@@ -1,0 +1,379 @@
+{
+  "id": "https://openalex.org/A5000546253",
+  "orcid": null,
+  "display_name": "Sakiko Shiratori",
+  "display_name_alternatives": [
+    "S. Shiratori",
+    "Sakiko SHIRATORI",
+    "Sakiko Shiratori",
+    "Shiratori Sakiko",
+    "Shiratori, Sakiko"
+  ],
+  "works_count": 29,
+  "cited_by_count": 127,
+  "summary_stats": {
+    "2yr_mean_citedness": 1.5,
+    "h_index": 6,
+    "i10_index": 3
+  },
+  "ids": {
+    "openalex": "https://openalex.org/A5000546253",
+    "orcid": "https://orcid.org/0000-0003-3285-3633"
+  },
+  "affiliations": [
+    {
+      "institution": {
+        "id": "https://openalex.org/I130238516",
+        "ror": "https://ror.org/017zqws13",
+        "display_name": "University of Minnesota",
+        "country_code": "US",
+        "type": "education",
+        "lineage": [
+          "https://openalex.org/I130238516"
+        ]
+      },
+      "years": [2011]
+    },
+    {
+      "institution": {
+        "id": "https://openalex.org/I2800403580",
+        "ror": "https://ror.org/03grvy078",
+        "display_name": "University of Minnesota System",
+        "country_code": "US",
+        "type": "education",
+        "lineage": [
+          "https://openalex.org/I2800403580"
+        ]
+      },
+      "years": [2011]
+    },
+    {
+      "institution": {
+        "id": "https://openalex.org/I4210089209",
+        "ror": "https://ror.org/005pdtr14",
+        "display_name": "Japan International Research Center for Agricultural Sciences",
+        "country_code": "JP",
+        "type": "facility",
+        "lineage": [
+          "https://openalex.org/I4210089209"
+        ]
+      },
+      "years": [2025, 2024, 2023, 2022, 2020, 2019, 2018, 2016]
+    }
+  ],
+  "last_known_institutions": [
+    {
+      "id": "https://openalex.org/I4210089209",
+      "ror": "https://ror.org/005pdtr14",
+      "display_name": "Japan International Research Center for Agricultural Sciences",
+      "country_code": "JP",
+      "type": "facility",
+      "lineage": [
+        "https://openalex.org/I4210089209"
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "id": "https://openalex.org/T10596",
+      "display_name": "Child Nutrition and Water Access",
+      "count": 12,
+      "score": 0.999800026416779,
+      "subfield": {
+        "id": "https://openalex.org/subfields/2916",
+        "display_name": "Nutrition and Dietetics"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/29",
+        "display_name": "Nursing"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/4",
+        "display_name": "Health Sciences"
+      }
+    },
+    {
+      "id": "https://openalex.org/T12057",
+      "display_name": "Consumer Attitudes and Food Labeling",
+      "count": 6,
+      "score": 0.985599994659424,
+      "subfield": {
+        "id": "https://openalex.org/subfields/2739",
+        "display_name": "Public Health, Environmental and Occupational Health"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/27",
+        "display_name": "Medicine"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/4",
+        "display_name": "Health Sciences"
+      }
+    },
+    {
+      "id": "https://openalex.org/T11259",
+      "display_name": "Agriculture Sustainability and Environmental Impact",
+      "count": 5,
+      "score": 0.992699980735779,
+      "subfield": {
+        "id": "https://openalex.org/subfields/2303",
+        "display_name": "Ecology"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/23",
+        "display_name": "Environmental Science"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/3",
+        "display_name": "Physical Sciences"
+      }
+    },
+    {
+      "id": "https://openalex.org/T10367",
+      "display_name": "Agricultural Innovations and Practices",
+      "count": 4,
+      "score": 0.985599994659424,
+      "subfield": {
+        "id": "https://openalex.org/subfields/1100",
+        "display_name": "General Agricultural and Biological Sciences"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/11",
+        "display_name": "Agricultural and Biological Sciences"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/1",
+        "display_name": "Life Sciences"
+      }
+    },
+    {
+      "id": "https://openalex.org/T11610",
+      "display_name": "Food Security and Health in Diverse Populations",
+      "count": 4,
+      "score": 0.99210000038147,
+      "subfield": {
+        "id": "https://openalex.org/subfields/3600",
+        "display_name": "General Health Professions"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/36",
+        "display_name": "Health Professions"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/4",
+        "display_name": "Health Sciences"
+      }
+    }
+  ],
+  "topic_share": [
+    {
+      "id": "https://openalex.org/T14242",
+      "display_name": "Nutrition, Health, and Society Studies",
+      "value": 0.0000764,
+      "subfield": {
+        "id": "https://openalex.org/subfields/1106",
+        "display_name": "Food Science"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/11",
+        "display_name": "Agricultural and Biological Sciences"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/1",
+        "display_name": "Life Sciences"
+      }
+    },
+    {
+      "id": "https://openalex.org/T12057",
+      "display_name": "Consumer Attitudes and Food Labeling",
+      "value": 0.0000742,
+      "subfield": {
+        "id": "https://openalex.org/subfields/2739",
+        "display_name": "Public Health, Environmental and Occupational Health"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/27",
+        "display_name": "Medicine"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/4",
+        "display_name": "Health Sciences"
+      }
+    },
+    {
+      "id": "https://openalex.org/T11898",
+      "display_name": "Economics of Agriculture and Food Markets",
+      "value": 0.0000585,
+      "subfield": {
+        "id": "https://openalex.org/subfields/2002",
+        "display_name": "Economics and Econometrics"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/20",
+        "display_name": "Economics, Econometrics and Finance"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/2",
+        "display_name": "Social Sciences"
+      }
+    },
+    {
+      "id": "https://openalex.org/T11259",
+      "display_name": "Agriculture Sustainability and Environmental Impact",
+      "value": 0.0000453,
+      "subfield": {
+        "id": "https://openalex.org/subfields/2303",
+        "display_name": "Ecology"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/23",
+        "display_name": "Environmental Science"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/3",
+        "display_name": "Physical Sciences"
+      }
+    },
+    {
+      "id": "https://openalex.org/T10596",
+      "display_name": "Child Nutrition and Water Access",
+      "value": 0.000044,
+      "subfield": {
+        "id": "https://openalex.org/subfields/2916",
+        "display_name": "Nutrition and Dietetics"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/29",
+        "display_name": "Nursing"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/4",
+        "display_name": "Health Sciences"
+      }
+    }
+  ],
+  "x_concepts": [
+    {
+      "id": "144133560",
+      "wikidata": "https://www.wikidata.org/wiki/Q4830453",
+      "display_name": "Business",
+      "score": 0.63002073764801
+    },
+    {
+      "id": "50522688",
+      "wikidata": "https://www.wikidata.org/wiki/Q189833",
+      "display_name": "Economic growth",
+      "score": 0.560756087303162
+    },
+    {
+      "id": "71924100",
+      "wikidata": "https://www.wikidata.org/wiki/Q11190",
+      "display_name": "Medicine",
+      "score": 0.545594751834869
+    },
+    {
+      "id": "205649164",
+      "wikidata": "https://www.wikidata.org/wiki/Q1071",
+      "display_name": "Geography",
+      "score": 0.543451070785523
+    },
+    {
+      "id": "162324750",
+      "wikidata": "https://www.wikidata.org/wiki/Q8134",
+      "display_name": "Economics",
+      "score": 0.400416642427444
+    }
+  ],
+  "counts_by_year": [
+    {
+      "year": 2009,
+      "works_count": 3,
+      "oa_works_count": 1,
+      "cited_by_count": 19
+    },
+    {
+      "year": 2011,
+      "works_count": 3,
+      "oa_works_count": 2,
+      "cited_by_count": 9
+    },
+    {
+      "year": 2013,
+      "works_count": 2,
+      "oa_works_count": 1,
+      "cited_by_count": 1
+    },
+    {
+      "year": 2014,
+      "works_count": 2,
+      "oa_works_count": 1,
+      "cited_by_count": 7
+    },
+    {
+      "year": 2016,
+      "works_count": 1,
+      "oa_works_count": 1,
+      "cited_by_count": 23
+    },
+    {
+      "year": 2017,
+      "works_count": 1,
+      "oa_works_count": 0,
+      "cited_by_count": 0
+    },
+    {
+      "year": 2018,
+      "works_count": 2,
+      "oa_works_count": 1,
+      "cited_by_count": 8
+    },
+    {
+      "year": 2019,
+      "works_count": 3,
+      "oa_works_count": 1,
+      "cited_by_count": 19
+    },
+    {
+      "year": 2020,
+      "works_count": 2,
+      "oa_works_count": 2,
+      "cited_by_count": 6
+    },
+    {
+      "year": 2022,
+      "works_count": 1,
+      "oa_works_count": 1,
+      "cited_by_count": 4
+    },
+    {
+      "year": 2023,
+      "works_count": 6,
+      "oa_works_count": 4,
+      "cited_by_count": 28
+    },
+    {
+      "year": 2024,
+      "works_count": 1,
+      "oa_works_count": 1,
+      "cited_by_count": 3
+    },
+    {
+      "year": 2025,
+      "works_count": 1,
+      "oa_works_count": 1,
+      "cited_by_count": 0
+    }
+  ],
+  "longest_name": "Shiratori, Sakiko",
+  "parsed_longest_name": {
+    "first": "sakiko",
+    "middle": "",
+    "last": "shiratori",
+    "suffix": "",
+    "nickname": ""
+  },
+  "block_key": "s shiratori",
+  "works_api_url": "https://api.openalex.org/works?filter=author.id:A5000546253",
+  "updated_date": "2026-02-11T12:21:17",
+  "created_date": "2021-02-01T00:00:00"
+}

@@ -1,0 +1,415 @@
+{
+    "created": "2025-08-04T05:46:27.775379+00:00",
+    "id": 2000894,
+    "links": {},
+    "metadata": {
+        "_buckets": {
+            "deposit": "b34bbc65-463c-470d-ac44-e4a62afcaf4b"
+        },
+        "_deposit": {
+            "created_by": 74,
+            "id": "2000894",
+            "owners": [
+                74
+            ],
+            "pid": {
+                "revision_id": 0,
+                "type": "depid",
+                "value": "2000894"
+            },
+            "status": "published"
+        },
+        "_oai": {
+            "id": "oai:jircas.repo.nii.ac.jp:02000894",
+            "sets": [
+                "1718256554766:1718256617194"
+            ]
+        },
+        "author_link": [],
+        "control_number": "2000894",
+        "item_30002_access_rights4": {
+            "attribute_name": "アクセス権",
+            "attribute_value_mlt": [
+                {
+                    "subitem_access_right": "open access",
+                    "subitem_access_right_uri": "http://purl.org/coar/access_right/c_abf2"
+                }
+            ]
+        },
+        "item_30002_bibliographic_information29": {
+            "attribute_name": "書誌情報",
+            "attribute_value_mlt": [
+                {
+                    "bibliographicIssueDates": {
+                        "bibliographicIssueDate": "2025-07-11",
+                        "bibliographicIssueDateType": "Issued"
+                    },
+                    "bibliographicIssueNumber": "8",
+                    "bibliographicPageStart": "100480",
+                    "bibliographicVolumeNumber": "16",
+                    "bibliographic_titles": [
+                        {
+                            "bibliographic_title": "Advances in Nutrition",
+                            "bibliographic_titleLang": "en"
+                        }
+                    ]
+                }
+            ]
+        },
+        "item_30002_creator2": {
+            "attribute_name": "作成者",
+            "attribute_type": "creator",
+            "attribute_value_mlt": [
+                {
+                    "creatorAffiliations": [
+                        {
+                            "affiliationNameIdentifiers": [
+                                {
+                                    "affiliationNameIdentifier": "0000000121078171",
+                                    "affiliationNameIdentifierScheme": "ISNI",
+                                    "affiliationNameIdentifierURI": "https://isni.org/isni/0000000121078171"
+                                }
+                            ],
+                            "affiliationNames": [
+                                {
+                                    "affiliationName": "Japan International Research Center for Agricultural Sciences",
+                                    "affiliationNameLang": "en"
+                                }
+                            ]
+                        }
+                    ],
+                    "creatorNames": [
+                        {
+                            "creatorName": "Shiratori, Sakiko",
+                            "creatorNameLang": "en",
+                            "creatorNameType": "Personal"
+                        }
+                    ],
+                    "creatorType": "Author",
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifier": "0000-0003-3285-3633",
+                            "nameIdentifierScheme": "ORCID",
+                            "nameIdentifierURI": "https://orcid.org/0000-0003-3285-3633"
+                        }
+                    ]
+                },
+                {
+                    "creatorAffiliations": [
+                        {
+                            "affiliationNameIdentifiers": [
+                                {
+                                    "affiliationNameIdentifier": "0000000121078171",
+                                    "affiliationNameIdentifierScheme": "ISNI",
+                                    "affiliationNameIdentifierURI": "https://isni.org/isni/0000000121078171"
+                                }
+                            ],
+                            "affiliationNames": [
+                                {
+                                    "affiliationName": "Japan International Research Center for Agricultural Sciences",
+                                    "affiliationNameLang": "en"
+                                }
+                            ]
+                        },
+                        {
+                            "affiliationNameIdentifiers": [
+                                {
+                                    "affiliationNameIdentifier": "0000000121691048",
+                                    "affiliationNameIdentifierScheme": "ISNI",
+                                    "affiliationNameIdentifierURI": "https://isni.org/isni/0000000121691048"
+                                }
+                            ],
+                            "affiliationNames": [
+                                {
+                                    "affiliationName": "The University of Tokyo",
+                                    "affiliationNameLang": "en"
+                                }
+                            ]
+                        }
+                    ],
+                    "creatorNames": [
+                        {
+                            "creatorName": "Abeysekara, MG Dilini",
+                            "creatorNameLang": "en",
+                            "creatorNameType": "Personal"
+                        }
+                    ],
+                    "creatorType": "Author"
+                }
+            ]
+        },
+        "item_30002_date11": {
+            "attribute_name": "日付",
+            "attribute_value_mlt": [
+                {
+                    "subitem_date_issued_datetime": "2025-07-08",
+                    "subitem_date_issued_type": "Accepted"
+                }
+            ]
+        },
+        "item_30002_description9": {
+            "attribute_name": "内容記述",
+            "attribute_value_mlt": [
+                {
+                    "subitem_description": "This study aimed to understand the role of mathematical programming in the development of food-based dietary recommendations (FBRs) in sub-Saharan Africa (SSA), identify current limitations, and highlight opportunities for advancing evidence-based dietary interventions. Following the Preferred Reporting Items for Systematic Reviews and Meta-Analyses Extension for Scoping Reviews, a systematic search from January 2000 to May 2024 identified 97 relevant studies. Among these, 30 studies spanning 12 SSA countries (of 48 countries and territories in SSA) met the inclusion criteria. The reviewed studies leveraged linear programming (LP) or extensions of LP (i.e., linear goal programming) to formulate FBRs by optimizing current dietary patterns to meet nutritional needs and gaps (n = 24), developing nutritionally and regionally optimized and cost-minimized food baskets (n = 4), and describing the use of LP as a method for designing population-specific food-based dietary guidelines (n = 2). The primary goal of the reviewed studies is to develop nutritionally adequate and economically affordable food patterns, rather than to address multiple chronic nutrition-related conditions simultaneously, reflecting the distinct priorities of diet modeling in low-resource settings compared with those of resource-rich contexts. The formulated FBRs and optimized diets are often defined for specific demographic groups, with a limited geographic scope reflecting regional priorities. Diets can be optimized both nutritionally and economically by prioritizing locally available food groups and items; however, in some cases, additional supplementation and or inclusion of rarely consumed nutrient-dense foods may be necessary. Mathematical optimization, particularly LP, is a valuable tool for addressing dietary challenges and developing evidence-based, context-specific FBRs. Its use is facilitated by the availability of user-friendly software. However, its successful application requires high-quality input data, consideration of behavioral and practical aspects, and interdisciplinary collaboration. High-quality input data and incorporating sociocultural contexts are critical for leveraging mathematical optimization to inform inclusive and effective dietary recommendations in SSA.",
+                    "subitem_description_language": "en",
+                    "subitem_description_type": "Abstract"
+                }
+            ]
+        },
+        "item_30002_file35": {
+            "attribute_name": "ファイル情報",
+            "attribute_type": "file",
+            "attribute_value_mlt": [
+                {
+                    "accessrole": "open_access",
+                    "date": [
+                        {
+                            "dateType": "Available",
+                            "dateValue": "2025-08-04"
+                        }
+                    ],
+                    "displaytype": "detail",
+                    "fileDate": [
+                        {
+                            "fileDateType": "Issued",
+                            "fileDateValue": "2025-07-11"
+                        }
+                    ],
+                    "filename": "2000894.pdf",
+                    "filesize": [
+                        {
+                            "value": "1.9 MB"
+                        }
+                    ],
+                    "format": "application/pdf",
+                    "licensetype": "license_0",
+                    "mimetype": "application/pdf",
+                    "url": {
+                        "label": "2000894",
+                        "objectType": "fulltext",
+                        "url": "https://jircas.repo.nii.ac.jp/record/2000894/files/2000894.pdf"
+                    },
+                    "version_id": "6a0a3b27-2239-46ae-b799-fcde28e87bcb"
+                }
+            ]
+        },
+        "item_30002_funding_reference21": {
+            "attribute_name": "助成情報",
+            "attribute_value_mlt": [
+                {
+                    "subitem_award_numbers": {
+                        "subitem_award_number": "JP19KK0341",
+                        "subitem_award_number_type": "JGN",
+                        "subitem_award_uri": "https://kaken.nii.ac.jp/grant/KAKENHI-PROJECT-19KK0341/"
+                    },
+                    "subitem_award_titles": [
+                        {
+                            "subitem_award_title": "Evaluation of food environment and dietary guidelines in rural Madagascar",
+                            "subitem_award_title_language": "en"
+                        }
+                    ],
+                    "subitem_funder_identifiers": {
+                        "subitem_funder_identifier": "https://doi.org/10.13039/501100001691",
+                        "subitem_funder_identifier_type": "Crossref Funder"
+                    },
+                    "subitem_funder_names": [
+                        {
+                            "subitem_funder_name": "Japan Society for the Promotion of Science (JSPS)",
+                            "subitem_funder_name_language": "en"
+                        }
+                    ]
+                },
+                {
+                    "subitem_award_titles": [
+                        {
+                            "subitem_award_title": "世界の栄養・食料安全保障と食料需給における課題",
+                            "subitem_award_title_language": "ja"
+                        }
+                    ],
+                    "subitem_funder_names": [
+                        {
+                            "subitem_funder_name": "The Foundation for Dietary Scientific Research",
+                            "subitem_funder_name_language": "en"
+                        }
+                    ]
+                },
+                {
+                    "subitem_award_numbers": {
+                        "subitem_award_number": "05a1C1",
+                        "subitem_award_uri": "https://www.jircas.go.jp/en/program/proc/c1"
+                    },
+                    "subitem_award_titles": [
+                        {
+                            "subitem_award_title": "Strategic information hub for international agricultural research",
+                            "subitem_award_title_language": "en"
+                        }
+                    ],
+                    "subitem_funder_identifiers": {
+                        "subitem_funder_identifier": "https://doi.org/10.13039/501100009472",
+                        "subitem_funder_identifier_type": "Crossref Funder"
+                    },
+                    "subitem_funder_names": [
+                        {
+                            "subitem_funder_name": "Japan International Research Center for Agricultural Sciences (JIRCAS)",
+                            "subitem_funder_name_language": "en"
+                        }
+                    ]
+                }
+            ]
+        },
+        "item_30002_geolocation20": {
+            "attribute_name": "位置情報",
+            "attribute_value_mlt": [
+                {
+                    "subitem_geolocation_place": [
+                        {
+                            "subitem_geolocation_place_text": "Africa"
+                        },
+                        {
+                            "subitem_geolocation_place_text": "アフリカ"
+                        }
+                    ]
+                }
+            ]
+        },
+        "item_30002_language12": {
+            "attribute_name": "言語",
+            "attribute_value_mlt": [
+                {
+                    "subitem_language": "eng"
+                }
+            ]
+        },
+        "item_30002_publisher10": {
+            "attribute_name": "出版者",
+            "attribute_value_mlt": [
+                {
+                    "subitem_publisher": "Elsevier",
+                    "subitem_publisher_language": "en"
+                }
+            ]
+        },
+        "item_30002_relation18": {
+            "attribute_name": "関連情報",
+            "attribute_value_mlt": [
+                {
+                    "subitem_relation_name": [
+                        {
+                            "subitem_relation_name_language": "en"
+                        }
+                    ],
+                    "subitem_relation_type": "isIdenticalTo",
+                    "subitem_relation_type_id": {
+                        "subitem_relation_type_id_text": "https://doi.org/10.1016/j.advnut.2025.100480",
+                        "subitem_relation_type_select": "DOI"
+                    }
+                }
+            ]
+        },
+        "item_30002_resource_type13": {
+            "attribute_name": "資源タイプ",
+            "attribute_value_mlt": [
+                {
+                    "resourcetype": "journal article",
+                    "resourceuri": "http://purl.org/coar/resource_type/c_6501"
+                }
+            ]
+        },
+        "item_30002_rights6": {
+            "attribute_name": "権利情報",
+            "attribute_value_mlt": [
+                {
+                    "subitem_rights": "© 2025 The Author(s). Published by Elsevier Inc. on behalf of American Society for Nutrition.",
+                    "subitem_rights_language": "en"
+                },
+                {
+                    "subitem_rights": "This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).",
+                    "subitem_rights_language": "en",
+                    "subitem_rights_resource": "http://creativecommons.org/licenses/by/4.0/"
+                }
+            ]
+        },
+        "item_30002_source_identifier22": {
+            "attribute_name": "収録物識別子",
+            "attribute_value_mlt": [
+                {
+                    "subitem_source_identifier": "2161-8313",
+                    "subitem_source_identifier_type": "EISSN"
+                },
+                {
+                    "subitem_source_identifier": "AA12622284",
+                    "subitem_source_identifier_type": "NCID"
+                }
+            ]
+        },
+        "item_30002_subject8": {
+            "attribute_name": "主題",
+            "attribute_value_mlt": [
+                {
+                    "subitem_subject": "food-based dietary recommendations",
+                    "subitem_subject_language": "en",
+                    "subitem_subject_scheme": "Other"
+                },
+                {
+                    "subitem_subject": "linear programming",
+                    "subitem_subject_language": "en",
+                    "subitem_subject_scheme": "Other"
+                },
+                {
+                    "subitem_subject": "diet optimization",
+                    "subitem_subject_language": "en",
+                    "subitem_subject_scheme": "Other"
+                },
+                {
+                    "subitem_subject": "sub-Saharan Africa",
+                    "subitem_subject_language": "en",
+                    "subitem_subject_scheme": "Other"
+                },
+                {
+                    "subitem_subject": "scoping review",
+                    "subitem_subject_language": "en",
+                    "subitem_subject_scheme": "Other"
+                }
+            ]
+        },
+        "item_30002_title0": {
+            "attribute_name": "タイトル",
+            "attribute_value_mlt": [
+                {
+                    "subitem_title": "Relevance of Mathematical Optimization as a Tool for Diet Modeling in the Development of Food-Based Dietary Recommendations in Sub-Saharan Africa : A Scoping Review",
+                    "subitem_title_language": "en"
+                }
+            ]
+        },
+        "item_30002_version_type15": {
+            "attribute_name": "出版タイプ",
+            "attribute_value_mlt": [
+                {
+                    "subitem_version_resource": "http://purl.org/coar/version/c_970fb48d4fbd8a85",
+                    "subitem_version_type": "VoR"
+                }
+            ]
+        },
+        "item_title": "Relevance of Mathematical Optimization as a Tool for Diet Modeling in the Development of Food-Based Dietary Recommendations in Sub-Saharan Africa : A Scoping Review",
+        "item_type_id": "40039",
+        "owner": "74",
+        "path": [
+            "1718256617194"
+        ],
+        "pubdate": {
+            "attribute_name": "PubDate",
+            "attribute_value": "2025-08-04"
+        },
+        "publish_date": "2025-08-04",
+        "publish_status": "0",
+        "recid": "2000894",
+        "relation_version_is_last": true,
+        "title": [
+            "Relevance of Mathematical Optimization as a Tool for Diet Modeling in the Development of Food-Based Dietary Recommendations in Sub-Saharan Africa : A Scoping Review"
+        ],
+        "weko_creator_id": "74",
+        "weko_shared_id": -1
+    },
+    "updated": "2025-08-06T00:13:13.869698+00:00"
+}

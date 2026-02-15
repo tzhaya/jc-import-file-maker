@@ -1,0 +1,9 @@
+# Claude Code settings (local only)
+.claude/
+
+# Old versions
+old/
+
+# OS
+.DS_Store
+Thumbs.db

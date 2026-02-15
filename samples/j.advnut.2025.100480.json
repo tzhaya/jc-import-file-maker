@@ -1,0 +1,1057 @@
+{
+  "status": "ok",
+  "message-type": "work",
+  "message-version": "1.0.0",
+  "message": {
+    "indexed": {
+      "date-parts": [
+        [2025, 11, 15]
+      ],
+      "date-time": "2025-11-15T11:28:03Z",
+      "timestamp": 1763206083227,
+      "version": "3.45.0"
+    },
+    "reference-count": 75,
+    "publisher": "Elsevier BV",
+    "issue": "8",
+    "license": [
+      {
+        "start": {
+          "date-parts": [
+            [2025, 8, 1]
+          ],
+          "date-time": "2025-08-01T00:00:00Z",
+          "timestamp": 1754006400000
+        },
+        "content-version": "tdm",
+        "delay-in-days": 0,
+        "URL": "https://www.elsevier.com/tdm/userlicense/1.0/"
+      },
+      {
+        "start": {
+          "date-parts": [
+            [2025, 8, 1]
+          ],
+          "date-time": "2025-08-01T00:00:00Z",
+          "timestamp": 1754006400000
+        },
+        "content-version": "tdm",
+        "delay-in-days": 0,
+        "URL": "https://www.elsevier.com/legal/tdmrep-license"
+      },
+      {
+        "start": {
+          "date-parts": [
+            [2025, 7, 8]
+          ],
+          "date-time": "2025-07-08T00:00:00Z",
+          "timestamp": 1751932800000
+        },
+        "content-version": "vor",
+        "delay-in-days": 0,
+        "URL": "http://creativecommons.org/licenses/by/4.0/"
+      }
+    ],
+    "funder": [
+      {
+        "DOI": "10.13039/501100001691",
+        "name": "Japan Society for the Promotion of Science",
+        "doi-asserted-by": "publisher",
+        "award": [
+          "JP19KK0341"
+        ],
+        "award-info": [
+          {
+            "award-number": [
+              "JP19KK0341"
+            ]
+          }
+        ],
+        "id": [
+          {
+            "id": "10.13039/501100001691",
+            "id-type": "DOI",
+            "asserted-by": "publisher"
+          }
+        ]
+      },
+      {
+        "DOI": "10.13039/501100008642",
+        "name": "Foundation for Dietary Scientific Research",
+        "doi-asserted-by": "publisher",
+        "id": [
+          {
+            "id": "10.13039/501100008642",
+            "id-type": "DOI",
+            "asserted-by": "publisher"
+          }
+        ]
+      }
+    ],
+    "content-domain": {
+      "domain": [
+        "elsevier.com",
+        "sciencedirect.com"
+      ],
+      "crossmark-restriction": true
+    },
+    "short-container-title": [
+      "Advances in Nutrition"
+    ],
+    "published-print": {
+      "date-parts": [
+        [2025, 8]
+      ]
+    },
+    "DOI": "10.1016/j.advnut.2025.100480",
+    "type": "journal-article",
+    "created": {
+      "date-parts": [
+        [2025, 7, 15]
+      ],
+      "date-time": "2025-07-15T20:15:31Z",
+      "timestamp": 1752610531000
+    },
+    "page": "100480",
+    "update-policy": "https://doi.org/10.1016/elsevier_cm_policy",
+    "source": "Crossref",
+    "is-referenced-by-count": 0,
+    "title": [
+      "Relevance of Mathematical Optimization as a Tool for Diet Modeling in the Development of Food-Based Dietary Recommendations in Sub-Saharan Africa: A Scoping Review"
+    ],
+    "prefix": "10.1016",
+    "volume": "16",
+    "author": [
+      {
+        "ORCID": "https://orcid.org/0000-0003-3285-3633",
+        "authenticated-orcid": false,
+        "given": "Sakiko",
+        "family": "Shiratori",
+        "sequence": "first",
+        "affiliation": []
+      },
+      {
+        "given": "MG Dilini",
+        "family": "Abeysekara",
+        "sequence": "additional",
+        "affiliation": []
+      }
+    ],
+    "member": "78",
+    "reference": [
+      {
+        "year": "2016",
+        "series-title": "Food systems and diets: facing the challenges of the 21st century",
+        "key": "10.1016/j.advnut.2025.100480_bib1"
+      },
+      {
+        "issue": "2",
+        "key": "10.1016/j.advnut.2025.100480_bib2",
+        "doi-asserted-by": "crossref",
+        "first-page": "245",
+        "DOI": "10.1093/ajcn/75.2.245",
+        "article-title": "Linear and nonlinear programming to optimize the nutrient density of a population’s diet: an example based on diets of preschool children in rural Malawi",
+        "volume": "75",
+        "author": "Darmon",
+        "year": "2002",
+        "journal-title": "Am. J. Clin. Nutr."
+      },
+      {
+        "key": "10.1016/j.advnut.2025.100480_bib3",
+        "doi-asserted-by": "crossref",
+        "first-page": "48",
+        "DOI": "10.3389/fnut.2018.00048",
+        "article-title": "A review of the use of linear programming to optimize diets, nutritiously, economically and environmentally",
+        "volume": "5",
+        "author": "van Dooren",
+        "year": "2018",
+        "journal-title": "Front. Nutr."
+      },
+      {
+        "issue": "Suppl 2",
+        "key": "10.1016/j.advnut.2025.100480_bib4",
+        "doi-asserted-by": "crossref",
+        "first-page": "2",
+        "DOI": "10.1159/000103560",
+        "article-title": "Global patterns and country experiences with the formulation and implementation of food-based dietary guidelines",
+        "volume": "51",
+        "author": "Albert",
+        "year": "2007",
+        "journal-title": "Ann. Nutr. Metab."
+      },
+      {
+        "issue": "4",
+        "key": "10.1016/j.advnut.2025.100480_bib5",
+        "doi-asserted-by": "crossref",
+        "first-page": "590",
+        "DOI": "10.1093/advances/nmy130",
+        "article-title": "A global review of food-based dietary guidelines",
+        "volume": "10",
+        "author": "Herforth",
+        "year": "2019",
+        "journal-title": "Adv. Nutr."
+      },
+      {
+        "key": "10.1016/j.advnut.2025.100480_bib6",
+        "doi-asserted-by": "crossref",
+        "DOI": "10.1016/j.cosust.2023.101376",
+        "article-title": "Review of policy action for healthy environmentally sustainable food systems in sub-Saharan Africa",
+        "volume": "65",
+        "author": "Holdsworth",
+        "year": "2023",
+        "journal-title": "Curr. Opin. Environ. Sustain."
+      },
+      {
+        "year": "2023",
+        "series-title": "FAOSTAT data on the cost and affordability of a healthy diet (CoAHD)",
+        "key": "10.1016/j.advnut.2025.100480_bib7"
+      },
+      {
+        "issue": "16",
+        "key": "10.1016/j.advnut.2025.100480_bib8",
+        "doi-asserted-by": "crossref",
+        "first-page": "9018",
+        "DOI": "10.3390/su13169018",
+        "article-title": "Policy considerations for African food systems: towards the United Nations 2021 food systems summit",
+        "volume": "13",
+        "author": "Sibanda",
+        "year": "2021",
+        "journal-title": "Sustainability"
+      },
+      {
+        "issue": "2",
+        "key": "10.1016/j.advnut.2025.100480_bib9",
+        "doi-asserted-by": "crossref",
+        "first-page": "171",
+        "DOI": "10.1038/s43016-024-00927-w",
+        "article-title": "Nutrient adequacy for poor households in Africa would improve with higher income but not necessarily with lower food prices",
+        "volume": "5",
+        "author": "McCullough",
+        "year": "2024",
+        "journal-title": "Nat. Food."
+      },
+      {
+        "issue": "2",
+        "key": "10.1016/j.advnut.2025.100480_bib10",
+        "doi-asserted-by": "crossref",
+        "first-page": "191",
+        "DOI": "10.1177/156482651403500205",
+        "article-title": "Toward the prevention of childhood undernutrition: diet diversity strategies using locally produced food can overcome gaps in nutrient supply",
+        "volume": "35",
+        "author": "Parlesak",
+        "year": "2014",
+        "journal-title": "Food Nutr. Bull."
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib11",
+        "first-page": "12",
+        "article-title": "Linear programming: a mathematical tool for analyzing and optimizing children’s diets during the complementary feeding period",
+        "volume": "36",
+        "author": "Briend",
+        "year": "2003",
+        "journal-title": "J. Pediatr. Gastroenterol. Nutr."
+      },
+      {
+        "issue": "4",
+        "key": "10.1016/j.advnut.2025.100480_bib12",
+        "doi-asserted-by": "crossref",
+        "first-page": "951",
+        "DOI": "10.1093/jn/134.4.951",
+        "article-title": "Food-based dietary guidelines can be developed and tested using linear programming analysis",
+        "volume": "134",
+        "author": "Ferguson",
+        "year": "2004",
+        "journal-title": "J. Nutr."
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib13",
+        "doi-asserted-by": "crossref",
+        "first-page": "115",
+        "DOI": "10.1111/nbu.12076",
+        "article-title": "Diet modelling: how it can inform the development of dietary recommendations and public health policy",
+        "volume": "39",
+        "author": "Buttriss",
+        "year": "2014",
+        "journal-title": "Nutr. Bull."
+      },
+      {
+        "issue": "6",
+        "key": "10.1016/j.advnut.2025.100480_bib14",
+        "doi-asserted-by": "crossref",
+        "first-page": "942",
+        "DOI": "10.1017/S0007114520004857",
+        "article-title": "Integration of various dimensions in food-based dietary guidelines via mathematical approaches: report of a DGE/FENS Workshop in Bonn, Germany, 23–24 September 2019",
+        "volume": "126",
+        "author": "Schäfer",
+        "year": "2021",
+        "journal-title": "Br. J. Nutr."
+      },
+      {
+        "issue": "3",
+        "key": "10.1016/j.advnut.2025.100480_bib15",
+        "doi-asserted-by": "crossref",
+        "first-page": "527",
+        "DOI": "10.1017/S1368980011002084",
+        "article-title": "Revision of food-based dietary guidelines for Ireland, phase 2: recommendations for healthy eating and affordability",
+        "volume": "15",
+        "author": "Flynn",
+        "year": "2012",
+        "journal-title": "Public Health Nutr"
+      },
+      {
+        "year": "2011",
+        "series-title": "A modelling system to inform the revision of the Australian guide to healthy eating",
+        "key": "10.1016/j.advnut.2025.100480_bib16"
+      },
+      {
+        "issue": "4",
+        "key": "10.1016/j.advnut.2025.100480_bib17",
+        "doi-asserted-by": "crossref",
+        "first-page": "622",
+        "DOI": "10.1017/S1368980014000706",
+        "article-title": "Contribution to the development of a food guide in Benin: linear programming for the optimization of local diets",
+        "volume": "18",
+        "author": "Levesque",
+        "year": "2015",
+        "journal-title": "Public Health Nutr"
+      },
+      {
+        "issue": "7",
+        "key": "10.1016/j.advnut.2025.100480_bib18",
+        "doi-asserted-by": "crossref",
+        "DOI": "10.1136/bmjopen-2018-027846",
+        "article-title": "Methodology for developing and evaluating food-based dietary guidelines and a healthy eating index for Ethiopia: a study protocol",
+        "volume": "9",
+        "author": "Bekele",
+        "year": "2019",
+        "journal-title": "BMJ Open"
+      },
+      {
+        "issue": "13",
+        "key": "10.1016/j.advnut.2025.100480_bib19",
+        "doi-asserted-by": "crossref",
+        "first-page": "2419",
+        "DOI": "10.1017/S1368980019001435",
+        "article-title": "Development of healthy and sustainable food-based dietary guidelines for the Netherlands",
+        "volume": "22",
+        "author": "Brink",
+        "year": "2019",
+        "journal-title": "Public Health Nutr"
+      },
+      {
+        "issue": "116",
+        "key": "10.1016/j.advnut.2025.100480_bib20",
+        "first-page": "22088",
+        "article-title": "Diet modelling in the development of a healthy diet for the Ghanaian population",
+        "volume": "23",
+        "author": "Azupogo",
+        "year": "2023",
+        "journal-title": "Afr. J. Food Agric. Nutr. Dev."
+      },
+      {
+        "issue": "5",
+        "key": "10.1016/j.advnut.2025.100480_bib21",
+        "doi-asserted-by": "crossref",
+        "first-page": "451",
+        "DOI": "10.1111/j.1365-277X.2008.00903.x",
+        "article-title": "Development of a recommended food intake pattern for healthy Danish adolescents consistent with the Danish dietary guidelines, nutrient recommendations and national food preferences",
+        "volume": "21",
+        "author": "Biltoft-Jensen",
+        "year": "2008",
+        "journal-title": "J. Hum. Nutr. Diet."
+      },
+      {
+        "issue": "2",
+        "key": "10.1016/j.advnut.2025.100480_bib22",
+        "doi-asserted-by": "crossref",
+        "first-page": "175",
+        "DOI": "10.1111/nbu.12431",
+        "article-title": "Testing the nutritional relevance of food-based dietary guidelines with mathematical optimisation of individual diets",
+        "volume": "45",
+        "author": "Maillot",
+        "year": "2020",
+        "journal-title": "Nutr. Bull."
+      },
+      {
+        "issue": "4",
+        "key": "10.1016/j.advnut.2025.100480_bib23",
+        "doi-asserted-by": "crossref",
+        "first-page": "739",
+        "DOI": "10.1017/S1368980016002664",
+        "article-title": "Operationalising the health aspects of sustainable diets: a review",
+        "volume": "20",
+        "author": "Mertens",
+        "year": "2017",
+        "journal-title": "Public Health Nutr"
+      },
+      {
+        "issue": "5",
+        "key": "10.1016/j.advnut.2025.100480_bib24",
+        "doi-asserted-by": "crossref",
+        "first-page": "602",
+        "DOI": "10.1093/advances/nmy049",
+        "article-title": "Mathematical optimization to explore tomorrow’s sustainable diets: a narrative review",
+        "volume": "9",
+        "author": "Gazan",
+        "year": "2021",
+        "journal-title": "Adv. Nutr."
+      },
+      {
+        "issue": "4",
+        "key": "10.1016/j.advnut.2025.100480_bib25",
+        "doi-asserted-by": "crossref",
+        "first-page": "S389",
+        "DOI": "10.1093/advances/nmz037",
+        "article-title": "Achieving healthy and sustainable diets: a review of the results of recent mathematical optimization studies",
+        "volume": "10",
+        "author": "Wilson",
+        "year": "2019",
+        "journal-title": "Adv. Nutr."
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib26",
+        "first-page": "1",
+        "article-title": "A systematic review of linear programming techniques as applied to diet optimisation and opportunities for improvement",
+        "volume": "2023",
+        "author": "Donkor",
+        "year": "2023",
+        "journal-title": "J. Optim."
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib27",
+        "article-title": "Dietary sources and nutrient adequacy potential of local foods among children (6–23 months) in urban slums of West Oromia (Ethiopia)",
+        "volume": "2020",
+        "author": "Berra",
+        "year": "2020",
+        "journal-title": "J. Nutr. Metab"
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib28",
+        "doi-asserted-by": "crossref",
+        "first-page": "12",
+        "DOI": "10.1186/s12937-019-0435-5",
+        "article-title": "Current and potential role of grain legumes on protein and micronutrient adequacy of the diet of rural Ghanaian infants and young children: Using linear programming",
+        "volume": "18",
+        "author": "De Jager",
+        "year": "2019",
+        "journal-title": "Nutr. J."
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib29",
+        "doi-asserted-by": "crossref",
+        "DOI": "10.1080/16546628.2017.1358035",
+        "article-title": "Optimal formulations of local foods to achieve nutritional adequacy for 6–23-month-old rural Tanzanian children",
+        "volume": "61",
+        "author": "Raymond",
+        "year": "2017",
+        "journal-title": "Food Nutr. Res."
+      },
+      {
+        "issue": "7",
+        "key": "10.1016/j.advnut.2025.100480_bib30",
+        "doi-asserted-by": "crossref",
+        "first-page": "467",
+        "DOI": "10.7326/M18-0850",
+        "article-title": "PRISMA extension for scoping reviews (PRISMA-ScR): checklist and explanation",
+        "volume": "169",
+        "author": "Tricco",
+        "year": "2018",
+        "journal-title": "Ann. Intern. Med."
+      },
+      {
+        "issue": "3",
+        "key": "10.1016/j.advnut.2025.100480_bib31",
+        "doi-asserted-by": "crossref",
+        "first-page": "141",
+        "DOI": "10.1097/XEB.0000000000000050",
+        "article-title": "Guidance for conducting systematic scoping reviews",
+        "volume": "13",
+        "author": "Peters",
+        "year": "2015",
+        "journal-title": "Int. J. Evid. Based Healthc."
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib32",
+        "doi-asserted-by": "crossref",
+        "first-page": "19",
+        "DOI": "10.1080/1364557032000119616",
+        "article-title": "Scoping studies: towards a methodological framework",
+        "volume": "8",
+        "author": "Arksey",
+        "year": "2005",
+        "journal-title": "Int. J. Soc. Res. Methodol. Theory Pract."
+      },
+      {
+        "key": "10.1016/j.advnut.2025.100480_bib34",
+        "doi-asserted-by": "crossref",
+        "DOI": "10.1016/j.glmedi.2023.100046",
+        "article-title": "Formulating research questions for evidence-based studies",
+        "volume": "2",
+        "author": "Hosseini",
+        "year": "2024",
+        "journal-title": "J. Med. Surg. Public Health"
+      },
+      {
+        "issue": "2",
+        "key": "10.1016/j.advnut.2025.100480_bib35",
+        "doi-asserted-by": "crossref",
+        "first-page": "416",
+        "DOI": "10.1108/NFS-01-2022-0020",
+        "article-title": "Context-specific optimal dietary guidelines for managing cancer for hospitalized patients in Tanzania",
+        "volume": "53",
+        "author": "Kisighii",
+        "year": "2023",
+        "journal-title": "Nutr. Food Sci"
+      },
+      {
+        "issue": "5",
+        "key": "10.1016/j.advnut.2025.100480_bib36",
+        "doi-asserted-by": "crossref",
+        "first-page": "955",
+        "DOI": "10.3945/jn.111.156943",
+        "article-title": "Low-cost, ready-to-use therapeutic foods can be designed using locally available commodities with the aid of linear programming",
+        "volume": "142",
+        "author": "Dibari",
+        "year": "2012",
+        "journal-title": "J. Nutr."
+      },
+      {
+        "issue": "6",
+        "key": "10.1016/j.advnut.2025.100480_bib37",
+        "doi-asserted-by": "crossref",
+        "first-page": "1551",
+        "DOI": "10.3945/ajcn.114.090670",
+        "article-title": "A comprehensive linear programming tool to optimize formulations of ready-to-use therapeutic foods: an application to Ethiopia",
+        "volume": "100",
+        "author": "Ryan",
+        "year": "2014",
+        "journal-title": "Am. J. Clin. Nutr."
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib38",
+        "doi-asserted-by": "crossref",
+        "first-page": "14",
+        "DOI": "10.4236/ojop.2016.51002",
+        "article-title": "An optimal DASH diet model for people with hypertension using linear programming approach",
+        "volume": "5",
+        "author": "Iwuji",
+        "year": "2016",
+        "journal-title": "Open J. Optim."
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib39",
+        "first-page": "75",
+        "article-title": "From diets to foods: using linear programming to formulate a nutritious, minimum-cost porridge mix for children aged 1 to 2 years, Food Nutr",
+        "volume": "36",
+        "author": "De Carvalho",
+        "year": "2015",
+        "journal-title": "Bull"
+      },
+      {
+        "issue": "6",
+        "key": "10.1016/j.advnut.2025.100480_bib41",
+        "doi-asserted-by": "crossref",
+        "first-page": "464",
+        "DOI": "10.2471/BLT.20.269308",
+        "article-title": "Global Diet and Activity Research Group and Network, Evidence for factors associated with diet and physical activity in African and Caribbean countries",
+        "volume": "99",
+        "author": "Turner-Moss",
+        "year": "2021",
+        "journal-title": "Bull. World Health Organ."
+      },
+      {
+        "key": "10.1016/j.advnut.2025.100480_bib42",
+        "series-title": "Joint 3rd African Association of Agricultural Economists (AAAE) and 48th Agricultural Economic Association of South Africa (AEASA) Conference",
+        "first-page": "18",
+        "article-title": "Cost-minimizing food budgets in Ghana",
+        "author": "Darko",
+        "year": "2010"
+      },
+      {
+        "issue": "4",
+        "key": "10.1016/j.advnut.2025.100480_bib43",
+        "doi-asserted-by": "crossref",
+        "first-page": "458",
+        "DOI": "10.1177/156482651403500408",
+        "article-title": "Assessing the potential of wild foods to reduce the cost of a nutritionally adequate diet: an example from Eastern Baringo District, Kenya",
+        "volume": "35",
+        "author": "Termote",
+        "year": "2014",
+        "journal-title": "Food Nutr. Bull."
+      },
+      {
+        "issue": "Suppl 3",
+        "key": "10.1016/j.advnut.2025.100480_bib44",
+        "doi-asserted-by": "crossref",
+        "first-page": "6",
+        "DOI": "10.1111/mcn.12243",
+        "article-title": "Zinc, iron, and calcium are major limiting nutrients in the complementary diets of rural Kenyan children",
+        "volume": "11",
+        "author": "Ferguson",
+        "year": "2015",
+        "journal-title": "Matern. Child Nutr."
+      },
+      {
+        "issue": "Suppl 3",
+        "key": "10.1016/j.advnut.2025.100480_bib45",
+        "doi-asserted-by": "crossref",
+        "first-page": "39",
+        "DOI": "10.1111/mcn.12245",
+        "article-title": "Constraints and opportunities for implementing nutrition-specific, agricultural and market-based approaches to improve nutrient intake adequacy among infants and young children in two regions of rural Kenya, Matern",
+        "volume": "11",
+        "author": "Hotz",
+        "year": "2015",
+        "journal-title": "Child Nutr."
+      },
+      {
+        "issue": "6",
+        "key": "10.1016/j.advnut.2025.100480_bib46",
+        "doi-asserted-by": "crossref",
+        "first-page": "971",
+        "DOI": "10.1017/S1368980016003116",
+        "article-title": "Context-specific complementary feeding recommendations developed using Optifood could improve the diets of breast-fed infants and young children from diverse livelihood groups in Northern Kenya",
+        "volume": "20",
+        "author": "Vossenaar",
+        "year": "2017",
+        "journal-title": "Public Health Nutr"
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib47",
+        "doi-asserted-by": "crossref",
+        "DOI": "10.1111/mcn.12461",
+        "article-title": "Local foods can meet micronutrient needs for women in urban Burkina Faso, but only if rarely consumed micronutrient-dense foods are included in daily diets: a linear programming exercise",
+        "volume": "14",
+        "author": "Arimond",
+        "year": "2018",
+        "journal-title": "Matern. Child Nutr."
+      },
+      {
+        "issue": "4",
+        "key": "10.1016/j.advnut.2025.100480_bib48",
+        "doi-asserted-by": "crossref",
+        "first-page": "461",
+        "DOI": "10.3390/nu10040461",
+        "article-title": "Nutritionally optimized, culturally acceptable, cost-minimized diets for low income Ghanaian families using linear programming",
+        "volume": "10",
+        "author": "Nykänen",
+        "year": "2018",
+        "journal-title": "Nutrients"
+      },
+      {
+        "issue": "2",
+        "key": "10.1016/j.advnut.2025.100480_bib49",
+        "article-title": "Combining food-based dietary recommendations using Optifood with zinc-fortified water potentially improves nutrient adequacy among 4- to 6-year-old children in Kisumu West district, Kenya, Matern",
+        "volume": "14",
+        "author": "Kujinga",
+        "year": "2018",
+        "journal-title": "Child Nutr."
+      },
+      {
+        "issue": "2",
+        "key": "10.1016/j.advnut.2025.100480_bib50",
+        "doi-asserted-by": "crossref",
+        "first-page": "365",
+        "DOI": "10.1017/S1368980017002506",
+        "article-title": "The potential contribution of yellow cassava to dietary nutrient adequacy of primary-school children in Eastern Kenya: the use of linear programming",
+        "volume": "21",
+        "author": "Talsma",
+        "year": "2018",
+        "journal-title": "Public Health Nutr"
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib51",
+        "doi-asserted-by": "crossref",
+        "first-page": "451",
+        "DOI": "10.1186/s12889-018-5369-x",
+        "article-title": "Optimal dietary patterns designed from local foods to achieve maternal nutritional goals",
+        "volume": "18",
+        "author": "Raymond",
+        "year": "2018",
+        "journal-title": "BMC Public Health"
+      },
+      {
+        "key": "10.1016/j.advnut.2025.100480_bib52",
+        "first-page": "832",
+        "article-title": "Development of food based dietary guidelines for rural Kenyan women using linear programming",
+        "volume": "17",
+        "author": "Ngala",
+        "year": "2017",
+        "journal-title": "RUFORUM Working Document Series"
+      },
+      {
+        "issue": "9",
+        "key": "10.1016/j.advnut.2025.100480_bib53",
+        "doi-asserted-by": "crossref",
+        "first-page": "2159",
+        "DOI": "10.3390/nu11092159",
+        "article-title": "Cost-minimized nutritionally adequate food baskets as basis for culturally adapted dietary guidelines for Ethiopians",
+        "volume": "11",
+        "author": "Gurmu",
+        "year": "2019",
+        "journal-title": "Nutrients"
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib54",
+        "doi-asserted-by": "crossref",
+        "first-page": "72",
+        "DOI": "10.3390/nu11010072",
+        "article-title": "Assessment of dietary intake and nutrient gaps, and development of food-based recommendations, among pregnant and lactating women in Zinder, Niger: an Optifood linear programming analysis",
+        "volume": "11",
+        "author": "Wessells",
+        "year": "2019",
+        "journal-title": "Nutrients"
+      },
+      {
+        "issue": "6",
+        "key": "10.1016/j.advnut.2025.100480_bib55",
+        "doi-asserted-by": "crossref",
+        "first-page": "1416",
+        "DOI": "10.3390/nu11061416",
+        "article-title": "Identifying dietary strategies to improve nutrient adequacy among Ethiopian infants and young children using linear modelling",
+        "volume": "11",
+        "author": "Samuel",
+        "year": "2019",
+        "journal-title": "Nutrients"
+      },
+      {
+        "key": "10.1016/j.advnut.2025.100480_bib56",
+        "doi-asserted-by": "crossref",
+        "first-page": "129",
+        "DOI": "10.3389/fnut.2020.00129",
+        "article-title": "The impact of local agrobiodiversity and food interventions on cost, nutritional adequacy, and affordability of women and children’s diet in Northern Kenya: a modeling exercise",
+        "volume": "7",
+        "author": "Sarfo",
+        "year": "2020",
+        "journal-title": "Front. Nutr."
+      },
+      {
+        "issue": "5",
+        "key": "10.1016/j.advnut.2025.100480_bib57",
+        "doi-asserted-by": "crossref",
+        "DOI": "10.1371/journal.pone.0232824",
+        "article-title": "Potential contribution of cereal and milk based fermented foods to dietary nutrient intake of 1-5 years old children in Central province in Zambia",
+        "volume": "15",
+        "author": "Chileshe",
+        "year": "2020",
+        "journal-title": "PLoS One"
+      },
+      {
+        "issue": "3",
+        "key": "10.1016/j.advnut.2025.100480_bib58",
+        "first-page": "100",
+        "article-title": "The use of linear programming to determine whether breastfed infants can achieve a nutritionally adequate complementary feeding diet: a case study of 6–11-month-old infants from KwaMashu, KwaZulu-Natal, South Africa, S. Afr",
+        "volume": "35",
+        "author": "Sayed",
+        "year": "2022",
+        "journal-title": "J. Clin. Nutr."
+      },
+      {
+        "issue": "2",
+        "key": "10.1016/j.advnut.2025.100480_bib59",
+        "article-title": "A food-based approach could improve dietary adequacy for 12–23-month-old Eastern Ugandan children, Matern",
+        "volume": "18",
+        "author": "Kimere",
+        "year": "2022",
+        "journal-title": "Child Nutr."
+      },
+      {
+        "issue": "10",
+        "key": "10.1016/j.advnut.2025.100480_bib60",
+        "doi-asserted-by": "crossref",
+        "first-page": "2096",
+        "DOI": "10.1017/S1368980023001374",
+        "article-title": "Developing feasible healthy diets for Ethiopian women of reproductive age: a linear goal programming approach",
+        "volume": "26",
+        "author": "Bekele",
+        "year": "2023",
+        "journal-title": "Public Health Nutr"
+      },
+      {
+        "issue": "3",
+        "key": "10.1016/j.advnut.2025.100480_bib61",
+        "doi-asserted-by": "crossref",
+        "first-page": "478",
+        "DOI": "10.1017/S0007114522000915",
+        "article-title": "The potential contribution of house crickets to the dietary zinc content and nutrient adequacy in young Kenyan children: a linear programming analysis using Optifood",
+        "volume": "129",
+        "author": "Coppoolse",
+        "year": "2023",
+        "journal-title": "Br J Nutr"
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib62",
+        "doi-asserted-by": "crossref",
+        "first-page": "84",
+        "DOI": "10.1111/nyas.15032",
+        "article-title": "Including calcium-fortified water or flour in modeled diets based on local foods could improve calcium intake for women, adolescent girls, and young children in Bangladesh, Uganda, and Guatemala",
+        "volume": "1526",
+        "author": "Knight",
+        "year": "2023",
+        "journal-title": "Ann. N.Y. Acad. Sci."
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib63",
+        "doi-asserted-by": "crossref",
+        "first-page": "173",
+        "DOI": "10.1111/nyas.15008",
+        "article-title": "Could local foods achieve recommended calcium intakes for nutritionally vulnerable populations in Uganda, Guatemala, and Bangladesh?",
+        "volume": "1525",
+        "author": "Knight",
+        "year": "2023",
+        "journal-title": "Ann. N.Y. Acad. Sci."
+      },
+      {
+        "journal-title": "Optifood",
+        "article-title": "Food and Nutrition Technical Assistance (FANTA)",
+        "year": "2013",
+        "key": "10.1016/j.advnut.2025.100480_bib64"
+      },
+      {
+        "issue": "9",
+        "key": "10.1016/j.advnut.2025.100480_bib65",
+        "doi-asserted-by": "crossref",
+        "first-page": "2399",
+        "DOI": "10.1093/jn/136.9.2399",
+        "article-title": "Design of optimal food-based complementary feeding recommendations and identification of key ‘problem nutrients’ using goal programming",
+        "volume": "136",
+        "author": "Ferguson",
+        "year": "2006",
+        "journal-title": "J. Nutr."
+      },
+      {
+        "issue": "Suppl 2",
+        "key": "10.1016/j.advnut.2025.100480_bib66",
+        "doi-asserted-by": "crossref",
+        "first-page": "116",
+        "DOI": "10.1111/mcn.12083",
+        "article-title": "Designing appropriate complementary feeding recommendations: tools for programmatic action",
+        "volume": "9",
+        "author": "Daelmans",
+        "year": "2013",
+        "journal-title": "Matern Child Nutr"
+      },
+      {
+        "year": "2013",
+        "series-title": "Process for the Promotion of Child Feeding-Field Manual (ProPAN)",
+        "key": "10.1016/j.advnut.2025.100480_bib67"
+      },
+      {
+        "issue": "26",
+        "key": "10.1016/j.advnut.2025.100480_bib68",
+        "first-page": "1",
+        "article-title": "Cost of the diet: a method and software to calculate the lowest cost of meeting recommended intakes of energy and nutrients from local foods",
+        "volume": "3",
+        "author": "Deptford",
+        "year": "2017",
+        "journal-title": "BMC Nutr."
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib69",
+        "doi-asserted-by": "crossref",
+        "first-page": "145",
+        "DOI": "10.1111/nyas.14709",
+        "article-title": "Household-level consumption data can be redistributed for individual-level Optifood diet modeling: analysis from four countries",
+        "volume": "1509",
+        "author": "Knight",
+        "year": "2022",
+        "journal-title": "Ann. N.Y. Acad. Sci."
+      },
+      {
+        "issue": "6",
+        "key": "10.1016/j.advnut.2025.100480_bib70",
+        "doi-asserted-by": "crossref",
+        "first-page": "980",
+        "DOI": "10.3945/an.117.016980",
+        "article-title": "Measurement errors in dietary assessment using self-reported 24-hour recalls in low-income countries and strategies for their prevention",
+        "volume": "8",
+        "author": "Gibson",
+        "year": "2017",
+        "journal-title": "Adv. Nutr."
+      },
+      {
+        "key": "10.1016/j.advnut.2025.100480_bib71",
+        "doi-asserted-by": "crossref",
+        "DOI": "10.1016/j.foodpol.2022.102347",
+        "article-title": "Weather shocks and food price seasonality in sub-Saharan Africa: evidence from Niger",
+        "volume": "112",
+        "author": "Kakpo",
+        "year": "2022",
+        "journal-title": "Food Policy"
+      },
+      {
+        "issue": "1",
+        "key": "10.1016/j.advnut.2025.100480_bib72",
+        "doi-asserted-by": "crossref",
+        "first-page": "2",
+        "DOI": "10.1186/1475-2891-5-2",
+        "article-title": "Food composition database development for comparison between country",
+        "volume": "5",
+        "author": "Merchant",
+        "year": "2006",
+        "journal-title": "Nutr. J."
+      },
+      {
+        "year": "2022",
+        "series-title": "Measuring what the world eats: insights from a new approach. Global Alliance for Improved Nutrition (GAIN), Harvard TH Chan School of Public Health",
+        "key": "10.1016/j.advnut.2025.100480_bib73"
+      },
+      {
+        "year": "2021",
+        "series-title": "United NationsEconomic Commission for Africa, African Union Commsission, Africa—regional overview of food security and nutrition 2021: statistics and trends",
+        "key": "10.1016/j.advnut.2025.100480_bib74"
+      },
+      {
+        "issue": "8",
+        "key": "10.1016/j.advnut.2025.100480_bib75",
+        "doi-asserted-by": "crossref",
+        "first-page": "867",
+        "DOI": "10.1017/S1368980007001115",
+        "article-title": "Food-based dietary guidelines and implementation: lessons from four countries—Chile, Germany, New Zealand and South Africa",
+        "volume": "11",
+        "author": "Keller",
+        "year": "2008",
+        "journal-title": "Public Health Nutr"
+      },
+      {
+        "issue": "10",
+        "key": "10.1016/j.advnut.2025.100480_bib76",
+        "doi-asserted-by": "crossref",
+        "first-page": "3485",
+        "DOI": "10.3390/nu13103485",
+        "article-title": "Sensitivity of food-based recommendations developed using linear programming to model input data in young Kenyan children",
+        "volume": "13",
+        "author": "Borgonjen-van den Berg",
+        "year": "2021",
+        "journal-title": "Nutrients"
+      },
+      {
+        "issue": "2",
+        "key": "10.1016/j.advnut.2025.100480_bib77",
+        "first-page": "19471",
+        "article-title": "A review of food-based dietary guidelines in Africa: opportunities to enhance the healthiness and environmental sustainability of population diets",
+        "volume": "22",
+        "author": "Ainuson-Quampah",
+        "year": "2022",
+        "journal-title": "Afr. J. Food Agric. Nutr. Dev."
+      }
+    ],
+    "container-title": [
+      "Advances in Nutrition"
+    ],
+    "original-title": [],
+    "language": "en",
+    "link": [
+      {
+        "URL": "https://api.elsevier.com/content/article/PII:S2161831325001164?httpAccept=text/xml",
+        "content-type": "text/xml",
+        "content-version": "vor",
+        "intended-application": "text-mining"
+      },
+      {
+        "URL": "https://api.elsevier.com/content/article/PII:S2161831325001164?httpAccept=text/plain",
+        "content-type": "text/plain",
+        "content-version": "vor",
+        "intended-application": "text-mining"
+      }
+    ],
+    "deposited": {
+      "date-parts": [
+        [2025, 11, 15]
+      ],
+      "date-time": "2025-11-15T11:23:57Z",
+      "timestamp": 1763205837000
+    },
+    "score": 1,
+    "resource": {
+      "primary": {
+        "URL": "https://linkinghub.elsevier.com/retrieve/pii/S2161831325001164"
+      }
+    },
+    "subtitle": [],
+    "short-title": [],
+    "issued": {
+      "date-parts": [
+        [2025, 8]
+      ]
+    },
+    "references-count": 75,
+    "journal-issue": {
+      "issue": "8",
+      "published-print": {
+        "date-parts": [
+          [2025, 8]
+        ]
+      }
+    },
+    "alternative-id": [
+      "S2161831325001164"
+    ],
+    "URL": "https://doi.org/10.1016/j.advnut.2025.100480",
+    "relation": {
+
+    },
+    "ISSN": [
+      "2161-8313"
+    ],
+    "issn-type": [
+      {
+        "type": "print",
+        "value": "2161-8313"
+      }
+    ],
+    "subject": [],
+    "published": {
+      "date-parts": [
+        [2025, 8]
+      ]
+    },
+    "assertion": [
+      {
+        "value": "Elsevier",
+        "name": "publisher",
+        "label": "This article is maintained by"
+      },
+      {
+        "value": "Relevance of Mathematical Optimization as a Tool for Diet Modeling in the Development of Food-Based Dietary Recommendations in Sub-Saharan Africa: A Scoping Review",
+        "name": "articletitle",
+        "label": "Article Title"
+      },
+      {
+        "value": "Advances in Nutrition",
+        "name": "journaltitle",
+        "label": "Journal Title"
+      },
+      {
+        "value": "https://doi.org/10.1016/j.advnut.2025.100480",
+        "name": "articlelink",
+        "label": "CrossRef DOI link to publisher maintained version"
+      },
+      {
+        "value": "article",
+        "name": "content_type",
+        "label": "Content Type"
+      },
+      {
+        "value": "© 2025 The Author(s). Published by Elsevier Inc. on behalf of American Society for Nutrition.",
+        "name": "copyright",
+        "label": "Copyright"
+      }
+    ],
+    "article-number": "100480"
+  }
+}

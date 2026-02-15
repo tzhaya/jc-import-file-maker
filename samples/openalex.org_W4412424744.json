@@ -1,0 +1,1045 @@
+{
+  "id": "https://openalex.org/W4412424744",
+  "doi": "https://doi.org/10.1016/j.advnut.2025.100480",
+  "title": "Relevance of Mathematical Optimization as a Tool for Diet Modeling in the Development of Food-Based Dietary Recommendations in Sub-Saharan Africa: A Scoping Review",
+  "display_name": "Relevance of Mathematical Optimization as a Tool for Diet Modeling in the Development of Food-Based Dietary Recommendations in Sub-Saharan Africa: A Scoping Review",
+  "publication_year": 2025,
+  "publication_date": "2025-07-15",
+  "ids": {
+    "openalex": "https://openalex.org/W4412424744",
+    "doi": "https://doi.org/10.1016/j.advnut.2025.100480",
+    "pmid": "https://pubmed.ncbi.nlm.nih.gov/40653270"
+  },
+  "language": "en",
+  "primary_location": {
+    "id": "doi:10.1016/j.advnut.2025.100480",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.1016/j.advnut.2025.100480",
+    "pdf_url": null,
+    "source": {
+      "id": "https://openalex.org/S2491932416",
+      "display_name": "Advances in Nutrition",
+      "issn_l": "2156-5376",
+      "issn": [
+        "2156-5376",
+        "2161-8313"
+      ],
+      "is_oa": false,
+      "is_in_doaj": false,
+      "is_core": true,
+      "host_organization": "https://openalex.org/P4310320990",
+      "host_organization_name": "Elsevier BV",
+      "host_organization_lineage": [
+        "https://openalex.org/P4310320990"
+      ],
+      "host_organization_lineage_names": [
+        "Elsevier BV"
+      ],
+      "type": "journal"
+    },
+    "license": "cc-by",
+    "license_id": "https://openalex.org/licenses/cc-by",
+    "version": "publishedVersion",
+    "is_accepted": true,
+    "is_published": true,
+    "raw_source_name": "Advances in Nutrition",
+    "raw_type": "journal-article"
+  },
+  "type": "review",
+  "indexed_in": [
+    "crossref",
+    "pubmed"
+  ],
+  "open_access": {
+    "is_oa": true,
+    "oa_status": "hybrid",
+    "oa_url": "https://doi.org/10.1016/j.advnut.2025.100480",
+    "any_repository_has_fulltext": true
+  },
+  "authorships": [
+    {
+      "author_position": "first",
+      "author": {
+        "id": "https://openalex.org/A5000546253",
+        "display_name": "Sakiko Shiratori",
+        "orcid": null
+      },
+      "institutions": [
+        {
+          "id": "https://openalex.org/I4210089209",
+          "display_name": "Japan International Research Center for Agricultural Sciences",
+          "ror": "https://ror.org/005pdtr14",
+          "country_code": "JP",
+          "type": "facility",
+          "lineage": [
+            "https://openalex.org/I4210089209"
+          ]
+        }
+      ],
+      "countries": [
+        "JP"
+      ],
+      "is_corresponding": true,
+      "raw_author_name": "Sakiko Shiratori",
+      "raw_affiliation_strings": [
+        "Information and Public Relations Office, Japan International Research Center for Agricultural Sciences (JIRCAS), Tsukuba, Ibaraki, Japan. Electronic address: shiratoris0121@jircas.go.jp",
+        "Information and Public Relations Office, Japan International Research Center for Agricultural Sciences (JIRCAS), 1-1 Ohwashi, Tsukuba, Ibaraki 305-8686, Japan. Electronic address: shiratoris0121@jircas.go.jp"
+      ],
+      "affiliations": [
+        {
+          "raw_affiliation_string": "Information and Public Relations Office, Japan International Research Center for Agricultural Sciences (JIRCAS), Tsukuba, Ibaraki, Japan. Electronic address: shiratoris0121@jircas.go.jp",
+          "institution_ids": [
+            "https://openalex.org/I4210089209"
+          ]
+        },
+        {
+          "raw_affiliation_string": "Information and Public Relations Office, Japan International Research Center for Agricultural Sciences (JIRCAS), 1-1 Ohwashi, Tsukuba, Ibaraki 305-8686, Japan. Electronic address: shiratoris0121@jircas.go.jp",
+          "institution_ids": [
+            "https://openalex.org/I4210089209"
+          ]
+        }
+      ]
+    },
+    {
+      "author_position": "last",
+      "author": {
+        "id": "https://openalex.org/A5118988948",
+        "display_name": "Mg Dilini Abeysekara",
+        "orcid": null
+      },
+      "institutions": [
+        {
+          "id": "https://openalex.org/I4210089209",
+          "display_name": "Japan International Research Center for Agricultural Sciences",
+          "ror": "https://ror.org/005pdtr14",
+          "country_code": "JP",
+          "type": "facility",
+          "lineage": [
+            "https://openalex.org/I4210089209"
+          ]
+        }
+      ],
+      "countries": [
+        "JP"
+      ],
+      "is_corresponding": false,
+      "raw_author_name": "MG Dilini Abeysekara",
+      "raw_affiliation_strings": [
+        "Information and Public Relations Office, Japan International Research Center for Agricultural Sciences (JIRCAS), Tsukuba, Ibaraki, Japan; Graduate School of Agricultural and Life Sciences, The University of Tokyo, Yayoi, Tokyo, Japan",
+        "Information and Public Relations Office, Japan International Research Center for Agricultural Sciences (JIRCAS), 1-1 Ohwashi, Tsukuba, Ibaraki 305-8686, Japan; Graduate School of Agricultural and Life Sciences, The University of Tokyo, 1-1-1, Yayoi, Tokyo, Japan"
+      ],
+      "affiliations": [
+        {
+          "raw_affiliation_string": "Information and Public Relations Office, Japan International Research Center for Agricultural Sciences (JIRCAS), Tsukuba, Ibaraki, Japan; Graduate School of Agricultural and Life Sciences, The University of Tokyo, Yayoi, Tokyo, Japan",
+          "institution_ids": [
+            "https://openalex.org/I4210089209"
+          ]
+        },
+        {
+          "raw_affiliation_string": "Information and Public Relations Office, Japan International Research Center for Agricultural Sciences (JIRCAS), 1-1 Ohwashi, Tsukuba, Ibaraki 305-8686, Japan; Graduate School of Agricultural and Life Sciences, The University of Tokyo, 1-1-1, Yayoi, Tokyo, Japan",
+          "institution_ids": [
+            "https://openalex.org/I4210089209"
+          ]
+        }
+      ]
+    }
+  ],
+  "institutions": [],
+  "countries_distinct_count": 1,
+  "institutions_distinct_count": 2,
+  "corresponding_author_ids": [
+    "https://openalex.org/A5000546253"
+  ],
+  "corresponding_institution_ids": [
+    "https://openalex.org/I4210089209"
+  ],
+  "apc_list": {
+    "value": 5000,
+    "currency": "USD",
+    "value_usd": 5000
+  },
+  "apc_paid": {
+    "value": 5000,
+    "currency": "USD",
+    "value_usd": 5000
+  },
+  "fwci": 0,
+  "has_fulltext": false,
+  "cited_by_count": 0,
+  "citation_normalized_percentile": {
+    "value": 0.26158972,
+    "is_in_top_1_percent": false,
+    "is_in_top_10_percent": false
+  },
+  "cited_by_percentile_year": null,
+  "biblio": {
+    "volume": "16",
+    "issue": "8",
+    "first_page": "100480",
+    "last_page": "100480"
+  },
+  "is_retracted": false,
+  "is_paratext": false,
+  "is_xpac": false,
+  "primary_topic": {
+    "id": "https://openalex.org/T10596",
+    "display_name": "Child Nutrition and Water Access",
+    "score": 0.992500007152557,
+    "subfield": {
+      "id": "https://openalex.org/subfields/2916",
+      "display_name": "Nutrition and Dietetics"
+    },
+    "field": {
+      "id": "https://openalex.org/fields/29",
+      "display_name": "Nursing"
+    },
+    "domain": {
+      "id": "https://openalex.org/domains/4",
+      "display_name": "Health Sciences"
+    }
+  },
+  "topics": [
+    {
+      "id": "https://openalex.org/T10596",
+      "display_name": "Child Nutrition and Water Access",
+      "score": 0.992500007152557,
+      "subfield": {
+        "id": "https://openalex.org/subfields/2916",
+        "display_name": "Nutrition and Dietetics"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/29",
+        "display_name": "Nursing"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/4",
+        "display_name": "Health Sciences"
+      }
+    },
+    {
+      "id": "https://openalex.org/T11610",
+      "display_name": "Food Security and Health in Diverse Populations",
+      "score": 0.99210000038147,
+      "subfield": {
+        "id": "https://openalex.org/subfields/3600",
+        "display_name": "General Health Professions"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/36",
+        "display_name": "Health Professions"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/4",
+        "display_name": "Health Sciences"
+      }
+    },
+    {
+      "id": "https://openalex.org/T11259",
+      "display_name": "Agriculture Sustainability and Environmental Impact",
+      "score": 0.986299991607666,
+      "subfield": {
+        "id": "https://openalex.org/subfields/2303",
+        "display_name": "Ecology"
+      },
+      "field": {
+        "id": "https://openalex.org/fields/23",
+        "display_name": "Environmental Science"
+      },
+      "domain": {
+        "id": "https://openalex.org/domains/3",
+        "display_name": "Physical Sciences"
+      }
+    }
+  ],
+  "keywords": [
+    {
+      "id": "https://openalex.org/keywords/scope",
+      "display_name": "Scope (computer science)",
+      "score": 0.658137559890747
+    },
+    {
+      "id": "https://openalex.org/keywords/context",
+      "display_name": "Context (archaeology)",
+      "score": 0.638186573982239
+    },
+    {
+      "id": "https://openalex.org/keywords/psychological-intervention",
+      "display_name": "Psychological intervention",
+      "score": 0.476629853248596
+    },
+    {
+      "id": "https://openalex.org/keywords/population",
+      "display_name": "Population",
+      "score": 0.468036204576492
+    },
+    {
+      "id": "https://openalex.org/keywords/inclusion",
+      "display_name": "Inclusion (mineral)",
+      "score": 0.467377126216888
+    },
+    {
+      "id": "https://openalex.org/keywords/relevance",
+      "display_name": "Relevance (law)",
+      "score": 0.465000033378601
+    },
+    {
+      "id": "https://openalex.org/keywords/systematic-review",
+      "display_name": "Systematic review",
+      "score": 0.461247116327286
+    },
+    {
+      "id": "https://openalex.org/keywords/resource",
+      "display_name": "Resource (disambiguation)",
+      "score": 0.456863850355148
+    },
+    {
+      "id": "https://openalex.org/keywords/malnutrition",
+      "display_name": "Malnutrition",
+      "score": 0.453528940677643
+    },
+    {
+      "id": "https://openalex.org/keywords/linear-programming",
+      "display_name": "Linear programming",
+      "score": 0.428740173578262
+    },
+    {
+      "id": "https://openalex.org/keywords/biotechnology",
+      "display_name": "Biotechnology",
+      "score": 0.410895705223084
+    },
+    {
+      "id": "https://openalex.org/keywords/environmental-health",
+      "display_name": "Environmental health",
+      "score": 0.35873955488205
+    },
+    {
+      "id": "https://openalex.org/keywords/computer-science",
+      "display_name": "Computer science",
+      "score": 0.347777634859085
+    },
+    {
+      "id": "https://openalex.org/keywords/medicine",
+      "display_name": "Medicine",
+      "score": 0.333070278167725
+    },
+    {
+      "id": "https://openalex.org/keywords/geography",
+      "display_name": "Geography",
+      "score": 0.301734864711762
+    },
+    {
+      "id": "https://openalex.org/keywords/medline",
+      "display_name": "MEDLINE",
+      "score": 0.231385350227356
+    },
+    {
+      "id": "https://openalex.org/keywords/biology",
+      "display_name": "Biology",
+      "score": 0.203846782445908
+    },
+    {
+      "id": "https://openalex.org/keywords/psychology",
+      "display_name": "Psychology",
+      "score": 0.152454912662506
+    },
+    {
+      "id": "https://openalex.org/keywords/political-science",
+      "display_name": "Political science",
+      "score": 0.117126315832138
+    }
+  ],
+  "concepts": [
+    {
+      "id": "https://openalex.org/C2778012447",
+      "wikidata": "https://www.wikidata.org/wiki/Q1034415",
+      "display_name": "Scope (computer science)",
+      "level": 2,
+      "score": 0.658137559890747
+    },
+    {
+      "id": "https://openalex.org/C2779343474",
+      "wikidata": "https://www.wikidata.org/wiki/Q3109175",
+      "display_name": "Context (archaeology)",
+      "level": 2,
+      "score": 0.638186573982239
+    },
+    {
+      "id": "https://openalex.org/C27415008",
+      "wikidata": "https://www.wikidata.org/wiki/Q7256382",
+      "display_name": "Psychological intervention",
+      "level": 2,
+      "score": 0.476629853248596
+    },
+    {
+      "id": "https://openalex.org/C2908647359",
+      "wikidata": "https://www.wikidata.org/wiki/Q2625603",
+      "display_name": "Population",
+      "level": 2,
+      "score": 0.468036204576492
+    },
+    {
+      "id": "https://openalex.org/C109359841",
+      "wikidata": "https://www.wikidata.org/wiki/Q728944",
+      "display_name": "Inclusion (mineral)",
+      "level": 2,
+      "score": 0.467377126216888
+    },
+    {
+      "id": "https://openalex.org/C158154518",
+      "wikidata": "https://www.wikidata.org/wiki/Q7310970",
+      "display_name": "Relevance (law)",
+      "level": 2,
+      "score": 0.465000033378601
+    },
+    {
+      "id": "https://openalex.org/C189708586",
+      "wikidata": "https://www.wikidata.org/wiki/Q1504425",
+      "display_name": "Systematic review",
+      "level": 3,
+      "score": 0.461247116327286
+    },
+    {
+      "id": "https://openalex.org/C206345919",
+      "wikidata": "https://www.wikidata.org/wiki/Q20380951",
+      "display_name": "Resource (disambiguation)",
+      "level": 2,
+      "score": 0.456863850355148
+    },
+    {
+      "id": "https://openalex.org/C551997983",
+      "wikidata": "https://www.wikidata.org/wiki/Q12167",
+      "display_name": "Malnutrition",
+      "level": 2,
+      "score": 0.453528940677643
+    },
+    {
+      "id": "https://openalex.org/C41045048",
+      "wikidata": "https://www.wikidata.org/wiki/Q202843",
+      "display_name": "Linear programming",
+      "level": 2,
+      "score": 0.428740173578262
+    },
+    {
+      "id": "https://openalex.org/C150903083",
+      "wikidata": "https://www.wikidata.org/wiki/Q7108",
+      "display_name": "Biotechnology",
+      "level": 1,
+      "score": 0.410895705223084
+    },
+    {
+      "id": "https://openalex.org/C99454951",
+      "wikidata": "https://www.wikidata.org/wiki/Q932068",
+      "display_name": "Environmental health",
+      "level": 1,
+      "score": 0.35873955488205
+    },
+    {
+      "id": "https://openalex.org/C41008148",
+      "wikidata": "https://www.wikidata.org/wiki/Q21198",
+      "display_name": "Computer science",
+      "level": 0,
+      "score": 0.347777634859085
+    },
+    {
+      "id": "https://openalex.org/C71924100",
+      "wikidata": "https://www.wikidata.org/wiki/Q11190",
+      "display_name": "Medicine",
+      "level": 0,
+      "score": 0.333070278167725
+    },
+    {
+      "id": "https://openalex.org/C205649164",
+      "wikidata": "https://www.wikidata.org/wiki/Q1071",
+      "display_name": "Geography",
+      "level": 0,
+      "score": 0.301734864711762
+    },
+    {
+      "id": "https://openalex.org/C2779473830",
+      "wikidata": "https://www.wikidata.org/wiki/Q1540899",
+      "display_name": "MEDLINE",
+      "level": 2,
+      "score": 0.231385350227356
+    },
+    {
+      "id": "https://openalex.org/C86803240",
+      "wikidata": "https://www.wikidata.org/wiki/Q420",
+      "display_name": "Biology",
+      "level": 0,
+      "score": 0.203846782445908
+    },
+    {
+      "id": "https://openalex.org/C15744967",
+      "wikidata": "https://www.wikidata.org/wiki/Q9418",
+      "display_name": "Psychology",
+      "level": 0,
+      "score": 0.152454912662506
+    },
+    {
+      "id": "https://openalex.org/C17744445",
+      "wikidata": "https://www.wikidata.org/wiki/Q36442",
+      "display_name": "Political science",
+      "level": 0,
+      "score": 0.117126315832138
+    },
+    {
+      "id": "https://openalex.org/C55493867",
+      "wikidata": "https://www.wikidata.org/wiki/Q7094",
+      "display_name": "Biochemistry",
+      "level": 1,
+      "score": 0
+    },
+    {
+      "id": "https://openalex.org/C31258907",
+      "wikidata": "https://www.wikidata.org/wiki/Q1301371",
+      "display_name": "Computer network",
+      "level": 1,
+      "score": 0
+    },
+    {
+      "id": "https://openalex.org/C199539241",
+      "wikidata": "https://www.wikidata.org/wiki/Q7748",
+      "display_name": "Law",
+      "level": 1,
+      "score": 0
+    },
+    {
+      "id": "https://openalex.org/C77805123",
+      "wikidata": "https://www.wikidata.org/wiki/Q161272",
+      "display_name": "Social psychology",
+      "level": 1,
+      "score": 0
+    },
+    {
+      "id": "https://openalex.org/C142724271",
+      "wikidata": "https://www.wikidata.org/wiki/Q7208",
+      "display_name": "Pathology",
+      "level": 1,
+      "score": 0
+    },
+    {
+      "id": "https://openalex.org/C11413529",
+      "wikidata": "https://www.wikidata.org/wiki/Q8366",
+      "display_name": "Algorithm",
+      "level": 1,
+      "score": 0
+    },
+    {
+      "id": "https://openalex.org/C199360897",
+      "wikidata": "https://www.wikidata.org/wiki/Q9143",
+      "display_name": "Programming language",
+      "level": 1,
+      "score": 0
+    },
+    {
+      "id": "https://openalex.org/C166957645",
+      "wikidata": "https://www.wikidata.org/wiki/Q23498",
+      "display_name": "Archaeology",
+      "level": 1,
+      "score": 0
+    },
+    {
+      "id": "https://openalex.org/C118552586",
+      "wikidata": "https://www.wikidata.org/wiki/Q7867",
+      "display_name": "Psychiatry",
+      "level": 1,
+      "score": 0
+    }
+  ],
+  "mesh": [
+    {
+      "descriptor_ui": "D004032",
+      "descriptor_name": "Diet",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D004032",
+      "descriptor_name": "Diet",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D004032",
+      "descriptor_name": "Diet",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D004032",
+      "descriptor_name": "Diet",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D004032",
+      "descriptor_name": "Diet",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D006801",
+      "descriptor_name": "Humans",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D006801",
+      "descriptor_name": "Humans",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D006801",
+      "descriptor_name": "Humans",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D006801",
+      "descriptor_name": "Humans",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D006801",
+      "descriptor_name": "Humans",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D008962",
+      "descriptor_name": "Models, Theoretical",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D008962",
+      "descriptor_name": "Models, Theoretical",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D008962",
+      "descriptor_name": "Models, Theoretical",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D008962",
+      "descriptor_name": "Models, Theoretical",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D008962",
+      "descriptor_name": "Models, Theoretical",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D011382",
+      "descriptor_name": "Programming, Linear",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D011382",
+      "descriptor_name": "Programming, Linear",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D011382",
+      "descriptor_name": "Programming, Linear",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D011382",
+      "descriptor_name": "Programming, Linear",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D011382",
+      "descriptor_name": "Programming, Linear",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D017954",
+      "descriptor_name": "Africa South of the Sahara",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D017954",
+      "descriptor_name": "Africa South of the Sahara",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D017954",
+      "descriptor_name": "Africa South of the Sahara",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D017954",
+      "descriptor_name": "Africa South of the Sahara",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D017954",
+      "descriptor_name": "Africa South of the Sahara",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": false
+    },
+    {
+      "descriptor_ui": "D018673",
+      "descriptor_name": "Nutrition Policy",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D018673",
+      "descriptor_name": "Nutrition Policy",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D018673",
+      "descriptor_name": "Nutrition Policy",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D018673",
+      "descriptor_name": "Nutrition Policy",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D018673",
+      "descriptor_name": "Nutrition Policy",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D064167",
+      "descriptor_name": "Recommended Dietary Allowances",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D064167",
+      "descriptor_name": "Recommended Dietary Allowances",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D064167",
+      "descriptor_name": "Recommended Dietary Allowances",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D064167",
+      "descriptor_name": "Recommended Dietary Allowances",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    },
+    {
+      "descriptor_ui": "D064167",
+      "descriptor_name": "Recommended Dietary Allowances",
+      "qualifier_ui": null,
+      "qualifier_name": null,
+      "is_major_topic": true
+    }
+  ],
+  "locations_count": 3,
+  "locations": [
+    {
+      "id": "doi:10.1016/j.advnut.2025.100480",
+      "is_oa": true,
+      "landing_page_url": "https://doi.org/10.1016/j.advnut.2025.100480",
+      "pdf_url": null,
+      "source": {
+        "id": "https://openalex.org/S2491932416",
+        "display_name": "Advances in Nutrition",
+        "issn_l": "2156-5376",
+        "issn": [
+          "2156-5376",
+          "2161-8313"
+        ],
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": true,
+        "host_organization": "https://openalex.org/P4310320990",
+        "host_organization_name": "Elsevier BV",
+        "host_organization_lineage": [
+          "https://openalex.org/P4310320990"
+        ],
+        "host_organization_lineage_names": [
+          "Elsevier BV"
+        ],
+        "type": "journal"
+      },
+      "license": "cc-by",
+      "license_id": "https://openalex.org/licenses/cc-by",
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "Advances in Nutrition",
+      "raw_type": "journal-article"
+    },
+    {
+      "id": "pmid:40653270",
+      "is_oa": false,
+      "landing_page_url": "https://pubmed.ncbi.nlm.nih.gov/40653270",
+      "pdf_url": null,
+      "source": {
+        "id": "https://openalex.org/S4306525036",
+        "display_name": "PubMed",
+        "issn_l": null,
+        "issn": null,
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": false,
+        "host_organization": "https://openalex.org/I1299303238",
+        "host_organization_name": "National Institutes of Health",
+        "host_organization_lineage": [
+          "https://openalex.org/I1299303238"
+        ],
+        "host_organization_lineage_names": [],
+        "type": "repository"
+      },
+      "license": null,
+      "license_id": null,
+      "version": "publishedVersion",
+      "is_accepted": true,
+      "is_published": true,
+      "raw_source_name": "Advances in nutrition (Bethesda, Md.)",
+      "raw_type": null
+    },
+    {
+      "id": "pmh:oai:pubmedcentral.nih.gov:12335993",
+      "is_oa": true,
+      "landing_page_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/12335993",
+      "pdf_url": null,
+      "source": {
+        "id": "https://openalex.org/S2764455111",
+        "display_name": "PubMed Central",
+        "issn_l": null,
+        "issn": null,
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": false,
+        "host_organization": "https://openalex.org/I1299303238",
+        "host_organization_name": "National Institutes of Health",
+        "host_organization_lineage": [
+          "https://openalex.org/I1299303238"
+        ],
+        "host_organization_lineage_names": [],
+        "type": "repository"
+      },
+      "license": "other-oa",
+      "license_id": "https://openalex.org/licenses/other-oa",
+      "version": "submittedVersion",
+      "is_accepted": false,
+      "is_published": false,
+      "raw_source_name": "Adv Nutr",
+      "raw_type": "Text"
+    }
+  ],
+  "best_oa_location": {
+    "id": "doi:10.1016/j.advnut.2025.100480",
+    "is_oa": true,
+    "landing_page_url": "https://doi.org/10.1016/j.advnut.2025.100480",
+    "pdf_url": null,
+    "source": {
+      "id": "https://openalex.org/S2491932416",
+      "display_name": "Advances in Nutrition",
+      "issn_l": "2156-5376",
+      "issn": [
+        "2156-5376",
+        "2161-8313"
+      ],
+      "is_oa": false,
+      "is_in_doaj": false,
+      "is_core": true,
+      "host_organization": "https://openalex.org/P4310320990",
+      "host_organization_name": "Elsevier BV",
+      "host_organization_lineage": [
+        "https://openalex.org/P4310320990"
+      ],
+      "host_organization_lineage_names": [
+        "Elsevier BV"
+      ],
+      "type": "journal"
+    },
+    "license": "cc-by",
+    "license_id": "https://openalex.org/licenses/cc-by",
+    "version": "publishedVersion",
+    "is_accepted": true,
+    "is_published": true,
+    "raw_source_name": "Advances in Nutrition",
+    "raw_type": "journal-article"
+  },
+  "sustainable_development_goals": [],
+  "awards": [
+    {
+      "id": "https://openalex.org/G54916635",
+      "display_name": null,
+      "funder_award_id": "JP19KK0341",
+      "funder_id": "https://openalex.org/F4320334764",
+      "funder_display_name": "Japan Society for the Promotion of Science"
+    }
+  ],
+  "funders": [
+    {
+      "id": "https://openalex.org/F4320325267",
+      "display_name": "Foundation for Dietary Scientific Research",
+      "ror": null
+    },
+    {
+      "id": "https://openalex.org/F4320334764",
+      "display_name": "Japan Society for the Promotion of Science",
+      "ror": "https://ror.org/00hhkn466"
+    }
+  ],
+  "has_content": {
+    "pdf": false,
+    "grobid_xml": false
+  },
+  "content_urls": null,
+  "referenced_works_count": 74,
+  "referenced_works": [
+    "https://openalex.org/W1784246281",
+    "https://openalex.org/W1914334088",
+    "https://openalex.org/W1926939058",
+    "https://openalex.org/W2002120073",
+    "https://openalex.org/W2046219926",
+    "https://openalex.org/W2075950485",
+    "https://openalex.org/W2105321265",
+    "https://openalex.org/W2111079034",
+    "https://openalex.org/W2115229142",
+    "https://openalex.org/W2117671454",
+    "https://openalex.org/W2124111052",
+    "https://openalex.org/W2133223185",
+    "https://openalex.org/W2135648773",
+    "https://openalex.org/W2138042314",
+    "https://openalex.org/W2159080939",
+    "https://openalex.org/W2160358737",
+    "https://openalex.org/W2189220718",
+    "https://openalex.org/W2254688379",
+    "https://openalex.org/W2260295510",
+    "https://openalex.org/W2290529631",
+    "https://openalex.org/W2335334751",
+    "https://openalex.org/W2553645875",
+    "https://openalex.org/W2560216179",
+    "https://openalex.org/W2596467425",
+    "https://openalex.org/W2611324732",
+    "https://openalex.org/W2741002596",
+    "https://openalex.org/W2755213149",
+    "https://openalex.org/W2757294967",
+    "https://openalex.org/W2773473201",
+    "https://openalex.org/W2796417351",
+    "https://openalex.org/W2801706122",
+    "https://openalex.org/W2808732972",
+    "https://openalex.org/W2891378911",
+    "https://openalex.org/W2891776640",
+    "https://openalex.org/W2907574845",
+    "https://openalex.org/W2924659551",
+    "https://openalex.org/W2942526895",
+    "https://openalex.org/W2953110226",
+    "https://openalex.org/W2955761166",
+    "https://openalex.org/W2958126420",
+    "https://openalex.org/W2971363226",
+    "https://openalex.org/W2983163941",
+    "https://openalex.org/W3021421833",
+    "https://openalex.org/W3033741009",
+    "https://openalex.org/W3048458741",
+    "https://openalex.org/W3095279363",
+    "https://openalex.org/W3106660996",
+    "https://openalex.org/W3171511747",
+    "https://openalex.org/W3188391123",
+    "https://openalex.org/W3201683516",
+    "https://openalex.org/W3205687705",
+    "https://openalex.org/W3216709252",
+    "https://openalex.org/W4200271404",
+    "https://openalex.org/W4206335042",
+    "https://openalex.org/W4225757324",
+    "https://openalex.org/W4225853527",
+    "https://openalex.org/W4283399828",
+    "https://openalex.org/W4295335527",
+    "https://openalex.org/W4317697538",
+    "https://openalex.org/W4378189599",
+    "https://openalex.org/W4382753618",
+    "https://openalex.org/W4384276968",
+    "https://openalex.org/W4386509565",
+    "https://openalex.org/W4387954189",
+    "https://openalex.org/W4390373082",
+    "https://openalex.org/W4390561061",
+    "https://openalex.org/W4391997846",
+    "https://openalex.org/W6648712977",
+    "https://openalex.org/W6676037817",
+    "https://openalex.org/W6734982166",
+    "https://openalex.org/W6784359272",
+    "https://openalex.org/W6810629384",
+    "https://openalex.org/W6849119387",
+    "https://openalex.org/W6857076649"
+  ],
+  "related_works": [
+    "https://openalex.org/W2591749929",
+    "https://openalex.org/W4281290275",
+    "https://openalex.org/W2065091400",
+    "https://openalex.org/W2991138589",
+    "https://openalex.org/W2506108991",
+    "https://openalex.org/W4312666309",
+    "https://openalex.org/W2888640894",
+    "https://openalex.org/W2571894821",
+    "https://openalex.org/W3215480487",
+    "https://openalex.org/W3089637196"
+  ],
+  "abstract_inverted_index": null,
+  "counts_by_year": [],
+  "updated_date": "2026-02-10T21:29:10.735309",
+  "created_date": "2025-07-15T00:00:00"
+}

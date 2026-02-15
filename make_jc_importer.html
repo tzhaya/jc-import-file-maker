@@ -1,0 +1,2427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAIRO Cloud インポート用TSV生成ツール</title>
+<style>
+  /* ===== ベーススタイル ===== */
+  body { font-family: sans-serif; margin: 20px; background: #f5f5f5; }
+  h1 { color: #2c5f2e; font-size: 1.4em; margin-bottom: 16px; }
+
+  /* ===== 入力エリア ===== */
+  #input-area {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .input-row label { font-weight: bold; white-space: nowrap; }
+  #doi-input {
+    width: 380px;
+    padding: 8px;
+    font-size: 1em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  #pos-index-input {
+    width: 200px;
+    padding: 6px 8px;
+    font-size: 0.9em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  /* ===== ボタン ===== */
+  button { padding: 8px 20px; font-size: 1em; border: none; border-radius: 4px; cursor: pointer; }
+  #fetch-btn { background: #2c5f2e; color: white; }
+  #fetch-btn:hover { background: #1e4020; }
+  #empty-btn { background: #546e7a; color: white; }
+  #empty-btn:hover { background: #37474f; }
+
+  /* ===== ローディング・エラー・情報バー ===== */
+  #error-msg {
+    color: #c62828;
+    background: #ffebee;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 8px;
+    display: none;
+  }
+  #loading { color: #555; margin-top: 8px; display: none; }
+  #info-bar {
+    display: none;
+    margin-top: 10px;
+    font-size: 0.92em;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  #info-bar a { font-weight: bold; color: #1565c0; word-break: break-all; }
+  .oa-badge {
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.82em;
+    font-weight: bold;
+    color: white;
+  }
+
+  /* ===== プレビューエリア ===== */
+  #preview-area {
+    display: none;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  #preview-area h2 {
+    background: #2c5f2e;
+    color: white;
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 1em;
+  }
+
+  /* ===== システムフィールドテーブル ===== */
+  #system-fields {
+    padding: 12px 16px;
+    border-bottom: 2px solid #e8f5e9;
+  }
+  #system-fields h3 {
+    color: #1b5e20;
+    font-size: 0.9em;
+    margin: 0 0 8px 0;
+    padding: 4px 8px;
+    background: #c8e6c9;
+    border-radius: 4px;
+  }
+  .sys-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82em;
+  }
+  .sys-table th {
+    background: #e8f5e9;
+    color: #2c5f2e;
+    text-align: left;
+    padding: 5px 8px;
+    font-size: 0.82em;
+  }
+  .sys-table td {
+    padding: 3px 8px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+  }
+  .sys-table td:first-child { color: #444; width: 220px; white-space: nowrap; }
+  .sys-table td:nth-child(2) { color: #777; width: 180px; font-size: 0.85em; }
+  .sys-table input[type=text],
+  .sys-table select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 0.82em;
+    font-family: sans-serif;
+  }
+
+  /* ===== メタデータフィールド（アコーディオン）エリア ===== */
+  #metadata-fields { padding: 8px 0; }
+
+  /* ===== アコーディオン: フィールドセクション ===== */
+  .field-section { border-bottom: 1px solid #e8f5e9; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    background: #f1f8e9;
+    border-left: 4px solid #2c5f2e;
+    user-select: none;
+    font-size: 0.88em;
+    font-weight: bold;
+    color: #1b5e20;
+  }
+  .section-header:hover { background: #e8f5e9; }
+  .section-header .toggle-icon { font-size: 0.8em; color: #555; flex-shrink: 0; }
+  .section-header a { color: #1565c0; text-decoration: none; }
+  .section-header a:hover { text-decoration: underline; }
+  .section-header .summary {
+    color: #666;
+    font-weight: normal;
+    font-size: 0.9em;
+    display: none;
+    margin-left: 4px;
+  }
+
+  .accordion-content { display: block; }
+
+  /* ===== ネスト項目 ===== */
+  .nested-item {
+    margin: 4px 0;
+  }
+
+  /* Level 1 */
+  .level-1 {
+    margin-left: 16px;
+    border-left: 3px solid #4caf50;
+    padding-left: 8px;
+  }
+  /* Level 2 */
+  .level-2 {
+    margin-left: 32px;
+    border-left: 3px solid #81c784;
+    padding-left: 8px;
+  }
+  /* Level 3 */
+  .level-3 {
+    margin-left: 48px;
+    border-left: 3px solid #a5d6a7;
+    padding-left: 8px;
+  }
+  /* Level 4 */
+  .level-4 {
+    margin-left: 64px;
+    border-left: 3px solid #c8e6c9;
+    padding-left: 8px;
+  }
+
+  .item-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #f9fbe7;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    font-size: 0.82em;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+  }
+  .item-header:hover { background: #f1f8e9; }
+  .item-header .toggle-icon { font-size: 0.8em; color: #555; }
+  .item-header .item-label { flex: 1; }
+  .item-header .item-summary {
+    color: #888;
+    font-weight: normal;
+    font-size: 0.9em;
+    display: none;
+  }
+
+  .item-content { display: block; }
+
+  /* ===== フィールド行 ===== */
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    font-size: 0.82em;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  .field-row:hover { background: #fafff8; }
+  .field-row .field-label {
+    color: #555;
+    white-space: nowrap;
+    min-width: 180px;
+    width: 220px;
+    flex-shrink: 0;
+    font-size: 0.92em;
+  }
+  .field-row input[type=text],
+  .field-row textarea,
+  .field-row select {
+    flex: 1;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 0.82em;
+    font-family: sans-serif;
+  }
+  .field-row textarea { resize: vertical; min-height: 60px; }
+  .field-row select { flex: 0 0 auto; width: auto; min-width: 120px; }
+
+  /* ===== 追加・削除ボタン ===== */
+  .btn-add {
+    background: #e8f5e9;
+    color: #2c5f2e;
+    border: 1px solid #a5d6a7;
+    padding: 2px 10px;
+    font-size: 0.78em;
+    border-radius: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-add:hover { background: #c8e6c9; }
+  .btn-delete {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+    padding: 2px 10px;
+    font-size: 0.78em;
+    border-radius: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-delete:hover { background: #ffcdd2; }
+
+  /* ===== エントリグループ（姓名・識別子等サブ配列1件） ===== */
+  .entry-group {
+    border-left: 2px solid #e0e0e0;
+    margin: 4px 0 4px 16px;
+    padding: 4px 0 4px 8px;
+  }
+  .btn-delete-inline {
+    display: block;
+    margin: 4px 0;
+    font-size: 0.8em;
+    padding: 2px 10px;
+  }
+
+  /* ===== ネストセクションヘッダー（Level 2+） ===== */
+  .nested-section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    font-size: 0.82em;
+    font-weight: bold;
+    color: #444;
+    cursor: pointer;
+    user-select: none;
+  }
+  .nested-section-header:hover { background: #f9fbe7; }
+  .nested-section-header .toggle-icon { font-size: 0.75em; color: #777; }
+  .nested-section-content { display: block; }
+
+  /* ===== 警告表示 ===== */
+  .warn-badge {
+    color: #e65100;
+    font-size: 0.75em;
+    cursor: help;
+    flex-shrink: 0;
+  }
+
+  /* ===== レベルアイコン ===== */
+  .level-icon { flex-shrink: 0; }
+
+  /* ===== 参照値（ヒント）セル ===== */
+  .hint-cell {
+    flex: 0 1 auto;
+    max-width: 220px;
+    color: #888;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: #f8f8f4;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px dashed #ddd;
+  }
+  .hint-cell a { color: #1565c0; text-decoration: none; }
+  .hint-cell a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<h1>🌾 JAIRO Cloud インポート用TSV生成ツール(β)</h1>
+
+<p>このツールはベータ版です。インポート用TSVファイルの生成機能は未実装です。</p>
+<p>現在のバージョンでは、Crossref APIおよびOpenAlex APIからのデータ取得のみ実装されています。</p>
+<p>「DOI」にDOIを入力して「データ取得」ボタンを押すと、データを取得して表示します。</p>
+
+
+<!-- ===== DOI入力エリア ===== -->
+<div id="input-area">
+  <div class="input-row">
+    <label>DOI:</label>
+    <input type="text" id="doi-input" placeholder="例: 10.1016/j.advnut.2025.100480" value="">
+    <button id="fetch-btn" onclick="fetchData()">データ取得</button>
+    <button id="empty-btn" onclick="showEmptyFields()">空値で全フィールド表示</button>
+  </div>
+  <div class="input-row">
+    <label title="WEKOのインデックスID（.pos_index[0]）">インデックスID:</label>
+    <input type="text" id="pos-index-input" value="1718256617194" placeholder="例: 1718256617194">
+    <span style="color:#888;font-size:0.85em">（.pos_index[0] の値）</span>
+  </div>
+  <div id="loading" style="display:none">⏳ データを取得中です（ROR/ISNIも並行取得）...</div>
+  <div id="error-msg"></div>
+  <div id="info-bar" style="display:none">
+    <a id="doi-link" href="" target="_blank"></a>
+    <span id="oa-badge" class="oa-badge"></span>
+  </div>
+</div>
+
+<!-- ===== メタデータプレビュー ===== -->
+<div id="preview-area">
+  <h2>📋 メタデータ確認・編集</h2>
+
+  <!-- システム管理フィールド -->
+  <div id="system-fields">
+    <h3>システム（管理フィールド）</h3>
+    <table class="sys-table">
+      <thead>
+        <tr>
+          <th>フィールド名</th>
+          <th>候補値</th>
+          <th>値（編集可能）</th>
+        </tr>
+      </thead>
+      <tbody id="system-fields-body">
+        <!-- JS で生成 -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- メタデータフィールド（アコーディオン） -->
+  <div id="metadata-fields">
+    <!-- JS で生成 -->
+  </div>
+</div>
+
+<script>
+// ================================================================
+// STEP 2: 定数・マスターデータ定義
+// ================================================================
+
+// ===== 除外フィールドリスト =====
+const EXCLUDED_KEYS = new Set([
+  'item_30002_apc5',                // APC
+  'item_30002_dissertation_number30',
+  'item_30002_degree_name31',
+  'item_30002_degree_grantor33',
+  'item_30002_heading36',
+  'system_identifier_doi',
+  'system_identifier_hdl',
+  'system_identifier_uri',
+  'system_file',
+  'item_1698624004',  // カタログ
+  'item_1698624001',  // データセットシリーズ
+  'item_1698624002',  // 原文の言語
+  'item_1698624003',  // 大きさ
+  'item_1698624008',  // 日付（リテラル）
+  'item_1698624009',  // 所蔵機関
+  'item_1698624010',  // 物理的形態
+  'item_1698624006',  // 版
+  'item_1698624007',  // 部編名
+  'item_1698624005',  // 出版者情報
+]);
+
+// ===== 資源タイプ語彙マッピング =====
+const RESOURCE_TYPE_MAP = {
+  'conference paper':         'http://purl.org/coar/resource_type/c_5794',
+  'data paper':               'http://purl.org/coar/resource_type/c_beb9',
+  'departmental bulletin paper': 'http://purl.org/coar/resource_type/c_6501',
+  'editorial':                'http://purl.org/coar/resource_type/c_b239',
+  'journal article':          'http://purl.org/coar/resource_type/c_6501',
+  'newspaper':                'http://purl.org/coar/resource_type/c_2fe3',
+  'periodical':               'http://purl.org/coar/resource_type/c_2659',
+  'review article':           'http://purl.org/coar/resource_type/c_dcae04bc',
+  'software paper':           'http://purl.org/coar/resource_type/c_7bab',
+  'article':                  'http://purl.org/coar/resource_type/c_6501',
+  'book':                     'http://purl.org/coar/resource_type/c_2f33',
+  'book part':                'http://purl.org/coar/resource_type/c_3248',
+  'cartographic material':    'http://purl.org/coar/resource_type/c_12cc',
+  'map':                      'http://purl.org/coar/resource_type/c_12cd',
+  'conference object':        'http://purl.org/coar/resource_type/c_c94f',
+  'conference proceedings':   'http://purl.org/coar/resource_type/c_f744',
+  'conference poster':        'http://purl.org/coar/resource_type/c_6670',
+  'dataset':                  'http://purl.org/coar/resource_type/c_ddb1',
+  'interview':                'http://purl.org/coar/resource_type/c_26e4',
+  'image':                    'http://purl.org/coar/resource_type/c_c513',
+  'still image':              'http://purl.org/coar/resource_type/c_ecc8',
+  'moving image':             'http://purl.org/coar/resource_type/c_8a7e',
+  'video':                    'http://purl.org/coar/resource_type/c_12ce',
+  'lecture':                  'http://purl.org/coar/resource_type/c_8544',
+  'patent':                   'http://purl.org/coar/resource_type/c_15cd',
+  'internal report':          'http://purl.org/coar/resource_type/c_18ww',
+  'report':                   'http://purl.org/coar/resource_type/c_93fc',
+  'research report':          'http://purl.org/coar/resource_type/c_18ws',
+  'technical report':         'http://purl.org/coar/resource_type/c_18gh',
+  'policy report':            'http://purl.org/coar/resource_type/c_186u',
+  'report part':              'http://purl.org/coar/resource_type/c_ba1f',
+  'working paper':            'http://purl.org/coar/resource_type/c_8042',
+  'data management plan':     'http://purl.org/coar/resource_type/c_ab20',
+  'sound':                    'http://purl.org/coar/resource_type/c_18cc',
+  'thesis':                   'http://purl.org/coar/resource_type/c_46ec',
+  'bachelor thesis':          'http://purl.org/coar/resource_type/c_7a1f',
+  'master thesis':            'http://purl.org/coar/resource_type/c_bdcc',
+  'doctoral thesis':          'http://purl.org/coar/resource_type/c_db06',
+  'interactive resource':     'http://purl.org/coar/resource_type/c_e9a0',
+  'learning object':          'http://purl.org/coar/resource_type/c_e059',
+  'manuscript':               'http://purl.org/coar/resource_type/c_0040',
+  'musical notation':         'http://purl.org/coar/resource_type/c_18cw',
+  'research proposal':        'http://purl.org/coar/resource_type/c_baaf',
+  'software':                 'http://purl.org/coar/resource_type/c_5ce6',
+  'technical documentation':  'http://purl.org/coar/resource_type/c_71bd',
+  'workflow':                 'http://purl.org/coar/resource_type/c_393c',
+  'other':                    'http://purl.org/coar/resource_type/c_1843',
+};
+
+// ===== アクセス権マッピング =====
+const ACCESS_RIGHTS_MAP = {
+  'embargoed access':       'http://purl.org/coar/access_right/c_f1cf',
+  'metadata only access':   'http://purl.org/coar/access_right/c_14cb',
+  'open access':            'http://purl.org/coar/access_right/c_abf2',
+  'restricted access':      'http://purl.org/coar/access_right/c_16ec',
+};
+
+// ===== JPCOAR リンクマッピング（フィールドキー→スキーマURL）=====
+const JPCOAR_LINKS = {
+  'item_30002_title0':                    'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/1',
+  'item_30002_alternative_title1':        'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/2',
+  'item_30002_creator2':                  'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/3',
+  'item_30002_contributor3':              'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/4',
+  'item_30002_access_rights4':            'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/5',
+  'item_30002_rights6':                   'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/7',
+  'item_30002_rights_holder7':            'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/8',
+  'item_30002_subject8':                  'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/9',
+  'item_30002_description9':              'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/10',
+  'item_30002_publisher10':               'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/11',
+  'item_30002_date11':                    'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/12',
+  'item_30002_language12':                'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/13',
+  'item_30002_resource_type13':           'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/14',
+  'item_30002_version14':                 'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/15',
+  'item_30002_version_type15':            'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/16',
+  'item_30002_identifier16':              'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/17',
+  'item_30002_identifier_registration17': 'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/18',
+  'item_30002_relation18':                'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/19',
+  'item_30002_temporal19':                'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/20',
+  'item_30002_geolocation20':             'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/21',
+  'item_30002_funding_reference21':       'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/22',
+  'item_30002_source_identifier22':       'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/23',
+  'item_30002_source_title23':            'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/24',
+  'item_30002_volume_number24':           'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/25',
+  'item_30002_issue_number25':            'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/26',
+  'item_30002_number_of_pages26':         'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/27',
+  'item_30002_page_start27':              'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/28',
+  'item_30002_page_end28':                'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/29',
+  'item_30002_bibliographic_information29': 'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/24',
+  'item_30002_conference34':              'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/34',
+};
+
+// ===== titleMap データ（ItemType.json から抽出）=====
+const TITLE_MAPS = {
+  // 言語（テキスト系フィールドの言語選択）
+  language: [
+    'ja','ja-Kana','en','fr','it','de','es','zh-cn','zh-tw','ru','la','ms','eo','ar','el','ko'
+  ],
+  // 本文言語（ISO 639-2/T コード）
+  subitem_language: [
+    'jpn','eng','aar','abk','afr','aka','amh','ara','arg','arm','asm','ava','ave','aym','aze',
+    'bak','bam','bel','ben','bis','bod','bos','bre','bul','cat','ces','cha','che','chu','chv',
+    'cor','cos','cre','cym','dan','deu','div','dzo','ell','epo','est','eus','ewe','fao','fas',
+    'fij','fin','fra','fry','ful','gla','gle','glg','glv','grn','guj','hat','hau','heb','her',
+    'hin','hmo','hrv','hun','hye','ibo','ido','iii','iku','ile','ina','ind','ipk','isl','ita',
+    'jav','kal','kan','kas','kat','kau','kaz','khm','kik','kin','kir','kom','kon','kor','kua',
+    'kur','lao','lat','lav','lim','lin','lit','ltz','lub','lug','mkd','mlg','mlt','mon','mri',
+    'msa','mya','nau','nav','nbl','nde','ndo','nep','nno','nob','nor','nya','oci','oji','ori',
+    'orm','oss','pan','pli','pol','por','pus','que','roh','ron','run','rus','sag','san','sin',
+    'slk','slv','sme','smo','sna','snd','som','sot','spa','sqi','srd','srp','ssw','sun','swa',
+    'swe','tah','tam','tat','tel','tgk','tgl','tha','tir','ton','tsn','tso','tuk','tur','twi',
+    'uig','ukr','urd','uzb','ven','vie','vol','wln','wol','xho','yid','yor','zha','zho','zul'
+  ],
+  // 資源タイプ（ItemType.json の resourcetype titleMap）
+  resourcetype: [
+    'conference paper','data paper','departmental bulletin paper','editorial',
+    'journal','journal article','newspaper','review article','other periodical',
+    'software paper','article','book','book part','cartographic material','map',
+    'conference output','conference presentation','conference proceedings','conference poster',
+    'aggregated data','clinical trial data','compiled data','encoded data','experimental data',
+    'genomic data','geospatial data','laboratory notebook','measurement and test data',
+    'observational data','recorded data','simulation data','survey data',
+    'dataset','image','still image','moving image','video',
+    'lecture','patent','internal report','report','research report','technical report',
+    'policy report','report part','working paper','data management plan',
+    'sound','thesis','bachelor thesis','master thesis','doctoral thesis',
+    'interactive resource','learning object','manuscript','musical notation',
+    'research proposal','software','technical documentation','workflow','other'
+  ],
+  // アクセス権
+  subitem_access_right: ['embargoed access','metadata only access','open access','restricted access'],
+  // 出版タイプ
+  subitem_version_type: ['AO','SMUR','AM','P','VoR','CVoR','EVoR','NA'],
+  // 内容記述タイプ
+  subitem_description_type: ['Abstract','Methods','TableOfContents','TechnicalInfo','Other'],
+  // 日付タイプ
+  subitem_date_issued_type: ['Accepted','Available','Collected','Copyrighted','Created','Issued','Submitted','Updated','Valid'],
+  // 書誌発行日タイプ
+  bibliographicIssueDateType: ['Issued'],
+  // 関連タイプ
+  subitem_relation_type: [
+    'isVersionOf','hasVersion','isPartOf','hasPart','isReferencedBy','references',
+    'isFormatOf','hasFormat','isReplacedBy','replaces','isRequiredBy','requires',
+    'isSupplementedBy','isSupplementTo','isIdenticalTo','isDerivedFrom','isSourceOf',
+    'isCitedBy','Cites','inSeries'
+  ],
+  // 関連識別子タイプ
+  subitem_relation_type_select: [
+    'ARK','arXiv','DOI','HDL','ICHUSHI','ISBN','J-GLOBAL','Local',
+    'PISSN','EISSN','ISSN','NAID','NCID','PMID','PURL','SCOPUS','URI','WOS','CRID'
+  ],
+  // 収録物識別子タイプ
+  subitem_source_identifier_type: ['PISSN','EISSN','ISSN','NCID'],
+  // 寄与者タイプ
+  contributorType: [
+    'ContactPerson','DataCollector','DataCurator','DataManager','Distributor','Editor',
+    'HostingInstitution','Producer','ProjectLeader','ProjectManager','ProjectMember',
+    'RelatedPerson','Researcher','ResearchGroup','Sponsor','Supervisor','WorkPackageLeader','Other'
+  ],
+  // 所属機関識別子スキーム
+  affiliationNameIdentifierScheme: ['ISNI','ROR','GRID','kakenhi','Ringgold'],
+  // 識別子タイプ（作成者/寄与者）
+  nameIdentifierScheme: ['ORCID','CiNii','ISNI','J-GLOBAL'],
+  // 識別子タイプ（作成者姓名タイプ）
+  creatorNameType: ['Personal','Organizational'],
+  // 識別子タイプ（識別子フィールド）
+  subitem_identifier_type: ['DOI','HDL','URI','CRID'],
+  // 助成機関識別子タイプ
+  subitem_funder_identifier_type: ['Crossref Funder','ISNI','ROR','Other'],
+  // 開催国（ISO 3166-1 alpha-3）
+  subitem_conference_country: [
+    'JPN','ABW','AFG','AGO','AIA','ALA','ALB','AND','ARE','ARG','ARM','ASM','ATA','ATF','ATG',
+    'AUS','AUT','AZE','BDI','BEL','BEN','BES','BFA','BGD','BGR','BHR','BHS','BIH','BLM','BLR',
+    'BLZ','BMU','BOL','BRA','BRB','BRN','BTN','BVT','BWA','CAF','CAN','CCK','CHE','CHL','CHN',
+    'CIV','CMR','COD','COG','COK','COL','COM','CPV','CRI','CUB','CUW','CXR','CYM','CYP','CZE',
+    'DEU','DJI','DMA','DNK','DOM','DZA','ECU','EGY','ERI','ESH','ESP','EST','ETH','FIN','FJI',
+    'FLK','FRA','FRO','FSM','GAB','GBR','GEO','GGY','GHA','GIB','GIN','GLP','GMB','GNB','GNQ',
+    'GRC','GRD','GRL','GTM','GUF','GUM','GUY','HKG','HMD','HND','HRV','HTI','HUN','IDN','IMN',
+    'IND','IOT','IRL','IRN','IRQ','ISL','ISR','ITA','JAM','JEY','JOR','KAZ','KEN','KGZ','KHM',
+    'KIR','KNA','KOR','KWT','LAO','LBN','LBR','LBY','LCA','LIE','LKA','LSO','LTU','LUX','LVA',
+    'MAC','MAF','MAR','MCO','MDA','MDG','MDV','MEX','MHL','MKD','MLI','MLT','MMR','MNE','MNG',
+    'MNP','MOZ','MRT','MSR','MTQ','MUS','MWI','MYS','MYT','NAM','NCL','NER','NFK','NGA','NIC',
+    'NIU','NLD','NOR','NPL','NRU','NZL','OMN','PAK','PAN','PCN','PER','PHL','PLW','PNG','POL',
+    'PRI','PRK','PRT','PRY','PSE','PYF','QAT','REU','ROU','RUS','RWA','SAU','SDN','SEN','SGP',
+    'SGS','SHN','SJM','SLB','SLE','SLV','SMR','SOM','SPM','SRB','SSD','STP','SUR','SVK','SVN',
+    'SWE','SWZ','SXM','SYC','SYR','TCA','TCD','TGO','THA','TJK','TKL','TKM','TLS','TON','TTO',
+    'TUN','TUR','TUV','TWN','TZA','UGA','UKR','UMI','URY','USA','UZB','VAT','VCT','VEN','VGB',
+    'VIR','VNM','VUT','WLF','WSM','YEM','ZAF','ZMB','ZWE',
+  ],
+};
+
+// ===== 日付ユーティリティ =====
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ===== select メニュー生成ヘルパー =====
+// values: 文字列配列 または {name, value}配列
+// selected: 初期選択値
+// onChange: 値変化時コールバック(value)
+function buildSelect(values, selected, onChange) {
+  const sel = document.createElement('select');
+  for (const v of values) {
+    const name  = (typeof v === 'object') ? v.name  : v;
+    const value = (typeof v === 'object') ? v.value : v;
+    const o = document.createElement('option');
+    o.value = value;
+    o.textContent = name;
+    if (value === selected) o.selected = true;
+    sel.appendChild(o);
+  }
+  if (onChange) sel.addEventListener('change', () => onChange(sel.value));
+  return sel;
+}
+
+// ===== HTML エスケープ =====
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== 参照値（ヒント）レンダリング =====
+// URL を自動リンク化して返す
+function renderHint(val) {
+  if (!val) return '';
+  return String(val).split(/(\s+)/).map(part => {
+    if (/^https?:\/\//.test(part))
+      return `<a href="${escHtml(part)}" target="_blank">${escHtml(part)}</a>`;
+    return escHtml(part);
+  }).join('');
+}
+
+// 参照値表示フラグ（API取得時 true、空値表示時 false）
+let showHints = false;
+
+// ===== エラー表示 =====
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  if (msg) { el.textContent = msg; el.style.display = 'block'; }
+  else { el.style.display = 'none'; }
+}
+
+// ===== アコーディオン展開/折りたたみ =====
+function toggleAccordion(headerEl) {
+  const content = headerEl.nextElementSibling;
+  const icon = headerEl.querySelector('.toggle-icon');
+  const summary = headerEl.querySelector('.summary') || headerEl.querySelector('.item-summary');
+
+  if (!content) return;
+  if (content.style.display === 'none') {
+    content.style.display = '';
+    if (icon) icon.textContent = '▼';
+    if (summary) summary.style.display = 'none';
+  } else {
+    content.style.display = 'none';
+    if (icon) icon.textContent = '▶';
+    if (summary) {
+      summary.style.display = 'inline';
+    }
+  }
+}
+
+// ===== システムフィールド描画 =====
+function renderSystemFields(systemData) {
+  const tbody = document.getElementById('system-fields-body');
+  tbody.innerHTML = '';
+
+  const sysRows = [
+    { label: '.id',                  hint: '新規登録時は空欄', key: 'sys_id',      type: 'text',   default: '' },
+    { label: '.uri',                 hint: '新規登録時は空欄', key: 'sys_uri',     type: 'text',   default: '' },
+    { label: '.IndexID[0]',          hint: '.metadata.path[0]', key: 'sys_path',  type: 'text',   default: '' },
+    { label: '.POS_INDEX[0]',        hint: '1718256617194',    key: 'sys_pos',     type: 'text',   default: document.getElementById('pos-index-input').value },
+    { label: '.PUBLISH_STATUS',      hint: 'private / public', key: 'sys_status',  type: 'select', options: ['private','public'], default: 'private' },
+    { label: '.FEEDBACK_MAIL[0]',    hint: '',                  key: 'sys_mail',   type: 'text',   default: '' },
+    { label: '.CNRI',                hint: '',                  key: 'sys_cnri',   type: 'text',   default: '' },
+    { label: '.DOI_RA',              hint: 'JaLC / Crossref',  key: 'sys_doi_ra',  type: 'select', options: ['','JaLC','Crossref'], default: '' },
+    { label: '.DOI',                 hint: '',                  key: 'sys_doi',    type: 'text',   default: '' },
+    { label: 'Keep/Upgrade Version', hint: 'Keep / Upgrade',   key: 'sys_edit',    type: 'select', options: ['Keep','Upgrade'], default: 'Keep' },
+    { label: '公開日',               hint: 'YYYY-MM-DD',        key: 'sys_pubdate', type: 'text',   default: todayStr() },
+  ];
+
+  for (const row of sysRows) {
+    const tr = document.createElement('tr');
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = row.label;
+    const tdHint = document.createElement('td');
+    tdHint.textContent = row.hint;
+    const tdVal = document.createElement('td');
+
+    const val = (systemData && systemData[row.key] !== undefined) ? systemData[row.key] : row.default;
+
+    if (row.type === 'select') {
+      const sel = document.createElement('select');
+      sel.dataset.key = row.key;
+      for (const opt of row.options) {
+        const o = document.createElement('option');
+        o.value = opt; o.textContent = opt || '（未設定）';
+        if (opt === val) o.selected = true;
+        sel.appendChild(o);
+      }
+      tdVal.appendChild(sel);
+    } else {
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.value = val;
+      inp.dataset.key = row.key;
+      tdVal.appendChild(inp);
+    }
+
+    tr.appendChild(tdLabel);
+    tr.appendChild(tdHint);
+    tr.appendChild(tdVal);
+    tbody.appendChild(tr);
+  }
+}
+
+// ================================================================
+// STEP 3: API 取得層
+// ================================================================
+
+// ===== DOI 正規化 =====
+function normalizeDoi(raw) {
+  return raw.trim()
+    .replace(/^https?:\/\/doi\.org\//i, '')
+    .replace(/^doi:/i, '')
+    .trim();
+}
+
+// ===== 3.1 Crossref API =====
+async function fetchCrossref(doi) {
+  const resp = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+  if (!resp.ok) {
+    if (resp.status === 404) throw new Error('DOIが見つかりません（Crossref 404）');
+    throw new Error(`Crossref APIエラー: ${resp.status}`);
+  }
+  const data = await resp.json();
+  return data.message;
+}
+
+// ===== 3.2 OpenAlex API =====
+async function fetchOpenAlex(doi) {
+  const resp = await fetch(`https://api.openalex.org/works/doi:${encodeURIComponent(doi)}`);
+  if (!resp.ok) {
+    if (resp.status === 404) throw new Error('DOIがOpenAlexに見つかりません');
+    throw new Error(`OpenAlex APIエラー: ${resp.status}`);
+  }
+  return await resp.json();
+}
+
+// ===== 3.3 ROR v2 API（単体） =====
+// rorUri: "https://ror.org/005pdtr14" 形式
+async function fetchRorDetails(rorUri) {
+  // ROR ID 部分だけを抽出
+  const rorId = rorUri.replace(/^https?:\/\/ror\.org\//i, '').replace(/\/$/, '');
+  const resp = await fetch(`https://api.ror.org/v2/organizations/${encodeURIComponent(rorId)}`);
+  if (!resp.ok) return { isni: '', rorDisplayName: '', rorId };
+
+  const data = await resp.json();
+
+  // ror_display タイプの名称を取得
+  const rorDisplayEntry = (data.names || []).find(n =>
+    Array.isArray(n.types) && n.types.includes('ror_display')
+  );
+  const rorDisplayName = rorDisplayEntry ? rorDisplayEntry.value : '';
+
+  // ISNI 取得（スペース除去）
+  const isniEntry = (data.external_ids || []).find(e => e.type === 'isni');
+  const isni = isniEntry && isniEntry.all && isniEntry.all[0]
+    ? isniEntry.all[0].replace(/\s+/g, '')
+    : '';
+
+  return { isni, rorDisplayName, rorId };
+}
+
+// ===== 3.4 全著者の ROR データを並列取得 =====
+async function fetchAllRorData(oaJson) {
+  const rorMap = new Map(); // rorUri → { isni, rorDisplayName, rorId }
+
+  const rorUris = new Set();
+  for (const authorship of (oaJson.authorships || [])) {
+    for (const inst of (authorship.institutions || [])) {
+      if (inst.ror) rorUris.add(inst.ror);
+    }
+  }
+
+  await Promise.all([...rorUris].map(async (rorUri) => {
+    try {
+      const info = await fetchRorDetails(rorUri);
+      rorMap.set(rorUri, info);
+    } catch {
+      rorMap.set(rorUri, { isni: '', rorDisplayName: '', rorId: rorUri });
+    }
+  }));
+
+  return rorMap;
+}
+
+// ===== 3.5 メイン取得フロー =====
+async function fetchData() {
+  showError('');
+  const rawDoi = document.getElementById('doi-input').value.trim();
+  if (!rawDoi) { showError('DOIを入力してください。'); return; }
+  const doi = normalizeDoi(rawDoi);
+
+  document.getElementById('info-bar').style.display = 'none';
+  document.getElementById('preview-area').style.display = 'none';
+  const loading = document.getElementById('loading');
+  loading.style.display = 'block';
+
+  try {
+    // Crossref + OpenAlex を並列取得
+    const [crJson, oaJson] = await Promise.all([
+      fetchCrossref(doi),
+      fetchOpenAlex(doi),
+    ]);
+
+    // ROR データを並列取得
+    const rorMap = await fetchAllRorData(oaJson);
+
+    // 情報バー表示
+    const doiUrl = `https://doi.org/${doi}`;
+    const doiLink = document.getElementById('doi-link');
+    doiLink.href = doiUrl;
+    doiLink.textContent = doiUrl;
+
+    const oaStatus = oaJson.open_access?.oa_status || '';
+    const isOa = oaJson.open_access?.is_oa || false;
+    const badge = document.getElementById('oa-badge');
+    badge.textContent = isOa
+      ? (oaStatus === 'gold'   ? '🟡 Gold OA'
+       : oaStatus === 'green'  ? '🟢 Green OA'
+       : oaStatus === 'hybrid' ? '🔵 Hybrid OA'
+       : '⚪ Other OA')
+      : '🔴 Closed';
+    badge.style.background = isOa ? '#4caf50' : '#999';
+    document.getElementById('info-bar').style.display = 'flex';
+
+    // マッピング → レンダリング
+    const metadata = mapToItemType(crJson, oaJson, rorMap);
+    showHints = true;
+    renderAll(metadata);
+
+  } catch (e) {
+    showError(`エラー: ${e.message}`);
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+// ===== 3.6 空値テスト表示 =====
+function showEmptyFields() {
+  showError('');
+  showHints = false;
+  renderAll(buildEmptyMetadata());
+}
+
+// ================================================================
+// STEP 4: データマッピング層
+// ================================================================
+
+// ===== 4.6 アブストラクト JATS 処理 =====
+function processAbstract(raw) {
+  if (!raw) return '';
+  // 1. 改行コードを削除
+  let text = raw.replace(/\r?\n/g, '');
+  // 2. エスケープされた実体参照を解除
+  text = text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+              .replace(/&apos;/g, "'").replace(/&quot;/g, '"');
+  // 3. 先頭の <jats:title>...</jats:title> を削除
+  text = text.replace(/^<jats:title>[^<]*<\/jats:title>/, '');
+  // 4. <jats:sec> 内の <jats:title>...</jats:title> を "TITLE: " 形式に変換
+  text = text.replace(/<jats:title>([^<]*)<\/jats:title>/g, '$1: ');
+  // 5 & 6. 残存する全タグを除去（<jats:p> 等のテキストはそのまま取り込み）
+  text = text.replace(/<[^>]+>/g, '');
+  // 7. 連続スペースを1つに統一・trim
+  text = text.replace(/ {2,}/g, ' ').trim();
+  return text;
+}
+
+// ===== 発行日取得 =====
+function getPubDate(cr) {
+  const parts = cr['published-online']?.['date-parts']?.[0]
+    || cr['published-print']?.['date-parts']?.[0]
+    || cr.published?.['date-parts']?.[0] || [];
+  if (!parts.length) return '';
+  if (parts.length >= 3) return `${parts[0]}-${String(parts[1]).padStart(2,'0')}-${String(parts[2]).padStart(2,'0')}`;
+  if (parts.length === 2) return `${parts[0]}-${String(parts[1]).padStart(2,'0')}`;
+  return String(parts[0]);
+}
+
+// ===== 4.3 著者マッピング =====
+function buildAuthors(crAuthors, oaAuthorships, rorMap) {
+  // OpenAlex 著者を姓で索引化
+  const oaByFamily = {};
+  const oaByIndex = [];
+  (oaAuthorships || []).forEach((a, i) => {
+    oaByIndex[i] = a;
+    const dn = (a.author?.display_name || '').toLowerCase();
+    // "Sakiko Shiratori" → last word as family
+    const parts = dn.split(/\s+/);
+    const familyKey = parts[parts.length - 1] || '';
+    if (familyKey) oaByFamily[familyKey] = a;
+  });
+
+  return (crAuthors || []).map((crA, idx) => {
+    const family = crA.family || '';
+    const given  = crA.given  || '';
+    const fullName = family && given ? `${family}, ${given}` : family || given;
+
+    // OpenAlex エントリと照合（姓→インデックス順でフォールバック）
+    const familyLower = family.toLowerCase();
+    const oaEntry = oaByFamily[familyLower] || oaByIndex[idx] || null;
+
+    // ORCID: Crossref 優先 → OpenAlex fallback（warn フラグ付き）
+    const crOrcid = crA.ORCID || '';
+    const oaOrcid = oaEntry?.author?.orcid || '';
+    const orcidUri = crOrcid || oaOrcid || '';
+    const orcidFromOA = !crOrcid && !!oaOrcid;
+    const orcidId = orcidUri.replace(/^https?:\/\/orcid\.org\//i, '');
+
+    // 所属: OpenAlex authorships[].institutions を使用
+    const oaInsts = oaEntry?.institutions || [];
+    const affiliations = oaInsts.map(inst => {
+      const rorUri = inst.ror || '';
+      const rorInfo = rorUri ? (rorMap.get(rorUri) || {}) : {};
+      const dispName = rorInfo.rorDisplayName || inst.display_name || '';
+      const isni     = rorInfo.isni || '';
+      const rorId    = rorInfo.rorId || '';
+
+      const affiliationNameIdentifiers = [];
+      if (isni) affiliationNameIdentifiers.push({
+        affiliationNameIdentifier:       isni,
+        affiliationNameIdentifierScheme: 'ISNI',
+        affiliationNameIdentifierURI:    `https://isni.org/isni/${isni}`,
+      });
+      if (rorId) affiliationNameIdentifiers.push({
+        affiliationNameIdentifier:       rorId,
+        affiliationNameIdentifierScheme: 'ROR',
+        affiliationNameIdentifierURI:    `https://ror.org/${rorId}`,
+      });
+
+      return {
+        affiliationNames: dispName
+          ? [{ affiliationName: dispName, affiliationNameLang: 'en', _warnLang: true }]
+          : [],
+        affiliationNameIdentifiers,
+      };
+    });
+
+    const nameIdentifiers = orcidId
+      ? [{ nameIdentifier: orcidId, nameIdentifierScheme: 'ORCID', nameIdentifierURI: `https://orcid.org/${orcidId}`, _warnOrcid: orcidFromOA }]
+      : [];
+
+    return {
+      creatorType: 'Author',
+      creatorNames: [{ creatorName: fullName, creatorNameLang: 'en', creatorNameType: 'Personal', _warnLang: true }],
+      familyNames:  family ? [{ familyName: family, familyNameLang: 'en', _warnLang: true }] : [],
+      givenNames:   given  ? [{ givenName:  given,  givenNameLang:  'en', _warnLang: true }] : [],
+      nameIdentifiers,
+      creatorAffiliations: affiliations,
+    };
+  });
+}
+
+// ===== 4.4 助成情報マッピング =====
+function buildFunders(crFunders) {
+  return (crFunders || []).map(f => {
+    const name      = f.name  || '';
+    const funderDoi = f.DOI   || '';
+    const awards    = f.award || [];
+
+    const obj = {};
+
+    obj.subitem_funder_names = name
+      ? [{ subitem_funder_name: name, subitem_funder_name_language: 'en' }]
+      : [];
+
+    if (funderDoi) {
+      obj.subitem_funder_identifiers = {
+        subitem_funder_identifier:      `https://doi.org/${funderDoi}`,
+        subitem_funder_identifier_type: 'Crossref Funder',
+      };
+    } else {
+      obj.subitem_funder_identifiers = { subitem_funder_identifier: '', subitem_funder_identifier_type: '' };
+    }
+
+    if (awards.length > 0) {
+      obj.subitem_award_numbers = {
+        subitem_award_number:      awards[0],
+        subitem_award_number_type: '',
+        subitem_award_uri:         '',
+      };
+    } else {
+      obj.subitem_award_numbers = { subitem_award_number: '', subitem_award_number_type: '', subitem_award_uri: '' };
+    }
+
+    obj.subitem_award_titles = []; // Crossref に課題名なし
+
+    return obj;
+  });
+}
+
+// ===== 4.1 メインマッピング関数 =====
+function mapToItemType(crJson, oaJson, rorMap) {
+  const doi        = crJson.DOI || '';
+  const pubDate    = getPubDate(crJson);
+  const isOa       = oaJson.open_access?.is_oa   || false;
+  const oaStatus   = oaJson.open_access?.oa_status || '';
+  const isGoldOa   = isOa && (oaStatus === 'gold' || oaStatus === 'hybrid');
+
+  // ===== タイトル =====
+  const title = (crJson.title || [])[0] || '';
+
+  // ===== 作成者 =====
+  const creators = buildAuthors(crJson.author || [], oaJson.authorships || [], rorMap);
+
+  // ===== 権利情報 =====
+  const rights = [];
+  // 1) vor ライセンス URL
+  const vorLicense = (crJson.license || []).find(l => l['content-version'] === 'vor');
+  if (vorLicense) {
+    rights.push({
+      subitem_rights:          '',
+      subitem_rights_language: 'en',
+      subitem_rights_resource: vorLicense.URL,
+    });
+  }
+  // 2) Copyright assertion
+  (crJson.assertion || []).filter(a => a.label === 'Copyright').forEach(a => {
+    rights.push({
+      subitem_rights:          a.value,
+      subitem_rights_language: 'en',
+      subitem_rights_resource: '',
+    });
+  });
+
+  // ===== 主題（API取り込み対象外: 空の編集可能フィールドを準備するのみ）=====
+  const subjects = [{
+    subitem_subject:          '',
+    subitem_subject_language: '',
+    subitem_subject_scheme:   '',
+    subitem_subject_uri:      '',
+  }];
+
+  // ===== 資源タイプ =====
+  const crType        = (crJson.type || '').replace(/-/g, ' ');
+  const resourcetype  = TITLE_MAPS.resourcetype.includes(crType) ? crType : '';
+  const resourceuri   = resourcetype ? (RESOURCE_TYPE_MAP[resourcetype] || '') : '';
+
+  // ===== 出版タイプ =====
+  const versionType     = isGoldOa ? 'VoR' : 'AM';
+  const versionResource = isGoldOa
+    ? 'http://purl.org/coar/version/c_970fb48d4fbd8a85'
+    : 'http://purl.org/coar/version/c_ab4af688f83e57aa';
+
+  // ===== ISSN =====
+  const sourceIdentifiers = [];
+  (crJson['issn-type'] || []).forEach(i => {
+    const itype = i.type === 'electronic' ? 'EISSN' : i.type === 'print' ? 'PISSN' : 'ISSN';
+    sourceIdentifiers.push({ subitem_source_identifier: i.value, subitem_source_identifier_type: itype });
+  });
+  if (!sourceIdentifiers.length) {
+    (crJson.ISSN || []).forEach(i => sourceIdentifiers.push({ subitem_source_identifier: i, subitem_source_identifier_type: 'ISSN' }));
+  }
+
+  // ===== 収録物名 =====
+  const containerTitle = (crJson['container-title'] || [])[0] || '';
+
+  // ===== 書誌情報 =====
+  const pageStr = crJson.page || '';
+  const pageParts = pageStr.split('-');
+  const pageStart = pageParts[0] || '';
+  const pageEnd   = pageParts[1] || '';
+
+  // ===== メタデータオブジェクト =====
+  const metadata = {
+    // ----- システムフィールド -----
+    system: {
+      id:             '',
+      uri:            '',
+      path:           '',
+      pos_index:      document.getElementById('pos-index-input').value,
+      publish_status: 'private',
+      feedback_mail:  '',
+      cnri:           '',
+      doi_ra:         '',
+      doi:            '',
+      edit_mode:      'Keep',
+      pubdate:        todayStr(),
+    },
+
+    // ----- タイトル -----
+    item_30002_title0: title
+      ? [{ subitem_title: title, subitem_title_language: 'en', _warnLang: true }]
+      : [],
+
+    // ----- その他のタイトル（空）-----
+    item_30002_alternative_title1: [],
+
+    // ----- 作成者 -----
+    item_30002_creator2: creators,
+
+    // ----- 寄与者（空）-----
+    item_30002_contributor3: [],
+
+    // ----- アクセス権 -----
+    item_30002_access_rights4: {
+      subitem_access_right:     'open access',
+      subitem_access_right_uri: 'http://purl.org/coar/access_right/c_abf2',
+    },
+
+    // ----- 権利情報 -----
+    item_30002_rights6: rights,
+
+    // ----- 権利者情報（空）-----
+    item_30002_rights_holder7: [],
+
+    // ----- 主題 -----
+    item_30002_subject8: subjects,
+
+    // ----- 内容記述 -----
+    item_30002_description9: crJson.abstract
+      ? [{ subitem_description: processAbstract(crJson.abstract), subitem_description_language: 'en', subitem_description_type: 'Abstract' }]
+      : [],
+
+    // ----- 出版者 -----
+    item_30002_publisher10: crJson.publisher
+      ? [{ subitem_publisher: crJson.publisher, subitem_publisher_language: 'en' }]
+      : [],
+
+    // ----- 日付 -----
+    item_30002_date11: pubDate
+      ? [{ subitem_date_issued_datetime: pubDate, subitem_date_issued_type: 'Issued' }]
+      : [],
+
+    // ----- 言語 -----
+    item_30002_language12: [{ subitem_language: 'eng' }],
+
+    // ----- 資源タイプ -----
+    item_30002_resource_type13: { resourcetype, resourceuri },
+
+    // ----- バージョン情報（空）-----
+    item_30002_version14: { subitem_version: '' },
+
+    // ----- 出版タイプ -----
+    item_30002_version_type15: {
+      subitem_version_resource: versionResource,
+      subitem_version_type:     versionType,
+    },
+
+    // ----- 識別子（空）-----
+    item_30002_identifier16: [],
+
+    // ----- ID登録（空）-----
+    item_30002_identifier_registration17: { subitem_identifier_reg_text: '', subitem_identifier_reg_type: '' },
+
+    // ----- 関連情報 -----
+    item_30002_relation18: (() => {
+      // relatedIdentifier.md に定義された識別子タイプ
+      const VALID_RELATION_ID_TYPES = new Set([
+        'ARK','ARXIV','DOI','HDL','ICHUSHI','ISBN','J-GLOBAL','LOCAL',
+        'PISSN','EISSN','ISSN','NAID','NCID','PMID','PURL','SCOPUS','URI','WOS',
+      ]);
+      const relations = [];
+      // 1) Crossref DOI エントリ（テキストがないので subitem_relation_name: []）
+      if (doi) {
+        relations.push({
+          subitem_relation_type: 'isIdenticalTo',
+          subitem_relation_type_id: {
+            subitem_relation_type_id_text: `https://doi.org/${doi}`,
+            subitem_relation_type_select: 'DOI',
+          },
+          subitem_relation_name: [],
+        });
+      }
+      // 2) OpenAlex ids から追加エントリ（DOI・OpenAlex キーは除外）
+      const oaIds = oaJson.ids || {};
+      Object.entries(oaIds).forEach(([key, value]) => {
+        const upperKey = key.toUpperCase();
+        if (upperKey === 'DOI' || upperKey === 'OPENALEX') return;
+        if (!VALID_RELATION_ID_TYPES.has(upperKey)) return;
+        relations.push({
+          subitem_relation_type: 'isIdenticalTo',
+          subitem_relation_type_id: {
+            subitem_relation_type_id_text: value,
+            subitem_relation_type_select: upperKey,
+          },
+          subitem_relation_name: [],
+        });
+      });
+      return relations;
+    })(),
+
+    // ----- 時間的範囲（空）-----
+    item_30002_temporal19: [],
+
+    // ----- 位置情報（空）-----
+    item_30002_geolocation20: [],
+
+    // ----- 助成情報 -----
+    item_30002_funding_reference21: buildFunders(crJson.funder),
+
+    // ----- 収録物識別子 -----
+    item_30002_source_identifier22: sourceIdentifiers,
+
+    // ----- 収録物名 -----
+    item_30002_source_title23: containerTitle
+      ? [{ subitem_source_title: containerTitle, subitem_source_title_language: 'en' }]
+      : [],
+
+    // ----- 巻 -----
+    item_30002_volume_number24: { subitem_volume: crJson.volume || '' },
+
+    // ----- 号 -----
+    item_30002_issue_number25: { subitem_issue: crJson.issue || '' },
+
+    // ----- ページ数（空）-----
+    item_30002_number_of_pages26: { subitem_number_of_pages: '' },
+
+    // ----- 開始ページ -----
+    item_30002_page_start27: { subitem_start_page: pageStart },
+
+    // ----- 終了ページ -----
+    item_30002_page_end28: { subitem_end_page: pageEnd },
+
+    // ----- 書誌情報 -----
+    item_30002_bibliographic_information29: containerTitle ? {
+      bibliographicIssueDates: pubDate
+        ? { bibliographicIssueDate: pubDate, bibliographicIssueDateType: 'Issued' }
+        : {},
+      bibliographicIssueNumber:    crJson.issue   || '',
+      bibliographicVolumeNumber:   crJson.volume  || '',
+      bibliographicPageStart:      pageStart,
+      bibliographicPageEnd:        pageEnd,
+      bibliographicNumberOfPages:  '',
+      bibliographic_titles: [{
+        bibliographic_title:     containerTitle,
+        bibliographic_titleLang: 'en',
+      }],
+    } : null,
+
+    // ----- 会議記述（空）-----
+    item_30002_conference34: [],
+  };
+
+  return metadata;
+}
+
+// ================================================================
+// STEP 5: UI レンダリング層
+// ================================================================
+
+// ===== 5.1 フィールド定義 =====
+// type: 'array','object','creator','contributor','relation','funding','biblio'
+// fields 内: k=キー, l=ラベル, t=入力型, o=TITLE_MAPSキー, w=警告フラグキー, ro=読取専用
+const FIELD_DEFS = [
+  { key: 'item_30002_title0', label: 'タイトル', type: 'array',
+    fields: [
+      { k: 'subitem_title', l: 'タイトル', t: 'text' },
+      { k: 'subitem_title_language', l: '言語', t: 'select', o: 'language', w: '_warnLang' },
+    ],
+    sum: a => a?.[0]?.subitem_title || '' },
+  { key: 'item_30002_alternative_title1', label: 'その他のタイトル', type: 'array',
+    fields: [
+      { k: 'subitem_alternative_title', l: 'その他のタイトル', t: 'text' },
+      { k: 'subitem_alternative_title_language', l: '言語', t: 'select', o: 'language' },
+    ],
+    sum: a => a?.[0]?.subitem_alternative_title || '' },
+  { key: 'item_30002_creator2', label: '作成者', type: 'creator',
+    sum: a => { if (!a?.length) return ''; const n = a[0]?.creatorNames?.[0]?.creatorName || ''; return a.length > 1 ? `${n} 他${a.length-1}名` : n; } },
+  { key: 'item_30002_contributor3', label: '寄与者', type: 'contributor',
+    sum: a => { if (!a?.length) return ''; const n = a[0]?.contributorNames?.[0]?.contributorName || ''; return a.length > 1 ? `${n} 他${a.length-1}名` : n; } },
+  { key: 'item_30002_access_rights4', label: 'アクセス権', type: 'object',
+    fields: [
+      { k: 'subitem_access_right', l: 'アクセス権', t: 'select', o: 'subitem_access_right', link: { tgt: 'subitem_access_right_uri', map: ACCESS_RIGHTS_MAP } },
+      { k: 'subitem_access_right_uri', l: 'アクセス権URI', t: 'text', ro: true },
+    ],
+    sum: o => o?.subitem_access_right || '' },
+  { key: 'item_30002_rights6', label: '権利情報', type: 'array',
+    fields: [
+      { k: 'subitem_rights', l: '権利情報', t: 'text' },
+      { k: 'subitem_rights_language', l: '言語', t: 'select', o: 'language' },
+      { k: 'subitem_rights_resource', l: '権利情報リソースURL', t: 'text' },
+    ],
+    sum: a => a?.[0]?.subitem_rights || a?.[0]?.subitem_rights_resource || '' },
+  { key: 'item_30002_rights_holder7', label: '権利者情報', type: 'rightsHolder',
+    sum: a => { if (!a?.length) return ''; const n = a[0]?.rightHolderNames?.[0]?.rightHolderName || ''; return a.length > 1 ? `${n} 他${a.length-1}件` : n; } },
+  { key: 'item_30002_subject8', label: '主題', type: 'array',
+    fields: [
+      { k: 'subitem_subject', l: '主題', t: 'text' },
+      { k: 'subitem_subject_language', l: '言語', t: 'select', o: 'language' },
+      { k: 'subitem_subject_scheme', l: '主題Scheme', t: 'text' },
+      { k: 'subitem_subject_uri', l: '主題URI', t: 'text' },
+    ],
+    sum: a => { if (!a?.length) return ''; const f = a[0]?.subitem_subject || ''; return a.length > 1 ? `${f} 他${a.length-1}件` : f; } },
+  { key: 'item_30002_description9', label: '内容記述', type: 'array',
+    fields: [
+      { k: 'subitem_description', l: '内容記述', t: 'textarea' },
+      { k: 'subitem_description_language', l: '言語', t: 'select', o: 'language' },
+      { k: 'subitem_description_type', l: '内容記述タイプ', t: 'select', o: 'subitem_description_type' },
+    ],
+    sum: a => { const d = a?.[0]?.subitem_description || ''; return d.length > 50 ? d.substring(0,50)+'…' : d; } },
+  { key: 'item_30002_publisher10', label: '出版者', type: 'array',
+    fields: [
+      { k: 'subitem_publisher', l: '出版者', t: 'text' },
+      { k: 'subitem_publisher_language', l: '言語', t: 'select', o: 'language' },
+    ],
+    sum: a => a?.[0]?.subitem_publisher || '' },
+  { key: 'item_30002_date11', label: '日付', type: 'array',
+    fields: [
+      { k: 'subitem_date_issued_datetime', l: '日付', t: 'text' },
+      { k: 'subitem_date_issued_type', l: '日付タイプ', t: 'select', o: 'subitem_date_issued_type' },
+    ],
+    sum: a => a?.[0] ? `${a[0].subitem_date_issued_datetime||''} (${a[0].subitem_date_issued_type||''})` : '' },
+  { key: 'item_30002_language12', label: '言語', type: 'array',
+    fields: [{ k: 'subitem_language', l: '言語', t: 'select', o: 'subitem_language' }],
+    sum: a => a?.[0]?.subitem_language || '' },
+  { key: 'item_30002_resource_type13', label: '資源タイプ', type: 'object',
+    fields: [
+      { k: 'resourcetype', l: '資源タイプ', t: 'select', o: 'resourcetype', link: { tgt: 'resourceuri', map: RESOURCE_TYPE_MAP } },
+      { k: 'resourceuri', l: '資源タイプ識別子', t: 'text', ro: true },
+    ],
+    sum: o => o?.resourcetype || '' },
+  { key: 'item_30002_version14', label: 'バージョン情報', type: 'object',
+    fields: [{ k: 'subitem_version', l: 'バージョン情報', t: 'text' }],
+    sum: o => o?.subitem_version || '' },
+  { key: 'item_30002_version_type15', label: '出版タイプ', type: 'object',
+    fields: [
+      { k: 'subitem_version_type', l: '出版タイプ', t: 'select', o: 'subitem_version_type' },
+      { k: 'subitem_version_resource', l: '出版タイプリソース', t: 'text' },
+    ],
+    sum: o => o?.subitem_version_type || '' },
+  { key: 'item_30002_identifier16', label: '識別子', type: 'array',
+    fields: [
+      { k: 'subitem_identifier_uri', l: '識別子', t: 'text' },
+      { k: 'subitem_identifier_type', l: '識別子タイプ', t: 'select', o: 'subitem_identifier_type' },
+    ],
+    sum: a => a?.[0]?.subitem_identifier_uri || '' },
+  { key: 'item_30002_identifier_registration17', label: 'ID登録', type: 'object',
+    fields: [
+      { k: 'subitem_identifier_reg_text', l: 'ID登録テキスト', t: 'text' },
+      { k: 'subitem_identifier_reg_type', l: 'ID登録タイプ', t: 'text' },
+    ],
+    sum: o => o?.subitem_identifier_reg_text || '' },
+  { key: 'item_30002_relation18', label: '関連情報', type: 'relation',
+    sum: a => a?.[0]?.subitem_relation_type_id?.subitem_relation_type_id_text || '' },
+  { key: 'item_30002_temporal19', label: '時間的範囲', type: 'array',
+    fields: [
+      { k: 'subitem_temporal_text', l: '時間的範囲', t: 'text' },
+      { k: 'subitem_temporal_language', l: '言語', t: 'select', o: 'language' },
+    ],
+    sum: a => a?.[0]?.subitem_temporal_text || '' },
+  { key: 'item_30002_geolocation20', label: '位置情報', type: 'geolocation',
+    sum: a => { if (!a?.length) return ''; const p = a[0]?.subitem_geolocation_place?.[0]?.subitem_geolocation_place_text || ''; return a.length > 1 ? `${p} 他${a.length-1}件` : p; } },
+  { key: 'item_30002_funding_reference21', label: '助成情報', type: 'funding',
+    sum: a => { if (!a?.length) return ''; const n = a[0]?.subitem_funder_names?.[0]?.subitem_funder_name || ''; return a.length > 1 ? `${n} 他${a.length-1}件` : n; } },
+  { key: 'item_30002_source_identifier22', label: '収録物識別子', type: 'array',
+    fields: [
+      { k: 'subitem_source_identifier', l: '収録物識別子', t: 'text' },
+      { k: 'subitem_source_identifier_type', l: '収録物識別子タイプ', t: 'select', o: 'subitem_source_identifier_type' },
+    ],
+    sum: a => a?.map(i => `${i.subitem_source_identifier_type||''}:${i.subitem_source_identifier||''}`).join(', ') || '' },
+  { key: 'item_30002_source_title23', label: '収録物名', type: 'array',
+    fields: [
+      { k: 'subitem_source_title', l: '収録物名', t: 'text' },
+      { k: 'subitem_source_title_language', l: '言語', t: 'select', o: 'language' },
+    ],
+    sum: a => a?.[0]?.subitem_source_title || '' },
+  { key: 'item_30002_volume_number24', label: '巻', type: 'object',
+    fields: [{ k: 'subitem_volume', l: '巻', t: 'text' }],
+    sum: o => o?.subitem_volume || '' },
+  { key: 'item_30002_issue_number25', label: '号', type: 'object',
+    fields: [{ k: 'subitem_issue', l: '号', t: 'text' }],
+    sum: o => o?.subitem_issue || '' },
+  { key: 'item_30002_number_of_pages26', label: 'ページ数', type: 'object',
+    fields: [{ k: 'subitem_number_of_pages', l: 'ページ数', t: 'text' }],
+    sum: o => o?.subitem_number_of_pages || '' },
+  { key: 'item_30002_page_start27', label: '開始ページ', type: 'object',
+    fields: [{ k: 'subitem_start_page', l: '開始ページ', t: 'text' }],
+    sum: o => o?.subitem_start_page || '' },
+  { key: 'item_30002_page_end28', label: '終了ページ', type: 'object',
+    fields: [{ k: 'subitem_end_page', l: '終了ページ', t: 'text' }],
+    sum: o => o?.subitem_end_page || '' },
+  { key: 'item_30002_bibliographic_information29', label: '書誌情報', type: 'biblio',
+    sum: o => o?.bibliographic_titles?.[0]?.bibliographic_title || '' },
+  { key: 'item_30002_conference34', label: '会議記述', type: 'conference',
+    sum: a => { if (!a?.length) return ''; const n = a[0]?.subitem_conference_names?.[0]?.subitem_conference_name || ''; return a.length > 1 ? `${n} 他${a.length-1}件` : n; } },
+];
+
+// ===== STEP 6: 動的削除ヘルパー =====
+
+function removeNestedItemEl(el) {
+  const parent = el.parentElement;
+  el.remove();
+  renumberItems(parent);
+}
+
+function renumberItems(container) {
+  container.querySelectorAll(':scope > .nested-item').forEach((item, idx) => {
+    const lbl = item.querySelector(':scope > .item-header .item-label');
+    if (lbl) lbl.textContent = lbl.textContent.replace(/\[\d+\]/, `[${idx}]`);
+  });
+}
+
+// ===== 5.2 DOM生成ヘルパー =====
+
+// トップレベルセクション（アコーディオン）
+function createSection(key, label, summaryText) {
+  const section = document.createElement('div');
+  section.className = 'field-section';
+  section.dataset.key = key;
+  const header = document.createElement('div');
+  header.className = 'section-header';
+  const jpcoarUrl = JPCOAR_LINKS[key];
+  const labelHtml = jpcoarUrl
+    ? `<a href="${jpcoarUrl}" target="_blank">${label}</a>`
+    : label;
+  header.innerHTML = `<span class="toggle-icon">▼</span>${labelHtml}<span class="summary">${summaryText ? '（'+summaryText+'）' : ''}</span>`;
+  header.onclick = function() { toggleAccordion(this); };
+  const content = document.createElement('div');
+  content.className = 'accordion-content';
+  section.appendChild(header);
+  section.appendChild(content);
+  return { section, content, header };
+}
+
+// フィールド行
+function createFieldRow(label, value, inputType, selectOptsKey, extra) {
+  extra = extra || {};
+  const row = document.createElement('div');
+  row.className = 'field-row';
+  if (extra.fieldKey) row.dataset.fieldKey = extra.fieldKey;
+  const lbl = document.createElement('span');
+  lbl.className = 'field-label';
+  lbl.textContent = label;
+  row.appendChild(lbl);
+
+  // 参照値（ヒント）セル: API取得時のみ、非空・非readonly・非selectフィールドに表示
+  if (showHints && value && !extra.readonly && inputType !== 'select') {
+    const hint = document.createElement('span');
+    hint.className = 'hint-cell';
+    hint.title = String(value);
+    hint.innerHTML = renderHint(value);
+    row.appendChild(hint);
+  }
+
+  if (inputType === 'textarea') {
+    const ta = document.createElement('textarea');
+    ta.value = value || '';
+    row.appendChild(ta);
+  } else if (inputType === 'select' && selectOptsKey) {
+    const opts = TITLE_MAPS[selectOptsKey] || [];
+    const sel = buildSelect(opts, value || '', extra.onChange || null);
+    row.appendChild(sel);
+  } else {
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.value = value || '';
+    if (extra.readonly) inp.readOnly = true;
+    row.appendChild(inp);
+  }
+
+  if (extra.warn) {
+    const badge = document.createElement('span');
+    badge.className = 'warn-badge';
+    badge.title = extra.warnTitle || '要確認';
+    badge.textContent = '⚠ 要確認';
+    row.appendChild(badge);
+  }
+  return row;
+}
+
+// ネスト項目（Level 1+ アコーディオン）
+function createNestedItem(label, level) {
+  const item = document.createElement('div');
+  item.className = `nested-item level-${level}`;
+  const icons = ['', '📦', '📍', '📎', '·'];
+  const icon = icons[Math.min(level, 4)] || '';
+  const header = document.createElement('div');
+  header.className = 'item-header';
+  header.innerHTML = `<span class="toggle-icon">▼</span>${icon ? '<span class="level-icon">'+icon+'</span>' : ''}<span class="item-label">${label}</span><span class="item-summary"></span>`;
+  const delBtn = document.createElement('button');
+  delBtn.className = 'btn-delete';
+  delBtn.textContent = '− 削除';
+  delBtn.onclick = function(e) { e.stopPropagation(); if (confirm('削除しますか？')) removeNestedItemEl(item); };
+  header.appendChild(delBtn);
+  header.onclick = function() { toggleAccordion(this); };
+  const content = document.createElement('div');
+  content.className = 'item-content';
+  item.appendChild(header);
+  item.appendChild(content);
+  return { item, content, header };
+}
+
+// ネストセクションヘッダー（Level 2+ サブセクション）
+// onAdd: 関数を渡すと追加ボタンのクリック時に onAdd(content) を呼び出す
+//        false を渡すと追加ボタンを非表示
+//        省略/null の場合はボタンを表示するが noop
+function createNestedSectionHeader(label, level, onAdd) {
+  const wrapper = document.createElement('div');
+  wrapper.className = `nested-item level-${level}`;
+  const icons = ['', '📦', '📍', '📎', '·'];
+  const icon = icons[Math.min(level, 4)] || '';
+  const header = document.createElement('div');
+  header.className = 'nested-section-header';
+  header.innerHTML = `<span class="toggle-icon">▼</span>${icon ? '<span class="level-icon">'+icon+'</span>' : ''}<span>${label}</span>`;
+  const content = document.createElement('div');
+  content.className = 'nested-section-content';
+  if (onAdd !== false) {
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn-add';
+    addBtn.textContent = '+ 追加';
+    addBtn.onclick = onAdd
+      ? function(e) { e.stopPropagation(); onAdd(content); }
+      : function(e) { e.stopPropagation(); };
+    header.appendChild(addBtn);
+  }
+  header.onclick = function() { toggleAccordion(this); };
+  wrapper.appendChild(header);
+  wrapper.appendChild(content);
+  return { wrapper, content };
+}
+
+// 追加ボタン（onAdd を渡すとクリック時に実行）
+function createAddButton(label, onAdd) {
+  const btn = document.createElement('button');
+  btn.className = 'btn-add';
+  btn.style.cssText = 'margin: 8px 16px; display: block;';
+  btn.textContent = `+ ${label}を追加`;
+  btn.onclick = onAdd
+    ? function(e) { e.stopPropagation(); onAdd(); }
+    : function(e) { e.stopPropagation(); };
+  return btn;
+}
+
+// エントリグループ（姓名・識別子等サブ配列1件を削除ボタン付きでラップ）
+function createEntryGroup() {
+  const grp = document.createElement('div');
+  grp.className = 'entry-group';
+  const delBtn = document.createElement('button');
+  delBtn.className = 'btn-delete btn-delete-inline';
+  delBtn.textContent = '− 削除';
+  delBtn.onclick = function(e) { e.stopPropagation(); if (confirm('削除しますか？')) grp.remove(); };
+  return { grp, delBtn };
+}
+
+// FIELD_DEFS の fields 定義から1アイテムのフィールド行群を生成
+function renderItemFields(itemData, fieldsDef, container) {
+  for (const f of fieldsDef) {
+    if (f.t === 'nested') continue; // nested は個別処理
+    const val = itemData[f.k] || '';
+    const isWarn = f.w && itemData[f.w];
+    const warnTitle = f.w === '_warnLang' ? '仮に英語として設定しています。正確か確認してください'
+                    : f.w === '_warnOrcid' ? 'OpenAlexから取得した値です。正確か確認してください'
+                    : '要確認';
+    let onChange = null;
+    if (f.link) {
+      onChange = (newVal) => {
+        const parent = container.closest('.accordion-content, .item-content') || container;
+        const targetRow = parent.querySelector(`[data-field-key="${f.link.tgt}"]`);
+        if (targetRow) {
+          const inp = targetRow.querySelector('input');
+          if (inp) inp.value = f.link.map[newVal] || '';
+        }
+      };
+    }
+    const row = createFieldRow(f.l, val, f.t, f.o, {
+      fieldKey: f.k,
+      readonly: f.ro,
+      warn: isWarn,
+      warnTitle,
+      onChange,
+    });
+    container.appendChild(row);
+  }
+}
+
+// ===== 5.3 汎用レンダラー =====
+
+// 配列フィールド
+function renderArrayField(def, items) {
+  const arr = Array.isArray(items) ? items : [];
+  const summaryText = def.sum(arr);
+  const { section, content } = createSection(def.key, def.label, summaryText);
+
+  if (!def.fields || !def.fields.length) {
+    if (!arr.length) {
+      const msg = document.createElement('div');
+      msg.style.cssText = 'padding:8px 16px;color:#999;font-size:0.85em';
+      msg.textContent = '（データなし）';
+      content.appendChild(msg);
+    }
+    content.appendChild(createAddButton(def.label));
+    return section;
+  }
+
+  arr.forEach((item, idx) => {
+    const firstVal = item[def.fields[0].k] || '';
+    const label = `${def.label}[${idx}]${firstVal ? ': '+firstVal.substring(0,40) : ''}`;
+    const { item: nestedItem, content: itemContent } = createNestedItem(label, 1);
+    renderItemFields(item, def.fields, itemContent);
+    content.appendChild(nestedItem);
+  });
+
+  content.appendChild(createAddButton(def.label, () => {
+    const newItem = {};
+    def.fields.forEach(f => { if (f.t !== 'nested') newItem[f.k] = ''; });
+    const idx = content.querySelectorAll(':scope > .nested-item').length;
+    const firstVal = '';
+    const label = `${def.label}[${idx}]`;
+    const { item: nestedItem, content: itemContent } = createNestedItem(label, 1);
+    renderItemFields(newItem, def.fields, itemContent);
+    content.insertBefore(nestedItem, content.lastChild);
+  }));
+  return section;
+}
+
+// オブジェクトフィールド
+function renderObjectField(def, obj) {
+  const data = obj || {};
+  const summaryText = def.sum(data);
+  const { section, content } = createSection(def.key, def.label, summaryText);
+  renderItemFields(data, def.fields, content);
+  return section;
+}
+
+// ===== 5.4 専用レンダラー =====
+
+// ----- 作成者/寄与者: 1人分のDOM生成 -----
+function renderOnePerson(person, idx, keys) {
+  const {
+    def, isCreator, typeLabel, typeKey, typeSelectOpts,
+    namesLabel, namesKey, nameKey, nameLangKey, nameTypeKey,
+    affKey, affLabel, affNameKey, affNameField, affNameLangField,
+    affIdKey, affIdField, affIdSchemeField, affIdUriField,
+  } = keys;
+
+  const dispName = person[namesKey]?.[0]?.[nameKey] || '';
+  const itemLabel = `${def.label}[${idx}]${dispName ? ': '+dispName : ''}`;
+  const { item: personItem, content: personContent } = createNestedItem(itemLabel, 1);
+
+  // タイプ
+  if (typeSelectOpts) {
+    personContent.appendChild(createFieldRow(typeLabel, person[typeKey] || '', 'select', typeSelectOpts, { fieldKey: typeKey }));
+  } else {
+    personContent.appendChild(createFieldRow(typeLabel, person[typeKey] || '', 'text', null, { fieldKey: typeKey }));
+  }
+
+  // 姓名
+  const { wrapper: namesWrap, content: namesCont } = createNestedSectionHeader(namesLabel, 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('姓名', '', 'text', null, { fieldKey: nameKey }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: nameLangKey }));
+    grp.appendChild(createFieldRow('名前タイプ', '', 'select', 'creatorNameType', { fieldKey: nameTypeKey }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (person[namesKey] || []).forEach(n => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('姓名', n[nameKey] || '', 'text', null, { fieldKey: nameKey }));
+    grp.appendChild(createFieldRow('言語', n[nameLangKey] || '', 'select', 'language', {
+      fieldKey: nameLangKey, warn: n._warnLang, warnTitle: '仮に英語として設定しています。正確か確認してください'
+    }));
+    grp.appendChild(createFieldRow('名前タイプ', n[nameTypeKey] || '', 'select', 'creatorNameType', { fieldKey: nameTypeKey }));
+    grp.appendChild(delBtn);
+    namesCont.appendChild(grp);
+  });
+  personContent.appendChild(namesWrap);
+
+  // 姓
+  const familyLabel = isCreator ? '作成者姓' : '寄与者姓';
+  const { wrapper: famWrap, content: famCont } = createNestedSectionHeader(familyLabel, 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('姓', '', 'text', null, { fieldKey: 'familyName' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'familyNameLang' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (person.familyNames || []).forEach(fn => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('姓', fn.familyName || '', 'text', null, { fieldKey: 'familyName' }));
+    grp.appendChild(createFieldRow('言語', fn.familyNameLang || '', 'select', 'language', {
+      fieldKey: 'familyNameLang', warn: fn._warnLang, warnTitle: '仮に英語として設定しています。正確か確認してください'
+    }));
+    grp.appendChild(delBtn);
+    famCont.appendChild(grp);
+  });
+  personContent.appendChild(famWrap);
+
+  // 名
+  const givenLabel = isCreator ? '作成者名' : '寄与者名';
+  const { wrapper: givWrap, content: givCont } = createNestedSectionHeader(givenLabel, 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('名', '', 'text', null, { fieldKey: 'givenName' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'givenNameLang' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (person.givenNames || []).forEach(gn => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('名', gn.givenName || '', 'text', null, { fieldKey: 'givenName' }));
+    grp.appendChild(createFieldRow('言語', gn.givenNameLang || '', 'select', 'language', {
+      fieldKey: 'givenNameLang', warn: gn._warnLang, warnTitle: '仮に英語として設定しています。正確か確認してください'
+    }));
+    grp.appendChild(delBtn);
+    givCont.appendChild(grp);
+  });
+  personContent.appendChild(givWrap);
+
+  // 識別子（ORCID等）
+  const idLabel = isCreator ? '作成者識別子' : '寄与者識別子';
+  const { wrapper: idWrap, content: idCont } = createNestedSectionHeader(idLabel, 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('識別子', '', 'text', null, { fieldKey: 'nameIdentifier' }));
+    grp.appendChild(createFieldRow('Scheme', '', 'select', 'nameIdentifierScheme', { fieldKey: 'nameIdentifierScheme' }));
+    grp.appendChild(createFieldRow('URI', '', 'text', null, { fieldKey: 'nameIdentifierURI' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (person.nameIdentifiers || []).forEach(ni => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('識別子', ni.nameIdentifier || '', 'text', null, { fieldKey: 'nameIdentifier' }));
+    grp.appendChild(createFieldRow('Scheme', ni.nameIdentifierScheme || '', 'select', 'nameIdentifierScheme', { fieldKey: 'nameIdentifierScheme' }));
+    grp.appendChild(createFieldRow('URI', ni.nameIdentifierURI || '', 'text', null, {
+      fieldKey: 'nameIdentifierURI', warn: ni._warnOrcid, warnTitle: 'OpenAlexから取得した値です。正確か確認してください'
+    }));
+    grp.appendChild(delBtn);
+    idCont.appendChild(grp);
+  });
+  personContent.appendChild(idWrap);
+
+  // 所属
+  const { wrapper: affWrap, content: affCont } = createNestedSectionHeader(affLabel, 2, (cont) => {
+    const ai = cont.querySelectorAll(':scope > .nested-item').length;
+    const emptyAff = {
+      [affNameKey]: [{ [affNameField]: '', [affNameLangField]: '' }],
+      [affIdKey]: [],
+    };
+    cont.appendChild(renderOneAffiliation(emptyAff, ai, keys));
+  });
+  (person[affKey] || []).forEach((aff, ai) => {
+    affCont.appendChild(renderOneAffiliation(aff, ai, keys));
+  });
+  personContent.appendChild(affWrap);
+
+  return personItem;
+}
+
+// ----- 所属機関: 1件分のDOM生成 -----
+function renderOneAffiliation(aff, ai, keys) {
+  const {
+    affLabel, affNameKey, affNameField, affNameLangField,
+    affIdKey, affIdField, affIdSchemeField, affIdUriField,
+  } = keys;
+
+  const affDispName = aff[affNameKey]?.[0]?.[affNameField] || '';
+  const { item: affItem, content: affItemCont } = createNestedItem(`${affLabel}[${ai}]${affDispName ? ': '+affDispName : ''}`, 2);
+
+  // 所属機関名
+  const { wrapper: anWrap, content: anCont } = createNestedSectionHeader('所属機関名', 3, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('所属機関名', '', 'text', null, { fieldKey: affNameField }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: affNameLangField }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (aff[affNameKey] || []).forEach(an => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('所属機関名', an[affNameField] || '', 'text', null, { fieldKey: affNameField }));
+    grp.appendChild(createFieldRow('言語', an[affNameLangField] || '', 'select', 'language', {
+      fieldKey: affNameLangField, warn: an._warnLang, warnTitle: '仮に英語として設定しています。正確か確認してください'
+    }));
+    grp.appendChild(delBtn);
+    anCont.appendChild(grp);
+  });
+  affItemCont.appendChild(anWrap);
+
+  // 所属機関識別子
+  const { wrapper: aiWrap, content: aiCont } = createNestedSectionHeader('所属機関識別子', 3, (cont) => {
+    const aidx = cont.querySelectorAll(':scope > .nested-item').length;
+    const { item: aidItem, content: aidContent } = createNestedItem(`所属機関識別子[${aidx}]`, 4);
+    aidContent.appendChild(createFieldRow('識別子', '', 'text', null, { fieldKey: affIdField }));
+    aidContent.appendChild(createFieldRow('Scheme', '', 'select', 'affiliationNameIdentifierScheme', { fieldKey: affIdSchemeField }));
+    aidContent.appendChild(createFieldRow('URI', '', 'text', null, { fieldKey: affIdUriField }));
+    cont.appendChild(aidItem);
+  });
+  (aff[affIdKey] || []).forEach((aid, aidx) => {
+    const { item: aidItem, content: aidContent } = createNestedItem(`所属機関識別子[${aidx}]`, 4);
+    aidContent.appendChild(createFieldRow('識別子', aid[affIdField] || '', 'text', null, { fieldKey: affIdField }));
+    aidContent.appendChild(createFieldRow('Scheme', aid[affIdSchemeField] || '', 'select', 'affiliationNameIdentifierScheme', { fieldKey: affIdSchemeField }));
+    aidContent.appendChild(createFieldRow('URI', aid[affIdUriField] || '', 'text', null, { fieldKey: affIdUriField }));
+    aiCont.appendChild(aidItem);
+  });
+  affItemCont.appendChild(aiWrap);
+
+  return affItem;
+}
+
+// ----- 作成者/寄与者 共通 -----
+function renderPersonField(def, persons, isCreator) {
+  const arr = Array.isArray(persons) ? persons : [];
+  const summaryText = def.sum(arr);
+  const { section, content } = createSection(def.key, def.label, summaryText);
+
+  const keys = {
+    def, isCreator,
+    typeLabel: isCreator ? '作成者タイプ' : '寄与者タイプ',
+    typeKey: isCreator ? 'creatorType' : 'contributorType',
+    typeSelectOpts: isCreator ? null : 'contributorType',
+    namesLabel: isCreator ? '作成者姓名' : '寄与者姓名',
+    namesKey: isCreator ? 'creatorNames' : 'contributorNames',
+    nameKey: isCreator ? 'creatorName' : 'contributorName',
+    nameLangKey: isCreator ? 'creatorNameLang' : 'lang',
+    nameTypeKey: isCreator ? 'creatorNameType' : 'nameType',
+    affKey: isCreator ? 'creatorAffiliations' : 'contributorAffiliations',
+    affLabel: isCreator ? '作成者所属' : '寄与者所属',
+    affNameKey: isCreator ? 'affiliationNames' : 'contributorAffiliationNames',
+    affNameField: isCreator ? 'affiliationName' : 'contributorAffiliationName',
+    affNameLangField: isCreator ? 'affiliationNameLang' : 'contributorAffiliationNameLang',
+    affIdKey: isCreator ? 'affiliationNameIdentifiers' : 'contributorAffiliationNameIdentifiers',
+    affIdField: isCreator ? 'affiliationNameIdentifier' : 'contributorAffiliationNameIdentifier',
+    affIdSchemeField: isCreator ? 'affiliationNameIdentifierScheme' : 'contributorAffiliationScheme',
+    affIdUriField: isCreator ? 'affiliationNameIdentifierURI' : 'contributorAffiliationURI',
+  };
+
+  arr.forEach((person, idx) => {
+    content.appendChild(renderOnePerson(person, idx, keys));
+  });
+
+  content.appendChild(createAddButton(def.label, () => {
+    const idx = content.querySelectorAll(':scope > .nested-item').length;
+    const emptyPerson = {
+      [keys.typeKey]: '',
+      [keys.namesKey]: [{ [keys.nameKey]: '', [keys.nameLangKey]: '', [keys.nameTypeKey]: '' }],
+      familyNames: [{ familyName: '', familyNameLang: '' }],
+      givenNames: [{ givenName: '', givenNameLang: '' }],
+      nameIdentifiers: [],
+      [keys.affKey]: [],
+    };
+    content.insertBefore(renderOnePerson(emptyPerson, idx, keys), content.lastChild);
+  }));
+
+  return section;
+}
+
+// ----- 関連情報 -----
+function renderRelationField(def, relations) {
+  const arr = Array.isArray(relations) ? relations : [];
+  const summaryText = def.sum(arr);
+  const { section, content } = createSection(def.key, def.label, summaryText);
+
+  arr.forEach((rel, idx) => {
+    const idText = rel.subitem_relation_type_id?.subitem_relation_type_id_text || '';
+    const itemLabel = `${def.label}[${idx}]${idText ? ': '+idText.substring(0,40) : ''}`;
+    const { item: relItem, content: relContent } = createNestedItem(itemLabel, 1);
+
+    relContent.appendChild(createFieldRow('関連タイプ', rel.subitem_relation_type || '', 'select', 'subitem_relation_type', { fieldKey: 'subitem_relation_type' }));
+
+    // 関連識別子（fieldset）
+    const relId = rel.subitem_relation_type_id || {};
+    relContent.appendChild(createFieldRow('識別子タイプ', relId.subitem_relation_type_select || '', 'select', 'subitem_relation_type_select', { fieldKey: 'subitem_relation_type_select' }));
+    relContent.appendChild(createFieldRow('関連識別子', relId.subitem_relation_type_id_text || '', 'text', null, { fieldKey: 'subitem_relation_type_id_text' }));
+
+    // 関連名称（配列）
+    const { wrapper: rnWrap, content: rnCont } = createNestedSectionHeader('関連名称', 2, (cont) => {
+      const { grp, delBtn } = createEntryGroup();
+      grp.appendChild(createFieldRow('関連名称', '', 'text', null, { fieldKey: 'subitem_relation_name_text' }));
+      grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_relation_name_language' }));
+      grp.appendChild(delBtn);
+      cont.appendChild(grp);
+    });
+    (rel.subitem_relation_name || []).forEach(rn => {
+      const { grp, delBtn } = createEntryGroup();
+      grp.appendChild(createFieldRow('関連名称', rn.subitem_relation_name_text || '', 'text', null, { fieldKey: 'subitem_relation_name_text' }));
+      grp.appendChild(createFieldRow('言語', rn.subitem_relation_name_language || '', 'select', 'language', { fieldKey: 'subitem_relation_name_language' }));
+      grp.appendChild(delBtn);
+      rnCont.appendChild(grp);
+    });
+    relContent.appendChild(rnWrap);
+
+    content.appendChild(relItem);
+  });
+
+  content.appendChild(createAddButton(def.label, () => {
+    const idx = content.querySelectorAll(':scope > .nested-item').length;
+    const emptyRel = {
+      subitem_relation_type: '',
+      subitem_relation_type_id: { subitem_relation_type_select: '', subitem_relation_type_id_text: '' },
+      subitem_relation_name: [],
+    };
+    content.insertBefore(
+      (() => {
+        const itemLabel = `${def.label}[${idx}]`;
+        const { item: relItem, content: relContent } = createNestedItem(itemLabel, 1);
+        relContent.appendChild(createFieldRow('関連タイプ', '', 'select', 'subitem_relation_type', { fieldKey: 'subitem_relation_type' }));
+        relContent.appendChild(createFieldRow('識別子タイプ', '', 'select', 'subitem_relation_type_select', { fieldKey: 'subitem_relation_type_select' }));
+        relContent.appendChild(createFieldRow('関連識別子', '', 'text', null, { fieldKey: 'subitem_relation_type_id_text' }));
+        const { wrapper: rnWrap, content: rnCont } = createNestedSectionHeader('関連名称', 2, (cont) => {
+          const { grp, delBtn } = createEntryGroup();
+          grp.appendChild(createFieldRow('関連名称', '', 'text', null, { fieldKey: 'subitem_relation_name_text' }));
+          grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_relation_name_language' }));
+          grp.appendChild(delBtn);
+          cont.appendChild(grp);
+        });
+        relContent.appendChild(rnWrap);
+        return relItem;
+      })(),
+      content.lastChild
+    );
+  }));
+  return section;
+}
+
+// ----- 1件の助成情報DOMを生成するヘルパー -----
+function renderOneFunder(funder, idx, defLabel) {
+  const fName = funder.subitem_funder_names?.[0]?.subitem_funder_name || '';
+  const itemLabel = `${defLabel}[${idx}]${fName ? ': '+fName.substring(0,40) : ''}`;
+  const { item: fundItem, content: fundContent } = createNestedItem(itemLabel, 1);
+
+  // 助成機関名（配列）
+  const { wrapper: fnWrap, content: fnCont } = createNestedSectionHeader('助成機関名', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('助成機関名', '', 'text', null, { fieldKey: 'subitem_funder_name' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_funder_name_language' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (funder.subitem_funder_names || []).forEach(fn => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('助成機関名', fn.subitem_funder_name || '', 'text', null, { fieldKey: 'subitem_funder_name' }));
+    grp.appendChild(createFieldRow('言語', fn.subitem_funder_name_language || '', 'select', 'language', { fieldKey: 'subitem_funder_name_language' }));
+    grp.appendChild(delBtn);
+    fnCont.appendChild(grp);
+  });
+  fundContent.appendChild(fnWrap);
+
+  // 助成機関識別子（fieldset）
+  const fId = funder.subitem_funder_identifiers || {};
+  fundContent.appendChild(createFieldRow('助成機関識別子', fId.subitem_funder_identifier || '', 'text', null, { fieldKey: 'subitem_funder_identifier' }));
+  fundContent.appendChild(createFieldRow('識別子タイプ', fId.subitem_funder_identifier_type || '', 'select', 'subitem_funder_identifier_type', { fieldKey: 'subitem_funder_identifier_type' }));
+
+  // 研究課題番号（fieldset）
+  const aw = funder.subitem_award_numbers || {};
+  fundContent.appendChild(createFieldRow('研究課題番号', aw.subitem_award_number || '', 'text', null, { fieldKey: 'subitem_award_number' }));
+  fundContent.appendChild(createFieldRow('研究課題番号URI', aw.subitem_award_uri || '', 'text', null, { fieldKey: 'subitem_award_uri' }));
+
+  // 研究課題名（配列）
+  const { wrapper: atWrap, content: atCont } = createNestedSectionHeader('研究課題名', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('研究課題名', '', 'text', null, { fieldKey: 'subitem_award_title' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_award_title_language' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (funder.subitem_award_titles || []).forEach(at => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('研究課題名', at.subitem_award_title || '', 'text', null, { fieldKey: 'subitem_award_title' }));
+    grp.appendChild(createFieldRow('言語', at.subitem_award_title_language || '', 'select', 'language', { fieldKey: 'subitem_award_title_language' }));
+    grp.appendChild(delBtn);
+    atCont.appendChild(grp);
+  });
+  fundContent.appendChild(atWrap);
+
+  return fundItem;
+}
+
+// ----- 助成情報 -----
+function renderFundingField(def, funders) {
+  const arr = Array.isArray(funders) ? funders : [];
+  const summaryText = def.sum(arr);
+  const { section, content } = createSection(def.key, def.label, summaryText);
+
+  arr.forEach((funder, idx) => {
+    content.appendChild(renderOneFunder(funder, idx, def.label));
+  });
+
+  content.appendChild(createAddButton(def.label, () => {
+    const idx = content.querySelectorAll(':scope > .nested-item').length;
+    const emptyFunder = {
+      subitem_funder_names: [{ subitem_funder_name: '', subitem_funder_name_language: '' }],
+      subitem_funder_identifiers: {},
+      subitem_award_numbers: {},
+      subitem_award_titles: [],
+    };
+    content.insertBefore(renderOneFunder(emptyFunder, idx, def.label), content.lastChild);
+  }));
+  return section;
+}
+
+// ----- 書誌情報 -----
+function renderBiblioField(def, obj) {
+  const data = obj || {};
+  const summaryText = def.sum(data);
+  const { section, content } = createSection(def.key, def.label, summaryText);
+
+  if (!obj) {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'padding:8px 16px;color:#999;font-size:0.85em';
+    msg.textContent = '（データなし）';
+    content.appendChild(msg);
+    return section;
+  }
+
+  // 雑誌名（配列）
+  const { wrapper: btWrap, content: btCont } = createNestedSectionHeader('雑誌名', 2);
+  (data.bibliographic_titles || []).forEach(bt => {
+    btCont.appendChild(createFieldRow('タイトル', bt.bibliographic_title || '', 'text', null, { fieldKey: 'bibliographic_title' }));
+    btCont.appendChild(createFieldRow('言語', bt.bibliographic_titleLang || '', 'select', 'language', { fieldKey: 'bibliographic_titleLang' }));
+  });
+  content.appendChild(btWrap);
+
+  // 巻・号・ページ
+  content.appendChild(createFieldRow('巻', data.bibliographicVolumeNumber || '', 'text', null, { fieldKey: 'bibliographicVolumeNumber' }));
+  content.appendChild(createFieldRow('号', data.bibliographicIssueNumber || '', 'text', null, { fieldKey: 'bibliographicIssueNumber' }));
+  content.appendChild(createFieldRow('開始ページ', data.bibliographicPageStart || '', 'text', null, { fieldKey: 'bibliographicPageStart' }));
+  content.appendChild(createFieldRow('終了ページ', data.bibliographicPageEnd || '', 'text', null, { fieldKey: 'bibliographicPageEnd' }));
+  content.appendChild(createFieldRow('ページ数', data.bibliographicNumberOfPages || '', 'text', null, { fieldKey: 'bibliographicNumberOfPages' }));
+
+  // 発行日（fieldset）
+  const bd = data.bibliographicIssueDates || {};
+  content.appendChild(createFieldRow('発行日', bd.bibliographicIssueDate || '', 'text', null, { fieldKey: 'bibliographicIssueDate' }));
+  content.appendChild(createFieldRow('発行日タイプ', bd.bibliographicIssueDateType || '', 'select', 'bibliographicIssueDateType', { fieldKey: 'bibliographicIssueDateType' }));
+
+  return section;
+}
+
+// ----- 権利者情報: 1件分のDOM生成 -----
+function renderOneRightsHolder(rh, idx, defLabel) {
+  const dispName = rh.rightHolderNames?.[0]?.rightHolderName || '';
+  const itemLabel = `${defLabel}[${idx}]${dispName ? ': '+dispName.substring(0,40) : ''}`;
+  const { item: rhItem, content: rhCont } = createNestedItem(itemLabel, 1);
+
+  // 権利者名（配列）
+  const { wrapper: rnWrap, content: rnCont } = createNestedSectionHeader('権利者名', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('権利者名', '', 'text', null, { fieldKey: 'rightHolderName' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'rightHolderLanguage' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (rh.rightHolderNames || []).forEach(rn => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('権利者名', rn.rightHolderName || '', 'text', null, { fieldKey: 'rightHolderName' }));
+    grp.appendChild(createFieldRow('言語', rn.rightHolderLanguage || '', 'select', 'language', { fieldKey: 'rightHolderLanguage' }));
+    grp.appendChild(delBtn);
+    rnCont.appendChild(grp);
+  });
+  rhCont.appendChild(rnWrap);
+
+  // 権利者識別子（配列）
+  const { wrapper: riWrap, content: riCont } = createNestedSectionHeader('権利者識別子', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('識別子', '', 'text', null, { fieldKey: 'nameIdentifier' }));
+    grp.appendChild(createFieldRow('Scheme', '', 'select', 'nameIdentifierScheme', { fieldKey: 'nameIdentifierScheme' }));
+    grp.appendChild(createFieldRow('URI', '', 'text', null, { fieldKey: 'nameIdentifierURI' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (rh.nameIdentifiers || []).forEach(ni => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('識別子', ni.nameIdentifier || '', 'text', null, { fieldKey: 'nameIdentifier' }));
+    grp.appendChild(createFieldRow('Scheme', ni.nameIdentifierScheme || '', 'select', 'nameIdentifierScheme', { fieldKey: 'nameIdentifierScheme' }));
+    grp.appendChild(createFieldRow('URI', ni.nameIdentifierURI || '', 'text', null, { fieldKey: 'nameIdentifierURI' }));
+    grp.appendChild(delBtn);
+    riCont.appendChild(grp);
+  });
+  rhCont.appendChild(riWrap);
+
+  return rhItem;
+}
+
+// ----- 権利者情報 -----
+function renderRightsHolderField(def, holders) {
+  const arr = Array.isArray(holders) ? holders : [];
+  const summaryText = def.sum(arr);
+  const { section, content } = createSection(def.key, def.label, summaryText);
+
+  arr.forEach((rh, idx) => {
+    content.appendChild(renderOneRightsHolder(rh, idx, def.label));
+  });
+
+  content.appendChild(createAddButton(def.label, () => {
+    const idx = content.querySelectorAll(':scope > .nested-item').length;
+    const emptyRh = {
+      rightHolderNames: [{ rightHolderName: '', rightHolderLanguage: '' }],
+      nameIdentifiers: [],
+    };
+    content.insertBefore(renderOneRightsHolder(emptyRh, idx, def.label), content.lastChild);
+  }));
+  return section;
+}
+
+// ----- 位置情報: 1件分のDOM生成 -----
+function renderOneGeolocation(geo, idx, defLabel) {
+  const placeText = geo.subitem_geolocation_place?.[0]?.subitem_geolocation_place_text || '';
+  const itemLabel = `${defLabel}[${idx}]${placeText ? ': '+placeText.substring(0,40) : ''}`;
+  const { item: geoItem, content: geoCont } = createNestedItem(itemLabel, 1);
+
+  // 位置情報（点）
+  const pt = geo.subitem_geolocation_point || {};
+  const { wrapper: ptWrap, content: ptCont } = createNestedSectionHeader('位置情報（点）', 2, false);
+  ptCont.appendChild(createFieldRow('経度', pt.subitem_point_longitude || '', 'text', null, { fieldKey: 'subitem_point_longitude' }));
+  ptCont.appendChild(createFieldRow('緯度', pt.subitem_point_latitude || '', 'text', null, { fieldKey: 'subitem_point_latitude' }));
+  geoCont.appendChild(ptWrap);
+
+  // 位置情報（空間）
+  const bx = geo.subitem_geolocation_box || {};
+  const { wrapper: bxWrap, content: bxCont } = createNestedSectionHeader('位置情報（空間）', 2, false);
+  bxCont.appendChild(createFieldRow('西部経度', bx.subitem_west_longitude || '', 'text', null, { fieldKey: 'subitem_west_longitude' }));
+  bxCont.appendChild(createFieldRow('東部経度', bx.subitem_east_longitude || '', 'text', null, { fieldKey: 'subitem_east_longitude' }));
+  bxCont.appendChild(createFieldRow('南部緯度', bx.subitem_south_latitude || '', 'text', null, { fieldKey: 'subitem_south_latitude' }));
+  bxCont.appendChild(createFieldRow('北部緯度', bx.subitem_north_latitude || '', 'text', null, { fieldKey: 'subitem_north_latitude' }));
+  geoCont.appendChild(bxWrap);
+
+  // 位置情報（自由記述）
+  const { wrapper: plWrap, content: plCont } = createNestedSectionHeader('位置情報（自由記述）', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('自由記述', '', 'text', null, { fieldKey: 'subitem_geolocation_place_text' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (geo.subitem_geolocation_place || []).forEach(pl => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('自由記述', pl.subitem_geolocation_place_text || '', 'text', null, { fieldKey: 'subitem_geolocation_place_text' }));
+    grp.appendChild(delBtn);
+    plCont.appendChild(grp);
+  });
+  geoCont.appendChild(plWrap);
+
+  return geoItem;
+}
+
+// ----- 位置情報 -----
+function renderGeolocationField(def, geos) {
+  const arr = Array.isArray(geos) ? geos : [];
+  const summaryText = def.sum(arr);
+  const { section, content } = createSection(def.key, def.label, summaryText);
+
+  arr.forEach((geo, idx) => {
+    content.appendChild(renderOneGeolocation(geo, idx, def.label));
+  });
+
+  content.appendChild(createAddButton(def.label, () => {
+    const idx = content.querySelectorAll(':scope > .nested-item').length;
+    const emptyGeo = {
+      subitem_geolocation_point: { subitem_point_longitude: '', subitem_point_latitude: '' },
+      subitem_geolocation_box: { subitem_west_longitude: '', subitem_east_longitude: '', subitem_south_latitude: '', subitem_north_latitude: '' },
+      subitem_geolocation_place: [],
+    };
+    content.insertBefore(renderOneGeolocation(emptyGeo, idx, def.label), content.lastChild);
+  }));
+  return section;
+}
+
+// ----- 会議記述: 1件分のDOM生成 -----
+function renderOneConference(conf, idx, defLabel) {
+  const confName = conf.subitem_conference_names?.[0]?.subitem_conference_name || '';
+  const itemLabel = `${defLabel}[${idx}]${confName ? ': '+confName.substring(0,40) : ''}`;
+  const { item: confItem, content: confCont } = createNestedItem(itemLabel, 1);
+
+  // 会議名（配列）
+  const { wrapper: cnWrap, content: cnCont } = createNestedSectionHeader('会議名', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('会議名', '', 'text', null, { fieldKey: 'subitem_conference_name' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_conference_name_language' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (conf.subitem_conference_names || []).forEach(cn => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('会議名', cn.subitem_conference_name || '', 'text', null, { fieldKey: 'subitem_conference_name' }));
+    grp.appendChild(createFieldRow('言語', cn.subitem_conference_name_language || '', 'select', 'language', { fieldKey: 'subitem_conference_name_language' }));
+    grp.appendChild(delBtn);
+    cnCont.appendChild(grp);
+  });
+  confCont.appendChild(cnWrap);
+
+  // 回次
+  confCont.appendChild(createFieldRow('回次', conf.subitem_conference_sequence || '', 'text', null, { fieldKey: 'subitem_conference_sequence' }));
+
+  // 主催機関（配列）
+  const { wrapper: csWrap, content: csCont } = createNestedSectionHeader('主催機関', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('主催機関', '', 'text', null, { fieldKey: 'subitem_conference_sponsor' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_conference_sponsor_language' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (conf.subitem_conference_sponsors || []).forEach(cs => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('主催機関', cs.subitem_conference_sponsor || '', 'text', null, { fieldKey: 'subitem_conference_sponsor' }));
+    grp.appendChild(createFieldRow('言語', cs.subitem_conference_sponsor_language || '', 'select', 'language', { fieldKey: 'subitem_conference_sponsor_language' }));
+    grp.appendChild(delBtn);
+    csCont.appendChild(grp);
+  });
+  confCont.appendChild(csWrap);
+
+  // 開催期間（オブジェクト）
+  const cd = conf.subitem_conference_date || {};
+  const { wrapper: cdWrap, content: cdCont } = createNestedSectionHeader('開催期間', 2, false);
+  cdCont.appendChild(createFieldRow('開始年', cd.subitem_conference_start_year || '', 'text', null, { fieldKey: 'subitem_conference_start_year' }));
+  cdCont.appendChild(createFieldRow('開始月', cd.subitem_conference_start_month || '', 'text', null, { fieldKey: 'subitem_conference_start_month' }));
+  cdCont.appendChild(createFieldRow('開始日', cd.subitem_conference_start_day || '', 'text', null, { fieldKey: 'subitem_conference_start_day' }));
+  cdCont.appendChild(createFieldRow('終了年', cd.subitem_conference_end_year || '', 'text', null, { fieldKey: 'subitem_conference_end_year' }));
+  cdCont.appendChild(createFieldRow('終了月', cd.subitem_conference_end_month || '', 'text', null, { fieldKey: 'subitem_conference_end_month' }));
+  cdCont.appendChild(createFieldRow('終了日', cd.subitem_conference_end_day || '', 'text', null, { fieldKey: 'subitem_conference_end_day' }));
+  cdCont.appendChild(createFieldRow('開催期間', cd.subitem_conference_period || '', 'text', null, { fieldKey: 'subitem_conference_period' }));
+  cdCont.appendChild(createFieldRow('言語', cd.subitem_conference_date_language || '', 'select', 'language', { fieldKey: 'subitem_conference_date_language' }));
+  confCont.appendChild(cdWrap);
+
+  // 開催会場（配列）
+  const { wrapper: cvWrap, content: cvCont } = createNestedSectionHeader('開催会場', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('開催会場', '', 'text', null, { fieldKey: 'subitem_conference_venue' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_conference_venue_language' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (conf.subitem_conference_venues || []).forEach(cv => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('開催会場', cv.subitem_conference_venue || '', 'text', null, { fieldKey: 'subitem_conference_venue' }));
+    grp.appendChild(createFieldRow('言語', cv.subitem_conference_venue_language || '', 'select', 'language', { fieldKey: 'subitem_conference_venue_language' }));
+    grp.appendChild(delBtn);
+    cvCont.appendChild(grp);
+  });
+  confCont.appendChild(cvWrap);
+
+  // 開催地（配列）
+  const { wrapper: cpWrap, content: cpCont } = createNestedSectionHeader('開催地', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('開催地', '', 'text', null, { fieldKey: 'subitem_conference_place' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_conference_place_language' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (conf.subitem_conference_places || []).forEach(cp => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('開催地', cp.subitem_conference_place || '', 'text', null, { fieldKey: 'subitem_conference_place' }));
+    grp.appendChild(createFieldRow('言語', cp.subitem_conference_place_language || '', 'select', 'language', { fieldKey: 'subitem_conference_place_language' }));
+    grp.appendChild(delBtn);
+    cpCont.appendChild(grp);
+  });
+  confCont.appendChild(cpWrap);
+
+  // 開催国
+  confCont.appendChild(createFieldRow('開催国', conf.subitem_conference_country || '', 'select', 'subitem_conference_country', { fieldKey: 'subitem_conference_country' }));
+
+  return confItem;
+}
+
+// ----- 会議記述 -----
+function renderConferenceField(def, confs) {
+  const arr = Array.isArray(confs) ? confs : [];
+  const summaryText = def.sum(arr);
+  const { section, content } = createSection(def.key, def.label, summaryText);
+
+  arr.forEach((conf, idx) => {
+    content.appendChild(renderOneConference(conf, idx, def.label));
+  });
+
+  content.appendChild(createAddButton(def.label, () => {
+    const idx = content.querySelectorAll(':scope > .nested-item').length;
+    const emptyConf = {
+      subitem_conference_names: [{ subitem_conference_name: '', subitem_conference_name_language: '' }],
+      subitem_conference_sequence: '',
+      subitem_conference_sponsors: [],
+      subitem_conference_date: {},
+      subitem_conference_venues: [],
+      subitem_conference_places: [],
+      subitem_conference_country: '',
+    };
+    content.insertBefore(renderOneConference(emptyConf, idx, def.label), content.lastChild);
+  }));
+  return section;
+}
+
+// ===== 5.5 メインレンダリング =====
+function renderAll(metadata) {
+  const container = document.getElementById('metadata-fields');
+  container.innerHTML = '';
+
+  // システムフィールド
+  renderSystemFields(metadata.system);
+
+  // メタデータフィールド
+  for (const def of FIELD_DEFS) {
+    const value = metadata[def.key];
+    if (value === undefined) continue;
+    let sectionEl;
+    switch (def.type) {
+      case 'array':
+        sectionEl = renderArrayField(def, value);
+        break;
+      case 'object':
+        sectionEl = renderObjectField(def, value);
+        break;
+      case 'creator':
+        sectionEl = renderPersonField(def, value, true);
+        break;
+      case 'contributor':
+        sectionEl = renderPersonField(def, value, false);
+        break;
+      case 'relation':
+        sectionEl = renderRelationField(def, value);
+        break;
+      case 'funding':
+        sectionEl = renderFundingField(def, value);
+        break;
+      case 'biblio':
+        sectionEl = renderBiblioField(def, value);
+        break;
+      case 'rightsHolder':
+        sectionEl = renderRightsHolderField(def, value);
+        break;
+      case 'geolocation':
+        sectionEl = renderGeolocationField(def, value);
+        break;
+      case 'conference':
+        sectionEl = renderConferenceField(def, value);
+        break;
+      default:
+        continue;
+    }
+    container.appendChild(sectionEl);
+  }
+
+  document.getElementById('preview-area').style.display = 'block';
+}
+
+// ===== 5.6 空メタデータ生成 =====
+function buildEmptyMetadata() {
+  return {
+    system: {
+      id: '', uri: '', path: '',
+      pos_index: document.getElementById('pos-index-input').value,
+      publish_status: 'private', feedback_mail: '', cnri: '',
+      doi_ra: '', doi: '', edit_mode: 'Keep', pubdate: todayStr(),
+    },
+    item_30002_title0: [{ subitem_title: '', subitem_title_language: '' }],
+    item_30002_alternative_title1: [],
+    item_30002_creator2: [{
+      creatorType: '', creatorNames: [{ creatorName: '', creatorNameLang: '', creatorNameType: '' }],
+      familyNames: [{ familyName: '', familyNameLang: '' }],
+      givenNames: [{ givenName: '', givenNameLang: '' }],
+      nameIdentifiers: [{ nameIdentifier: '', nameIdentifierScheme: '', nameIdentifierURI: '' }],
+      creatorAffiliations: [{
+        affiliationNames: [{ affiliationName: '', affiliationNameLang: '' }],
+        affiliationNameIdentifiers: [{ affiliationNameIdentifier: '', affiliationNameIdentifierScheme: '', affiliationNameIdentifierURI: '' }],
+      }],
+    }],
+    item_30002_contributor3: [],
+    item_30002_access_rights4: { subitem_access_right: '', subitem_access_right_uri: '' },
+    item_30002_rights6: [],
+    item_30002_rights_holder7: [{
+      rightHolderNames: [{ rightHolderName: '', rightHolderLanguage: '' }],
+      nameIdentifiers: [],
+    }],
+    item_30002_subject8: [],
+    item_30002_description9: [],
+    item_30002_publisher10: [],
+    item_30002_date11: [],
+    item_30002_language12: [{ subitem_language: '' }],
+    item_30002_resource_type13: { resourcetype: '', resourceuri: '' },
+    item_30002_version14: { subitem_version: '' },
+    item_30002_version_type15: { subitem_version_resource: '', subitem_version_type: '' },
+    item_30002_identifier16: [],
+    item_30002_identifier_registration17: { subitem_identifier_reg_text: '', subitem_identifier_reg_type: '' },
+    item_30002_relation18: [],
+    item_30002_temporal19: [],
+    item_30002_geolocation20: [{
+      subitem_geolocation_point: { subitem_point_longitude: '', subitem_point_latitude: '' },
+      subitem_geolocation_box: { subitem_west_longitude: '', subitem_east_longitude: '', subitem_south_latitude: '', subitem_north_latitude: '' },
+      subitem_geolocation_place: [{ subitem_geolocation_place_text: '' }],
+    }],
+    item_30002_funding_reference21: [],
+    item_30002_source_identifier22: [],
+    item_30002_source_title23: [],
+    item_30002_volume_number24: { subitem_volume: '' },
+    item_30002_issue_number25: { subitem_issue: '' },
+    item_30002_number_of_pages26: { subitem_number_of_pages: '' },
+    item_30002_page_start27: { subitem_start_page: '' },
+    item_30002_page_end28: { subitem_end_page: '' },
+    item_30002_bibliographic_information29: null,
+    item_30002_conference34: [{
+      subitem_conference_names: [{ subitem_conference_name: '', subitem_conference_name_language: '' }],
+      subitem_conference_sequence: '',
+      subitem_conference_sponsors: [],
+      subitem_conference_date: {},
+      subitem_conference_venues: [],
+      subitem_conference_places: [],
+      subitem_conference_country: '',
+    }],
+  };
+}
+
+// ===== Enter キー =====
+document.getElementById('doi-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') fetchData();
+});
+</script>
+</body>
+</html>
