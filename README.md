@@ -4,15 +4,15 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 ## 使い方
 
-**このツールはベータ版です。インポート用TSVファイルの生成機能（Phase 2）は未実装です。**
+**このツールはベータ版です。インポート用TSVファイルの生成機能はPhase 2で実装予定です。**
 
 `make_jc_importer.html` をブラウザで開き、DOIを入力するだけで利用できます。サーバー不要のスタンドアロンHTMLツールです。
 
-現在のバージョン（Phase 1 完了）では、APIからのデータ取得・マッピング・編集UIが実装されています。
+現在のバージョン（Phase 1）では、APIからのデータ取得・マッピング・編集UIが実装されています。
 
 ## 機能
 
-### 実装済み（Phase 1）
+### Phase 1
 
 - DOIの入力により Crossref / OpenAlex API から書誌情報を自動取得
 - ROR API（v2）による機関情報の補完（ISNI・ROR ID取得）
@@ -29,7 +29,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 - Crossref と OpenAlex の著者情報マッチング（姓名一致 → インデックスフォールバック）
 - 空フィールドのみの表示
 
-### 未実装（Phase 2）
+### Phase 2
 
 - メタデータ収集（`collectMetadata()`）
 - TSV出力（`generateTsv()`、ダウンロードボタン）
@@ -48,8 +48,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 │   ├── tsv_headers.json    # TSVヘッダー定義
 │   └── crossref_fields.json　# Crossrefフィールド定義
 ├── docs/                   # 仕様・設計ドキュメント
-├── samples/                # サンプルデータ（API レスポンス等）
-└── old/                    # 旧バージョン参照用
+└── samples/                # サンプルデータ（API レスポンス等）
 ```
 
 ## ドキュメント
@@ -62,7 +61,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 - [JPCOARスキーマ フィールド一覧](docs/fields.md) 「デフォルトアイテムタイプ（フル）」に含まれるフィールド一覧です。
 - [JPCOARスキーマ 項目別説明リンク一覧](docs/JPCOARschema_guide.md)
 
-## 📝 ライセンス
+## ライセンス
 
 このプロジェクトは [CC0 1.0 Universal (CC0 1.0) Public Domain Dedication](https://creativecommons.org/publicdomain/zero/1.0/) の下で公開されています。詳細は [LICENSE](LICENSE) ファイルを参照してください。
 
