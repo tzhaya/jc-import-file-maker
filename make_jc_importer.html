@@ -360,6 +360,7 @@
     <span style="color:#888;font-size:0.85em">（.pos_index[0] の値）</span>
   </div>
   <div id="loading" style="display:none">⏳ データを取得中です（ROR/ISNIも並行取得）...</div>
+  <div id="apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ OpenAlex API Keyが設定されていません。設定しない場合、利用回数が制限されます。</div>
   <div id="error-msg"></div>
   <div id="info-bar" style="display:none">
     <a id="doi-link" href="" target="_blank"></a>
@@ -398,6 +399,12 @@
 // ================================================================
 // STEP 2: 定数・マスターデータ定義
 // ================================================================
+
+const CONFIG = {
+    // OpenAlex APIキー（必須）
+    // https://openalex.org/settings/api からご自身のキーを取得して貼り付けてください
+    API_KEY: "YOUR_API_KEY",
+};
 
 // ===== 除外フィールドリスト =====
 const EXCLUDED_KEYS = new Set([
@@ -764,9 +771,14 @@ async function fetchCrossref(doi) {
 
 // ===== 3.2 OpenAlex API =====
 async function fetchOpenAlex(doi) {
-  const resp = await fetch(`https://api.openalex.org/works/doi:${encodeURIComponent(doi)}`);
+  let url = `https://api.openalex.org/works/doi:${encodeURIComponent(doi)}`;
+  if (CONFIG.API_KEY && CONFIG.API_KEY !== 'YOUR_API_KEY') {
+    url += `?api_key=${encodeURIComponent(CONFIG.API_KEY)}`;
+  }
+  const resp = await fetch(url);
   if (!resp.ok) {
     if (resp.status === 404) throw new Error('DOIがOpenAlexに見つかりません');
+    if (resp.status === 409) throw new Error('OpenAlex API Keyなしでの利用回数の制限を超えました。https://openalex.org/pricing でAPI Keyを取得し、設定してください。');
     throw new Error(`OpenAlex APIエラー: ${resp.status}`);
   }
   return await resp.json();
@@ -2422,6 +2434,11 @@ function buildEmptyMetadata() {
 document.getElementById('doi-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') fetchData();
 });
+
+// ===== APIキー未設定警告 =====
+if (!CONFIG.API_KEY || CONFIG.API_KEY === 'YOUR_API_KEY') {
+  document.getElementById('apikey-warning').style.display = 'block';
+}
 </script>
 </body>
 </html>

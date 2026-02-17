@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-15（コードクリーンアップ＋フィールド補完＋参照用列追加完了）
+最終更新: 2026-02-17（OpenAlex API Key設定機能追加）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約2410行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列済み）
+現在のファイル規模: **約2440行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定済み）
 
 ---
 
@@ -266,6 +266,28 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 - `fetchData()` に `showHints = true` を追加（APIデータ取得後に参照値を表示）
 - `showEmptyFields()` に `showHints = false` を追加（空値表示では参照値を非表示）
 - 個別レンダラーの変更不要（`createFieldRow()` で一元的に処理）
+
+---
+
+### OpenAlex API Key 設定機能 ✅（2026-02-17）
+
+**背景:** 2026年2月13日以降、OpenAlex APIはAPIキーなしでの利用にテストクレジット（100回）の制限を設け、超過時にHTTP 409を返すようになった（[Issue #1](https://github.com/tzhaya/jc-import-file-maker/issues/1)）。
+
+**実装内容:**
+1. **`CONFIG` 定数の追加（STEP 2 定数セクション冒頭）:**
+   - `CONFIG.API_KEY`: OpenAlex APIキーを設定する定数
+   - デフォルト値 `"YOUR_API_KEY"`（未設定状態）
+2. **未設定時の警告バナー（`#apikey-warning`）:**
+   - `#input-area` 内に黄色背景の警告 div を追加
+   - ページ読み込み時に `CONFIG.API_KEY` が未設定（`"YOUR_API_KEY"` または空）の場合に表示
+3. **`fetchOpenAlex()` のAPIキー送信対応:**
+   - `CONFIG.API_KEY` が有効値の場合、リクエストURLに `?api_key=<key>` パラメータを付与
+   - 未設定の場合は従来通りパラメータなしで送信
+4. **409エラーの専用ハンドリング:**
+   - `resp.status === 409` の場合、利用回数制限超過の専用エラーメッセージを表示
+   - APIキー取得先URLを含むガイダンスメッセージ
+
+**検証:** APIキー設定時のリクエストURL確認（`?api_key=` 付与）、未設定時の警告表示確認済み
 
 ---
 
