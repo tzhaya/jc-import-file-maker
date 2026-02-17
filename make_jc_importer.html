@@ -1001,39 +1001,38 @@ function buildAuthors(crAuthors, oaAuthorships, rorMap) {
 
 // ===== 4.4 助成情報マッピング =====
 function buildFunders(crFunders) {
-  return (crFunders || []).map(f => {
+  return (crFunders || []).flatMap(f => {
     const name      = f.name  || '';
     const funderDoi = f.DOI   || '';
     const awards    = f.award || [];
 
-    const obj = {};
+    const buildEntry = (awardNum) => {
+      const obj = {};
+      obj.subitem_funder_names = name
+        ? [{ subitem_funder_name: name, subitem_funder_name_language: 'en' }]
+        : [];
 
-    obj.subitem_funder_names = name
-      ? [{ subitem_funder_name: name, subitem_funder_name_language: 'en' }]
-      : [];
+      if (funderDoi) {
+        obj.subitem_funder_identifiers = {
+          subitem_funder_identifier:      `https://doi.org/${funderDoi}`,
+          subitem_funder_identifier_type: 'Crossref Funder',
+        };
+      } else {
+        obj.subitem_funder_identifiers = { subitem_funder_identifier: '', subitem_funder_identifier_type: '' };
+      }
 
-    if (funderDoi) {
-      obj.subitem_funder_identifiers = {
-        subitem_funder_identifier:      `https://doi.org/${funderDoi}`,
-        subitem_funder_identifier_type: 'Crossref Funder',
-      };
-    } else {
-      obj.subitem_funder_identifiers = { subitem_funder_identifier: '', subitem_funder_identifier_type: '' };
-    }
-
-    if (awards.length > 0) {
       obj.subitem_award_numbers = {
-        subitem_award_number:      awards[0],
+        subitem_award_number:      awardNum,
         subitem_award_number_type: '',
         subitem_award_uri:         '',
       };
-    } else {
-      obj.subitem_award_numbers = { subitem_award_number: '', subitem_award_number_type: '', subitem_award_uri: '' };
-    }
 
-    obj.subitem_award_titles = []; // Crossref に課題名なし
+      obj.subitem_award_titles = []; // Crossref に課題名なし
+      return obj;
+    };
 
-    return obj;
+    if (awards.length === 0) return [buildEntry('')];
+    return awards.map(aw => buildEntry(aw));
   });
 }
 

@@ -60,6 +60,76 @@ Crossrefの著者とOpenAlexの著者の突合は、以下の手順で行われ�
 1. **Crossref** の `author[].ORCID` を優先的に使用
 2. Crossrefに存在しない場合、**OpenAlex** の `authorships[].author.orcid` をフォールバックとして使用（警告フラグ `_warnOrcid` 付き）
 
+## 助成情報 (Funding Reference) フィールドの詳細マッピング
+
+Crossrefの `funder[]` 配列から助成情報を構築します。1つのfunderに複数のawardがある場合、各awardごとに同一funder情報を持つエントリを生成します（`flatMap`で展開）。
+
+### 助成情報マッピング
+
+| サブフィールド | WEKOキー | Crossref | 備考 |
+|---|---|---|---|
+| **助成機関名** | `subitem_funder_names[].subitem_funder_name` | `funder[].name` | 言語は'en'固定 |
+| **助成機関名 言語** | `subitem_funder_names[].subitem_funder_name_language` | — | 'en'にハードコード |
+| **助成機関識別子** | `subitem_funder_identifiers.subitem_funder_identifier` | `funder[].DOI` | `https://doi.org/{DOI}` 形式に変換 |
+| **助成機関識別子タイプ** | `subitem_funder_identifiers.subitem_funder_identifier_type` | — | DOIがある場合 'Crossref Funder'、なければ空 |
+| **助成機関識別子タイプURI** | `subitem_funder_identifiers.subitem_funder_identifier_type_uri` | — | 空（未使用） |
+| **研究課題番号** | `subitem_award_numbers.subitem_award_number` | `funder[].award[]` | 各awardごとに1エントリ生成 |
+| **研究課題番号タイプ** | `subitem_award_numbers.subitem_award_number_type` | — | 空（未使用） |
+| **研究課題番号URI** | `subitem_award_numbers.subitem_award_uri` | — | 空（未使用） |
+| **プログラム情報** | `subitem_funding_streams` | — | 空（未実装） |
+| **プログラム情報識別子** | `subitem_funding_stream_identifiers` | — | 空（未実装） |
+| **研究課題名** | `subitem_award_titles.subitem_award_title` | — | 空（Crossrefに課題名なし） |
+| **研究課題名 言語** | `subitem_award_titles.subitem_award_title_language` | — | 空（Crossrefに課題名なし） |
+
+### 助成機関識別子の変換ロジック
+
+| 条件 | 識別子値 | 識別子タイプ |
+|---|---|---|
+| `funder[].DOI` が存在する | `https://doi.org/{funder.DOI}` | `Crossref Funder` |
+| `funder[].DOI` が存在しない | 空文字 | 空文字 |
+
+### 研究課題番号の取得
+
+- Crossrefの `funder[].award` は配列形式（1つの助成機関に複数の課題番号がある場合がある）
+- `flatMap` により各awardごとに同一funder情報（名前・DOI）を持つエントリを展開
+- awardが0件の場合は空awardで1エントリを生成
+
+### Crossref APIレスポンス例
+
+```json
+{
+  "funder": [
+    {
+      "DOI": "10.13039/100000002",
+      "name": "National Institutes of Health",
+      "doi-asserted-by": "publisher",
+      "award": ["R01DK123456"],
+      "id": [{"id": "10.13039/100000002", "id-type": "DOI", "asserted-by": "publisher"}]
+    }
+  ]
+}
+```
+
+### 生成されるWEKOデータ構造例
+
+```json
+{
+  "subitem_funder_names": [
+    { "subitem_funder_name": "National Institutes of Health", "subitem_funder_name_language": "en" }
+  ],
+  "subitem_funder_identifiers": {
+    "subitem_funder_identifier": "https://doi.org/10.13039/100000002",
+    "subitem_funder_identifier_type": "Crossref Funder"
+  },
+  "subitem_award_numbers": {
+    "subitem_award_number": "R01DK123456",
+    "subitem_award_number_type": "",
+    "subitem_award_uri": ""
+  },
+  "subitem_award_titles": []
+}
+```
+
 ## 出版タイプ (Version Type) の判定ロジック
 
 OpenAlexの `open_access` フィールドを使用して判定します。

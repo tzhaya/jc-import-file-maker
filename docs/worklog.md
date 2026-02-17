@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-17（OpenAlex API Key設定機能追加）
+最終更新: 2026-02-17（同一助成機関・複数award対応）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -105,6 +105,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
   - `_warnLang: true` フラグ（言語を英語と仮設定した場合）
 - `buildFunders(crFunders)`: 助成情報マッピング
   - funder名、Crossref Funder DOI、award番号を変換
+  - 同一funderの複数awardをflatMapで展開（各awardごとに1エントリ生成）
 - `mapToItemType(crJson, oaJson, rorMap)`: メインマッピング関数
   - 以下の全フィールドをマッピング:
     - タイトル、作成者、アクセス権（固定: open access）
@@ -288,6 +289,22 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
    - APIキー取得先URLを含むガイダンスメッセージ
 
 **検証:** APIキー設定時のリクエストURL確認（`?api_key=` 付与）、未設定時の警告表示確認済み
+
+---
+
+### 同一助成機関・複数award対応 ✅（2026-02-17）
+
+**背景:** Crossref APIでは1つのfunderに複数のaward番号が含まれることがある（例: JSPSが4つのaward番号を持つケース）。従来の`buildFunders()`は`awards[0]`のみ取得し、2番目以降を破棄していた。
+
+**実装内容:**
+1. **`buildFunders()` 関数の修正:**
+   - `.map()` → `.flatMap()` に変更
+   - 内部ヘルパー `buildEntry(awardNum)` を導入し、各awardごとに同一funder情報を持つエントリを生成
+   - award 0件の場合は空awardで1エントリ（従来と同じ動作）
+
+**影響範囲:** `buildFunders()` のみ。`mapToItemType()`、`renderFundingField()`、`renderOneFunder()` は配列を走査するだけなので変更不要。
+
+**検証:** DOI `10.1002/advs.202512896` でJSPSが4エントリ、FORESTが2エントリ、計6エントリが助成情報に表示されることを確認。
 
 ---
 
