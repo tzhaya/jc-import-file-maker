@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-17（同一助成機関・複数award対応）
+最終更新: 2026-02-17（DOI RA判定機能追加）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -305,6 +305,27 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 **影響範囲:** `buildFunders()` のみ。`mapToItemType()`、`renderFundingField()`、`renderOneFunder()` は配列を走査するだけなので変更不要。
 
 **検証:** DOI `10.1002/advs.202512896` でJSPSが4エントリ、FORESTが2エントリ、計6エントリが助成情報に表示されることを確認。
+
+---
+
+### DOI RA判定機能 ✅（2026-02-17）
+
+**背景:** Issue #4（JaLC DOI対応）の前提として、DOIの登録機関（Registration Authority）を判定し、RAに応じて処理を分岐する仕組みが必要（[Issue #5](https://github.com/tzhaya/jc-import-file-maker/issues/5)）。
+
+**実装内容:**
+1. **`fetchDoiRA(doi)` 関数の追加（セクション 3.0）:**
+   - `https://doi.org/doiRA/{DOI}` APIを呼び出してRAを判定
+   - DOIが存在しない場合は「入力されたDOIは存在しません。」エラーを表示
+   - 返却値: RA名文字列（"Crossref", "JaLC", "DataCite" 等）
+2. **`fetchCrossrefData(doi)` 関数の抽出（セクション 3.5）:**
+   - 既存の `fetchData()` 内の Crossref + OpenAlex + ROR 取得 → マッピング → レンダリングのロジックを独立関数に切り出し
+3. **`fetchData()` のRA分岐ロジック（セクション 3.6）:**
+   - DOI正規化後、まず `fetchDoiRA()` でRAを判定
+   - `Crossref` → 既存の `fetchCrossrefData()` を呼び出し
+   - `JaLC` → 未対応メッセージを表示（Issue #6 で実装予定）
+   - その他 → サポート外メッセージを表示
+
+**検証:** Crossref DOI (`10.1016/j.advnut.2025.100480`) で既存動作維持を確認。JaLC DOI (`10.11209/jim.27.85`) で未対応メッセージ表示を確認。
 
 ---
 
