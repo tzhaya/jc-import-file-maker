@@ -10,21 +10,30 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 現在のバージョン（Phase 1）では、APIからのデータ取得・マッピング・編集UIが実装されています。
 
-### OpenAlex API Key の設定
+### API Key の設定
 
-OpenAlex APIは、APIキーなしでの利用回数に制限があります。継続的に利用する場合は、APIキーの設定を推奨します。
-
-1. [OpenAlex API設定ページ](https://openalex.org/settings/api) からAPIキーを取得
-2. `make_jc_importer.html` をテキストエディタで開く
-3. ファイル冒頭付近の `CONFIG` 定数を探し、`YOUR_API_KEY` を取得したキーに置き換える
+`make_jc_importer.html` をテキストエディタで開き、ファイル冒頭付近の `CONFIG` 定数にAPIキーを設定してください。
 
 ```js
 const CONFIG = {
-    API_KEY: "ここに取得したAPIキーを貼り付け",
+    OpenAlex_API_KEY: "ここにOpenAlex APIキーを貼り付け",
+    CiNii_API_KEY: "ここにCiNii APIキーを貼り付け",
 };
 ```
 
-APIキーが未設定の場合、ページ上部に警告メッセージが表示されます。未設定でも利用可能ですが、利用回数の制限を超えるとデータ取得時にエラーが表示されます。
+#### OpenAlex API Key（必須）
+
+OpenAlex APIは、APIキーなしでの利用回数に制限があります。継続的に利用する場合は、APIキーの設定を推奨します。
+
+- [OpenAlex API設定ページ](https://openalex.org/settings/api) からAPIキーを取得してください。
+- 未設定の場合、ページ上部に警告メッセージが表示されます。未設定でも利用可能ですが、利用回数の制限を超えるとデータ取得時にエラーが表示されます。
+
+#### CiNii API Key（任意）
+
+CiNii APIキーを設定すると、JSPS（日本学術振興会）が助成機関に含まれる場合に、CiNii Research Projects API を通じて科研費の課題名（日英）とKAKEN課題ページURLを自動取得します。
+
+- [CiNiiウェブAPI 利用登録](https://support.nii.ac.jp/ja/cinii/api/developer) からAPIキーを取得してください。
+- 未設定の場合、KAKEN連携はスキップされ、Crossrefの助成情報のみが表示されます。
 
 ## 機能
 
@@ -44,6 +53,7 @@ APIキーが未設定の場合、ページ上部に警告メッセージが表�
 - JATS XML 形式のDescription(内容記述)からタグの除去
 - Crossref と OpenAlex の著者情報マッチング（姓名一致 → インデックスフォールバック）
 - 空フィールドのみの表示
+- KAKEN連携：JSPS助成の科研費課題名（日英）・課題ページURL自動取得（CiNii Research Projects API）
 
 ### Phase 2
 
@@ -53,7 +63,7 @@ APIキーが未設定の場合、ページ上部に警告メッセージが表�
 ## 技術スタック
 
 - HTML5 / CSS3 / JavaScript（依存ライブラリなし、単一HTMLファイル）
-- 外部API: [Crossref](https://api.crossref.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/)
+- 外部API: [Crossref](https://api.crossref.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/), [CiNii Research](https://cir.nii.ac.jp/)
 
 ## ディレクトリ構成
 
@@ -85,6 +95,7 @@ APIキーが未設定の場合、ページ上部に警告メッセージが表�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-02-18 | KAKEN連携：JSPS助成時にCiNii Research APIから科研費課題名・URLを自動取得（[#2](https://github.com/tzhaya/jc-import-file-maker/issues/2), [#7](https://github.com/tzhaya/jc-import-file-maker/issues/7)） |
 | 2026-02-17 | DOI登録機関（RA）判定機能を追加し、Crossref/JaLC/その他で処理を分岐（[#5](https://github.com/tzhaya/jc-import-file-maker/issues/5)） |
 | 2026-02-17 | 同一助成機関から複数awardがある場合に各awardごとにエントリを生成するよう修正 |
 | 2026-02-17 | OpenAlex API Key設定機能を追加（[#1](https://github.com/tzhaya/jc-import-file-maker/issues/1)） |
