@@ -1,0 +1,66 @@
+{
+  "@context": {
+    "@vocab": "http://purl.org/rss/1.0/",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "prism": "http://prismstandard.org/namespaces/basic/2.0/",
+    "ndl": "http://ndl.go.jp/dcndl/terms",
+    "opensearch": "http://a9.com/-/spec/opensearch/1.1/",
+    "cir": "https://cir.nii.ac.jp/schema/1.0/",
+    "@language": "ja"
+  },
+  "@id": "https://cir.nii.ac.jp/opensearch/v2/projects?format=json&projectId=19KK0341",
+  "@type": "channel",
+  "title": "CiNii Research projects - json 19KK0341",
+  "description": "CiNii Research projects - json 19KK0341",
+  "link": {
+    "@id": "https://cir.nii.ac.jp/opensearch/v2/projects?format=json&projectId=19KK0341"
+  },
+  "dc:date": "2026-02-18T21:08:57.274+09:00",
+  "opensearch:totalResults": 1,
+  "opensearch:startIndex": 1,
+  "opensearch:itemsPerPage": 1,
+  "items": [
+    {
+      "@id": "https://cir.nii.ac.jp/crid/1040848250614322432",
+      "@type": "item",
+      "title": "マダガスカル農村部における食環境の評価と食生活指針",
+      "link": {
+        "@id": "https://cir.nii.ac.jp/crid/1040848250614322432"
+      },
+      "dc:creator": [
+        "白鳥 佐紀子"
+      ],
+      "dc:type": "Project",
+      "description": "マダガスカルの食事はコメの消費に偏っており、栄養不足や栄養バランスの不均衡がみられる。消費者の嗜好や行動に注目し栄養改善のモチベーションを探る基課題に対し、本国際共同研究では、実際に消費している食品をベースとして栄養改善に貢献する食生活指針を策定することを目的とする。つまり現在の食環境の特性を示し、栄養素供給の過不足を同定し、建設的な解決策を導く。各国・地域に固有の食環境に注目し、発育阻害の軽減に取り組む研究者と共同研究を行うことで、食環境評価の精度向上や効率化がみこめる。",
+      "dc:identifier": [
+        {
+          "@type": "cir:KAKEN",
+          "@value": "19KK0341"
+        },
+        {
+          "@type": "cir:JGN",
+          "@value": "JP19KK0341"
+        },
+        {
+          "@type": "cir:URI",
+          "@value": "https://kaken.nii.ac.jp/grant/KAKENHI-PROJECT-19KK0341/"
+        }
+      ],
+      "dc:subject": [
+        "栄養改善",
+        "食環境",
+        "マダガスカル",
+        "食生活指針",
+        "開発途上地域"
+      ],
+      "dc:source": [
+        {
+          "@id": "https://kaken.nii.ac.jp/grant/KAKENHI-PROJECT-19KK0341/",
+          "dc:title": "KAKEN"
+        }
+      ]
+    }
+  ]
+}

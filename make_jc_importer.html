@@ -403,7 +403,11 @@
 const CONFIG = {
     // OpenAlex APIキー（必須）
     // https://openalex.org/settings/api からご自身のキーを取得して貼り付けてください
-    API_KEY: "YOUR_API_KEY",
+    OpenAlex_API_KEY: "YOUR_OpenAlex_API_KEY",
+
+    // CiNii APIキー（任意）
+    // CiNiiウェブAPI 利用登録 https://support.nii.ac.jp/ja/cinii/api/developer で取得したキーを貼り付けてください
+    CiNii_API_KEY: "YOUR_CiNii_API_KEY",
 };
 
 // ===== 除外フィールドリスト =====
@@ -784,8 +788,8 @@ async function fetchCrossref(doi) {
 // ===== 3.2 OpenAlex API =====
 async function fetchOpenAlex(doi) {
   let url = `https://api.openalex.org/works/doi:${encodeURIComponent(doi)}`;
-  if (CONFIG.API_KEY && CONFIG.API_KEY !== 'YOUR_API_KEY') {
-    url += `?api_key=${encodeURIComponent(CONFIG.API_KEY)}`;
+  if (CONFIG.OpenAlex_API_KEY && CONFIG.OpenAlex_API_KEY !== 'YOUR_OpenAlex_API_KEY') {
+    url += `?api_key=${encodeURIComponent(CONFIG.OpenAlex_API_KEY)}`;
   }
   const resp = await fetch(url);
   if (!resp.ok) {
@@ -844,7 +848,42 @@ async function fetchAllRorData(oaJson) {
   return rorMap;
 }
 
-// ===== 3.5 Crossref DOI データ取得 =====
+// ===== 3.5 CiNii Research KAKEN API =====
+async function fetchKaken(awardNumber) {
+  // JP プレフィックス除去
+  const projectId = awardNumber.replace(/^JP/i, '');
+  const appid = encodeURIComponent(CONFIG.CiNii_API_KEY);
+
+  // 日本語・英語タイトルを並列取得
+  const [jaResp, enResp] = await Promise.all([
+    fetch(`https://cir.nii.ac.jp/opensearch/v2/projects?appid=${appid}&format=json&projectId=${encodeURIComponent(projectId)}`),
+    fetch(`https://cir.nii.ac.jp/opensearch/v2/projects?appid=${appid}&format=json&projectId=${encodeURIComponent(projectId)}&lang=en`),
+  ]);
+
+  if (!jaResp.ok || !enResp.ok) return null;
+
+  const jaData = await jaResp.json();
+  const enData = await enResp.json();
+
+  if (!jaData.items?.length) return null;
+
+  const jaTitle = jaData.items[0].title || '';
+  const enTitle = enData.items?.[0]?.title || '';
+  const kakenUrl = jaData.items[0]['dc:source']?.[0]?.['@id'] || '';
+
+  // 日英タイトルが同一の場合は英語タイトルなし
+  const titles = [];
+  if (jaTitle) {
+    titles.push({ subitem_award_title: jaTitle, subitem_award_title_language: 'ja' });
+  }
+  if (enTitle && enTitle !== jaTitle) {
+    titles.push({ subitem_award_title: enTitle, subitem_award_title_language: 'en' });
+  }
+
+  return { titles, kakenUrl };
+}
+
+// ===== 3.6 Crossref DOI データ取得 =====
 async function fetchCrossrefData(doi) {
   // Crossref + OpenAlex を並列取得
   const [crJson, oaJson] = await Promise.all([
@@ -874,12 +913,12 @@ async function fetchCrossrefData(doi) {
   document.getElementById('info-bar').style.display = 'flex';
 
   // マッピング → レンダリング
-  const metadata = mapToItemType(crJson, oaJson, rorMap);
+  const metadata = await mapToItemType(crJson, oaJson, rorMap);
   showHints = true;
   renderAll(metadata);
 }
 
-// ===== 3.6 メイン取得フロー =====
+// ===== 3.7 メイン取得フロー =====
 async function fetchData() {
   showError('');
   const rawDoi = document.getElementById('doi-input').value.trim();
@@ -909,7 +948,7 @@ async function fetchData() {
   }
 }
 
-// ===== 3.7 空値テスト表示 =====
+// ===== 3.8 空値テスト表示 =====
 function showEmptyFields() {
   showError('');
   showHints = false;
@@ -1025,13 +1064,20 @@ function buildAuthors(crAuthors, oaAuthorships, rorMap) {
 }
 
 // ===== 4.4 助成情報マッピング =====
-function buildFunders(crFunders) {
-  return (crFunders || []).flatMap(f => {
+async function buildFunders(crFunders) {
+  const JSPS_DOI = '10.13039/501100001691';
+  const isKakenEnabled = CONFIG.CiNii_API_KEY
+                      && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
+
+  const entries = await Promise.all((crFunders || []).map(async (f) => {
     const name      = f.name  || '';
     const funderDoi = f.DOI   || '';
     const awards    = f.award || [];
 
-    const buildEntry = (awardNum) => {
+    // JSPS判定: DOI一致 かつ CiNii_API_KEY設定済み
+    const isJsps = isKakenEnabled && funderDoi === JSPS_DOI;
+
+    const buildEntry = async (awardNum) => {
       const obj = {};
       obj.subitem_funder_names = name
         ? [{ subitem_funder_name: name, subitem_funder_name_language: 'en' }]
@@ -1046,23 +1092,35 @@ function buildFunders(crFunders) {
         obj.subitem_funder_identifiers = { subitem_funder_identifier: '', subitem_funder_identifier_type: '' };
       }
 
+      // KAKEN連携: JSPS かつ award番号ありの場合
+      let kakenResult = null;
+      if (isJsps && awardNum) {
+        try {
+          kakenResult = await fetchKaken(awardNum);
+        } catch (e) {
+          console.warn(`KAKEN取得失敗 (${awardNum}):`, e.message);
+        }
+      }
+
       obj.subitem_award_numbers = {
         subitem_award_number:      awardNum,
         subitem_award_number_type: '',
-        subitem_award_uri:         '',
+        subitem_award_uri:         kakenResult?.kakenUrl || '',
       };
 
-      obj.subitem_award_titles = []; // Crossref に課題名なし
+      obj.subitem_award_titles = kakenResult?.titles || [];
       return obj;
     };
 
-    if (awards.length === 0) return [buildEntry('')];
-    return awards.map(aw => buildEntry(aw));
-  });
+    if (awards.length === 0) return [await buildEntry('')];
+    return Promise.all(awards.map(aw => buildEntry(aw)));
+  }));
+
+  return entries.flat();
 }
 
 // ===== 4.1 メインマッピング関数 =====
-function mapToItemType(crJson, oaJson, rorMap) {
+async function mapToItemType(crJson, oaJson, rorMap) {
   const doi        = crJson.DOI || '';
   const pubDate    = getPubDate(crJson);
   const isOa       = oaJson.open_access?.is_oa   || false;
@@ -1259,7 +1317,7 @@ function mapToItemType(crJson, oaJson, rorMap) {
     item_30002_geolocation20: [],
 
     // ----- 助成情報 -----
-    item_30002_funding_reference21: buildFunders(crJson.funder),
+    item_30002_funding_reference21: await buildFunders(crJson.funder),
 
     // ----- 収録物識別子 -----
     item_30002_source_identifier22: sourceIdentifiers,
@@ -2460,7 +2518,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 });
 
 // ===== APIキー未設定警告 =====
-if (!CONFIG.API_KEY || CONFIG.API_KEY === 'YOUR_API_KEY') {
+if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
   document.getElementById('apikey-warning').style.display = 'block';
 }
 </script>

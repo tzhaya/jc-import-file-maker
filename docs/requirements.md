@@ -16,6 +16,7 @@ make_jc_importer.html
     -   Crossref API (`https://api.crossref.org/works/`)
     -   OpenAlex API (`https://api.openalex.org/works/`)
     -   ROR API (`https://api.ror.org/v2/organizations/`)
+    -   CiNii Research Projects API (`https://cir.nii.ac.jp/opensearch/v2/projects`)
        
 **メタデータ構造定義**
 - `ItemType.json` ただし、要素から `title_i18n_temp` は除く。 
@@ -333,12 +334,22 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 - **Level 2**:
   - `subitem_funder_names[]` - 複数言語による助成機関名
   - `subitem_funder_identifiers` - 助成機関識別子 (単一)
-  - `subitem_funding_streams[]` - 複数プログラム名 
+  - `subitem_funding_streams[]` - 複数プログラム名
   - `subitem_award_titles[]` - 複数言語による研究課題名
 
 **要件**:
 - 複数言語バージョンの助成機関名・課題名をサポート
 - アコーディオンUIで複数プログラム情報を管理
+
+**KAKEN連携（CiNii Research Projects API）**:
+- Crossref の funder 情報に JSPS（日本学術振興会、funder DOI: `10.13039/501100001691`）が含まれる場合、CiNii Research Projects API を使って科研費の課題名と KAKEN 課題ページ URL を自動取得する
+- CiNii APIキー（`CONFIG.CiNii_API_KEY`）が設定されている場合のみ有効
+- award番号から `JP` プレフィックスを除去して CiNii API の `projectId` パラメータに使用
+- 日本語・英語の課題名を並列取得し、`subitem_award_titles[]` に設定
+  - 日英タイトルが同一の場合は日本語のみ設定
+- KAKEN 課題ページ URL を `subitem_award_uri` に設定
+- CiNii API がエラーの場合は警告のみ出力し、Crossref データを保持（フォールバック）
+- CiNii APIキー未設定、JSPS以外の funder、award番号が空の場合はKAKEN連携をスキップ
 
 ### 3. 会議記述フィールド
 

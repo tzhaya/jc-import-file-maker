@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-17（DOI RA判定機能追加）
+最終更新: 2026-02-18（KAKEN連携実装）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約2440行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定済み）
+現在のファイル規模: **約2526行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携）
 
 ---
 
@@ -326,6 +326,38 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
    - その他 → サポート外メッセージを表示
 
 **検証:** Crossref DOI (`10.1016/j.advnut.2025.100480`) で既存動作維持を確認。JaLC DOI (`10.11209/jim.27.85`) で未対応メッセージ表示を確認。
+
+---
+
+### KAKEN連携（CiNii Research Projects API）✅（2026-02-18）
+
+**背景:** Crossref の funder 情報に JSPS（日本学術振興会）が含まれる場合、科研費の課題名と KAKEN 課題ページ URL を自動取得して助成情報フィールドに入力する機能が必要（[Issue #2](https://github.com/tzhaya/jc-import-file-maker/issues/2), [Issue #7](https://github.com/tzhaya/jc-import-file-maker/issues/7)）。
+
+**実装計画:** `docs/Implementation_KAKEN.md` に詳細記載。
+
+**実装内容:**
+1. **`CONFIG` 定数の変更:**
+   - `API_KEY` → `OpenAlex_API_KEY` にリネーム
+   - `CiNii_API_KEY` を新規追加（任意設定）
+2. **`fetchOpenAlex()` の CONFIG参照先変更:** `CONFIG.API_KEY` → `CONFIG.OpenAlex_API_KEY`
+3. **`fetchKaken(awardNumber)` 関数の新規追加（セクション 3.5）:**
+   - award番号から `JP` プレフィックスを除去
+   - CiNii Research Projects API を日本語・英語で並列呼び出し（`Promise.all`）
+   - 課題名（日英）と KAKEN 課題ページ URL を返却
+   - 日英タイトルが同一の場合は日本語のみ
+4. **`buildFunders()` の async化:**
+   - `flatMap` → `Promise.all` + `map` + `flat()` に変更（async対応）
+   - JSPS判定: `funderDoi === '10.13039/501100001691'` かつ `CiNii_API_KEY` 設定済み
+   - JSPS funder の各 award 番号で `fetchKaken()` を呼び出し
+   - 取得した課題名を `subitem_award_titles`、KAKEN URL を `subitem_award_uri` に設定
+   - KAKEN取得失敗時は `console.warn` のみで Crossref データを保持
+5. **`mapToItemType()` の async化:** `buildFunders` の `await` 対応
+6. **`fetchCrossrefData()` の修正:** `mapToItemType` 呼び出しに `await` 追加
+7. **APIキー未設定警告の変更:** `CONFIG.API_KEY` → `CONFIG.OpenAlex_API_KEY`
+
+**検証:**
+- DOI `10.1016/j.advnut.2025.100480`: JSPS助成のaward番号でKAKEN連携が発動、日本語のみの課題名とURLが正しく入力されることを確認
+- DOI `10.1002/advs.202512896`: 複数のJSPS funder award番号で、日英両方の課題名が正しく取得されることを確認
 
 ---
 
