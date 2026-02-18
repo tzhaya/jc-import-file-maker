@@ -12,6 +12,7 @@ make_jc_importer.html
 
 **フロントエンド技術**: HTML5, CSS3, JavaScript
 **外部API**:
+    -   DOI RA判定 API (`https://doi.org/doiRA/`)
     -   Crossref API (`https://api.crossref.org/works/`)
     -   OpenAlex API (`https://api.openalex.org/works/`)
     -   ROR API (`https://api.ror.org/v2/organizations/`)
@@ -73,8 +74,12 @@ make_jc_importer.html
 
 ## 主要機能
 
--   **DOIからのデータ取得**: 
-    -   入力されたDOIに基づき、CrossrefおよびOpenAlex APIから論文のメタデータ（タイトル、著者、所属、発行日、要旨、出版者、識別子など）を自動で取得します。
+-   **DOIからのデータ取得**:
+    -   入力されたDOIに基づき、まず `https://doi.org/doiRA/{DOI}` APIでDOIの登録機関（Registration Authority）を判定します。
+        -   DOIが存在しない場合はエラーメッセージを表示し、処理を中断します。
+        -   登録機関が **Crossref** の場合：Crossref および OpenAlex APIから論文のメタデータを取得します。
+        -   登録機関が **JaLC** の場合：未対応メッセージを表示します（今後対応予定）。
+        -   その他の登録機関（DataCite等）の場合：サポート外メッセージを表示します。
     -   Crossref APIで得られる内容（例：`j.advnut.2025.100480.json`）を`ItemType.json`の構造に変更します。マッピングの例は  `sample.json` です。
 -   **ROR/ISNI情報との連携**
     -   OpenAlexから取得したROR IDを基に、ROR v2 APIを介してISNI情報を取得し、所属機関の識別子として活用します。

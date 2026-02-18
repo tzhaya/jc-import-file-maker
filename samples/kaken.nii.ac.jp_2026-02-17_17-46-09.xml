@@ -1,0 +1,926 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<grantAwards>
+    <totalResults>1</totalResults>
+    <startIndex>1</startIndex>
+    <itemsPerPage>20</itemsPerPage>
+    <grantAward id="KAKENHI-PROJECT-19KK0341" recordSet="kakenhi" projectType="project"
+        awardNumber="19KK0341">
+        <identifier type="nationalAwardNumber">
+            <normalizedValue>JP19KK0341</normalizedValue>
+        </identifier>
+        <created>2020-02-06T07:42:42Z</created>
+        <modified>2026-01-16T00:19:41Z</modified>
+        <urlList>
+            <url>https://kaken.nii.ac.jp/grant/KAKENHI-PROJECT-19KK0341/</url>
+        </urlList>
+        <summary xml:lang="ja">
+            <title>マダガスカル農村部における食環境の評価と食生活指針</title>
+            <awardNumber awardNumber="19KK0341" sequence="1" />
+            <category path="000254" niiCode="254">国際共同研究加速基金(国際共同研究強化(A))</category>
+            <categoryFc path="000254" niiCode="254">国際共同研究加速基金(国際共同研究強化(A))</categoryFc>
+            <review_section sequence="1" niiCode="227" tableType="review_section">小区分41010:食料農業経済関連</review_section>
+            <institution niiCode="382749" sequence="1">国立研究開発法人国際農林水産業研究センター</institution>
+            <agency niiCode="kakenhi">科学研究費助成事業</agency>
+            <allocation niiCode="kikin" sequence="1">基金</allocation>
+            <member sequence="1" eradCode="60746486" role="principal_investigator">
+                <institution>国立研究開発法人国際農林水産業研究センター</institution>
+                <department>情報広報室</department>
+                <jobTitle>プロジェクトリーダー</jobTitle>
+                <affiliation sequence="1">
+                    <institution>国立研究開発法人国際農林水産業研究センター</institution>
+                    <department>情報広報室</department>
+                    <jobTitle>プロジェクトリーダー</jobTitle>
+                </affiliation>
+                <personalName sequence="1">
+                    <fullName>白鳥 佐紀子</fullName>
+                    <familyName yomi="シラトリ">白鳥</familyName>
+                    <givenName yomi="サキコ">佐紀子</givenName>
+                </personalName>
+                <enriched>
+                    <researcherNumber type="erad">60746486</researcherNumber>
+                </enriched>
+            </member>
+            <projectStatus fiscalYear="2024" statusCode="project_closed" />
+            <keywordList>
+                <keyword sequence="1">栄養改善</keyword>
+                <keyword sequence="2">食環境</keyword>
+                <keyword sequence="3">マダガスカル</keyword>
+                <keyword sequence="4">食生活指針</keyword>
+                <keyword sequence="5">開発途上地域</keyword>
+            </keywordList>
+            <paragraphList sequence="1" parentId="19KK03412021" type="outline_of_research_initial">
+                <paragraph sequence="1">
+                    マダガスカルの食事はコメの消費に偏っており、栄養不足や栄養バランスの不均衡がみられる。消費者の嗜好や行動に注目し栄養改善のモチベーションを探る基課題に対し、本国際共同研究では、実際に消費している食品をベースとして栄養改善に貢献する食生活指針を策定することを目的とする。つまり現在の食環境の特性を示し、栄養素供給の過不足を同定し、建設的な解決策を導く。各国・地域に固有の食環境に注目し、発育阻害の軽減に取り組む研究者と共同研究を行うことで、食環境評価の精度向上や効率化がみこめる。</paragraph>
+            </paragraphList>
+            <paragraphList sequence="2" parentId="19KK0341seika"
+                type="outline_of_research_achievement">
+                <paragraph sequence="1">
+                    マダガスカル農村部では、栄養不足と食の偏りが深刻な問題である。本研究では、現地の事情を考慮した食生活指針の策定を目指した。アフリカ諸国における数学的最適化を用いた食生活指針の事例を整理し、線形計画法の活用可能性を示した。さらに家計調査データをもとに、英国の共同研究者からの助言も得ながら、栄養改善に適した現地入手可能な食品の組み合わせを数理モデルで導出し、消費者行動の特性も考慮し、受容性の高い改善策を検討した。</paragraph>
+            </paragraphList>
+            <paragraphList sequence="4" parentId="19KK0341seika"
+                type="significance_of_research_achievement">
+                <paragraph sequence="1">
+                    本研究は、栄養改善が急務であるマダガスカル農村部において、理想を掲げるだけでなく、現地の食環境と住民の嗜好をふまえた実行可能で持続的な食生活指針の策定に取り組んだ点に社会的・実務的な意義がある。さらに、スコーピングレビューによる事例整理や、消費者行動分析（嗜好、リスク・時間選好など）も学術的に貢献する。得られた成果は、持続可能な食料・栄養政策に関する政策提言や社会実装につながることが期待される。</paragraph>
+            </paragraphList>
+            <periodOfAward searchStartFiscalYear="2021" searchEndFiscalYear="2024">
+                <startFiscalYear>2021</startFiscalYear>
+                <endFiscalYear estimated="false" nondisclosure="false">2024</endFiscalYear>
+            </periodOfAward>
+            <overallAwardAmount planned="false" sequence="1" caption="配分額">
+                <directCost>11400000</directCost>
+                <indirectCost>3420000</indirectCost>
+                <totalCost>14820000</totalCost>
+            </overallAwardAmount>
+        </summary>
+        <summary xml:lang="en">
+            <title>Evaluation of food environment and dietary guidelines in rural Madagascar</title>
+            <awardNumber awardNumber="19KK0341" sequence="1" />
+            <category path="000254" niiCode="254">Fund for the Promotion of Joint International
+                Research (Fostering Joint International Research (A))</category>
+            <categoryFc path="000254" niiCode="254">Fund for the Promotion of Joint International
+                Research (Fostering Joint International Research (A))</categoryFc>
+            <review_section sequence="1" niiCode="227" tableType="review_section">Basic Section
+                41010:Agricultural and food economics-related</review_section>
+            <institution niiCode="382749" sequence="1">Japan International Research Center for
+                Agricultural Sciences</institution>
+            <agency niiCode="kakenhi">Grants-in-Aid for Scientific Research</agency>
+            <allocation niiCode="kikin" sequence="1">Multi-year Fund</allocation>
+            <member sequence="1" eradCode="60746486" role="principal_investigator">
+                <personalName sequence="1">
+                    <fullName>Shiratori Sakiko</fullName>
+                    <familyName>Shiratori</familyName>
+                    <givenName>Sakiko</givenName>
+                </personalName>
+                <enriched>
+                    <researcherNumber type="erad">60746486</researcherNumber>
+                </enriched>
+            </member>
+            <projectStatus fiscalYear="2024" statusCode="project_closed" />
+            <paragraphList sequence="3" parentId="19KK0341seika"
+                type="outline_of_research_achievement">
+                <paragraph sequence="1">In rural Madagascar, malnutrition and unbalanced diets are
+                    serious problems. This study aims to develop dietary guidelines tailored to
+                    local context. A scoping review was conducted to examine cases of dietary
+                    guidelines in African countries that employed mathematical optimization,
+                    demonstrating the applicability of linear programming. Using household survey
+                    data and with input from UK-based collaborators, the study employed mathematical
+                    models to identify combinations of locally available foods suitable for
+                    nutritional improvement. Additionally, consumer behavior characteristics were
+                    considered to explore feasible and acceptable interventions.</paragraph>
+            </paragraphList>
+            <overallAwardAmount planned="false" sequence="1" caption="Budget Amount">
+                <directCost>11400000</directCost>
+                <indirectCost>3420000</indirectCost>
+                <totalCost>14820000</totalCost>
+            </overallAwardAmount>
+        </summary>
+        <grantAwardInfo parentId="KAKENHI-PROJECT-19KK0341" xml:lang="ja">
+            <identifier type="nationalAwardNumber">
+                <normalizedValue>JP19KK0341</normalizedValue>
+            </identifier>
+            <created>2020-02-06T07:42:42Z</created>
+            <modified>2026-01-16T00:19:41Z</modified>
+            <category path="000254" niiCode="254">国際共同研究加速基金(国際共同研究強化(A))</category>
+            <review_section sequence="1" niiCode="227" tableType="review_section">小区分41010:食料農業経済関連</review_section>
+            <allocation sequence="1" niiCode="kikin">基金</allocation>
+        </grantAwardInfo>
+        <grantAwardInfo parentId="KAKENHI-PROJECT-19KK0341" xml:lang="en">
+            <category path="000254" niiCode="254">Fund for the Promotion of Joint International
+                Research (Fostering Joint International Research (A))</category>
+            <review_section sequence="1" niiCode="227" tableType="review_section">Basic Section
+                41010:Agricultural and food economics-related</review_section>
+            <allocation sequence="1" niiCode="kikin">Multi-year Fund</allocation>
+        </grantAwardInfo>
+        <grantList>
+            <grant id="19KK03412019" xml:lang="ja" fiscalYear="2019" sequence="1">
+                <title>マダガスカル農村部における食環境の評価と食生活指針</title>
+                <institution sequence="1" niiCode="382749" mextCode="82104">国立研究開発法人国際農林水産業研究センター</institution>
+                <agency niiCode="kakenhi">科学研究費助成事業</agency>
+                <projectStatus statusCode="adopted" />
+                <created>2020-02-06T07:42:42Z</created>
+            </grant>
+            <grant id="19KK03412019" xml:lang="en" fiscalYear="2019" sequence="1">
+                <institution sequence="1" niiCode="382749" mextCode="82104">Japan International
+                    Research Center for Agricultural Sciences</institution>
+                <agency niiCode="kakenhi">Grants-in-Aid for Scientific Research</agency>
+                <projectStatus statusCode="adopted" />
+                <created>2020-02-06T07:42:42Z</created>
+            </grant>
+            <grant id="19KK03412021" xml:lang="ja" fiscalYear="2021" sequence="2">
+                <title>マダガスカル農村部における食環境の評価と食生活指針</title>
+                <periodOfAward searchStartFiscalYear="2021" searchEndFiscalYear="2023">
+                    <startFiscalYear>2021</startFiscalYear>
+                    <endFiscalYear estimated="false" nondisclosure="false">2023</endFiscalYear>
+                </periodOfAward>
+                <institution sequence="1" niiCode="382749" mextCode="82104">国立研究開発法人国際農林水産業研究センター</institution>
+                <agency niiCode="kakenhi">科学研究費助成事業</agency>
+                <projectStatus statusCode="granted" />
+                <created>2022-09-06T04:01:26Z</created>
+                <modified>2022-12-28T00:30:22Z</modified>
+            </grant>
+            <grant id="19KK03412021" xml:lang="en" fiscalYear="2021" sequence="2">
+                <title>Evaluation of food environment and dietary guidelines in rural Madagascar</title>
+                <periodOfAward searchStartFiscalYear="2021" searchEndFiscalYear="2023">
+                    <startFiscalYear>2021</startFiscalYear>
+                    <endFiscalYear estimated="false" nondisclosure="false">2023</endFiscalYear>
+                </periodOfAward>
+                <institution sequence="1" niiCode="382749" mextCode="82104">Japan International
+                    Research Center for Agricultural Sciences</institution>
+                <agency niiCode="kakenhi">Grants-in-Aid for Scientific Research</agency>
+                <projectStatus statusCode="granted" />
+                <created>2022-09-06T04:01:26Z</created>
+                <modified>2022-12-28T00:30:22Z</modified>
+            </grant>
+            <grant id="19KK03412022" xml:lang="ja" fiscalYear="2022" sequence="3">
+                <title>マダガスカル農村部における食環境の評価と食生活指針</title>
+                <periodOfAward searchStartFiscalYear="2021" searchEndFiscalYear="2023">
+                    <startFiscalYear>2021</startFiscalYear>
+                    <endFiscalYear estimated="false" nondisclosure="false">2023</endFiscalYear>
+                </periodOfAward>
+                <institution sequence="1" niiCode="382749" mextCode="82104">国立研究開発法人国際農林水産業研究センター</institution>
+                <agency niiCode="kakenhi">科学研究費助成事業</agency>
+                <projectStatus statusCode="granted" />
+                <created>2023-12-25T00:38:21Z</created>
+            </grant>
+            <grant id="19KK03412022" xml:lang="en" fiscalYear="2022" sequence="3">
+                <title>Evaluation of food environment and dietary guidelines in rural Madagascar</title>
+                <periodOfAward searchStartFiscalYear="2021" searchEndFiscalYear="2023">
+                    <startFiscalYear>2021</startFiscalYear>
+                    <endFiscalYear estimated="false" nondisclosure="false">2023</endFiscalYear>
+                </periodOfAward>
+                <institution sequence="1" niiCode="382749" mextCode="82104">Japan International
+                    Research Center for Agricultural Sciences</institution>
+                <agency niiCode="kakenhi">Grants-in-Aid for Scientific Research</agency>
+                <projectStatus statusCode="granted" />
+                <created>2023-12-25T00:38:21Z</created>
+            </grant>
+            <grant id="19KK03412023" xml:lang="ja" fiscalYear="2023" sequence="4">
+                <title>マダガスカル農村部における食環境の評価と食生活指針</title>
+                <periodOfAward searchStartFiscalYear="2021" searchEndFiscalYear="2024">
+                    <startFiscalYear>2021</startFiscalYear>
+                    <endFiscalYear estimated="false" nondisclosure="false">2024</endFiscalYear>
+                </periodOfAward>
+                <institution sequence="1" niiCode="382749" mextCode="82104">国立研究開発法人国際農林水産業研究センター</institution>
+                <agency niiCode="kakenhi">科学研究費助成事業</agency>
+                <projectStatus statusCode="granted" />
+                <created>2024-12-25T00:38:59Z</created>
+            </grant>
+            <grant id="19KK03412023" xml:lang="en" fiscalYear="2023" sequence="4">
+                <title>Evaluation of food environment and dietary guidelines in rural Madagascar</title>
+                <periodOfAward searchStartFiscalYear="2021" searchEndFiscalYear="2024">
+                    <startFiscalYear>2021</startFiscalYear>
+                    <endFiscalYear estimated="false" nondisclosure="false">2024</endFiscalYear>
+                </periodOfAward>
+                <institution sequence="1" niiCode="382749" mextCode="82104">Japan International
+                    Research Center for Agricultural Sciences</institution>
+                <agency niiCode="kakenhi">Grants-in-Aid for Scientific Research</agency>
+                <projectStatus statusCode="granted" />
+                <created>2024-12-25T00:38:59Z</created>
+            </grant>
+            <grant id="19KK03412024" xml:lang="ja" fiscalYear="2024" sequence="5">
+                <title>マダガスカル農村部における食環境の評価と食生活指針</title>
+                <periodOfAward searchStartFiscalYear="2021" searchEndFiscalYear="2024">
+                    <startFiscalYear>2021</startFiscalYear>
+                    <endFiscalYear estimated="false" nondisclosure="false">2024</endFiscalYear>
+                </periodOfAward>
+                <institution sequence="1" niiCode="382749" mextCode="82104">国立研究開発法人国際農林水産業研究センター</institution>
+                <agency niiCode="kakenhi">科学研究費助成事業</agency>
+                <projectStatus statusCode="project_closed" />
+                <created>2025-12-26T00:36:56Z</created>
+            </grant>
+            <grant id="19KK03412024" xml:lang="en" fiscalYear="2024" sequence="5">
+                <title>Evaluation of food environment and dietary guidelines in rural Madagascar</title>
+                <periodOfAward searchStartFiscalYear="2021" searchEndFiscalYear="2024">
+                    <startFiscalYear>2021</startFiscalYear>
+                    <endFiscalYear estimated="false" nondisclosure="false">2024</endFiscalYear>
+                </periodOfAward>
+                <institution sequence="1" niiCode="382749" mextCode="82104">Japan International
+                    Research Center for Agricultural Sciences</institution>
+                <agency niiCode="kakenhi">Grants-in-Aid for Scientific Research</agency>
+                <projectStatus statusCode="project_closed" />
+                <created>2025-12-26T00:36:56Z</created>
+            </grant>
+        </grantList>
+        <reportList>
+            <report id="19KK03412021hokoku" parentId="19KK03412021" type="jishi_jokyo_hokoku"
+                xml:lang="ja" fiscalYear="2021" sequence="1">
+                <parent id="19KK03412021" />
+                <created>2022-12-28T00:30:22Z</created>
+            </report>
+            <report id="19KK03412021hokoku" parentId="19KK03412021" type="jishi_jokyo_hokoku"
+                xml:lang="en" fiscalYear="2021" sequence="1">
+                <parent id="19KK03412021" />
+                <created>2022-12-28T00:30:22Z</created>
+            </report>
+            <report id="19KK03412022hokoku" parentId="19KK03412022" type="jishi_jokyo_hokoku"
+                xml:lang="ja" fiscalYear="2022" sequence="2">
+                <parent id="19KK03412022" />
+                <created>2023-12-25T00:38:21Z</created>
+            </report>
+            <report id="19KK03412022hokoku" parentId="19KK03412022" type="jishi_jokyo_hokoku"
+                xml:lang="en" fiscalYear="2022" sequence="2">
+                <parent id="19KK03412022" />
+                <created>2023-12-25T00:38:21Z</created>
+            </report>
+            <report id="19KK03412023hokoku" parentId="19KK03412023" type="jishi_jokyo_hokoku"
+                xml:lang="ja" fiscalYear="2023" sequence="3">
+                <parent id="19KK03412023" />
+                <created>2024-12-25T00:38:59Z</created>
+            </report>
+            <report id="19KK03412023hokoku" parentId="19KK03412023" type="jishi_jokyo_hokoku"
+                xml:lang="en" fiscalYear="2023" sequence="3">
+                <parent id="19KK03412023" />
+                <created>2024-12-25T00:38:59Z</created>
+            </report>
+            <report id="19KK03412024jisseki" parentId="19KK03412024" type="jiseki_hokoku"
+                xml:lang="ja" fiscalYear="2024" sequence="4">
+                <parent id="19KK03412024" />
+                <created>2025-12-26T00:36:56Z</created>
+            </report>
+            <report id="19KK03412024jisseki" parentId="19KK03412024" type="jiseki_hokoku"
+                xml:lang="en" fiscalYear="2024" sequence="4">
+                <parent id="19KK03412024" />
+                <created>2025-12-26T00:36:56Z</created>
+            </report>
+            <report id="19KK0341seika" parentId="KAKENHI-PROJECT-19KK0341"
+                type="kenkyu_seika_hokoku" xml:lang="ja" fiscalYear="2024" sequence="5">
+                <parent id="KAKENHI-PROJECT-19KK0341" />
+                <title>マダガスカル農村部における食環境の評価と食生活指針</title>
+                <projectStatus statusCode="project_closed" />
+                <created>2026-01-16T00:19:41Z</created>
+            </report>
+            <report id="19KK0341seika" parentId="KAKENHI-PROJECT-19KK0341"
+                type="kenkyu_seika_hokoku" xml:lang="en" fiscalYear="2024" sequence="5">
+                <parent id="KAKENHI-PROJECT-19KK0341" />
+                <title>Evaluation of food environment and dietary guidelines in rural Madagascar</title>
+                <projectStatus statusCode="project_closed" />
+                <created>2026-01-16T00:19:41Z</created>
+            </report>
+        </reportList>
+        <productList>
+            <product id="PRODUCT-25581597" type="journal_article" sequence="1" reviewed="true"
+                openAccess="true" acknowledgement="false" jointInternational="true">
+                <parent id="19KK03412024jisseki" />
+                <doi originalValue="10.3390/foods13193147" authenticated="true">
+                    10.3390/foods13193147</doi>
+                <author>Shiratori Sakiko、Abeysekara Mudduwa Gamaethige Dilini、Ozaki
+                    Ryosuke、Rafalimanantsoa Jules、Rasolonirina Andrianjanaka Britney Havannah</author>
+                <title>Effects of Risk and Time Preferences on Diet Quality: Empirical Evidence from
+                    Rural Madagascar</title>
+                <journalTitle>Foods</journalTitle>
+                <volume>13</volume>
+                <pages originalValue="3147～3147">3147-3147</pages>
+                <year originalValue="2024">2024</year>
+            </product>
+            <product id="PRODUCT-25581598" type="journal_article" sequence="2" reviewed="false"
+                openAccess="true" acknowledgement="false" jointInternational="false">
+                <parent id="19KK03412024jisseki" />
+                <doi originalValue="なし" authenticated="false" />
+                <author>白鳥 佐紀子</author>
+                <title>マダガスカル農家における栄養供給と多様な食事への道</title>
+                <journalTitle>serasera</journalTitle>
+                <volume>51</volume>
+                <pages originalValue="15～19">15-19</pages>
+                <year originalValue="2024">2024</year>
+            </product>
+            <product id="PRODUCT-25581599" type="presentation" sequence="3" invited="false"
+                jointInternational="true">
+                <parent id="19KK03412024jisseki" />
+                <author>Sakiko Shiratori, Mudduwa Gamaethige Dilini Abeysekara, Ryosuke Ozaki, Jules
+                    Rafalimanantsoa, and Havannah Britney Rasolonirina</author>
+                <title>Exploring the Relationship between Risk Preferences, Time Preferences and
+                    Household Dietary Diversity: Evidence from Madagascar</title>
+                <organizer>32nd International Conference of Agricultural Economists</organizer>
+                <year originalValue="2024">2024</year>
+            </product>
+            <product id="PRODUCT-25581600" type="presentation" sequence="4" invited="false"
+                jointInternational="true">
+                <parent id="19KK03412024jisseki" />
+                <author>Sakiko Shiratori, Risa Nomura, Jules Rafalimanantsoa, Zoniaina
+                    Ramahaimandimby, and Takeshi Sakurai</author>
+                <title>The role of home production on nutritional supply in rural Madagascar before
+                    and after the COVID-19 outbreak</title>
+                <organizer>5th Global Food Security Conference</organizer>
+                <year originalValue="2024">2024</year>
+            </product>
+            <product id="PRODUCT-25581601" type="jointInternational" sequence="5">
+                <parent id="19KK03412024jisseki" />
+                <title>University of Sheffield(英国)</title>
+                <year originalValue="2022">2022</year>
+                <date originalValue="2022-06-08/2023-02-21">2022-06-08</date>
+                <country xml:lang="ja">英国</country>
+                <country xml:lang="en">UNITED KINGDOM</country>
+                <counterpartInstitution>University of Sheffield</counterpartInstitution>
+                <coinvestigatorOverseas>Bhavani Shankar</coinvestigatorOverseas>
+                <department>Department of Geography</department>
+                <jobTitle>Professor</jobTitle>
+            </product>
+            <product id="PRODUCT-24843311" type="journal_article" sequence="6" reviewed="true"
+                openAccess="true" acknowledgement="false" jointInternational="true">
+                <parent id="19KK03412023hokoku" />
+                <doi originalValue="10.1080/23311932.2023.2281092" authenticated="false">
+                    10.1080/23311932.2023.2281092</doi>
+                <author>Sakiko Shiratori, Jules Rafalimanantsoa &amp; Harisoa Sahondra Andriamanana
+                    Razafimbelonaina</author>
+                <title>Rice preference in rural Madagascar: A study of producer and consumer
+                    preferences</title>
+                <journalTitle>Cogent Food &amp; Agriculture</journalTitle>
+                <volume>9(2)</volume>
+                <pages originalValue="2281092">2281092</pages>
+                <year originalValue="2023">2023</year>
+            </product>
+            <product id="PRODUCT-24843312" type="journal_article" sequence="7" reviewed="true"
+                openAccess="true" acknowledgement="false" jointInternational="true">
+                <parent id="19KK03412023hokoku" />
+                <doi originalValue="10.1016/j.foodpol.2023.102547" authenticated="false">
+                    10.1016/j.foodpol.2023.102547</doi>
+                <author>Zoniaina Ramahaimandimby, Sakiko Shiratori, Jules Rafalimanantsoa, and
+                    Takeshi Sakurai</author>
+                <title>Animal-sourced foods production and early childhood nutrition: Panel data
+                    evidence in central Madagascar</title>
+                <journalTitle>Food Policy</journalTitle>
+                <volume>121</volume>
+                <pages originalValue="102547">102547</pages>
+                <year originalValue="2023">2023</year>
+            </product>
+            <product id="PRODUCT-24843313" type="presentation" sequence="8" invited="true"
+                jointInternational="false">
+                <parent id="19KK03412023hokoku" />
+                <author>白鳥佐紀子</author>
+                <title>農家の食料消費と栄養供給</title>
+                <organizer>マダガスカル研究懇談会第27回大会</organizer>
+                <year originalValue="2024">2024</year>
+            </product>
+            <product id="PRODUCT-24843314" type="presentation" sequence="9" invited="true"
+                jointInternational="false">
+                <parent id="19KK03412023hokoku" />
+                <author>Sakiko Shiratori</author>
+                <title>Food Security and Nutrition in Africa: The Impact of Fertilizer Price Surge</title>
+                <organizer>日本作物学会第257回講演会ミニシンポジウム”Threat and Technical solutions to Fertilizer Price
+                    Surge on Food Security in Africa”</organizer>
+                <year originalValue="2024">2024</year>
+            </product>
+            <product id="PRODUCT-24843315" type="presentation" sequence="10" invited="true"
+                jointInternational="false">
+                <parent id="19KK03412023hokoku" />
+                <author>白鳥佐紀子</author>
+                <title>アフリカにおける食料と栄養について</title>
+                <organizer>TICAD30周年記念公式サイドイベント「アフリカの持続的で強靭な食料システム構築に向けて」</organizer>
+                <year originalValue="2023">2023</year>
+            </product>
+            <product id="PRODUCT-24843316" type="presentation" sequence="11" invited="true"
+                jointInternational="false">
+                <parent id="19KK03412023hokoku" />
+                <author>白鳥佐紀子</author>
+                <title>世界の食料事情と畜産が支える栄養への貢献</title>
+                <organizer>日本畜産学会第131回大会公開シンポジウム「豊かな食と畜産の未来に向けて」</organizer>
+                <year originalValue="2023">2023</year>
+            </product>
+            <product id="PRODUCT-24843317" type="presentation" sequence="12" invited="false"
+                jointInternational="true">
+                <parent id="19KK03412023hokoku" />
+                <author>Zoniaina Ramahaimandimby, Sakiko Shiratori, Jules Rafalimanantsoa, and
+                    Takeshi Sakurai</author>
+                <title>Farmers’ responses to intra-seasonal rainfall variability in central
+                    Madagascar, and their effects on child stunting</title>
+                <organizer>The 11th Asian Society of Agricultural Economists (ASAE) International
+                    Conference</organizer>
+                <year originalValue="2023">2023</year>
+            </product>
+            <product id="PRODUCT-24340972" type="journal_article" sequence="13" reviewed="true"
+                openAccess="true" acknowledgement="false" jointInternational="true">
+                <parent id="19KK03412022hokoku" />
+                <doi originalValue="10.1007/s12571-022-01333-5" authenticated="true">
+                    10.1007/s12571-022-01333-5</doi>
+                <author>Nikiema Relwende A.、Shiratori Sakiko、Rafalimanantsoa Jules、Ozaki
+                    Ryosuke、Sakurai Takeshi</author>
+                <title>How are higher rice yields associated with dietary outcomes of smallholder
+                    farm households of Madagascar?</title>
+                <journalTitle>Food Security</journalTitle>
+                <volume>-</volume>
+                <pages originalValue="-" />
+                <year originalValue="2023">2023</year>
+            </product>
+            <product id="PRODUCT-24340973" type="journal_article" sequence="14" reviewed="true"
+                openAccess="true" acknowledgement="false" jointInternational="true">
+                <parent id="19KK03412022hokoku" />
+                <doi originalValue="10.18480/jjae.25.0_13" authenticated="false">
+                    10.18480/jjae.25.0_13</doi>
+                <author>Shiratori, Sakiko; Narmandakh,Davaatseren; Rafalimanantsoa,Jules</author>
+                <title>Seasonal energy deficiency of rural rice farmers in Madagascar</title>
+                <journalTitle>Japanese Journal of Agricultural Economics</journalTitle>
+                <volume>25</volume>
+                <pages originalValue="13-16">13-16</pages>
+                <year originalValue="2023">2023</year>
+            </product>
+            <product id="PRODUCT-24340974" type="journal_article" sequence="15" reviewed="false"
+                openAccess="true" acknowledgement="false" jointInternational="false">
+                <parent id="19KK03412022hokoku" />
+                <doi originalValue="なし" authenticated="false" />
+                <author>白鳥佐紀子</author>
+                <title>アフリカにおける栄養・食料安全保障</title>
+                <journalTitle>世界の農業農村開発</journalTitle>
+                <volume>67</volume>
+                <pages originalValue="22-26">22-26</pages>
+                <year originalValue="2023">2023</year>
+            </product>
+        </productList>
+        <productListEnriched>
+            <product id="PRODUCT-id_product_kakenhi--25581597" type="journal_article" sequence="1"
+                reviewed="true" openAccess="true" acknowledgement="false" jointInternational="true">
+                <ref id="PRODUCT-25581597" />
+                <parent id="19KK03412024jisseki" />
+                <doi>10.3390/foods13193147</doi>
+                <author xml:lang="ja">Shiratori Sakiko、Abeysekara Mudduwa Gamaethige Dilini、Ozaki
+                    Ryosuke、Rafalimanantsoa Jules、Rasolonirina Andrianjanaka Britney Havannah</author>
+                <title xml:lang="ja">Effects of Risk and Time Preferences on Diet Quality: Empirical
+                    Evidence from Rural Madagascar</title>
+                <journalTitle xml:lang="ja">Foods</journalTitle>
+                <volume>13</volume>
+                <issue>19</issue>
+                <pages>3147-3147</pages>
+                <year>2024</year>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--25581598" type="journal_article" sequence="2"
+                reviewed="false" openAccess="true" acknowledgement="false"
+                jointInternational="false">
+                <ref id="PRODUCT-25581598" />
+                <parent id="19KK03412024jisseki" />
+                <author xml:lang="ja">白鳥 佐紀子</author>
+                <title xml:lang="ja">マダガスカル農家における栄養供給と多様な食事への道</title>
+                <journalTitle xml:lang="ja">serasera</journalTitle>
+                <volume>51</volume>
+                <pages>15-19</pages>
+                <year>2024</year>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--25581599" type="presentation" sequence="3"
+                invited="false" jointInternational="true">
+                <ref id="PRODUCT-25581599" />
+                <parent id="19KK03412024jisseki" />
+                <author xml:lang="ja">Sakiko Shiratori, Mudduwa Gamaethige Dilini Abeysekara,
+                    Ryosuke Ozaki, Jules Rafalimanantsoa, and Havannah Britney Rasolonirina</author>
+                <title xml:lang="ja">Exploring the Relationship between Risk Preferences, Time
+                    Preferences and Household Dietary Diversity: Evidence from Madagascar</title>
+                <organizer xml:lang="ja">32nd International Conference of Agricultural Economists</organizer>
+                <year>2024</year>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--25581600" type="presentation" sequence="4"
+                invited="false" jointInternational="true">
+                <ref id="PRODUCT-25581600" />
+                <parent id="19KK03412024jisseki" />
+                <author xml:lang="ja">Sakiko Shiratori, Risa Nomura, Jules Rafalimanantsoa, Zoniaina
+                    Ramahaimandimby, and Takeshi Sakurai</author>
+                <title xml:lang="ja">The role of home production on nutritional supply in rural
+                    Madagascar before and after the COVID-19 outbreak</title>
+                <organizer xml:lang="ja">5th Global Food Security Conference</organizer>
+                <year>2024</year>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--25581601" type="jointInternational"
+                sequence="5">
+                <ref id="PRODUCT-25581601" />
+                <parent id="19KK03412024jisseki" />
+                <title xml:lang="ja">University of Sheffield(英国)</title>
+                <year>2022</year>
+                <date>2022-06-08</date>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--24843311" type="journal_article" sequence="6"
+                reviewed="true" openAccess="true" acknowledgement="false" jointInternational="true">
+                <ref id="PRODUCT-24843311" />
+                <parent id="19KK03412023hokoku" />
+                <doi>10.1080/23311932.2023.2281092</doi>
+                <author xml:lang="ja">Sakiko Shiratori, Jules Rafalimanantsoa &amp; Harisoa Sahondra
+                    Andriamanana Razafimbelonaina</author>
+                <title xml:lang="ja">Rice preference in rural Madagascar: A study of producer and
+                    consumer preferences</title>
+                <journalTitle xml:lang="ja">Cogent Food &amp; Agriculture</journalTitle>
+                <volume>9(2)</volume>
+                <issue>2</issue>
+                <pages>2281092-2281092</pages>
+                <year>2023</year>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--24843312" type="journal_article" sequence="7"
+                reviewed="true" openAccess="true" acknowledgement="false" jointInternational="true">
+                <ref id="PRODUCT-24843312" />
+                <parent id="19KK03412023hokoku" />
+                <doi>10.1016/j.foodpol.2023.102547</doi>
+                <author xml:lang="ja">Zoniaina Ramahaimandimby, Sakiko Shiratori, Jules
+                    Rafalimanantsoa, and Takeshi Sakurai</author>
+                <title xml:lang="ja">Animal-sourced foods production and early childhood nutrition:
+                    Panel data evidence in central Madagascar</title>
+                <journalTitle xml:lang="ja">Food Policy</journalTitle>
+                <volume>121</volume>
+                <pages>102547-102547</pages>
+                <year>2023</year>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--24843313" type="presentation" sequence="8"
+                invited="true" jointInternational="false">
+                <ref id="PRODUCT-24843313" />
+                <parent id="19KK03412023hokoku" />
+                <author xml:lang="ja">白鳥佐紀子</author>
+                <title xml:lang="ja">農家の食料消費と栄養供給</title>
+                <organizer xml:lang="ja">マダガスカル研究懇談会第27回大会</organizer>
+                <year>2024</year>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--24843314" type="presentation" sequence="9"
+                invited="true" jointInternational="false">
+                <ref id="PRODUCT-24843314" />
+                <parent id="19KK03412023hokoku" />
+                <author xml:lang="ja">Sakiko Shiratori</author>
+                <title xml:lang="ja">Food Security and Nutrition in Africa: The Impact of Fertilizer
+                    Price Surge</title>
+                <organizer xml:lang="ja">日本作物学会第257回講演会ミニシンポジウム”Threat and Technical solutions to
+                    Fertilizer Price Surge on Food Security in Africa”</organizer>
+                <year>2024</year>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--24843315" type="presentation" sequence="10"
+                invited="true" jointInternational="false">
+                <ref id="PRODUCT-24843315" />
+                <parent id="19KK03412023hokoku" />
+                <author xml:lang="ja">白鳥佐紀子</author>
+                <title xml:lang="ja">アフリカにおける食料と栄養について</title>
+                <organizer xml:lang="ja">TICAD30周年記念公式サイドイベント「アフリカの持続的で強靭な食料システム構築に向けて」</organizer>
+                <year>2023</year>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--24843316" type="presentation" sequence="11"
+                invited="true" jointInternational="false">
+                <ref id="PRODUCT-24843316" />
+                <parent id="19KK03412023hokoku" />
+                <author xml:lang="ja">白鳥佐紀子</author>
+                <title xml:lang="ja">世界の食料事情と畜産が支える栄養への貢献</title>
+                <organizer xml:lang="ja">日本畜産学会第131回大会公開シンポジウム「豊かな食と畜産の未来に向けて」</organizer>
+                <year>2023</year>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--24843317" type="presentation" sequence="12"
+                invited="false" jointInternational="true">
+                <ref id="PRODUCT-24843317" />
+                <parent id="19KK03412023hokoku" />
+                <author xml:lang="ja">Zoniaina Ramahaimandimby, Sakiko Shiratori, Jules
+                    Rafalimanantsoa, and Takeshi Sakurai</author>
+                <title xml:lang="ja">Farmers’ responses to intra-seasonal rainfall variability in
+                    central Madagascar, and their effects on child stunting</title>
+                <organizer xml:lang="ja">The 11th Asian Society of Agricultural Economists (ASAE)
+                    International Conference</organizer>
+                <year>2023</year>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--24298848" type="journal_article" sequence="13"
+                reviewed="true" openAccess="true" acknowledgement="false" jointInternational="true">
+                <ref id="PRODUCT-24340972" />
+                <parent id="19KK03412022hokoku" />
+                <doi>10.1007/s12571-022-01333-5</doi>
+                <author xml:lang="ja">Nikiema, Relwende A.、Shiratori, Sakiko、Rafalimanantsoa,
+                    Jules、Ozaki, Ryosuke、Sakurai, Takeshi</author>
+                <title xml:lang="ja">How are higher rice yields associated with dietary outcomes of
+                    smallholder farm households of Madagascar?</title>
+                <journalTitle xml:lang="ja">Food Security</journalTitle>
+                <volume>-</volume>
+                <issue>3</issue>
+                <pages>823-838</pages>
+                <year>2023</year>
+            </product>
+            <product id="PRODUCT-id_jalc--oai_japanlinkcenter.org_2010655460" type="journal_article"
+                sequence="14" reviewed="true" openAccess="true" acknowledgement="false"
+                jointInternational="true">
+                <ref id="PRODUCT-24340973" />
+                <language>eng</language>
+                <parent id="19KK03412022hokoku" />
+                <doi>10.18480/jjae.25.0_13</doi>
+                <issn>2432-2385</issn>
+                <author xml:lang="ja">Shiratori, Sakiko*; Narmandakh,Davaatseren;
+                    Rafalimanantsoa,Jules</author>
+                <title xml:lang="en">Seasonal Energy Deficiency of Rural Rice Farmers in Madagascar</title>
+                <journalTitle xml:lang="ja">Japanese Journal of Agricultural Economics</journalTitle>
+                <journalTitle xml:lang="en">Japanese Journal of Agricultural Economics</journalTitle>
+                <volume>25</volume>
+                <issue>0</issue>
+                <pages>13-16</pages>
+                <year>2023</year>
+                <date>2023-03-31</date>
+            </product>
+            <product id="PRODUCT-id_product_kakenhi--24340974" type="journal_article" sequence="15"
+                reviewed="false" openAccess="true" acknowledgement="false"
+                jointInternational="false">
+                <ref id="PRODUCT-24340974" />
+                <parent id="19KK03412022hokoku" />
+                <author xml:lang="ja">白鳥佐紀子</author>
+                <title xml:lang="ja">アフリカにおける栄養・食料安全保障</title>
+                <journalTitle xml:lang="ja">世界の農業農村開発</journalTitle>
+                <volume>67</volume>
+                <pages>22-26</pages>
+                <year>2023</year>
+            </product>
+        </productListEnriched>
+        <memberList>
+            <member id="MEMBER-12323292" sequence="1" xml:lang="ja" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK0341seika" />
+                <personalName sequence="1">
+                    <fullName>白鳥 佐紀子</fullName>
+                    <familyName yomi="シラトリ">白鳥</familyName>
+                    <givenName yomi="サキコ">佐紀子</givenName>
+                </personalName>
+                <attribute>
+                    <affiliation sequence="1">
+                        <institution mextCode="82104">国立研究開発法人国際農林水産業研究センター</institution>
+                        <department mextCode="210">情報広報室</department>
+                        <jobTitle>プロジェクトリーダー</jobTitle>
+                    </affiliation>
+                </attribute>
+            </member>
+            <member id="MEMBER-12323292" sequence="1" xml:lang="en" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK0341seika" />
+                <personalName sequence="1">
+                    <fullName>Shiratori Sakiko</fullName>
+                    <familyName>Shiratori</familyName>
+                    <givenName>Sakiko</givenName>
+                </personalName>
+            </member>
+            <member id="MEMBER-12119778" sequence="2" xml:lang="ja" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK03412024" />
+                <personalName sequence="1">
+                    <fullName>白鳥 佐紀子</fullName>
+                    <familyName yomi="シラトリ">白鳥</familyName>
+                    <givenName yomi="サキコ">佐紀子</givenName>
+                </personalName>
+                <attribute>
+                    <affiliation sequence="1">
+                        <institution mextCode="82104">国立研究開発法人国際農林水産業研究センター</institution>
+                        <department>情報広報室</department>
+                        <jobTitle>プロジェクトリーダー</jobTitle>
+                    </affiliation>
+                </attribute>
+            </member>
+            <member id="MEMBER-12119778" sequence="2" xml:lang="en" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK03412024" />
+            </member>
+            <member id="MEMBER-11661148" sequence="3" xml:lang="ja" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK03412023" />
+                <personalName sequence="1">
+                    <fullName>白鳥 佐紀子</fullName>
+                    <familyName yomi="シラトリ">白鳥</familyName>
+                    <givenName yomi="サキコ">佐紀子</givenName>
+                </personalName>
+                <attribute>
+                    <affiliation sequence="1">
+                        <institution mextCode="82104">国立研究開発法人国際農林水産業研究センター</institution>
+                        <department>情報広報室</department>
+                        <jobTitle>主任研究員</jobTitle>
+                    </affiliation>
+                </attribute>
+            </member>
+            <member id="MEMBER-11661148" sequence="3" xml:lang="en" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK03412023" />
+            </member>
+            <member id="MEMBER-10973883" sequence="4" xml:lang="ja" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK03412022" />
+                <personalName sequence="1">
+                    <fullName>白鳥 佐紀子</fullName>
+                    <familyName yomi="シラトリ">白鳥</familyName>
+                    <givenName yomi="サキコ">佐紀子</givenName>
+                </personalName>
+                <attribute>
+                    <affiliation sequence="1">
+                        <institution mextCode="82104">国立研究開発法人国際農林水産業研究センター</institution>
+                        <department>情報広報室</department>
+                        <jobTitle>主任研究員</jobTitle>
+                    </affiliation>
+                </attribute>
+            </member>
+            <member id="MEMBER-10973883" sequence="4" xml:lang="en" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK03412022" />
+            </member>
+            <member id="MEMBER-10666616" sequence="5" xml:lang="ja" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK03412021" />
+                <personalName sequence="1">
+                    <fullName>白鳥 佐紀子</fullName>
+                    <familyName yomi="シラトリ">白鳥</familyName>
+                    <givenName yomi="サキコ">佐紀子</givenName>
+                </personalName>
+                <attribute>
+                    <affiliation sequence="1">
+                        <institution mextCode="82104">国立研究開発法人国際農林水産業研究センター</institution>
+                        <department>情報広報室</department>
+                        <jobTitle>主任研究員</jobTitle>
+                    </affiliation>
+                </attribute>
+            </member>
+            <member id="MEMBER-10666616" sequence="5" xml:lang="en" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK03412021" />
+            </member>
+            <member id="MEMBER-9185584" sequence="6" xml:lang="ja" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK03412019" />
+                <personalName sequence="1">
+                    <fullName>白鳥 佐紀子</fullName>
+                    <familyName yomi="シラトリ">白鳥</familyName>
+                    <givenName yomi="サキコ">佐紀子</givenName>
+                </personalName>
+                <attribute>
+                    <affiliation sequence="1">
+                        <institution mextCode="82104">国立研究開発法人国際農林水産業研究センター</institution>
+                        <department mextCode="999">その他部局等</department>
+                        <jobTitle mextCode="24">研究員</jobTitle>
+                    </affiliation>
+                </attribute>
+            </member>
+            <member id="MEMBER-9185584" sequence="6" xml:lang="en" role="principal_investigator"
+                eradCode="60746486">
+                <parent id="19KK03412019" />
+            </member>
+        </memberList>
+        <awardNumberList parentId="KAKENHI-PROJECT-19KK0341">
+            <awardNumber>19KK0341</awardNumber>
+        </awardNumberList>
+        <keywordList parentId="19KK03412021">
+            <keyword sequence="1">栄養改善</keyword>
+            <keyword sequence="2">食環境</keyword>
+            <keyword sequence="3">開発途上地域</keyword>
+            <keyword sequence="4">マダガスカル</keyword>
+            <keyword sequence="5">食生活指針</keyword>
+        </keywordList>
+        <keywordList parentId="19KK03412021hokoku">
+            <keyword sequence="1">栄養改善</keyword>
+            <keyword sequence="2">食環境</keyword>
+            <keyword sequence="3">マダガスカル</keyword>
+            <keyword sequence="4">食生活指針</keyword>
+            <keyword sequence="5">開発途上地域</keyword>
+        </keywordList>
+        <keywordList parentId="19KK03412022hokoku">
+            <keyword sequence="1">栄養改善</keyword>
+            <keyword sequence="2">食環境</keyword>
+            <keyword sequence="3">マダガスカル</keyword>
+            <keyword sequence="4">食生活指針</keyword>
+            <keyword sequence="5">開発途上地域</keyword>
+        </keywordList>
+        <keywordList parentId="19KK03412023hokoku">
+            <keyword sequence="1">栄養改善</keyword>
+            <keyword sequence="2">食環境</keyword>
+            <keyword sequence="3">マダガスカル</keyword>
+            <keyword sequence="4">食生活指針</keyword>
+            <keyword sequence="5">開発途上地域</keyword>
+        </keywordList>
+        <keywordList parentId="19KK03412024jisseki">
+            <keyword sequence="1">栄養改善</keyword>
+            <keyword sequence="2">食環境</keyword>
+            <keyword sequence="3">マダガスカル</keyword>
+            <keyword sequence="4">食生活指針</keyword>
+            <keyword sequence="5">開発途上地域</keyword>
+        </keywordList>
+        <keywordList parentId="19KK0341seika">
+            <keyword sequence="1">栄養改善</keyword>
+            <keyword sequence="2">食環境</keyword>
+            <keyword sequence="3">マダガスカル</keyword>
+            <keyword sequence="4">食生活指針</keyword>
+            <keyword sequence="5">開発途上地域</keyword>
+        </keywordList>
+        <paragraphList type="note" parentId="19KK03412019" sequence="1">
+            <paragraph sequence="1">内定年度：2019</paragraph>
+        </paragraphList>
+        <paragraphList type="outline_of_research_initial" parentId="19KK03412021" sequence="2">
+            <paragraph sequence="1">
+                マダガスカルの食事はコメの消費に偏っており、栄養不足や栄養バランスの不均衡がみられる。消費者の嗜好や行動に注目し栄養改善のモチベーションを探る基課題に対し、本国際共同研究では、実際に消費している食品をベースとして栄養改善に貢献する食生活指針を策定することを目的とする。つまり現在の食環境の特性を示し、栄養素供給の過不足を同定し、建設的な解決策を導く。各国・地域に固有の食環境に注目し、発育阻害の軽減に取り組む研究者と共同研究を行うことで、食環境評価の精度向上や効率化がみこめる。</paragraph>
+        </paragraphList>
+        <paragraphList type="outline_of_research_performance" parentId="19KK03412021hokoku"
+            sequence="3">
+            <paragraph sequence="1">
+                マダガスカルの食事はコメの消費に偏っており、栄養不足や栄養バランスの不均衡がみられる。本国際共同研究ではマダガスカルを対象として、実際に消費している食品をベースとして栄養改善に貢献する食生活指針を策定することを目的とする。具体的には、現在の食環境の特性を示し、栄養素供給の過不足を同定し、建設的な解決策を導く。各国・地域に固有の食環境に注目し、発育阻害の軽減に取り組む研究者と共同研究を行うことで、食環境評価の精度向上や効率化がみこめる。</paragraph>
+            <paragraph sequence="2">
+                2021（令和３）年度は初年度にあたるが、2022年2月に交付申請を行い、3月29日に交付決定を受けたため、実質的な活動は2022年度からの開始となる。2021年度はこれまでにマダガスカルで収集したデータの整理や分析を進めるとともに、文献をレビューして栄養改善に係る知見を整理した。</paragraph>
+        </paragraphList>
+        <paragraphList type="progress" parentId="classification19KK0341progress2021" sequence="4">
+            <paragraph sequence="1">開始時期は当初の予定からコロナ禍で遅れたとはいえ、今年度交付申請を行い交付決定に至ることができた。</paragraph>
+        </paragraphList>
+        <paragraphList type="outline_of_research_performance" parentId="19KK03412022hokoku"
+            sequence="5">
+            <paragraph sequence="1">
+                マダガスカルの食事はコメの消費に偏っており、栄養不足や栄養バランスの不均衡がみられる。本国際共同研究ではマダガスカルを対象として、実際に消費している食品をベースとして栄養改善に貢献する食生活指針を策定することを目的とする。具体的には、現在の食環境の特性を示し、栄養素供給の過不足を同定し、建設的な解決策を導く。各国・地域に固有の食環境に注目し、発育阻害の軽減に取り組む研究者と共同研究を行うことで、食環境評価の精度向上や効率化がみこめる。</paragraph>
+            <paragraph sequence="2">
+                コロナの影響で交付申請を延期しており、その間はマダガスカルのデータ整理や分析を進めたり、文献をレビューして栄養改善に係る知見を整理したりしていた。そして令和4年（2022年）度2月に交付申請を行い、3月末に交付決定を受けることができた。そのため書面上の初年度は令和3年度となるが、令和4年（2022年）度が実質的な活動の初年度である。</paragraph>
+            <paragraph sequence="3">
+                令和4年度に渡英し、シェフィールド大学に客員研究員として在籍した。まずは共同研究契約を締結し、共同研究の体制を整えた。英国滞在中は、出張者の研究に対して参考文献や参考となるプロジェクトを紹介してもらうなど、研究を発展させることのできる有益なアドバイスを受けることができた。共同研究者の率いるプロジェクトメンバーとも適宜会合を行い、研究やプロジェクトの進め方、食環境の定義、今後の研究テーマ、分析に役立つツール等に関して情報・意見交換を行うことで、栄養改善に貢献するための研究基盤を強化することができた。またマダガスカルでは、対象地域の各農村や中心部などさまざまな規模や形態の市場を回り、入手可能な品物、価格、仕入れ先などについての調査を行い、現地の食環境についての理解を深めた。</paragraph>
+        </paragraphList>
+        <paragraphList type="progress" parentId="classification19KK0341progress2022" sequence="6">
+            <paragraph sequence="1">コロナ禍で開始時期は遅れ、スケジュールが後ろ倒しにはなったものの、進捗はおおむね順調である。</paragraph>
+        </paragraphList>
+        <paragraphList type="outline_of_research_performance" parentId="19KK03412023hokoku"
+            sequence="7">
+            <paragraph sequence="1">
+                マダガスカルの食事はコメの消費に偏っており、栄養不足や栄養バランスの不均衡がみられる。本国際共同研究では、マダガスカルで実際に消費している食品をベースとして栄養改善に貢献する食生活指針を策定することを目的とする。具体的には、現在の食環境の特性を示し、栄養素供給の過不足を同定し、建設的な解決策を導く。各国・地域に固有の食環境に注目し、発育阻害の軽減に取り組む研究者と共同研究を行うことで、食環境評価の精度向上や効率化がみこむ。</paragraph>
+            <paragraph sequence="2">
+                コロナの影響で交付申請を延期したが、令和４年2月に交付申請を行い、3月末に交付決定を受け、令和4年度に実質的な活動を開始した。令和4年度に渡英し、シェフィールド大学に客員研究員として在籍することで、情報・意見交換や研究基盤の強化をはかった。またマダガスカルにも赴き、対象地域の各農村や中心部などさまざまな規模や形態の市場を回り、入手可能な品物、価格、仕入れ先などについての調査を行い、現地の食環境についての理解を深めた。</paragraph>
+            <paragraph sequence="3">
+                令和5年度には海外渡航は行わず、共同研究者や現地のカウンターパートとのメールでのやりとりをベースに、成果を出すことに集中した。マダガスカルの食事の中核となっているコメの特性に対する嗜好をまとめた論文と、動物性食品の自家生産が時間をおいて子どもの健康に正の影響を与えることを明らかにした論文を発表した。年度途中より研究助手を1名雇用し、データ整理や文献レビュー等を補助してもらうことで、ガイドライン作成に向けての更なる進捗がみられた。</paragraph>
+        </paragraphList>
+        <paragraphList type="progress" parentId="classification19KK0341progress2023" sequence="8">
+            <paragraph sequence="1">コロナ禍で開始時期は遅れ、スケジュールが後ろ倒しにはなったものの、進捗はおおむね順調である。</paragraph>
+        </paragraphList>
+        <paragraphList type="outline_of_research_performance" parentId="19KK03412024jisseki"
+            sequence="9">
+            <paragraph sequence="1">
+                マダガスカルの食生活では主食であるコメの摂取量が極端に多く、栄養不足に加え、栄養バランスの偏りが深刻な問題となっている。本国際共同研究は、同国で実際に消費されている食品をベースに、栄養改善に資する現実的かつ実践的な食生活指針の策定を目指したものである。</paragraph>
+            <paragraph sequence="2">
+                当初、コロナ禍の影響により交付申請を延期したが、令和4年度に渡英しシェフィールド大学に客員研究員として在籍することで、情報・意見交換や研究基盤の強化を図った。また、マダガスカルの対象地域で多様な規模・形態の市場を訪問し、入手可能な食品、価格、仕入れ先などに関する調査を行い、現地の食環境に対する理解を深めた。</paragraph>
+            <paragraph sequence="3">
+                令和6年度には、これまでに収集された食事・栄養関連データを活用し、入手可能な食品の範囲を明らかにした。さらに、行動経済学の観点から、リスク選好・時間選好が食の選択に与える影響を分析した結果、リスク回避傾向のある人々は新しい食品を「リスク」と見なして受け入れにくく、現在志向の強い人々は将来の健康のために栄養価の高い食品へ投資することをためらう傾向が示唆された。これらは栄養改善の阻害要因となる可能性がある。本結果は国際会議で発表し、国際誌に掲載された。</paragraph>
+            <paragraph sequence="4">
+                また、食生活指針の策定手法として用いられている数学的最適化モデルに注目し、サブサハラアフリカ諸国における関連文献のスコーピングレビューを実施した。最も実行可能な食事の選択肢を導き出す方法論および成果を整理したレビュー論文を現在国際誌に投稿中である。さらに、マダガスカルの現地事情を踏まえた実用的なガイドラインの策定に向けた作業も進行中である。</paragraph>
+        </paragraphList>
+        <paragraphList type="outline_of_research_achievement" xml:lang="ja" parentId="19KK0341seika"
+            sequence="10">
+            <paragraph sequence="1">
+                マダガスカル農村部では、栄養不足と食の偏りが深刻な問題である。本研究では、現地の事情を考慮した食生活指針の策定を目指した。アフリカ諸国における数学的最適化を用いた食生活指針の事例を整理し、線形計画法の活用可能性を示した。さらに家計調査データをもとに、英国の共同研究者からの助言も得ながら、栄養改善に適した現地入手可能な食品の組み合わせを数理モデルで導出し、消費者行動の特性も考慮し、受容性の高い改善策を検討した。</paragraph>
+        </paragraphList>
+        <paragraphList type="outline_of_research_achievement" xml:lang="en" parentId="19KK0341seika"
+            sequence="11">
+            <paragraph sequence="1">In rural Madagascar, malnutrition and unbalanced diets are
+                serious problems. This study aims to develop dietary guidelines tailored to local
+                context. A scoping review was conducted to examine cases of dietary guidelines in
+                African countries that employed mathematical optimization, demonstrating the
+                applicability of linear programming. Using household survey data and with input from
+                UK-based collaborators, the study employed mathematical models to identify
+                combinations of locally available foods suitable for nutritional improvement.
+                Additionally, consumer behavior characteristics were considered to explore feasible
+                and acceptable interventions.</paragraph>
+        </paragraphList>
+        <paragraphList type="planning_scheme" parentId="19KK03412021hokoku" sequence="12">
+            <paragraph sequence="1">2022年度中に英国での国際共同研究を実施予定。</paragraph>
+        </paragraphList>
+        <paragraphList type="planning_scheme" parentId="19KK03412022hokoku" sequence="13">
+            <paragraph sequence="1">
+                令和５年度は、これまでに導き出した栄養供給と現地の食環境を鑑みての食生活のガイドラインを作成する。そのため年度内に、共同研究者との共同作業・最終確認のための渡英と、あわせて作成したガイドラインが実際に現地事情に即した有効なものかを確認するためのマダガスカル渡航を予定する。</paragraph>
+        </paragraphList>
+        <paragraphList type="planning_scheme" parentId="19KK03412023hokoku" sequence="14">
+            <paragraph sequence="1">次年度は最終年度であり、これまでに導き出した栄養供給状況や現地の食環境を鑑みての食生活のガイドラインを論文として公表する。</paragraph>
+        </paragraphList>
+        <paragraphList type="free_research_field" parentId="19KK0341seika" sequence="15">
+            <paragraph sequence="1">農業経済、食料消費、栄養改善、農業と栄養のリンク、消費者行動、グローバルフードシステム、開発途上地域</paragraph>
+        </paragraphList>
+        <paragraphList type="significance_of_research_achievement" parentId="19KK0341seika"
+            sequence="16">
+            <paragraph sequence="1">
+                本研究は、栄養改善が急務であるマダガスカル農村部において、理想を掲げるだけでなく、現地の食環境と住民の嗜好をふまえた実行可能で持続的な食生活指針の策定に取り組んだ点に社会的・実務的な意義がある。さらに、スコーピングレビューによる事例整理や、消費者行動分析（嗜好、リスク・時間選好など）も学術的に貢献する。得られた成果は、持続可能な食料・栄養政策に関する政策提言や社会実装につながることが期待される。</paragraph>
+        </paragraphList>
+        <classificationList>
+            <classification id="classification19KK0341progress2023" parentId="19KK03412023hokoku"
+                type="progress" statusCode="2" sequence="1" />
+            <classification id="classification19KK0341progress2022" parentId="19KK03412022hokoku"
+                type="progress" statusCode="2" sequence="2" />
+            <classification id="classification19KK0341progress2021" parentId="19KK03412021hokoku"
+                type="progress" statusCode="2" sequence="3" />
+        </classificationList>
+        <fileList parentId="19KK0341seika">
+            <file sequence="1">
+                <name>PDF</name>
+                <path>https://kaken.nii.ac.jp/file/KAKENHI-PROJECT-19KK0341/19KK0341seika.pdf</path>
+            </file>
+        </fileList>
+    </grantAward>
+</grantAwards>

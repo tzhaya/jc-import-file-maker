@@ -758,6 +758,18 @@ function normalizeDoi(raw) {
     .trim();
 }
 
+// ===== 3.0 DOI RA判定 =====
+async function fetchDoiRA(doi) {
+  const resp = await fetch(`https://doi.org/doiRA/${encodeURIComponent(doi)}`);
+  if (!resp.ok) throw new Error(`DOI RA判定APIエラー: ${resp.status}`);
+  const data = await resp.json();
+  const entry = data[0];
+  if (!entry || entry.status) {
+    throw new Error('入力されたDOIは存在しません。');
+  }
+  return entry.RA;
+}
+
 // ===== 3.1 Crossref API =====
 async function fetchCrossref(doi) {
   const resp = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
@@ -832,7 +844,42 @@ async function fetchAllRorData(oaJson) {
   return rorMap;
 }
 
-// ===== 3.5 メイン取得フロー =====
+// ===== 3.5 Crossref DOI データ取得 =====
+async function fetchCrossrefData(doi) {
+  // Crossref + OpenAlex を並列取得
+  const [crJson, oaJson] = await Promise.all([
+    fetchCrossref(doi),
+    fetchOpenAlex(doi),
+  ]);
+
+  // ROR データを並列取得
+  const rorMap = await fetchAllRorData(oaJson);
+
+  // 情報バー表示
+  const doiUrl = `https://doi.org/${doi}`;
+  const doiLink = document.getElementById('doi-link');
+  doiLink.href = doiUrl;
+  doiLink.textContent = doiUrl;
+
+  const oaStatus = oaJson.open_access?.oa_status || '';
+  const isOa = oaJson.open_access?.is_oa || false;
+  const badge = document.getElementById('oa-badge');
+  badge.textContent = isOa
+    ? (oaStatus === 'gold'   ? '🟡 Gold OA'
+     : oaStatus === 'green'  ? '🟢 Green OA'
+     : oaStatus === 'hybrid' ? '🔵 Hybrid OA'
+     : '⚪ Other OA')
+    : '🔴 Closed';
+  badge.style.background = isOa ? '#4caf50' : '#999';
+  document.getElementById('info-bar').style.display = 'flex';
+
+  // マッピング → レンダリング
+  const metadata = mapToItemType(crJson, oaJson, rorMap);
+  showHints = true;
+  renderAll(metadata);
+}
+
+// ===== 3.6 メイン取得フロー =====
 async function fetchData() {
   showError('');
   const rawDoi = document.getElementById('doi-input').value.trim();
@@ -845,38 +892,16 @@ async function fetchData() {
   loading.style.display = 'block';
 
   try {
-    // Crossref + OpenAlex を並列取得
-    const [crJson, oaJson] = await Promise.all([
-      fetchCrossref(doi),
-      fetchOpenAlex(doi),
-    ]);
+    // RA判定
+    const ra = await fetchDoiRA(doi);
 
-    // ROR データを並列取得
-    const rorMap = await fetchAllRorData(oaJson);
-
-    // 情報バー表示
-    const doiUrl = `https://doi.org/${doi}`;
-    const doiLink = document.getElementById('doi-link');
-    doiLink.href = doiUrl;
-    doiLink.textContent = doiUrl;
-
-    const oaStatus = oaJson.open_access?.oa_status || '';
-    const isOa = oaJson.open_access?.is_oa || false;
-    const badge = document.getElementById('oa-badge');
-    badge.textContent = isOa
-      ? (oaStatus === 'gold'   ? '🟡 Gold OA'
-       : oaStatus === 'green'  ? '🟢 Green OA'
-       : oaStatus === 'hybrid' ? '🔵 Hybrid OA'
-       : '⚪ Other OA')
-      : '🔴 Closed';
-    badge.style.background = isOa ? '#4caf50' : '#999';
-    document.getElementById('info-bar').style.display = 'flex';
-
-    // マッピング → レンダリング
-    const metadata = mapToItemType(crJson, oaJson, rorMap);
-    showHints = true;
-    renderAll(metadata);
-
+    if (ra === 'Crossref') {
+      await fetchCrossrefData(doi);
+    } else if (ra === 'JaLC') {
+      showError('JaLC DOI のインポートは現在未対応です。今後のアップデートで対応予定です。');
+    } else {
+      showError(`この DOI の登録機関 (${ra}) は現在サポートされていません。`);
+    }
   } catch (e) {
     showError(`エラー: ${e.message}`);
   } finally {
@@ -884,7 +909,7 @@ async function fetchData() {
   }
 }
 
-// ===== 3.6 空値テスト表示 =====
+// ===== 3.7 空値テスト表示 =====
 function showEmptyFields() {
   showError('');
   showHints = false;
