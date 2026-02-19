@@ -400,7 +400,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
    - 「CiNiiで検索」ボタンの表示/非表示を切り替え
 4. **CiNii検索URLの修正:**
    - 旧URL `https://cir.nii.ac.jp/ja/researchers/search?q=` → 新URL `https://cir.nii.ac.jp/researchers?q=`
-   - 検索クエリ: 姓+名（`familyName+givenName`）、取得不可時は creatorName/contributorName にフォールバック
+   - 検索クエリ: 姓 名（`familyName givenName`、スペースは`%20`にURLエンコード）、取得不可時は creatorName/contributorName にフォールバック
 5. **新規追加テンプレートへの反映:**
    - 識別子の「＋」ボタンで新規追加する際のテンプレートにも同じ onChange ハンドラと検索ボタンを設定
 

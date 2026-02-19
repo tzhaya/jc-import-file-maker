@@ -1871,7 +1871,7 @@ function renderOnePerson(person, idx, keys) {
       e.preventDefault();
       const family = person.familyNames?.[0]?.familyName || '';
       const given = person.givenNames?.[0]?.givenName || '';
-      const searchName = (family && given) ? `${family}+${given}`
+      const searchName = (family && given) ? `${family} ${given}`
         : (person.creatorNames?.[0]?.creatorName || person.contributorNames?.[0]?.contributorName || '');
       if (searchName) {
         window.open(`https://cir.nii.ac.jp/researchers?q=${encodeURIComponent(searchName)}`, '_blank');
@@ -1910,7 +1910,7 @@ function renderOnePerson(person, idx, keys) {
       e.preventDefault();
       const family = person.familyNames?.[0]?.familyName || '';
       const given = person.givenNames?.[0]?.givenName || '';
-      const searchName = (family && given) ? `${family}+${given}`
+      const searchName = (family && given) ? `${family} ${given}`
         : (person.creatorNames?.[0]?.creatorName || person.contributorNames?.[0]?.contributorName || '');
       if (searchName) {
         window.open(`https://cir.nii.ac.jp/researchers?q=${encodeURIComponent(searchName)}`, '_blank');

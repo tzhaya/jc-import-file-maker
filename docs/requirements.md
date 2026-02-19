@@ -284,7 +284,7 @@ make_jc_importer.html
 ### 作成者識別子のCiNii対応
 
 - 作成者識別子スキーマで「CiNii」を選択した場合、URIフィールドに `https://ci.nii.ac.jp/nrid/` を自動セットする
-- CiNii選択時に「CiNiiで検索」ボタンを表示し、クリックで CiNii Researchers（`https://cir.nii.ac.jp/researchers?q={姓}+{名}`）を新しいタブで開く
+- CiNii選択時に「CiNiiで検索」ボタンを表示し、クリックで CiNii Researchers（`https://cir.nii.ac.jp/researchers?q={姓}%20{名}`）を新しいタブで開く
   - 姓名が取得できない場合は著者名（creatorName / contributorName）にフォールバック
 - 他のScheme（ORCID等）選択時は検索ボタンを非表示にする
 
