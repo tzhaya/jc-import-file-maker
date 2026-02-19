@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-18（KAKEN連携実装）
+最終更新: 2026-02-19（NCID自動取得実装）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約2526行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携）
+現在のファイル規模: **約2546行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得）
 
 ---
 
@@ -358,6 +358,29 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 **検証:**
 - DOI `10.1016/j.advnut.2025.100480`: JSPS助成のaward番号でKAKEN連携が発動、日本語のみの課題名とURLが正しく入力されることを確認
 - DOI `10.1002/advs.202512896`: 複数のJSPS funder award番号で、日英両方の課題名が正しく取得されることを確認
+
+---
+
+### NCID自動取得（CiNii Research Books API）✅（2026-02-19）
+
+**背景:** Crossref APIから取得したISSN情報をもとに、CiNii Research OpenSearch API (books) を呼び出してNCID（NACSIS-CAT書誌ID）を自動取得し、収録物識別子（`source_identifier22`）フィールドに追加する機能が必要（[Issue #3](https://github.com/tzhaya/jc-import-file-maker/issues/3)）。
+
+**実装内容:**
+1. **`fetchNcid(issns)` 関数の新規追加（セクション 3.5.1）:**
+   - ISSNの配列を受け取り、CiNii Research OpenSearch API（books）を順番に呼び出し
+   - `CiNii_API_KEY` 設定時は `appid` パラメータを付与（任意、未設定でも動作）
+   - レスポンスの `items[0]['dc:identifier']` から `@type === 'cir:NCID'` の `@value` を抽出
+   - 最初にNCIDが見つかった時点でreturn、エラー時はスキップして次のISSNを試行
+2. **`mapToItemType()` 内のNCID取得呼び出し（ISSN処理直後）:**
+   - ISSN取得後、全ISSNを `fetchNcid()` に渡してNCIDを取得
+   - NCIDが取得できた場合、`sourceIdentifiers` に `{ subitem_source_identifier: ncid, subitem_source_identifier_type: 'NCID', _ncidUrl: 'https://ci.nii.ac.jp/ncid/{ncid}' }` を追加
+3. **NCID参照リンクの表示（ヒントセル）:**
+   - `createFieldRow()` に `extra.hintOverride` パラメータを追加し、指定時はフィールド値の代わりにカスタムヒントを表示
+   - `renderItemFields()` で `_ncidUrl` プロパティがある場合、CiNii書誌ページへのクリック可能なリンクを参照欄に表示
+
+**検証:**
+- DOI `10.1016/j.advnut.2025.100480`: 収録物識別子にPISSN/EISSNに加えてNCIDが自動追加されることを確認
+- DOI `10.1104/pp.106.4.1707`: NCIDの参照欄に `https://ci.nii.ac.jp/ncid/AA00775335` のリンクが表示されることを確認
 
 ---
 

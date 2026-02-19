@@ -883,6 +883,25 @@ async function fetchKaken(awardNumber) {
   return { titles, kakenUrl };
 }
 
+// ===== 3.5.1 CiNii Research NCID取得 =====
+async function fetchNcid(issns) {
+  const appidParam = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY'
+    ? `&appid=${encodeURIComponent(CONFIG.CiNii_API_KEY)}` : '';
+  for (const issn of issns) {
+    const url = `https://cir.nii.ac.jp/opensearch/v2/books?issn=${encodeURIComponent(issn)}&format=json${appidParam}`;
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      if (!data.items?.length) continue;
+      const ids = data.items[0]['dc:identifier'] || [];
+      const ncidObj = ids.find(id => id['@type'] === 'cir:NCID');
+      if (ncidObj?.['@value']) return ncidObj['@value'];
+    } catch { continue; }
+  }
+  return null;
+}
+
 // ===== 3.6 Crossref DOI データ取得 =====
 async function fetchCrossrefData(doi) {
   // Crossref + OpenAlex を並列取得
@@ -1052,6 +1071,9 @@ function buildAuthors(crAuthors, oaAuthorships, rorMap) {
       ? [{ nameIdentifier: orcidId, nameIdentifierScheme: 'ORCID', nameIdentifierURI: `https://orcid.org/${orcidId}`, _warnOrcid: orcidFromOA }]
       : [];
 
+    // CiNii ID のプレースホルダを追加
+    nameIdentifiers.push({ nameIdentifier: '', nameIdentifierScheme: 'CiNii', nameIdentifierURI: '' });
+
     return {
       creatorType: 'Author',
       creatorNames: [{ creatorName: fullName, creatorNameLang: 'en', creatorNameType: 'Personal', _warnLang: true }],
@@ -1180,6 +1202,15 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   });
   if (!sourceIdentifiers.length) {
     (crJson.ISSN || []).forEach(i => sourceIdentifiers.push({ subitem_source_identifier: i, subitem_source_identifier_type: 'ISSN' }));
+  }
+
+  // ===== NCID (CiNii Research) =====
+  const allIssns = sourceIdentifiers.map(si => si.subitem_source_identifier);
+  if (allIssns.length) {
+    const ncid = await fetchNcid(allIssns);
+    if (ncid) {
+      sourceIdentifiers.push({ subitem_source_identifier: ncid, subitem_source_identifier_type: 'NCID', _ncidUrl: `https://ci.nii.ac.jp/ncid/${ncid}` });
+    }
   }
 
   // ===== 収録物名 =====
@@ -1555,11 +1586,12 @@ function createFieldRow(label, value, inputType, selectOptsKey, extra) {
   row.appendChild(lbl);
 
   // 参照値（ヒント）セル: API取得時のみ、非空・非readonly・非selectフィールドに表示
-  if (showHints && value && !extra.readonly && inputType !== 'select') {
+  const hintVal = extra.hintOverride || value;
+  if (showHints && hintVal && !extra.readonly && inputType !== 'select') {
     const hint = document.createElement('span');
     hint.className = 'hint-cell';
-    hint.title = String(value);
-    hint.innerHTML = renderHint(value);
+    hint.title = String(hintVal);
+    hint.innerHTML = renderHint(hintVal);
     row.appendChild(hint);
   }
 
@@ -1689,6 +1721,7 @@ function renderItemFields(itemData, fieldsDef, container) {
       warn: isWarn,
       warnTitle,
       onChange,
+      hintOverride: itemData._ncidUrl && f.k === 'subitem_source_identifier' ? itemData._ncidUrl : null,
     });
     container.appendChild(row);
   }
@@ -1831,20 +1864,76 @@ function renderOnePerson(person, idx, keys) {
   const { wrapper: idWrap, content: idCont } = createNestedSectionHeader(idLabel, 2, (cont) => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('識別子', '', 'text', null, { fieldKey: 'nameIdentifier' }));
-    grp.appendChild(createFieldRow('Scheme', '', 'select', 'nameIdentifierScheme', { fieldKey: 'nameIdentifierScheme' }));
+    const sel = buildSelect(TITLE_MAPS['nameIdentifierScheme'], '', null);
+    sel.dataset.fieldKey = 'nameIdentifierScheme';
+    const selRow = createFieldRow('Scheme', '', 'select', 'nameIdentifierScheme', { fieldKey: 'nameIdentifierScheme' });
+    grp.appendChild(selRow);
     grp.appendChild(createFieldRow('URI', '', 'text', null, { fieldKey: 'nameIdentifierURI' }));
     grp.appendChild(delBtn);
     cont.appendChild(grp);
   });
   (person.nameIdentifiers || []).forEach(ni => {
-    const { grp, delBtn } = createEntryGroup();
-    grp.appendChild(createFieldRow('識別子', ni.nameIdentifier || '', 'text', null, { fieldKey: 'nameIdentifier' }));
-    grp.appendChild(createFieldRow('Scheme', ni.nameIdentifierScheme || '', 'select', 'nameIdentifierScheme', { fieldKey: 'nameIdentifierScheme' }));
-    grp.appendChild(createFieldRow('URI', ni.nameIdentifierURI || '', 'text', null, {
-      fieldKey: 'nameIdentifierURI', warn: ni._warnOrcid, warnTitle: 'OpenAlexから取得した値です。正確か確認してください'
-    }));
-    grp.appendChild(delBtn);
-    idCont.appendChild(grp);
+    // --- CiNii ID 用の特別UI ---
+    if (ni.nameIdentifierScheme === 'CiNii') {
+      const { grp, delBtn } = createEntryGroup();
+      const row = document.createElement('div');
+      row.className = 'field-row';
+      const lbl = document.createElement('span');
+      lbl.className = 'field-label';
+      lbl.textContent = 'CiNii ID';
+      const ciniiInp = document.createElement('input');
+      ciniiInp.type = 'text';
+      ciniiInp.value = ni.nameIdentifier || '';
+      ciniiInp.dataset.fieldKey = 'nameIdentifier';
+      ciniiInp.placeholder = '例: 9000000000000';
+      const searchBtn = document.createElement('button');
+      searchBtn.textContent = 'CiNiiで検索';
+      searchBtn.className = 'btn-add';
+      searchBtn.style.marginLeft = '8px';
+      searchBtn.onclick = (e) => {
+        e.preventDefault();
+        const searchName = person.creatorNames?.[0]?.creatorName || person.contributorNames?.[0]?.contributorName || '';
+        if (searchName) {
+            window.open(`https://cir.nii.ac.jp/ja/researchers/search?q=${encodeURIComponent(searchName)}`, '_blank');
+        } else {
+            alert('著者名が入力されていません。');
+        }
+      };
+      
+      const uriInp = document.createElement('input');
+      uriInp.type = 'hidden';
+      uriInp.value = ni.nameIdentifierURI || '';
+      uriInp.dataset.fieldKey = 'nameIdentifierURI';
+
+      ciniiInp.oninput = () => {
+        const idVal = ciniiInp.value.trim();
+        uriInp.value = idVal ? `https://ci.nii.ac.jp/nrid/${idVal}` : '';
+      };
+      
+      const schemeInp = document.createElement('input');
+      schemeInp.type = 'hidden';
+      schemeInp.value = 'CiNii';
+      schemeInp.dataset.fieldKey = 'nameIdentifierScheme';
+
+      row.appendChild(lbl);
+      row.appendChild(ciniiInp);
+      row.appendChild(searchBtn);
+      grp.appendChild(row);
+      grp.appendChild(uriInp);
+      grp.appendChild(schemeInp);
+      grp.appendChild(delBtn);
+      idCont.appendChild(grp);
+    } else {
+      // --- ORCID 等、その他のID用の標準UI ---
+      const { grp, delBtn } = createEntryGroup();
+      grp.appendChild(createFieldRow('識別子', ni.nameIdentifier || '', 'text', null, { fieldKey: 'nameIdentifier' }));
+      grp.appendChild(createFieldRow('Scheme', ni.nameIdentifierScheme || '', 'select', 'nameIdentifierScheme', { fieldKey: 'nameIdentifierScheme' }));
+      grp.appendChild(createFieldRow('URI', ni.nameIdentifierURI || '', 'text', null, {
+        fieldKey: 'nameIdentifierURI', warn: ni._warnOrcid, warnTitle: 'OpenAlexから取得した値です。正確か確認してください'
+      }));
+      grp.appendChild(delBtn);
+      idCont.appendChild(grp);
+    }
   });
   personContent.appendChild(idWrap);
 
