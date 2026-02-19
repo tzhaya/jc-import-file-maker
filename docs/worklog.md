@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-19（NCID自動取得実装）
+最終更新: 2026-02-19（CiNii識別子UI簡素化）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -381,6 +381,33 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 **検証:**
 - DOI `10.1016/j.advnut.2025.100480`: 収録物識別子にPISSN/EISSNに加えてNCIDが自動追加されることを確認
 - DOI `10.1104/pp.106.4.1707`: NCIDの参照欄に `https://ci.nii.ac.jp/ncid/AA00775335` のリンクが表示されることを確認
+
+---
+
+### CiNii識別子UI簡素化 ✅（2026-02-19）
+
+**背景:** CiNii ID用の特別UI（hidden scheme + 専用入力欄 + CiNiiで検索ボタン）が実装されていたが、検索URLが誤っており動作しなかった。特別UIを廃止して標準の識別子UIに統合し、Scheme選択時の自動URI設定と正しい検索リンクを実装。
+
+**実装内容:**
+1. **CiNiiプレースホルダの削除（`mapToItemType()` 内）:**
+   - 著者ごとに自動追加していた空のCiNiiエントリ `{ nameIdentifier: '', nameIdentifierScheme: 'CiNii', nameIdentifierURI: '' }` を削除
+   - CiNii IDは手動でSchemeから選択する運用に変更
+2. **CiNii特別UIの廃止と標準UIへの統合（`renderOnePerson()` 内）:**
+   - hidden の Scheme/URI + 専用 CiNii ID 入力欄を廃止
+   - 全識別子で統一された標準UI（識別子 / Scheme セレクト / URI テキスト）を使用
+3. **Scheme onChange ハンドラの追加:**
+   - Scheme セレクトで「CiNii」を選択した場合、URI フィールドに `https://ci.nii.ac.jp/nrid/` を自動セット（URIが空の場合のみ）
+   - 「CiNiiで検索」ボタンの表示/非表示を切り替え
+4. **CiNii検索URLの修正:**
+   - 旧URL `https://cir.nii.ac.jp/ja/researchers/search?q=` → 新URL `https://cir.nii.ac.jp/researchers?q=`
+   - 検索クエリ: 姓+名（`familyName+givenName`）、取得不可時は creatorName/contributorName にフォールバック
+5. **新規追加テンプレートへの反映:**
+   - 識別子の「＋」ボタンで新規追加する際のテンプレートにも同じ onChange ハンドラと検索ボタンを設定
+
+**検証:**
+- Scheme で CiNii を選択 → URI に `https://ci.nii.ac.jp/nrid/` が自動セットされることを確認
+- CiNii 選択時に「CiNiiで検索」ボタンが表示され、正しいURL `https://cir.nii.ac.jp/researchers?q=...` で開くことを確認
+- 他のScheme選択時は検索ボタンが非表示であることを確認
 
 ---
 
