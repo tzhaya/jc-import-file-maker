@@ -17,6 +17,7 @@ make_jc_importer.html
     -   OpenAlex API (`https://api.openalex.org/works/`)
     -   ROR API (`https://api.ror.org/v2/organizations/`)
     -   CiNii Research Projects API (`https://cir.nii.ac.jp/opensearch/v2/projects`)
+    -   CiNii Research Books API (`https://cir.nii.ac.jp/opensearch/v2/books`)
        
 **メタデータ構造定義**
 - `ItemType.json` ただし、要素から `title_i18n_temp` は除く。 
@@ -350,6 +351,14 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 - KAKEN 課題ページ URL を `subitem_award_uri` に設定
 - CiNii API がエラーの場合は警告のみ出力し、Crossref データを保持（フォールバック）
 - CiNii APIキー未設定、JSPS以外の funder、award番号が空の場合はKAKEN連携をスキップ
+
+**NCID自動取得（CiNii Research Books API）**:
+- Crossref APIから取得したISSN（PISSN/EISSN）をもとに、CiNii Research OpenSearch API（books）を呼び出してNCID（NACSIS-CAT書誌ID）を自動取得する
+- CiNii APIキーは任意（未設定でもAPI呼び出し可能、設定時はレート制限緩和）
+- ISSNを順番に試行し、最初にNCIDが見つかった時点で取得完了
+- 取得したNCIDを `source_identifier22` に `subitem_source_identifier_type: 'NCID'` として追加
+- NCIDの参照欄（ヒントセル）に `https://ci.nii.ac.jp/ncid/{ncid}` へのクリック可能なリンクを表示
+- ISSNが存在しない場合やNCIDが見つからない場合はスキップ
 
 ### 3. 会議記述フィールド
 

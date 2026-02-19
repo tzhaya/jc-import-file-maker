@@ -30,7 +30,10 @@ OpenAlex APIは、APIキーなしでの利用回数に制限があります。�
 
 #### CiNii API Key（任意）
 
-CiNii APIキーを設定すると、JSPS（日本学術振興会）が助成機関に含まれる場合に、CiNii Research Projects API を通じて科研費の課題名（日英）とKAKEN課題ページURLを自動取得します。
+CiNii APIキーを設定すると、以下の機能が有効になります：
+- JSPS（日本学術振興会）が助成機関に含まれる場合に、CiNii Research Projects API を通じて科研費の課題名（日英）とKAKEN課題ページURLを自動取得
+
+CiNii APIキー未設定でも、ISSNをもとにCiNii Research OpenSearch APIからNCID（NACSIS-CAT書誌ID）を自動取得します。APIキーを設定するとレート制限が緩和されます。
 
 - [CiNiiウェブAPI 利用登録](https://support.nii.ac.jp/ja/cinii/api/developer) からAPIキーを取得してください。
 - 未設定の場合、KAKEN連携はスキップされ、Crossrefの助成情報のみが表示されます。
@@ -54,6 +57,7 @@ CiNii APIキーを設定すると、JSPS（日本学術振興会）が助成機�
 - Crossref と OpenAlex の著者情報マッチング（姓名一致 → インデックスフォールバック）
 - 空フィールドのみの表示
 - KAKEN連携：JSPS助成の科研費課題名（日英）・課題ページURL自動取得（CiNii Research Projects API）
+- NCID自動取得：ISSNからCiNii Research OpenSearch APIでNCIDを取得し収録物識別子に追加（CiNii書誌ページへの参照リンク付き）
 
 ### Phase 2
 
@@ -95,6 +99,7 @@ CiNii APIキーを設定すると、JSPS（日本学術振興会）が助成機�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-02-19 | NCID自動取得：ISSNをもとにCiNii Research OpenSearch APIからNCIDを取得し収録物識別子に追加（[#3](https://github.com/tzhaya/jc-import-file-maker/issues/3)） |
 | 2026-02-18 | KAKEN連携：JSPS助成時にCiNii Research APIから科研費課題名・URLを自動取得（[#2](https://github.com/tzhaya/jc-import-file-maker/issues/2), [#7](https://github.com/tzhaya/jc-import-file-maker/issues/7)） |
 | 2026-02-17 | DOI登録機関（RA）判定機能を追加し、Crossref/JaLC/その他で処理を分岐（[#5](https://github.com/tzhaya/jc-import-file-maker/issues/5)） |
 | 2026-02-17 | 同一助成機関から複数awardがある場合に各awardごとにエントリを生成するよう修正 |
