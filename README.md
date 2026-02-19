@@ -16,8 +16,13 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 ```js
 const CONFIG = {
-    OpenAlex_API_KEY: "ここにOpenAlex APIキーを貼り付け",
-    CiNii_API_KEY: "ここにCiNii APIキーを貼り付け",
+    // OpenAlex APIキー（必須）
+    // https://openalex.org/settings/api からご自身のキーを取得して貼り付けてください
+    OpenAlex_API_KEY: "YOUR_OpenAlex_API_KEY",
+
+    // CiNii APIキー（任意）
+    // CiNiiウェブAPI 利用登録 https://support.nii.ac.jp/ja/cinii/api/developer で取得したキーを貼り付けてください
+    CiNii_API_KEY: "YOUR_CiNii_API_KEY",
 };
 ```
 
@@ -84,7 +89,10 @@ CiNii APIキー未設定でも、ISSNをもとにCiNii Research OpenSearch API�
 ## ドキュメント
 
 - [要件定義](docs/requirements.md)
-- [実装計画](docs/Implementation_phase1.md) 現在の実装計画書です。
+- 実装計画
+  - [Phase 1](docs/Implementation_phase1.md) 現在の実装計画書です。
+  - [Phase 2](docs/Implementation_phase2.md) TSVファイル出力対応の実装計画書です。
+  - [KAKEN対応](docs/Implementation_KAKEN.md) KAKEN APIからのデータ取得に関する実装計画書です。
 - [作業ログ](docs/worklog.md) 実装作業時のログです。
 
 - [フィールドマッピング一覧](docs/fieldmapping.md) Crossref/OpenAlexとのマッピング表です。  
