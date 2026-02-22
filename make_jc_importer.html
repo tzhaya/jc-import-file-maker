@@ -527,6 +527,37 @@ const CROSSREF_TYPE_MAP = {
   'grant':               'other',
 };
 
+// ===== Crossref relation type → JPCOAR relation type マッピング =====
+const CROSSREF_RELATION_TYPE_MAP = {
+  'is-version-of':      'isVersionOf',
+  'has-version':        'hasVersion',
+  'is-preprint-of':     'isVersionOf',
+  'has-preprint':       'hasVersion',
+  'is-part-of':         'isPartOf',
+  'has-part':           'hasPart',
+  'is-referenced-by':   'isReferencedBy',
+  'references':         'references',
+  'is-format-of':       'isFormatOf',
+  'has-format':         'hasFormat',
+  'is-identical-to':    'isIdenticalTo',
+  'is-supplement-to':   'isSupplementTo',
+  'is-supplemented-by': 'isSupplementedBy',
+  'replaces':           'replaces',
+  'is-replaced-by':     'isReplacedBy',
+  'is-cited-by':        'isCitedBy',
+  'cites':              'Cites',
+};
+
+// ===== Crossref relation id-type → JPCOAR identifierType マッピング =====
+const CROSSREF_RELATION_ID_TYPE_MAP = {
+  'doi':   'DOI',
+  'isbn':  'ISBN',
+  'issn':  'ISSN',
+  'uri':   'URI',
+  'arxiv': 'arXiv',
+  'pmid':  'PMID',
+};
+
 // ===== アクセス権マッピング =====
 const ACCESS_RIGHTS_MAP = {
   'embargoed access':       'http://purl.org/coar/access_right/c_f1cf',
@@ -1422,6 +1453,50 @@ async function mapToItemType(crJson, oaJson, rorMap) {
             subitem_relation_type_select: upperKey,
           },
           subitem_relation_name: [],
+        });
+      });
+      // 3) Crossref ISBN エントリ（book 系）
+      const isbnEntries = crJson['isbn-type'] || [];
+      if (isbnEntries.length) {
+        isbnEntries.forEach(i => {
+          relations.push({
+            subitem_relation_type: 'isIdenticalTo',
+            subitem_relation_type_id: {
+              subitem_relation_type_id_text: i.value,
+              subitem_relation_type_select: 'ISBN',
+            },
+            subitem_relation_name: [],
+          });
+        });
+      } else {
+        (crJson.ISBN || []).forEach(isbn => {
+          relations.push({
+            subitem_relation_type: 'isIdenticalTo',
+            subitem_relation_type_id: {
+              subitem_relation_type_id_text: isbn,
+              subitem_relation_type_select: 'ISBN',
+            },
+            subitem_relation_name: [],
+          });
+        });
+      }
+      // 4) Crossref relation エントリ（全資源タイプ）
+      Object.entries(crJson.relation || {}).forEach(([crRelType, items]) => {
+        const jpcoarRelType = CROSSREF_RELATION_TYPE_MAP[crRelType];
+        if (!jpcoarRelType) return;
+        (items || []).forEach(item => {
+          const jpcoarIdType = CROSSREF_RELATION_ID_TYPE_MAP[(item['id-type'] || '').toLowerCase()];
+          if (!jpcoarIdType) return;
+          const id = item.id || '';
+          if (!id) return;
+          relations.push({
+            subitem_relation_type: jpcoarRelType,
+            subitem_relation_type_id: {
+              subitem_relation_type_id_text: id,
+              subitem_relation_type_select: jpcoarIdType,
+            },
+            subitem_relation_name: [],
+          });
         });
       });
       return relations;

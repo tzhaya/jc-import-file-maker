@@ -192,7 +192,31 @@ make_jc_importer.html
             -   関連識別子："key": "item_30002_relation18[].subitem_relation_type_id.subitem_relation_type_id_text"
                 -   `key`に対する `value` の値
                 -   例：https://pubmed.ncbi.nlm.nih.gov/40653270
+        -   Crossref APIの `isbn-type` / `ISBN` フィールドに含まれるISBNを関連情報に追加する（book 系資源タイプ固有）。`isbn-type` が存在する場合は優先し、なければ `ISBN` 配列にフォールバック。
+            -   関連タイプ："key": "item_30002_relation18[].subitem_relation_type"
+                -   "value": "isIdenticalTo"
+            -   識別子タイプ："key": "item_30002_relation18[].subitem_relation_type_id.subitem_relation_type_select"
+                -   "value": "ISBN"
+            -   関連識別子："key": "item_30002_relation18[].subitem_relation_type_id.subitem_relation_type_id_text"
+                -   ISBN 値
+        -   Crossref APIの `relation` フィールドに含まれる関連情報を関連情報に追加する（全資源タイプ共通）。`CROSSREF_RELATION_TYPE_MAP` および `CROSSREF_RELATION_ID_TYPE_MAP` を使用してマッピング。マッピング対象外のrelation type / id-type はスキップする。
+            -   関連タイプ："key": "item_30002_relation18[].subitem_relation_type"
+                -   `CROSSREF_RELATION_TYPE_MAP` でマッピングした JPCOAR relation type 値
+            -   識別子タイプ："key": "item_30002_relation18[].subitem_relation_type_id.subitem_relation_type_select"
+                -   `CROSSREF_RELATION_ID_TYPE_MAP` でマッピングした JPCOAR identifierType 値
+            -   関連識別子："key": "item_30002_relation18[].subitem_relation_type_id.subitem_relation_type_id_text"
+                -   Crossref `relation[*][*].id` の値
 
+**Crossref `relation` フィールドの例**
+```json
+{
+  "relation": {
+    "has-preprint": [
+      { "id-type": "doi", "id": "10.1101/2025.01.01.000001", "asserted-by": "object" }
+    ]
+  }
+}
+```
 
 **OpenAlex のJSONPATH `ids` の例**
 ```
