@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-22（DOI必須項目バッジ表示）
+最終更新: 2026-02-22（Crossref type → JPCOAR 資源タイプ マッピング追加）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,57 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約2739行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ）
+現在のファイル規模: **約2769行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング）
+
+---
+
+## 2026-02-22: Crossref type → JPCOAR 資源タイプ マッピング追加（#12）
+
+### 問題
+
+Crossref API から書籍等を取り込んだ際、資源タイプが正しく識別されない問題があった。従来のコードは Crossref の `type` フィールドのハイフンをスペースに変換するだけで、30タイプのうち7タイプしか `TITLE_MAPS.resourcetype` に一致しなかった（`edited-book` → `edited book` → 一致なし → 空）。
+
+### 実装内容
+
+**`CROSSREF_TYPE_MAP` 定数を追加**（`RESOURCE_TYPE_MAP` の直後、約L510付近）
+
+Crossref type（ハイフン付き）を直接キーとし、対応するJPCOAR資源タイプを値とするマッピングテーブル（23エントリ）を追加。マッピング根拠は `docs/crossref_type_mapping.md` に記載。
+
+**`mapToItemType()` 内の資源タイプ解決ロジックを更新**
+
+```javascript
+// 変更前
+const crType       = (crJson.type || '').replace(/-/g, ' ');
+const resourcetype = TITLE_MAPS.resourcetype.includes(crType) ? crType : '';
+
+// 変更後
+const crTypeRaw    = crJson.type || '';
+const crTypeLabel  = crTypeRaw.replace(/-/g, ' ');
+const resourcetype = TITLE_MAPS.resourcetype.includes(crTypeLabel)
+  ? crTypeLabel
+  : (CROSSREF_TYPE_MAP[crTypeRaw] || '');
+```
+
+フォールバック順序:
+1. ハイフン→スペース変換で TITLE_MAPS に一致 → そのまま使用（既存の7タイプ）
+2. `CROSSREF_TYPE_MAP` でルックアップ → 対応するJPCOAR資源タイプを使用（23タイプ）
+3. どちらも一致しない → 空文字（未知のタイプ）
+
+### マッピング概要
+
+| 変換先 | 対象 Crossref type |
+|---|---|
+| `book` | edited-book, monograph, reference-book, book-set, book-series |
+| `book part` | book-chapter, book-section, book-track, reference-entry |
+| `conference paper` | proceedings-article |
+| `conference proceedings` | proceedings, proceedings-series |
+| `thesis` | dissertation |
+| `article` | posted-content, peer-review |
+| `report` | report-series |
+| `report part` | report-component |
+| `journal` | journal-volume, journal-issue |
+| `dataset` | database |
+| `other` | standard, component, grant |
 
 ---
 

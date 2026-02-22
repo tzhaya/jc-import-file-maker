@@ -207,7 +207,9 @@ make_jc_importer.html
 -   **資源タイプの設定**
     -   資源タイプ（"key": "item_30002_resource_type13"）は以下のように設定します。
         -   資源タイプ："key": "item_30002_resource_type13.resourcetype"
-            -   Crossref APIで取得したmessage.type の value の値と、"key": "item_30002_resource_type13.resourcetype" の titleMap に定義されたいずれかの value と一致する場合にその値。ハイフンは空白に置き換えてかまわない。一致しない場合は空値
+            -   Crossref APIで取得したmessage.type の値を以下の優先順位でJPCOAR 資源タイプに変換する。一致しない場合は空値。
+                1. ハイフンをスペースに変換した値が titleMap に一致する場合、その値を使用（例: `journal-article` → `journal article`）
+                2. 上記で一致しない場合、`CROSSREF_TYPE_MAP`（`docs/crossref_type_mapping.md` 参照）でルックアップして対応するJPCOAR資源タイプを使用（例: `edited-book` → `book`）
         -   資源タイプ識別子："key": "item_30002_resource_type13.resourceuri"
             -   資源タイプ語彙別表で一致するURLの値。一致しない場合は空値
 

@@ -500,6 +500,33 @@ const RESOURCE_TYPE_MAP = {
   'other':                    'http://purl.org/coar/resource_type/c_1843',
 };
 
+// ===== Crossref type → JPCOAR 資源タイプ マッピング =====
+const CROSSREF_TYPE_MAP = {
+  'edited-book':         'book',
+  'monograph':           'book',
+  'reference-book':      'book',
+  'book-set':            'book',
+  'book-series':         'book',
+  'book-chapter':        'book part',
+  'book-section':        'book part',
+  'book-track':          'book part',
+  'reference-entry':     'book part',
+  'proceedings-article': 'conference paper',
+  'proceedings':         'conference proceedings',
+  'proceedings-series':  'conference proceedings',
+  'dissertation':        'thesis',
+  'posted-content':      'article',
+  'peer-review':         'article',
+  'report-series':       'report',
+  'report-component':    'report part',
+  'journal-volume':      'journal',
+  'journal-issue':       'journal',
+  'database':            'dataset',
+  'standard':            'other',
+  'component':           'other',
+  'grant':               'other',
+};
+
 // ===== アクセス権マッピング =====
 const ACCESS_RIGHTS_MAP = {
   'embargoed access':       'http://purl.org/coar/access_right/c_f1cf',
@@ -1240,8 +1267,11 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   }];
 
   // ===== 資源タイプ =====
-  const crType        = (crJson.type || '').replace(/-/g, ' ');
-  const resourcetype  = TITLE_MAPS.resourcetype.includes(crType) ? crType : '';
+  const crTypeRaw     = crJson.type || '';
+  const crTypeLabel   = crTypeRaw.replace(/-/g, ' ');
+  const resourcetype  = TITLE_MAPS.resourcetype.includes(crTypeLabel)
+    ? crTypeLabel
+    : (CROSSREF_TYPE_MAP[crTypeRaw] || '');
   const resourceuri   = resourcetype ? (RESOURCE_TYPE_MAP[resourcetype] || '') : '';
 
   // ===== 出版タイプ =====
