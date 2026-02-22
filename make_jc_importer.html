@@ -1619,7 +1619,7 @@ function getDoiCategory(resourceType) {
                      'thesis','bachelor thesis','master thesis','doctoral thesis'];
   const articleTypes = ['conference paper','departmental bulletin paper','journal article',
                         'review article','data paper','editorial','article','newspaper',
-                        'software paper','other','periodical'];
+                        'software paper','other'];
   if (articleTypes.includes(resourceType)) return 'article';
   if (bookTypes.includes(resourceType)) return 'book';
   return null;
