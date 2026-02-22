@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-19（CiNii識別子UI簡素化）
+最終更新: 2026-02-22（DOI必須項目バッジ表示）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約2546行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得）
+現在のファイル規模: **約2739行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ）
 
 ---
 
@@ -381,6 +381,48 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 **検証:**
 - DOI `10.1016/j.advnut.2025.100480`: 収録物識別子にPISSN/EISSNに加えてNCIDが自動追加されることを確認
 - DOI `10.1104/pp.106.4.1707`: NCIDの参照欄に `https://ci.nii.ac.jp/ncid/AA00775335` のリンクが表示されることを確認
+
+---
+
+### DOI必須項目バッジ表示 ✅（2026-02-22）
+
+**背景:** JaLC DOI / Crossref DOI の登録要件（JPCOAR/JaLC対照表 付録 ver.1.5）をユーザーが参照しながら入力できるよう、各フィールドのセクションヘッダーに必須・条件付必須のバッジを動的に表示する機能が必要（[Issue #15](https://github.com/tzhaya/jc-import-file-maker/issues/15)）。
+
+**実装計画:** `docs/Implementation_doi_badges.md` に詳細記載。
+
+**実装内容:**
+1. **CSS: `.doi-badge` 4クラスの追加（L341-354）:**
+   - `.jalc-required`: 青系・実線ボーダー（必須）
+   - `.jalc-conditional`: 青系・破線ボーダー（条件付必須）
+   - `.crossref-required`: 赤系・実線ボーダー（必須）
+   - `.crossref-conditional`: 赤系・破線ボーダー（条件付必須）
+2. **`DOI_REQUIREMENTS` 定数の追加（L549~）:**
+   - 12フィールドの必須レベルマッピング（article/book別）
+   - 対象: title0, creator2, publisher10, date11, resource_type13, identifier16, identifier_registration17, relation18, source_identifier22, source_title23, volume_number24, page_start27
+   - 各エントリに `jalc`/`crossref` の必須レベル（`'required'`/`'conditional'`/`null`）と備考（`jalc_note`/`crossref_note`）を定義
+3. **`getDoiCategory(resourceType)` 関数の追加:**
+   - 資源タイプ文字列 → `'article'` / `'book'` / `null` に変換
+   - article系: `conference paper`, `departmental bulletin paper`, `journal article`, `review article`, `data paper`, `editorial`, `article`, `newspaper`, `software paper`, `other`
+   - book系: `book`, `book part`, `technical report`, `research report`, `report`, `thesis`, `bachelor thesis`, `master thesis`, `doctoral thesis`
+4. **`getCurrentDoiCategory()` 関数の追加:**
+   - DOM から `item_30002_resource_type13` セクションの select 値を取得して `getDoiCategory()` に渡す
+5. **`createDoiBadges(fieldKey, category)` 関数の追加:**
+   - fieldKey と category から `DOI_REQUIREMENTS` を参照してバッジ HTML 文字列を生成
+   - `title` 属性に備考テキストを設定（ツールチップ）
+6. **`updateDoiBadges()` 関数の追加:**
+   - 全 `.field-section` ヘッダーの既存バッジを除去し、現在のカテゴリに応じたバッジを再挿入
+   - `.summary` 要素の直前に挿入
+7. **`renderItemFields()` の修正:**
+   - `resourcetype` フィールドの `onChange` ハンドラ内で `updateDoiBadges()` を呼び出し
+8. **`renderAll()` の修正:**
+   - 末尾で `updateDoiBadges()` を呼び出し、初期表示（API取得後）でもバッジを反映
+
+**検証:**
+- `journal article` 選択時: タイトル・出版者・日付・巻・開始ページ等に `[JaLC必須]` `[Crossref必須]` バッジ表示
+- `book` 選択時: 巻・開始ページのバッジ消失、関連情報に `[Crossref必須]` 表示
+- `image` 等（対象外）: 全バッジ消去
+- バッジホバー: ツールチップで備考表示（例: `Crossref: xml:lang必須`）
+- DOI取得後の自動設定: API取得後の資源タイプ自動設定でもバッジが正しく表示
 
 ---
 

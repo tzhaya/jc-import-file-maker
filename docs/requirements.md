@@ -100,7 +100,19 @@ make_jc_importer.html
     - 項目名の右に、追加・削除のボタンを配置します。
     - 追加の場合は、同じフィールドのまとまりごとに直下に追加します。
   
--   **入力支援**: 
+-   **DOI必須項目バッジ表示**:
+    -   各フィールドセクションのヘッダーに JaLC DOI / Crossref DOI の必須項目情報を色付きタグ（バッジ）で表示する
+    -   バッジ種別: 必須（実線ボーダー）、条件付必須（破線ボーダー）
+    -   JaLC: 青系（`#e3f2fd` 背景）、Crossref: 赤系（`#fce4ec` 背景）
+    -   バッジにマウスホバーするとツールチップで備考（例: `Crossref: xml:lang必須`）を確認可能
+    -   資源タイプ（`item_30002_resource_type13.resourcetype`）の選択値に応じて動的に切り替える
+        -   ジャーナルアーティクル系（`journal article`, `conference paper`, `departmental bulletin paper` 等）: 別表2-1/3-1 に基づくバッジを表示
+        -   書籍系（`book`, `book part`, `technical report`, `thesis` 等）: 別表2-3/3-2 に基づくバッジを表示
+        -   対象外の資源タイプ（`image`, `dataset` 等）: バッジ非表示
+    -   資源タイプ変更時および初期表示時（`renderAll()` 完了後）にバッジを自動更新する
+    -   根拠: `docs/JPCOAR_JaLC_Crossref_requirements.md`（JPCOAR/JaLC対照表 付録 ver.1.5）
+
+-   **入力支援**:
     -   `fields.md` で列titleMapが「あり」のフィールドは、選択肢が用意されているフィールドです。
     -   選択肢は `ItemType.json` のうち"key" に対するtitleMapの配列の name と value で定義されています。
     -   選択式の項目は select メニューで選択できます。
