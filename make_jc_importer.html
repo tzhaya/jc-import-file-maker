@@ -1642,13 +1642,13 @@ function createDoiBadges(fieldKey, category) {
   if (catReq.jalc) {
     const cls   = catReq.jalc === 'required' ? 'jalc-required' : 'jalc-conditional';
     const label = catReq.jalc === 'required' ? 'JaLC必須' : 'JaLC条件付';
-    const tip   = catReq.jalc_note || (catReq.jalc === 'required' ? 'JaLC DOI登録に必須' : 'JaLC DOI: 条件付必須');
+    const tip   = (catReq.jalc_note || (catReq.jalc === 'required' ? 'JaLC DOI登録に必須' : 'JaLC DOI: 条件付必須')).replace(/"/g, '&quot;');
     html += `<span class="doi-badge ${cls}" title="${tip}">${label}</span>`;
   }
   if (catReq.crossref) {
     const cls   = catReq.crossref === 'required' ? 'crossref-required' : 'crossref-conditional';
     const label = catReq.crossref === 'required' ? 'Crossref必須' : 'Crossref条件付';
-    const tip   = catReq.crossref_note || (catReq.crossref === 'required' ? 'Crossref DOI登録に必須' : 'Crossref DOI: 条件付必須');
+    const tip   = (catReq.crossref_note || (catReq.crossref === 'required' ? 'Crossref DOI登録に必須' : 'Crossref DOI: 条件付必須')).replace(/"/g, '&quot;');
     html += `<span class="doi-badge ${cls}" title="${tip}">${label}</span>`;
   }
   return html;
