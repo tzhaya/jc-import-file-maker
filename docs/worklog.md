@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-22（Crossref type → JPCOAR 資源タイプ マッピング追加）
+最終更新: 2026-02-22（Crossref ISBN・relation フィールドの関連情報取り込み追加）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,40 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約2769行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング）
+
+---
+
+## 2026-02-22: Crossref ISBN・relation フィールドの関連情報取り込み追加（#20）
+
+### 問題
+
+issue #12 で Crossref type マッピングを追加した際、book 型データの検証を行ったところ、以下の情報が関連情報（`item_30002_relation18`）に取り込まれていないことを確認した。
+
+1. **`ISBN` フィールド**（book 系資源タイプ固有）: Crossref が返す ISBN が関連情報に登録されていない
+2. **`relation` フィールド**（全資源タイプ共通）: Crossref が返す関連識別子が全く処理されていない
+
+### 実装内容
+
+**定数 2 つを追加**（`CROSSREF_TYPE_MAP` 末尾直後）
+
+- `CROSSREF_RELATION_TYPE_MAP`: Crossref relation type（ハイフン区切り）→ JPCOAR relation type（17エントリ）
+- `CROSSREF_RELATION_ID_TYPE_MAP`: Crossref `id-type` → JPCOAR identifierType（6エントリ）
+
+値は `TITLE_MAPS.subitem_relation_type` / `TITLE_MAPS.subitem_relation_type_select` に完全一致させた（`arXiv` 等の大文字小文字に注意）。
+
+**`item_30002_relation18` IIFE に処理を追加**（既存の DOI / OpenAlex ids 処理の後）
+
+```
+3) Crossref ISBN エントリ（book 系）
+   isbn-type 優先 → なければ ISBN 配列にフォールバック（issn-type / ISSN と同パターン）
+   → isIdenticalTo / ISBN として追加
+
+4) Crossref relation エントリ（全資源タイプ）
+   CROSSREF_RELATION_TYPE_MAP / CROSSREF_RELATION_ID_TYPE_MAP でマッピング
+   対象外の relation type / id-type はスキップ
+```
+
+UI 側（`renderRelationField`）は変更不要（ISBN や各 relation type は既に TITLE_MAPS に定義済み）。
 
 ---
 

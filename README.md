@@ -63,6 +63,7 @@ CiNii APIキー未設定でも、ISSNをもとにCiNii Research OpenSearch API�
 - 空フィールドのみの表示
 - KAKEN連携：JSPS助成の科研費課題名（日英）・課題ページURL自動取得（CiNii Research Projects API）
 - NCID自動取得：ISSNからCiNii Research OpenSearch APIでNCIDを取得し収録物識別子に追加（CiNii書誌ページへの参照リンク付き）
+- Crossref ISBN・relation フィールドの関連情報への取り込み：book系でISBNをisIdenticalTo/ISBNとして追加、全資源タイプでCrossref relationフィールドのエントリを関連情報に追加
 
 ### Phase 2
 
@@ -107,6 +108,7 @@ CiNii APIキー未設定でも、ISSNをもとにCiNii Research OpenSearch API�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-02-22 | Crossref ISBN・relation フィールドを関連情報に取り込み：book系でISBNをisIdenticalTo/ISBNとして追加、全資源タイプでCrossref relationフィールドに対応（[#20](https://github.com/tzhaya/jc-import-file-maker/issues/20)） |
 | 2026-02-22 | DOI必須項目バッジ表示：資源タイプに応じてJaLC/Crossref DOIの必須・条件付必須をセクションヘッダーに色付きタグ+ツールチップで動的表示（[#15](https://github.com/tzhaya/jc-import-file-maker/issues/15)） |
 | 2026-02-22 | Crossref type → JPCOAR 資源タイプ マッピングを追加：書籍・会議論文・学位論文等23タイプを正しくマッピング（[#12](https://github.com/tzhaya/jc-import-file-maker/issues/12)） |
 | 2026-02-19 | CiNii識別子UIを簡素化：特別UIを廃止し標準UIに統合、Scheme選択時のURI自動設定とCiNii Researchers検索ボタンを追加 |
