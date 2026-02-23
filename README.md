@@ -35,13 +35,13 @@ OpenAlex APIは、APIキーなしでの利用回数に制限があります。�
 
 #### CiNii API Key（任意）
 
-CiNii APIキーを設定すると、以下の機能が有効になります：
+CiNii APIキー未設定でも、以下の機能が動作します：
 - JSPS（日本学術振興会）が助成機関に含まれる場合に、CiNii Research Projects API を通じて科研費の課題名（日英）とKAKEN課題ページURLを自動取得
+- ISSNをもとにCiNii Research OpenSearch APIからNCID（NACSIS-CAT書誌ID）を自動取得
 
-CiNii APIキー未設定でも、ISSNをもとにCiNii Research OpenSearch APIからNCID（NACSIS-CAT書誌ID）を自動取得します。APIキーを設定するとレート制限が緩和されます。
+APIキーを設定するとレート制限が緩和されます。
 
 - [CiNiiウェブAPI 利用登録](https://support.nii.ac.jp/ja/cinii/api/developer) からAPIキーを取得してください。
-- 未設定の場合、KAKEN連携はスキップされ、Crossrefの助成情報のみが表示されます。
 
 ## 機能
 

@@ -969,12 +969,13 @@ async function fetchAllRorData(oaJson) {
 async function fetchKaken(awardNumber) {
   // JP プレフィックス除去
   const projectId = awardNumber.replace(/^JP/i, '');
-  const appid = encodeURIComponent(CONFIG.CiNii_API_KEY);
+  const appidParam = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY'
+    ? `&appid=${encodeURIComponent(CONFIG.CiNii_API_KEY)}` : '';
 
   // 日本語・英語タイトルを並列取得
   const [jaResp, enResp] = await Promise.all([
-    fetch(`https://cir.nii.ac.jp/opensearch/v2/projects?appid=${appid}&format=json&projectId=${encodeURIComponent(projectId)}`),
-    fetch(`https://cir.nii.ac.jp/opensearch/v2/projects?appid=${appid}&format=json&projectId=${encodeURIComponent(projectId)}&lang=en`),
+    fetch(`https://cir.nii.ac.jp/opensearch/v2/projects?format=json&projectId=${encodeURIComponent(projectId)}${appidParam}`),
+    fetch(`https://cir.nii.ac.jp/opensearch/v2/projects?format=json&projectId=${encodeURIComponent(projectId)}&lang=en${appidParam}`),
   ]);
 
   if (!jaResp.ok || !enResp.ok) return null;
@@ -1226,16 +1227,14 @@ function buildAuthors(crAuthors, oaAuthorships, rorMap) {
 // ===== 4.4 助成情報マッピング =====
 async function buildFunders(crFunders) {
   const JSPS_DOI = '10.13039/501100001691';
-  const isKakenEnabled = CONFIG.CiNii_API_KEY
-                      && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
 
   const entries = await Promise.all((crFunders || []).map(async (f) => {
     const name      = f.name  || '';
     const funderDoi = f.DOI   || '';
     const awards    = f.award || [];
 
-    // JSPS判定: DOI一致 かつ CiNii_API_KEY設定済み
-    const isJsps = isKakenEnabled && funderDoi === JSPS_DOI;
+    // JSPS判定: funder DOI が JSPS（APIキー不要）
+    const isJsps = funderDoi === JSPS_DOI;
 
     const buildEntry = async (awardNum) => {
       const obj = {};

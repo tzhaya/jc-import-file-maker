@@ -399,13 +399,13 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 
 **KAKEN連携（CiNii Research Projects API）**:
 - Crossref の funder 情報に JSPS（日本学術振興会、funder DOI: `10.13039/501100001691`）が含まれる場合、かつJGN連携が成功しなかった場合に、CiNii Research Projects API を使って科研費の課題名と KAKEN 課題ページ URL を自動取得する
-- CiNii APIキー（`CONFIG.CiNii_API_KEY`）が設定されている場合のみ有効
+- CiNii APIキー（`CONFIG.CiNii_API_KEY`）は任意（未設定でも動作、設定時はレート制限緩和）
 - award番号から `JP` プレフィックスを除去して CiNii API の `projectId` パラメータに使用
 - 日本語・英語の課題名を並列取得し、`subitem_award_titles[]` に設定
   - 日英タイトルが同一の場合は日本語のみ設定
 - KAKEN 課題ページ URL を `subitem_award_uri` に設定
 - CiNii API がエラーの場合は警告のみ出力し、Crossref データを保持（フォールバック）
-- CiNii APIキー未設定、JSPS以外の funder、award番号が空の場合はKAKEN連携をスキップ
+- JSPS以外の funder、award番号が空、またはJGN連携成功済みの場合はKAKEN連携をスキップ
 
 **NCID自動取得（CiNii Research Books API）**:
 - Crossref APIから取得したISSN（PISSN/EISSN）をもとに、CiNii Research OpenSearch API（books）を呼び出してNCID（NACSIS-CAT書誌ID）を自動取得する
