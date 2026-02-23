@@ -361,6 +361,42 @@
 <p>現在のバージョンでは、Crossref APIおよびOpenAlex APIからのデータ取得のみ実装されています。</p>
 <p>「DOI」にDOIを入力して「データ取得」ボタンを押すと、データを取得して表示します。</p>
 
+<div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
+  <div style="margin-bottom:6px;">
+    <strong>最終更新:</strong> 2026-02-23 &nbsp;|&nbsp;
+    <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
+  </div>
+  <table style="border-collapse:collapse; width:100%;">
+    <thead>
+      <tr style="border-bottom:1px solid #ddd;">
+        <th style="text-align:left; padding:2px 10px 2px 0; white-space:nowrap; font-weight:bold; color:#444;">日付</th>
+        <th style="text-align:left; padding:2px 0; font-weight:bold; color:#444;">更新概要</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-23</td>
+        <td style="padding:2px 0;">JGN連携：JP始まりawardにCrossref JGN API照会、JST助成金の課題名（日英）・課題DOI URIを自動取得。JGN未登録時はKAKEN連携にフォールバック</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-22</td>
+        <td style="padding:2px 0;">Crossref ISBN・relation フィールドを関連情報に取り込み（book系はISBN→isIdenticalTo/ISBN、全資源タイプでrelation対応）</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-22</td>
+        <td style="padding:2px 0;">DOI必須項目バッジ：資源タイプに応じてJaLC/CrossrefのDOI必須・条件付必須をセクションヘッダーに動的表示</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-19</td>
+        <td style="padding:2px 0;">NCID自動取得：ISSNからCiNii Research OpenSearch APIでNCIDを取得し収録物識別子に追加</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-18</td>
+        <td style="padding:2px 0;">KAKEN連携：JSPS助成時にCiNii Research APIから科研費課題名（日英）・課題ページURLを自動取得</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
 <!-- ===== DOI入力エリア ===== -->
 <div id="input-area">
