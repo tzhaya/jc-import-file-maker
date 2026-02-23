@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-22（Crossref ISBN・relation フィールドの関連情報取り込み追加）
+最終更新: 2026-02-23（JGN連携追加 / JST助成金の課題名・URI自動取得）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,45 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約2769行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング）
+現在のファイル規模: **約2867行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携）
+
+---
+
+## 2026-02-23: JGN連携追加（#14）
+
+### 問題
+
+Crossref から取得した助成情報の `award` に `JPMJBF1801` のような JGN（Japan Grant Number）体系的番号が含まれる場合、課題名・URIが取得されていなかった。
+JST 助成金は CiNii Research Projects（KAKEN）には登録されておらず、既存の KAKEN 連携では対応不可だった。
+
+### 実装内容
+
+**`fetchJgn(awardNumber)` 関数を追加**（`fetchKaken()` 直後、`fetchNcid()` 直前）
+
+- URL: `https://api.crossref.org/works/10.52926/${encodeURIComponent(awardNumber)}`
+- 404 → `null` 返却（JGN未登録、KAKEN にフォールバック）
+- `type !== 'grant'` → `null` 返却
+- `project[0].project-title[]` から `{ subitem_award_title, subitem_award_title_language }` の配列を生成
+- URI: `https://doi.org/10.52926/${awardNumber}`
+- 戻り値形式は `fetchKaken()` と同じ `{ titles, kakenUrl }` → 下流コード（`buildFunders()`）の変更を最小化
+
+**`buildFunders()` 内 `buildEntry()` を修正**
+
+```
+変更前:
+  KAKEN連携: JSPS かつ award番号ありの場合のみ fetchKaken() 呼び出し
+
+変更後:
+  1. JGN連携: award が /^JP/i にマッチする場合、まず fetchJgn() を試みる
+  2. KAKEN連携: JSPS かつ JGN未取得の場合のみ fetchKaken() を呼び出す（フォールバック）
+```
+
+### スコープ整理
+
+| 助成機関 | 番号形式 | JGN | 対応 |
+|---|---|---|---|
+| JST | `JPMJXXXXXXXX` | 登録あり（200） | JGN連携で課題名・URI取得 |
+| JSPS | `JP19K11839` 等 | 未登録（404） | KAKEN連携にフォールバック |
 
 ---
 

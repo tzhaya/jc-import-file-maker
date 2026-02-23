@@ -18,6 +18,7 @@ make_jc_importer.html
     -   ROR API (`https://api.ror.org/v2/organizations/`)
     -   CiNii Research Projects API (`https://cir.nii.ac.jp/opensearch/v2/projects`)
     -   CiNii Research Books API (`https://cir.nii.ac.jp/opensearch/v2/books`)
+    -   Crossref Works API - JGN（Japan Grant Number）(`https://api.crossref.org/works/10.52926/{award}`)
        
 **メタデータ構造定義**
 - `ItemType.json` ただし、要素から `title_i18n_temp` は除く。 
@@ -387,15 +388,24 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 - 複数言語バージョンの助成機関名・課題名をサポート
 - アコーディオンUIで複数プログラム情報を管理
 
+**JGN連携（Crossref JGN API）**:
+- award番号が `JP` で始まる場合、Crossref の JGN（Japan Grant Number）API（`https://api.crossref.org/works/10.52926/{award}`）を照会する
+- レスポンスが `type: "grant"` の場合のみ処理実行
+- `project[0].project-title[].title` を課題名、`.language` を言語として `subitem_award_titles[]` に設定
+- `https://doi.org/10.52926/{award}` を `subitem_award_uri` に設定
+- 404（JGN未登録）の場合は null を返し、KAKEN連携にフォールバック
+- JGN連携が成功した場合、KAKEN連携はスキップ
+- JSTの体系的番号（`JPMJXXXXXXXX` 形式）が主な対象（JSPS科研費はJGN未登録のためKAKENにフォールバック）
+
 **KAKEN連携（CiNii Research Projects API）**:
-- Crossref の funder 情報に JSPS（日本学術振興会、funder DOI: `10.13039/501100001691`）が含まれる場合、CiNii Research Projects API を使って科研費の課題名と KAKEN 課題ページ URL を自動取得する
-- CiNii APIキー（`CONFIG.CiNii_API_KEY`）が設定されている場合のみ有効
+- Crossref の funder 情報に JSPS（日本学術振興会、funder DOI: `10.13039/501100001691`）が含まれる場合、かつJGN連携が成功しなかった場合に、CiNii Research Projects API を使って科研費の課題名と KAKEN 課題ページ URL を自動取得する
+- CiNii APIキー（`CONFIG.CiNii_API_KEY`）は任意（未設定でも動作、設定時はレート制限緩和）
 - award番号から `JP` プレフィックスを除去して CiNii API の `projectId` パラメータに使用
 - 日本語・英語の課題名を並列取得し、`subitem_award_titles[]` に設定
   - 日英タイトルが同一の場合は日本語のみ設定
 - KAKEN 課題ページ URL を `subitem_award_uri` に設定
 - CiNii API がエラーの場合は警告のみ出力し、Crossref データを保持（フォールバック）
-- CiNii APIキー未設定、JSPS以外の funder、award番号が空の場合はKAKEN連携をスキップ
+- JSPS以外の funder、award番号が空、またはJGN連携成功済みの場合はKAKEN連携をスキップ
 
 **NCID自動取得（CiNii Research Books API）**:
 - Crossref APIから取得したISSN（PISSN/EISSN）をもとに、CiNii Research OpenSearch API（books）を呼び出してNCID（NACSIS-CAT書誌ID）を自動取得する

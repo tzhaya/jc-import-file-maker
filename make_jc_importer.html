@@ -969,12 +969,13 @@ async function fetchAllRorData(oaJson) {
 async function fetchKaken(awardNumber) {
   // JP プレフィックス除去
   const projectId = awardNumber.replace(/^JP/i, '');
-  const appid = encodeURIComponent(CONFIG.CiNii_API_KEY);
+  const appidParam = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY'
+    ? `&appid=${encodeURIComponent(CONFIG.CiNii_API_KEY)}` : '';
 
   // 日本語・英語タイトルを並列取得
   const [jaResp, enResp] = await Promise.all([
-    fetch(`https://cir.nii.ac.jp/opensearch/v2/projects?appid=${appid}&format=json&projectId=${encodeURIComponent(projectId)}`),
-    fetch(`https://cir.nii.ac.jp/opensearch/v2/projects?appid=${appid}&format=json&projectId=${encodeURIComponent(projectId)}&lang=en`),
+    fetch(`https://cir.nii.ac.jp/opensearch/v2/projects?format=json&projectId=${encodeURIComponent(projectId)}${appidParam}`),
+    fetch(`https://cir.nii.ac.jp/opensearch/v2/projects?format=json&projectId=${encodeURIComponent(projectId)}&lang=en${appidParam}`),
   ]);
 
   if (!jaResp.ok || !enResp.ok) return null;
@@ -998,6 +999,30 @@ async function fetchKaken(awardNumber) {
   }
 
   return { titles, kakenUrl };
+}
+
+// ===== 3.5.2 Crossref JGN（Japan Grant Number）API =====
+async function fetchJgn(awardNumber) {
+  const url = `https://api.crossref.org/works/10.52926/${encodeURIComponent(awardNumber)}`;
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return null;            // 404 → JGN未登録
+    const data = await resp.json();
+    const item = data.message;
+    if (item.type !== 'grant') return null;
+
+    const projectTitles = item.project?.[0]?.['project-title'] || [];
+    const titles = projectTitles
+      .filter(t => t.title)
+      .map(t => ({
+        subitem_award_title:          t.title,
+        subitem_award_title_language: t.language || '',
+      }));
+
+    return { titles, kakenUrl: `https://doi.org/10.52926/${awardNumber}` };
+  } catch {
+    return null;
+  }
 }
 
 // ===== 3.5.1 CiNii Research NCID取得 =====
@@ -1202,16 +1227,14 @@ function buildAuthors(crAuthors, oaAuthorships, rorMap) {
 // ===== 4.4 助成情報マッピング =====
 async function buildFunders(crFunders) {
   const JSPS_DOI = '10.13039/501100001691';
-  const isKakenEnabled = CONFIG.CiNii_API_KEY
-                      && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
 
   const entries = await Promise.all((crFunders || []).map(async (f) => {
     const name      = f.name  || '';
     const funderDoi = f.DOI   || '';
     const awards    = f.award || [];
 
-    // JSPS判定: DOI一致 かつ CiNii_API_KEY設定済み
-    const isJsps = isKakenEnabled && funderDoi === JSPS_DOI;
+    // JSPS判定: funder DOI が JSPS（APIキー不要）
+    const isJsps = funderDoi === JSPS_DOI;
 
     const buildEntry = async (awardNum) => {
       const obj = {};
@@ -1228,9 +1251,18 @@ async function buildFunders(crFunders) {
         obj.subitem_funder_identifiers = { subitem_funder_identifier: '', subitem_funder_identifier_type: '' };
       }
 
-      // KAKEN連携: JSPS かつ award番号ありの場合
+      // JGN連携: award が JP で始まる場合（JST助成金等）
       let kakenResult = null;
-      if (isJsps && awardNum) {
+      if (awardNum && /^JP/i.test(awardNum)) {
+        try {
+          kakenResult = await fetchJgn(awardNum);
+        } catch (e) {
+          console.warn(`JGN取得失敗 (${awardNum}):`, e.message);
+        }
+      }
+
+      // KAKEN連携: JSPS かつ award番号あり かつ JGN取得できなかった場合
+      if (isJsps && awardNum && !kakenResult) {
         try {
           kakenResult = await fetchKaken(awardNum);
         } catch (e) {
