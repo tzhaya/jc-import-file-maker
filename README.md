@@ -112,6 +112,8 @@ APIキーを設定するとレート制限が緩和されます。
 
 | 日付 | 内容 |
 |------|------|
+| 2026-02-24 | JPCOAR スキーマ 2.0 資源タイプ語彙対応：`RESOURCE_TYPE_MAP` に v2.0 の31型（データセットサブタイプ・特許サブタイプ等）を追加し、セレクトメニューも更新（docs/resource_type_vocabulary.md も更新） |
+| 2026-02-24 | 出版タイプ選択時に出版タイプリソース URI を自動設定（COAR version type vocabulary、`VERSION_TYPE_MAP` 追加） |
 | 2026-02-24 | 識別子からの機関名逆引き：所属機関識別子（ROR）・助成機関識別子（ROR / Crossref Funder）から「名称を確認」ボタンでAPI逆引きし、名称不一致時は「上書き」ボタンで置換可能（[#17](https://github.com/tzhaya/jc-import-file-maker/issues/17)） |
 | 2026-02-23 | JGN連携：award が `JP` で始まる場合にCrossref JGN API（prefix `10.52926`）を照会しJST助成金の課題名（日英）・課題DOI URIを自動取得。JGN未登録時はKAKEN連携にフォールバック（[#14](https://github.com/tzhaya/jc-import-file-maker/issues/14)） |
 | 2026-02-22 | Crossref ISBN・relation フィールドを関連情報に取り込み：book系でISBNをisIdenticalTo/ISBNとして追加、全資源タイプでCrossref relationフィールドに対応（[#20](https://github.com/tzhaya/jc-import-file-maker/issues/20)） |
