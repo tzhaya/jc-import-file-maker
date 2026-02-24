@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-24（識別子逆引き機能追加 / ROR・Crossref Funder からの機関名確認・上書き）
+最終更新: 2026-02-24（JPCOAR 2.0 資源タイプ語彙対応 / 出版タイプリソース自動設定）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,53 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約2867行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携）
+現在のファイル規模: **約2900行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応）
+
+---
+
+## 2026-02-24: JPCOAR 2.0 資源タイプ語彙対応・出版タイプリソース自動設定
+
+### 問題
+
+1. **出版タイプリソース未設定**: 出版タイプ（AO/AM/VoR 等）のセレクトを変更しても出版タイプリソース URI が自動設定されなかった。
+2. **資源タイプ 2.0 未対応**: JPCOAR スキーマ 2.0 で追加された資源タイプ（データセットサブタイプ・特許サブタイプ等）が選択できても `RESOURCE_TYPE_MAP` に対応エントリがなく、`resourceuri` が空になっていた。
+
+### 実装内容
+
+**`VERSION_TYPE_MAP` 定数追加** (`ACCESS_RIGHTS_MAP` 直前)
+
+- AO / SMUR / AM / P / VoR / CVoR / EVoR / NA の8型を COAR version type vocabulary URI にマッピング
+- 出典: http://vocabularies.coar-repositories.org/version_types/
+
+**FIELD_DEFS 修正** (`item_30002_version_type15`)
+
+- `subitem_version_type` フィールドに `link: { tgt: 'subitem_version_resource', map: VERSION_TYPE_MAP }` を追加
+- `subitem_version_resource` フィールドに `ro: true` を追加（自動入力のため readonly 化）
+- 資源タイプの `resourcetype` → `resourceuri` 自動設定と同一パターン
+
+**`RESOURCE_TYPE_MAP` 拡張**
+
+- v2.0 追加型 31 件を追加（コメントで `// v2.0追加` を明記）
+  - Articles: `journal`（c_0640）、`other periodical`（QX5C-AR31）
+  - Conference Output: `conference output`（c_c94f、旧 `conference object` の改称）、`conference presentation`（R60J-J5BD）
+  - Dataset サブタイプ 13 型: aggregated data / clinical trial data / compiled data / encoded data / experimental data / genomic data / geospatial data / laboratory notebook / measurement and test data / observational data / recorded data / simulation data / survey data
+  - Patent サブタイプ 7 型: design patent / PCT application / plant patent / plant variety protection / software patent / trademark / utility model
+  - Other 8 型: commentary / design / industrial design / layout design / peer review / research protocol / source code / transcription
+- v1.0 のみの型（periodical / interview / internal report / report part）にコメント `// v1.0のみ` を追加
+
+**`TITLE_MAPS.resourcetype` 更新**
+
+- Patent サブタイプ 7 型、Other 8 型（計 15 型）をセレクトメニューに追加
+- patent の直前に特許サブタイプをグループ化して配置
+
+**`docs/resource_type_vocabulary.md` 全面更新**
+
+- v1.0 / v2.0 の両出典 URL を明記
+- 「凡例」セクション追加（v1.0 / v2.0追加 / v1.0のみ の区分）
+- カテゴリ別構成に再編（Articles / Books / Cartographic Material / Conference Output / Dataset / Image / Lecture / Patent / Report / Sound / Thesis / Other）
+- v2.0 追加型を **太字** で明示
+- v2.0 で廃止の可能性がある型（periodical / interview / internal report / report part）を "v1.0のみ" で明示
+- `conference object` → `conference output` の改称を注記
 
 ---
 

@@ -39,6 +39,8 @@ make_jc_importer.html
 
 **資源タイプ語彙別表**
     -　`resource_type_vocabulary.md`
+    - JPCOAR スキーマ 2.0 の語彙に対応（v2.0追加型・v1.0のみ型を区分表示）
+    - 出典: v1.0 https://schema.irdb.nii.ac.jp/ja/resource_type_vocabulary / v2.0 https://schema.irdb.nii.ac.jp/ja/2.0/resource_type_vocabulary
 
 **JPCOARスキーマ 項目別説明リンク一覧**
     - `JPCOARschme_guide.md`

@@ -385,6 +385,14 @@
     <tbody>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-24</td>
+        <td style="padding:2px 0;">JPCOAR 2.0 資源タイプ語彙対応：v2.0の31型（データセットサブタイプ・特許サブタイプ等）を RESOURCE_TYPE_MAP に追加、セレクトメニュー更新</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-24</td>
+        <td style="padding:2px 0;">出版タイプ選択時に出版タイプリソース URI を自動設定（COAR version type vocabulary）</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-24</td>
         <td style="padding:2px 0;">識別子逆引き：所属機関識別子（ROR）・助成機関識別子（ROR / Crossref Funder）から「名称を確認」ボタンでAPI逆引き、名称不一致時は「上書き」で置換可能</td>
       </tr>
       <tr>
@@ -500,51 +508,95 @@ const EXCLUDED_KEYS = new Set([
 
 // ===== 資源タイプ語彙マッピング =====
 const RESOURCE_TYPE_MAP = {
+  // ----- Articles -----
   'conference paper':         'http://purl.org/coar/resource_type/c_5794',
   'data paper':               'http://purl.org/coar/resource_type/c_beb9',
   'departmental bulletin paper': 'http://purl.org/coar/resource_type/c_6501',
   'editorial':                'http://purl.org/coar/resource_type/c_b239',
+  'journal':                  'http://purl.org/coar/resource_type/c_0640',    // v2.0追加
   'journal article':          'http://purl.org/coar/resource_type/c_6501',
   'newspaper':                'http://purl.org/coar/resource_type/c_2fe3',
-  'periodical':               'http://purl.org/coar/resource_type/c_2659',
+  'other periodical':         'http://purl.org/coar/resource_type/QX5C-AR31', // v2.0追加
+  'periodical':               'http://purl.org/coar/resource_type/c_2659',    // v1.0のみ
   'review article':           'http://purl.org/coar/resource_type/c_dcae04bc',
   'software paper':           'http://purl.org/coar/resource_type/c_7bab',
   'article':                  'http://purl.org/coar/resource_type/c_6501',
+  // ----- Books -----
   'book':                     'http://purl.org/coar/resource_type/c_2f33',
   'book part':                'http://purl.org/coar/resource_type/c_3248',
+  // ----- Cartographic Material -----
   'cartographic material':    'http://purl.org/coar/resource_type/c_12cc',
   'map':                      'http://purl.org/coar/resource_type/c_12cd',
-  'conference object':        'http://purl.org/coar/resource_type/c_c94f',
+  // ----- Conference Output -----
+  'conference output':        'http://purl.org/coar/resource_type/c_c94f',    // v2.0改称（旧: conference object）
+  'conference object':        'http://purl.org/coar/resource_type/c_c94f',    // 後方互換
+  'conference presentation':  'http://purl.org/coar/resource_type/R60J-J5BD', // v2.0追加
   'conference proceedings':   'http://purl.org/coar/resource_type/c_f744',
   'conference poster':        'http://purl.org/coar/resource_type/c_6670',
+  // ----- Dataset -----
+  'aggregated data':          'http://purl.org/coar/resource_type/ACF7-8YT9', // v2.0追加
+  'clinical trial data':      'http://purl.org/coar/resource_type/c_cb28',    // v2.0追加
+  'compiled data':            'http://purl.org/coar/resource_type/FXF3-D3G7', // v2.0追加
   'dataset':                  'http://purl.org/coar/resource_type/c_ddb1',
-  'interview':                'http://purl.org/coar/resource_type/c_26e4',
+  'encoded data':             'http://purl.org/coar/resource_type/AM6W-6QAW', // v2.0追加
+  'experimental data':        'http://purl.org/coar/resource_type/63NG-B465', // v2.0追加
+  'genomic data':             'http://purl.org/coar/resource_type/A8F1-NPV9', // v2.0追加
+  'geospatial data':          'http://purl.org/coar/resource_type/2H0M-X761', // v2.0追加
+  'laboratory notebook':      'http://purl.org/coar/resource_type/H41Y-FW7B', // v2.0追加
+  'measurement and test data':'http://purl.org/coar/resource_type/DD58-GFSX', // v2.0追加
+  'observational data':       'http://purl.org/coar/resource_type/FF4C-28RK', // v2.0追加
+  'recorded data':            'http://purl.org/coar/resource_type/CQMR-7K63', // v2.0追加
+  'simulation data':          'http://purl.org/coar/resource_type/W2XT-7017', // v2.0追加
+  'survey data':              'http://purl.org/coar/resource_type/NHD0-W6SY', // v2.0追加
+  // ----- Image -----
+  'interview':                'http://purl.org/coar/resource_type/c_26e4',    // v1.0のみ
   'image':                    'http://purl.org/coar/resource_type/c_c513',
   'still image':              'http://purl.org/coar/resource_type/c_ecc8',
   'moving image':             'http://purl.org/coar/resource_type/c_8a7e',
   'video':                    'http://purl.org/coar/resource_type/c_12ce',
+  // ----- Lecture -----
   'lecture':                  'http://purl.org/coar/resource_type/c_8544',
+  // ----- Patent -----
+  'design patent':            'http://purl.org/coar/resource_type/C53B-JCY5', // v2.0追加
   'patent':                   'http://purl.org/coar/resource_type/c_15cd',
-  'internal report':          'http://purl.org/coar/resource_type/c_18ww',
+  'PCT application':          'http://purl.org/coar/resource_type/SB3Y-W4EH', // v2.0追加
+  'plant patent':             'http://purl.org/coar/resource_type/Z907-YMBB', // v2.0追加
+  'plant variety protection': 'http://purl.org/coar/resource_type/GPQ7-G5VE', // v2.0追加
+  'software patent':          'http://purl.org/coar/resource_type/MW8G-3CR8', // v2.0追加
+  'trademark':                'http://purl.org/coar/resource_type/H6QP-SC1X', // v2.0追加
+  'utility model':            'http://purl.org/coar/resource_type/9DKX-KSAF', // v2.0追加
+  // ----- Report -----
+  'internal report':          'http://purl.org/coar/resource_type/c_18ww',    // v1.0のみ
   'report':                   'http://purl.org/coar/resource_type/c_93fc',
   'research report':          'http://purl.org/coar/resource_type/c_18ws',
   'technical report':         'http://purl.org/coar/resource_type/c_18gh',
   'policy report':            'http://purl.org/coar/resource_type/c_186u',
-  'report part':              'http://purl.org/coar/resource_type/c_ba1f',
+  'report part':              'http://purl.org/coar/resource_type/c_ba1f',    // v1.0のみ
   'working paper':            'http://purl.org/coar/resource_type/c_8042',
   'data management plan':     'http://purl.org/coar/resource_type/c_ab20',
+  // ----- Sound -----
   'sound':                    'http://purl.org/coar/resource_type/c_18cc',
+  // ----- Thesis -----
   'thesis':                   'http://purl.org/coar/resource_type/c_46ec',
   'bachelor thesis':          'http://purl.org/coar/resource_type/c_7a1f',
   'master thesis':            'http://purl.org/coar/resource_type/c_bdcc',
   'doctoral thesis':          'http://purl.org/coar/resource_type/c_db06',
+  // ----- Other -----
+  'commentary':               'http://purl.org/coar/resource_type/D97F-VB57', // v2.0追加
+  'design':                   'http://purl.org/coar/resource_type/542X-3S04', // v2.0追加
+  'industrial design':        'http://purl.org/coar/resource_type/JBNF-DYAD', // v2.0追加
   'interactive resource':     'http://purl.org/coar/resource_type/c_e9a0',
+  'layout design':            'http://purl.org/coar/resource_type/BW7T-YM2G', // v2.0追加
   'learning object':          'http://purl.org/coar/resource_type/c_e059',
   'manuscript':               'http://purl.org/coar/resource_type/c_0040',
   'musical notation':         'http://purl.org/coar/resource_type/c_18cw',
+  'peer review':              'http://purl.org/coar/resource_type/H9BQ-739P', // v2.0追加
   'research proposal':        'http://purl.org/coar/resource_type/c_baaf',
+  'research protocol':        'http://purl.org/coar/resource_type/YZ1N-ZFT9', // v2.0追加
   'software':                 'http://purl.org/coar/resource_type/c_5ce6',
+  'source code':              'http://purl.org/coar/resource_type/QH80-2R4E', // v2.0追加
   'technical documentation':  'http://purl.org/coar/resource_type/c_71bd',
+  'transcription':            'http://purl.org/coar/resource_type/6NC7-GK9S', // v2.0追加
   'workflow':                 'http://purl.org/coar/resource_type/c_393c',
   'other':                    'http://purl.org/coar/resource_type/c_1843',
 };
@@ -605,6 +657,18 @@ const CROSSREF_RELATION_ID_TYPE_MAP = {
   'uri':   'URI',
   'arxiv': 'arXiv',
   'pmid':  'PMID',
+};
+
+// ===== 出版タイプ URI マッピング =====
+const VERSION_TYPE_MAP = {
+  'AO':   'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
+  'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
+  'AM':   'http://purl.org/coar/version/c_ab4af688f83e57aa',
+  'P':    'http://purl.org/coar/version/c_fa2ee174bc00049f',
+  'VoR':  'http://purl.org/coar/version/c_970fb48d4fbd8a85',
+  'CVoR': 'http://purl.org/coar/version/c_e19f295774971610',
+  'EVoR': 'http://purl.org/coar/version/c_dc82b40f9837b551',
+  'NA':   'http://purl.org/coar/version/c_be7fb7dd8ff6fe43',
 };
 
 // ===== アクセス権マッピング =====
@@ -723,11 +787,16 @@ const TITLE_MAPS = {
     'genomic data','geospatial data','laboratory notebook','measurement and test data',
     'observational data','recorded data','simulation data','survey data',
     'dataset','image','still image','moving image','video',
-    'lecture','patent','internal report','report','research report','technical report',
+    'lecture',
+    'design patent','patent','PCT application','plant patent','plant variety protection',
+    'software patent','trademark','utility model',
+    'internal report','report','research report','technical report',
     'policy report','report part','working paper','data management plan',
     'sound','thesis','bachelor thesis','master thesis','doctoral thesis',
-    'interactive resource','learning object','manuscript','musical notation',
-    'research proposal','software','technical documentation','workflow','other'
+    'commentary','design','industrial design','interactive resource','layout design',
+    'learning object','manuscript','musical notation','peer review',
+    'research proposal','research protocol','software','source code',
+    'technical documentation','transcription','workflow','other'
   ],
   // アクセス権
   subitem_access_right: ['embargoed access','metadata only access','open access','restricted access'],
@@ -1743,8 +1812,8 @@ const FIELD_DEFS = [
     sum: o => o?.subitem_version || '' },
   { key: 'item_30002_version_type15', label: '出版タイプ', type: 'object',
     fields: [
-      { k: 'subitem_version_type', l: '出版タイプ', t: 'select', o: 'subitem_version_type' },
-      { k: 'subitem_version_resource', l: '出版タイプリソース', t: 'text' },
+      { k: 'subitem_version_type', l: '出版タイプ', t: 'select', o: 'subitem_version_type', link: { tgt: 'subitem_version_resource', map: VERSION_TYPE_MAP } },
+      { k: 'subitem_version_resource', l: '出版タイプリソース', t: 'text', ro: true },
     ],
     sum: o => o?.subitem_version_type || '' },
   { key: 'item_30002_identifier16', label: '識別子', type: 'array',
