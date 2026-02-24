@@ -407,6 +407,15 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 - CiNii API がエラーの場合は警告のみ出力し、Crossref データを保持（フォールバック）
 - JSPS以外の funder、award番号が空、またはJGN連携成功済みの場合はKAKEN連携をスキップ
 
+**識別子からの機関名逆引き（ROR / Crossref Funders API）**:
+- 所属機関識別子セクション: Scheme が「ROR」の場合に「名称を確認」ボタンを表示し、URI フィールドの値を使って ROR v2 API から機関名（`ror_display` + `label` タイプ）を取得
+- 助成機関識別子セクション: 識別子タイプが「ROR」または「Crossref Funder」の場合に「名称を確認」ボタンを表示し、識別子フィールドの値を使って対応 API から機関名を取得
+  - ROR: `https://api.ror.org/v2/organizations/{rorId}` → `ror_display` + `label` タイプの全名称
+  - Crossref Funder: `https://api.crossref.org/funders/{doi}` → `name`（`alt-names` は参考表示のみ、上書き対象外）
+- 取得結果と現在入力済みの名称を比較し、一致の場合は緑色で「✓ 一致確認」、不一致の場合はオレンジ色で「⚠ 取得:」と名称を表示
+- 不一致時は「上書き」ボタンを表示し、クリックすると既存の名称エントリを取得名称で置換（言語タグ付き）
+- Scheme / 識別子タイプの変更時にボタン表示を動的更新（ROR/Crossref Funder 以外では非表示）
+
 **NCID自動取得（CiNii Research Books API）**:
 - Crossref APIから取得したISSN（PISSN/EISSN）をもとに、CiNii Research OpenSearch API（books）を呼び出してNCID（NACSIS-CAT書誌ID）を自動取得する
 - CiNii APIキーは任意（未設定でもAPI呼び出し可能、設定時はレート制限緩和）

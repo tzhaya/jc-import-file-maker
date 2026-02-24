@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-23（JGN連携追加 / JST助成金の課題名・URI自動取得）
+最終更新: 2026-02-24（識別子逆引き機能追加 / ROR・Crossref Funder からの機関名確認・上書き）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,48 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約2867行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携）
+
+---
+
+## 2026-02-24: 識別子からの機関名逆引き（#17）
+
+### 問題
+
+所属機関識別子（ROR URI）や助成機関識別子（Crossref Funder DOI / ROR URI）を入力しても、対応する機関名と照合する手段がなく、誤入力を検出できなかった。
+
+### 実装内容
+
+**CSS 追加** (`<style>` 末尾)
+
+- `.lookup-result` クラス: 結果エリア用（ok: 緑、warn: オレンジ、err: 赤）
+
+**API 関数追加** (`fetchRorDetails` 直後)
+
+- `fetchRorNamesAll(rorUri)`: ROR v2 API で `ror_display` + `label` タイプの全名称を取得
+- `fetchCrossrefFunderDetails(funderUri)`: Crossref Funders API で主名称を取得（`alt-names` は参考表示のみ）
+
+**`attachLookupUi()` ヘルパー追加** (`renderOnePerson` 直前)
+
+- ボタン（呼び出し元生成）とイベント処理・結果エリアを一体管理するユーティリティ関数
+- 遅延バインディングパターン: Scheme/Type select DOM 追加後に `attachLookupUi` を呼ぶことで `updateVisibility` を初期化
+- 比較ロジック: 取得名称と現入力値を集合比較し、完全一致で緑、不一致でオレンジ + 上書きボタン表示
+- 上書き処理: 既存の `entry-group` を削除し、API 取得名称（言語タグ付き）で再生成
+
+**`renderOneAffiliation()` 修正**
+
+- 所属機関識別子セクション（新規追加・既存エントリの両方）に逆引き UI を追加
+- Scheme 変更時のコールバックで `updateAffLookup()` を呼び出し、ROR 選択時のみボタン表示
+
+**`renderOneFunder()` 修正**
+
+- 助成機関識別子の識別子フィールド行に「名称を確認」ボタンをインライン追加
+- 識別子タイプ変更時のコールバックで `updateFunderLookup()` を呼び出し
+- タイプが ROR → `fetchRorNamesAll`、Crossref Funder → `fetchCrossrefFunderDetails` に分岐
+- `getTargetCont: () => fnCont` で助成機関名コンテナを参照し、上書き時に置換
+
+### 行数変化
+
+追加行数: +約145行（現在のファイル規模: 約3010行）
 
 ---
 
