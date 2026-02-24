@@ -352,6 +352,15 @@
   .doi-badge.jalc-conditional { background: #e3f2fd; color: #1565c0; border: 1px dashed #90caf9; }
   .doi-badge.crossref-required    { background: #fce4ec; color: #c62828; border: 1px solid #ef9a9a; }
   .doi-badge.crossref-conditional { background: #fce4ec; color: #c62828; border: 1px dashed #ef9a9a; }
+  /* ===== 識別子逆引き結果エリア ===== */
+  .lookup-result {
+    margin: 2px 16px 4px;
+    font-size: 0.82em;
+    min-height: 1.2em;
+  }
+  .lookup-result.ok   { color: #2e7d32; }
+  .lookup-result.warn { color: #e65100; }
+  .lookup-result.err  { color: #c62828; }
 </style>
 </head>
 <body>
@@ -363,7 +372,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-02-23 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-02-24 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
   </div>
   <table style="border-collapse:collapse; width:100%;">
@@ -374,6 +383,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-24</td>
+        <td style="padding:2px 0;">識別子逆引き：所属機関識別子（ROR）・助成機関識別子（ROR / Crossref Funder）から「名称を確認」ボタンでAPI逆引き、名称不一致時は「上書き」で置換可能</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-23</td>
         <td style="padding:2px 0;">JGN連携：JP始まりawardにCrossref JGN API照会、JST助成金の課題名（日英）・課題DOI URIを自動取得。JGN未登録時はKAKEN連携にフォールバック</td>
@@ -976,6 +989,31 @@ async function fetchRorDetails(rorUri) {
     : '';
 
   return { isni, rorDisplayName, rorId };
+}
+
+// ===== 3.3b ROR 逆引き: ror_display + label タイプの全名称を取得 =====
+async function fetchRorNamesAll(rorUri) {
+  const rorId = rorUri.replace(/^https?:\/\/ror\.org\//i, '').replace(/\/$/, '');
+  const resp = await fetch(`https://api.ror.org/v2/organizations/${encodeURIComponent(rorId)}`);
+  if (!resp.ok) throw new Error(`ROR APIエラー: ${resp.status}`);
+  const data = await resp.json();
+  return (data.names || [])
+    .filter(n => Array.isArray(n.types) && (n.types.includes('ror_display') || n.types.includes('label')))
+    .map(n => ({ name: n.value, lang: n.lang || '' }));
+}
+
+// ===== 3.3c Crossref Funders 逆引き: 主名称を取得 =====
+async function fetchCrossrefFunderDetails(funderUri) {
+  const doi = funderUri.replace(/^https?:\/\/doi\.org\//i, '');
+  const resp = await fetch(`https://api.crossref.org/funders/${encodeURIComponent(doi)}`);
+  if (!resp.ok) throw new Error(`Crossref Funders APIエラー: ${resp.status}`);
+  const data = await resp.json();
+  const name = data.message?.name || '';
+  // alt-names は言語タグなしのため上書き対象外（表示のみ）
+  const altNames = (data.message?.['alt-names'] || []).join(', ');
+  return name
+    ? [{ name, lang: 'en', _altNames: altNames }]
+    : [];
 }
 
 // ===== 3.4 全著者の ROR データを並列取得 =====
@@ -2068,6 +2106,92 @@ function renderObjectField(def, obj) {
 
 // ===== 5.4 専用レンダラー =====
 
+// ----- 識別子逆引きUI（結果エリアのみ生成・ボタンイベントを設定）-----
+/**
+ * @param {object} opts
+ *   btn           - 呼び出し元が生成した「名称を確認」ボタン要素（フィールド行にインライン配置済み）
+ *   resultContainer - 結果エリアを appendChild する DOM 要素
+ *   fetchNames    - async () => [{ name, lang, _altNames? }] を返す関数
+ *   getVisible    - () => boolean: ボタン表示可否
+ *   getTargetCont - () => DOM 要素（名称 entry-group が入るコンテナ）
+ *   nameFld       - fieldKey 名（例: 'affiliationName'）
+ *   langFld       - fieldKey 名（例: 'affiliationNameLang'）
+ *   nameLabel     - 名称フィールドのラベル（例: '所属機関名'）
+ *   langLabel     - 言語フィールドのラベル（例: '言語'）
+ * @returns { updateVisibility: fn }
+ */
+function attachLookupUi({ btn, resultContainer, fetchNames, getVisible, getTargetCont,
+                          nameFld, langFld, nameLabel, langLabel }) {
+  const resultEl = document.createElement('div');
+  resultEl.className = 'lookup-result';
+  resultContainer.appendChild(resultEl);
+
+  const updateVisibility = () => {
+    btn.style.display = getVisible() ? '' : 'none';
+    if (!getVisible()) resultEl.textContent = '';
+  };
+  updateVisibility();
+
+  btn.onclick = async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    resultEl.className = 'lookup-result';
+    resultEl.textContent = '取得中...';
+    try {
+      const names = await fetchNames();
+      if (!names.length) {
+        resultEl.textContent = '名称が取得できませんでした。';
+        return;
+      }
+
+      const targetCont = getTargetCont();
+      const currentNames = [...targetCont.querySelectorAll(`[data-field-key="${nameFld}"] input`)]
+        .map(el => el.value.trim()).filter(Boolean);
+      const fetchedNames = names.map(n => n.name);
+      const allMatch = fetchedNames.length === currentNames.length
+        && fetchedNames.every(fn => currentNames.includes(fn));
+
+      resultEl.innerHTML = '';
+      const altInfo = names[0]?._altNames ? `（別名: ${names[0]._altNames}）` : '';
+      const namesStr = names.map(n => `${n.name}${n.lang ? ' (' + n.lang + ')' : ''}`).join(', ');
+
+      if (allMatch) {
+        resultEl.className = 'lookup-result ok';
+        resultEl.textContent = `✓ 一致確認: ${namesStr}${altInfo}`;
+      } else {
+        resultEl.className = 'lookup-result warn';
+        const warnSpan = document.createElement('span');
+        warnSpan.textContent = `⚠ 取得: ${namesStr}${altInfo} `;
+        resultEl.appendChild(warnSpan);
+
+        const overwriteBtn = document.createElement('button');
+        overwriteBtn.textContent = '上書き';
+        overwriteBtn.className = 'btn-add';
+        overwriteBtn.onclick = () => {
+          [...targetCont.querySelectorAll(':scope > .entry-group')].forEach(g => g.remove());
+          names.forEach(({ name: nm, lang }) => {
+            const { grp, delBtn } = createEntryGroup();
+            grp.appendChild(createFieldRow(nameLabel, nm, 'text', null, { fieldKey: nameFld }));
+            grp.appendChild(createFieldRow(langLabel, lang || 'en', 'select', 'language', { fieldKey: langFld }));
+            grp.appendChild(delBtn);
+            targetCont.appendChild(grp);
+          });
+          resultEl.className = 'lookup-result ok';
+          resultEl.textContent = `✓ 上書きしました: ${namesStr}`;
+        };
+        resultEl.appendChild(overwriteBtn);
+      }
+    } catch (err) {
+      resultEl.className = 'lookup-result err';
+      resultEl.textContent = `エラー: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  return { updateVisibility };
+}
+
 // ----- 作成者/寄与者: 1人分のDOM生成 -----
 function renderOnePerson(person, idx, keys) {
   const {
@@ -2283,16 +2407,83 @@ function renderOneAffiliation(aff, ai, keys) {
   const { wrapper: aiWrap, content: aiCont } = createNestedSectionHeader('所属機関識別子', 3, (cont) => {
     const aidx = cont.querySelectorAll(':scope > .nested-item').length;
     const { item: aidItem, content: aidContent } = createNestedItem(`所属機関識別子[${aidx}]`, 4);
-    aidContent.appendChild(createFieldRow('識別子', '', 'text', null, { fieldKey: affIdField }));
-    aidContent.appendChild(createFieldRow('Scheme', '', 'select', 'affiliationNameIdentifierScheme', { fieldKey: affIdSchemeField }));
+
+    // (1) 識別子フィールド行を生成し、逆引きボタンをインライン追加
+    const idRow = createFieldRow('識別子', '', 'text', null, { fieldKey: affIdField });
+    const lookupBtn = document.createElement('button');
+    lookupBtn.textContent = '名称を確認';
+    lookupBtn.className = 'btn-add';
+    lookupBtn.style.display = 'none';
+    idRow.appendChild(lookupBtn);
+    aidContent.appendChild(idRow);
+
+    // (2) Scheme・URI フィールド行（Scheme 変更時に updateAffLookup 呼び出し）
+    let updateAffLookup = () => {};
+    aidContent.appendChild(createFieldRow('Scheme', '', 'select', 'affiliationNameIdentifierScheme', {
+      fieldKey: affIdSchemeField,
+      onChange: () => updateAffLookup(),
+    }));
     aidContent.appendChild(createFieldRow('URI', '', 'text', null, { fieldKey: affIdUriField }));
+
+    // (3) Scheme select が DOM にある状態で attachLookupUi を呼ぶ
+    const { updateVisibility } = attachLookupUi({
+      btn: lookupBtn,
+      resultContainer: aidContent,
+      fetchNames: () => {
+        const uriInput = aidContent.querySelector(`[data-field-key="${affIdUriField}"] input`);
+        return fetchRorNamesAll(uriInput?.value || '');
+      },
+      getVisible: () => {
+        const schemeEl = aidContent.querySelector(`[data-field-key="${affIdSchemeField}"] select`);
+        return schemeEl?.value === 'ROR';
+      },
+      getTargetCont: () => anCont,
+      nameFld: affNameField, langFld: affNameLangField,
+      nameLabel: '所属機関名', langLabel: '言語',
+    });
+    updateAffLookup = updateVisibility;
+
     cont.appendChild(aidItem);
   });
   (aff[affIdKey] || []).forEach((aid, aidx) => {
     const { item: aidItem, content: aidContent } = createNestedItem(`所属機関識別子[${aidx}]`, 4);
-    aidContent.appendChild(createFieldRow('識別子', aid[affIdField] || '', 'text', null, { fieldKey: affIdField }));
-    aidContent.appendChild(createFieldRow('Scheme', aid[affIdSchemeField] || '', 'select', 'affiliationNameIdentifierScheme', { fieldKey: affIdSchemeField }));
+
+    // (1) 識別子フィールド行を生成し、逆引きボタンをインライン追加
+    const idRow = createFieldRow('識別子', aid[affIdField] || '', 'text', null, { fieldKey: affIdField });
+    const lookupBtn = document.createElement('button');
+    lookupBtn.textContent = '名称を確認';
+    lookupBtn.className = 'btn-add';
+    lookupBtn.style.display = 'none';
+    idRow.appendChild(lookupBtn);
+    aidContent.appendChild(idRow);
+
+    // (2) Scheme・URI フィールド行（Scheme 変更時に updateAffLookup 呼び出し）
+    let updateAffLookup = () => {};
+    aidContent.appendChild(createFieldRow('Scheme', aid[affIdSchemeField] || '', 'select',
+      'affiliationNameIdentifierScheme', {
+        fieldKey: affIdSchemeField,
+        onChange: () => updateAffLookup(),
+      }));
     aidContent.appendChild(createFieldRow('URI', aid[affIdUriField] || '', 'text', null, { fieldKey: affIdUriField }));
+
+    // (3) Scheme select が DOM にある状態で attachLookupUi を呼ぶ
+    const { updateVisibility } = attachLookupUi({
+      btn: lookupBtn,
+      resultContainer: aidContent,
+      fetchNames: () => {
+        const uriInput = aidContent.querySelector(`[data-field-key="${affIdUriField}"] input`);
+        return fetchRorNamesAll(uriInput?.value || '');
+      },
+      getVisible: () => {
+        const schemeEl = aidContent.querySelector(`[data-field-key="${affIdSchemeField}"] select`);
+        return schemeEl?.value === 'ROR';
+      },
+      getTargetCont: () => anCont,
+      nameFld: affNameField, langFld: affNameLangField,
+      nameLabel: '所属機関名', langLabel: '言語',
+    });
+    updateAffLookup = updateVisibility;
+
     aiCont.appendChild(aidItem);
   });
   affItemCont.appendChild(aiWrap);
@@ -2440,8 +2631,47 @@ function renderOneFunder(funder, idx, defLabel) {
 
   // 助成機関識別子（fieldset）
   const fId = funder.subitem_funder_identifiers || {};
-  fundContent.appendChild(createFieldRow('助成機関識別子', fId.subitem_funder_identifier || '', 'text', null, { fieldKey: 'subitem_funder_identifier' }));
-  fundContent.appendChild(createFieldRow('識別子タイプ', fId.subitem_funder_identifier_type || '', 'select', 'subitem_funder_identifier_type', { fieldKey: 'subitem_funder_identifier_type' }));
+
+  // (1) 識別子フィールド行にボタンをインライン追加
+  const funderIdRow = createFieldRow('助成機関識別子', fId.subitem_funder_identifier || '', 'text', null,
+    { fieldKey: 'subitem_funder_identifier' });
+  const funderLookupBtn = document.createElement('button');
+  funderLookupBtn.textContent = '名称を確認';
+  funderLookupBtn.className = 'btn-add';
+  funderLookupBtn.style.display = 'none';
+  funderIdRow.appendChild(funderLookupBtn);
+  fundContent.appendChild(funderIdRow);
+
+  // (2) タイプ行（変更時に updateFunderLookup 呼び出し）
+  let updateFunderLookup = () => {};
+  fundContent.appendChild(createFieldRow('識別子タイプ', fId.subitem_funder_identifier_type || '', 'select',
+    'subitem_funder_identifier_type', {
+      fieldKey: 'subitem_funder_identifier_type',
+      onChange: () => updateFunderLookup(),
+    }));
+
+  // (3) タイプ select が DOM にある状態で attachLookupUi
+  const { updateVisibility: updateFV } = attachLookupUi({
+    btn: funderLookupBtn,
+    resultContainer: fundContent,
+    fetchNames: () => {
+      const idInput = fundContent.querySelector('[data-field-key="subitem_funder_identifier"] input');
+      const typeEl  = fundContent.querySelector('[data-field-key="subitem_funder_identifier_type"] select');
+      const idVal   = idInput?.value || '';
+      const typeVal = typeEl?.value  || '';
+      if (typeVal === 'Crossref Funder') return fetchCrossrefFunderDetails(idVal);
+      if (typeVal === 'ROR')             return fetchRorNamesAll(idVal);
+      return Promise.resolve([]);
+    },
+    getVisible: () => {
+      const typeEl = fundContent.querySelector('[data-field-key="subitem_funder_identifier_type"] select');
+      return typeEl?.value === 'Crossref Funder' || typeEl?.value === 'ROR';
+    },
+    getTargetCont: () => fnCont,
+    nameFld: 'subitem_funder_name', langFld: 'subitem_funder_name_language',
+    nameLabel: '助成機関名', langLabel: '言語',
+  });
+  updateFunderLookup = updateFV;
 
   // 研究課題番号（fieldset）
   const aw = funder.subitem_award_numbers || {};
