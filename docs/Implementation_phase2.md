@@ -4,6 +4,25 @@
 
 `make_jc_importer.html` は DOI → API取得 → メタデータ編集UI を実装済みだが、WEKO インポート用TSVファイルの出力機能が未実装。Phase 2 として DOM → JSON → TSV のパイプラインを追加する。
 
+## 前提条件
+
+**JPCOAR スキーマ 2.0 対応（#25）のフェーズ1-a が完了していること。**
+
+DOM の構造・フィールドキー・語彙が固まってから TSV 出力を実装することで、列定義の二度手間を防ぐ。
+以下の issue がすべて完了していることを確認してから着手すること:
+
+| issue | 内容 | TSV への影響 |
+|---|---|---|
+| #26 | nameIdentifier スキーム語彙の更新 | スキーム値が変わる |
+| #27 | `creatorType` 属性の追加 | creator の DOM にサブフィールドが増える |
+| #28 | 言語コード `ja-Kana` → `ja-Latn` | lang 属性の値が変わる |
+| #29 | `relationType` 語彙への追加 | relationType の値が変わる |
+| #31 | `resourceType` 語彙の更新 | resourcetype の値が変わる |
+| #34 | 助成情報にプログラム情報フィールドを追加 | funding の DOM にサブフィールドが増える |
+
+フェーズ1-b（#30 出版者必須度変更）は UI のみで DOM 構造に影響しないため、TSV 実装と並行可能。
+フェーズ2-b（#32 出版者情報・#33 日付リテラル）は新規フィールド追加であり、TSV 実装後に `TSV_EXCLUDED_GROUPS` から除外して対応する。
+
 ## 対象ファイル
 
 - **編集**: `make_jc_importer.html`（単一ファイルアプリ）
@@ -14,7 +33,7 @@
 - **空フィールドの省略**: 値が存在しないフィールドの列はTSVに出力しない
   - フィールド全体が空の場合（例: contributor3 にデータなし → contributor3 の列群すべてを省略）
   - 複合型の内部配列が空の場合（例: creator2 に nameIdentifiers がない → その識別子列を省略）
-- **除外フィールド**: heading36, file35, dissertation30〜degree33, item_1698624001〜item_1698624010 は常に出力しない
+- **除外フィールド**: heading36, file35, dissertation30〜degree33, apc5, item_1698624001〜item_1698624010 は常に出力しない
 - **System列の自動補完**: RESOURCE_TYPE_MAP, ACCESS_RIGHTS_MAP 等から自動計算
 
 ## アーキテクチャ
@@ -95,18 +114,60 @@ const TSV_COL_GROUPS = [
 
 **ポイント**: 列の順序と日本語ラベルは 30002.tsv と完全一致させる。テンプレート中の `{i}`, `{j}`, `{k}` は展開時に実際のインデックスに置換する。
 
+#### contributor3 サブグループのキー名注意事項
+
+creator と contributor は同じ `renderOnePerson()` を共有するが、内部フィールドキー名が異なる（[renderPersonField L2508-2518](../make_jc_importer.html#L2508)）。TSV_COL_GROUPS の contributor3 サブグループでは以下の正しいキーを使うこと：
+
+| サブフィールド | creator のキー | contributor のキー（TSV実キー） |
+|---|---|---|
+| 姓名言語 | `creatorNameLang` | `lang` |
+| 名前タイプ | `creatorNameType` | `nameType` |
+| 所属機関名配列キー | `affiliationNames` | `contributorAffiliationNames` |
+| 所属機関名フィールド | `affiliationName` | `contributorAffiliationName` |
+| 所属機関名言語 | `affiliationNameLang` | `contributorAffiliationNameLang` |
+| 所属識別子配列キー | `affiliationNameIdentifiers` | `contributorAffiliationNameIdentifiers` |
+| 所属識別子フィールド | `affiliationNameIdentifier` | `contributorAffiliationNameIdentifier` |
+| 所属識別子Scheme | `affiliationNameIdentifierScheme` | `contributorAffiliationScheme` |
+| 所属識別子URI | `affiliationNameIdentifierURI` | `contributorAffiliationURI` |
+
+#### identifier16 の列順注意事項
+
+TSV の列順は `subitem_identifier_type` → `subitem_identifier_uri`（タイプが先）だが、FIELD_DEFS の定義順は逆（URI が先）。TSV_COL_GROUPS はTSV列順（タイプ→URI）に合わせること。
+
 ### Step 2: DOM → JSON 収集関数（`collectFromDOM()`）
 
 DOMの入力要素を走査して、`mapToItemType()` と同じ構造の JSON オブジェクトを返す。
 
+#### システムフィールドのキー名マッピング
+
+DOM の `dataset.key` には `sys_*` プレフィックスが付く（`sys_id`, `sys_uri` 等）が、`buildEmptyMetadata().system` や `getSystemValue()` で使う内部キーはプレフィックスなし（`id`, `uri` 等）。`collectFromDOM()` でマッピングが必要。
+
 ```javascript
+// DOM dataset.key → metadata.system キー 変換マップ
+const SYS_KEY_MAP = {
+  sys_id:      'id',
+  sys_uri:     'uri',
+  sys_path:    'path',
+  sys_pos:     'pos_index',
+  sys_status:  'publish_status',
+  sys_mail:    'feedback_mail',
+  sys_cnri:    'cnri',
+  sys_doi_ra:  'doi_ra',
+  sys_doi:     'doi',
+  sys_edit:    'edit_mode',
+  sys_pubdate: 'pubdate',
+};
+
 function collectFromDOM() {
   const metadata = {};
 
-  // 1. システムフィールド
+  // 1. システムフィールド（dataset.key → 内部キーに変換）
   metadata.system = {};
   document.querySelectorAll('#system-fields-body input, #system-fields-body select')
-    .forEach(el => { metadata.system[el.dataset.key] = el.value; });
+    .forEach(el => {
+      const internalKey = SYS_KEY_MAP[el.dataset.key] ?? el.dataset.key;
+      metadata.system[internalKey] = el.value;
+    });
 
   // 2. メタデータフィールド（FIELD_DEFS に従い型別に収集）
   for (const def of FIELD_DEFS) {
@@ -114,16 +175,16 @@ function collectFromDOM() {
     if (!section) { metadata[def.key] = def.type === 'object' || def.type === 'biblio' ? {} : []; continue; }
 
     switch (def.type) {
-      case 'array':   metadata[def.key] = collectArrayField(section, def); break;
-      case 'object':  metadata[def.key] = collectObjectField(section, def); break;
-      case 'creator': metadata[def.key] = collectPersonField(section, true); break;
+      case 'array':       metadata[def.key] = collectArrayField(section, def); break;
+      case 'object':      metadata[def.key] = collectObjectField(section, def); break;
+      case 'creator':     metadata[def.key] = collectPersonField(section, true); break;
       case 'contributor': metadata[def.key] = collectPersonField(section, false); break;
-      case 'relation': metadata[def.key] = collectRelationField(section); break;
-      case 'funding':  metadata[def.key] = collectFundingField(section); break;
-      case 'biblio':   metadata[def.key] = collectBiblioField(section); break;
-      case 'rightsHolder': metadata[def.key] = collectRightsHolderField(section); break;
-      case 'geolocation': metadata[def.key] = collectGeolocationField(section); break;
-      case 'conference': metadata[def.key] = collectConferenceField(section); break;
+      case 'relation':    metadata[def.key] = collectRelationField(section); break;
+      case 'funding':     metadata[def.key] = collectFundingField(section); break;
+      case 'biblio':      metadata[def.key] = collectBiblioField(section); break;  // null返却あり（後述）
+      case 'rightsHolder':  metadata[def.key] = collectRightsHolderField(section); break;
+      case 'geolocation':   metadata[def.key] = collectGeolocationField(section); break;
+      case 'conference':    metadata[def.key] = collectConferenceField(section); break;
     }
   }
   return metadata;
@@ -134,13 +195,13 @@ function collectFromDOM() {
 
 - **`collectArrayField(section, def)`**: `.nested-item.level-1` を列挙 → 各アイテム内の `.field-row[data-field-key]` から値を取得
 - **`collectObjectField(section, def)`**: `.accordion-content` 内の `.field-row` から直接取得
-- **`collectPersonField(section, isCreator)`**: `.nested-item.level-1` = 各人物 → 内部の `.nested-section-header` + `.entry-group` を走査して creatorNames, familyNames, givenNames, nameIdentifiers, creatorAffiliations を再帰的に収集
-- **`collectRelationField(section)`**: 関連情報の構造（relation_type, relation_type_id{object}, relation_name[array]）を収集
-- **`collectFundingField(section)`**: 助成情報（funder_names[array], funder_identifiers{object}, award_titles[array], award_numbers{object}）を収集
-- **`collectBiblioField(section)`**: 書誌情報（単一オブジェクト、内部に bibliographic_titles[array]）を収集
+- **`collectPersonField(section, isCreator)`**: `.nested-item.level-1` = 各人物 → 内部の `.nested-section-header` + `.entry-group` を走査して creatorNames/contributorNames, familyNames, givenNames, nameIdentifiers, creatorAffiliations/contributorAffiliations を再帰的に収集。`isCreator` フラグに応じて上記フィールドキー名テーブルを参照すること
+- **`collectRelationField(section)`**: 関連情報の構造（subitem_relation_type, subitem_relation_type_id{object}, subitem_relation_name[array]）を収集
+- **`collectFundingField(section)`**: 助成情報（subitem_funder_names[array], subitem_funder_identifiers{object}, subitem_award_titles[array], subitem_award_numbers{object}, subitem_funding_streams[array], subitem_funding_stream_identifiers{object}）を収集
+- **`collectBiblioField(section)`**: 書誌情報（単一オブジェクト、内部に bibliographic_titles[array]）を収集。**セクションが空ならば `null` を返す**（`isFieldEmpty()` が null → empty と判定するためTSV出力時に自動スキップされる）
 - **`collectRightsHolderField`**: rightHolderNames[array], nameIdentifiers[array]
-- **`collectGeolocationField`**: point{object}, box{object}, place[array]
-- **`collectConferenceField`**: names[array], date{object}, venues[array], places[array], sponsors[array], country, sequence
+- **`collectGeolocationField`**: subitem_geolocation_point{object}, subitem_geolocation_box{object}, subitem_geolocation_place[array]
+- **`collectConferenceField`**: subitem_conference_names[array], subitem_conference_date{object}, subitem_conference_venues[array], subitem_conference_places[array], subitem_conference_sponsors[array], subitem_conference_country, subitem_conference_sequence
 
 ### Step 3: TSV列展開（`buildColumnDefs(metadata)`）
 
@@ -149,7 +210,9 @@ metadata JSON の配列サイズを調べ、TSV_COL_GROUPS のテンプレート
 
 ```javascript
 // 除外フィールド（TSVに出力しない）
+// ※ apc5 は EXCLUDED_KEYS（API取得対象外）かつ FIELD_DEFS 非定義（UI非表示）のため常に空 → 明示的に除外
 const TSV_EXCLUDED_GROUPS = new Set([
+  'item_30002_apc5',
   'item_30002_heading36',
   'item_30002_file35',
   'item_30002_dissertation_number30',
@@ -260,7 +323,7 @@ function generateTsv(metadata) {
 }
 ```
 
-### Step 5: 値の取得（`getValueByColumnKey(key, metadata)`）
+### Step 5: 値の取得（`getValueByColumnKey` / `getSystemValue`）
 
 列キー（例: `.metadata.item_30002_creator2[0].creatorNames[0].creatorName`）をパースして、metadata オブジェクトから対応する値を取得する。
 
@@ -283,6 +346,32 @@ function getValueByColumnKey(columnKey, metadata) {
     current = typeof seg === 'number' ? current[seg] : current[seg];
   }
   return current ?? '';
+}
+```
+
+#### `getSystemValue()` の仕様
+
+TSV列キー（`.id`, `.pos_index[0]` 等）から `metadata.system` の値を返す。TSV列キーと内部キー（`SYS_KEY_MAP` で定義済み）のマッピングを逆引きする。
+
+```javascript
+// TSV列キー → metadata.system 内部キー 変換マップ
+const TSV_SYS_KEY_MAP = {
+  '.id':                 'id',
+  '.uri':                'uri',
+  '.metadata.path[0]':   'path',
+  '.pos_index[0]':       'pos_index',
+  '.publish_status':     'publish_status',
+  '.feedback_mail[0]':   'feedback_mail',
+  '.cnri':               'cnri',
+  '.doi_ra':             'doi_ra',
+  '.doi':                'doi',
+  '.edit_mode':          'edit_mode',
+  '.metadata.pubdate':   'pubdate',
+};
+
+function getSystemValue(columnKey, system) {
+  const internalKey = TSV_SYS_KEY_MAP[columnKey];
+  return internalKey != null ? (system[internalKey] ?? '') : '';
 }
 ```
 
@@ -316,7 +405,8 @@ function downloadTsv(tsvString, filename) {
 function exportTsv() {
   const metadata = collectFromDOM();
   const tsv = generateTsv(metadata);
-  const doi = metadata.system.sys_doi || 'import';
+  // metadata.system.doi は SYS_KEY_MAP 経由で収集済み（sys_doi ではない）
+  const doi = metadata.system.doi || 'import';
   downloadTsv(tsv, `${doi.replace(/\//g, '_')}.tsv`);
 }
 ```
@@ -331,32 +421,32 @@ function exportTsv() {
 | 4 | creator2 | creator | [i][j][k] 多段 | 空なら省略、内部配列も空なら省略 |
 | 5 | contributor3 | contributor | [i][j][k] 多段 | 空なら省略、内部配列も空なら省略 |
 | 6 | access_rights4 | object | なし | 全値空なら省略 |
-| 7 | apc5 | object | なし | 全値空なら省略 |
-| 8 | rights6 | array | [i] | 空なら省略 |
-| 9 | rights_holder7 | rightsHolder | [i][j] | 空なら省略 |
-| 10 | subject8 | array | [i] | 空なら省略 |
-| 11 | description9 | array | [i] | 空なら省略 |
-| 12 | publisher10 | array | [i] | 空なら省略 |
-| 13 | date11 | array | [i] | 空なら省略 |
-| 14 | language12 | array | [i] | 空なら省略 |
-| 15 | resource_type13 | object | なし | 全値空なら省略 |
-| 16 | version14 | object | なし | 全値空なら省略 |
-| 17 | version_type15 | object | なし | 全値空なら省略 |
-| 18 | identifier16 | array | [i] | 空なら省略 |
-| 19 | identifier_registration17 | object | なし | 全値空なら省略 |
-| 20 | relation18 | relation | [i][j] | 空なら省略 |
-| 21 | temporal19 | array | [i] | 空なら省略 |
-| 22 | geolocation20 | geolocation | [i][j] | 空なら省略 |
-| 23 | funding_reference21 | funding | [i][j] | 空なら省略 |
-| 24 | source_identifier22 | array | [i] | 空なら省略 |
-| 25 | source_title23 | array | [i] | 空なら省略 |
-| 26 | volume_number24 | object | なし | 全値空なら省略 |
-| 27 | issue_number25 | object | なし | 全値空なら省略 |
-| 28 | number_of_pages26 | object | なし | 全値空なら省略 |
-| 29 | page_start27 | object | なし | 全値空なら省略 |
-| 30 | page_end28 | object | なし | 全値空なら省略 |
-| 31 | bibliographic29 | biblio | [j]（内部配列のみ） | 空なら省略 |
-| 32 | conference34 | conference | [i][j] | 空なら省略 |
+| 7 | rights6 | array | [i] | 空なら省略 |
+| 8 | rights_holder7 | rightsHolder | [i][j] | 空なら省略 |
+| 9 | subject8 | array | [i] | 空なら省略 |
+| 10 | description9 | array | [i] | 空なら省略 |
+| 11 | publisher10 | array | [i] | 空なら省略 |
+| 12 | date11 | array | [i] | 空なら省略 |
+| 13 | language12 | array | [i] | 空なら省略 |
+| 14 | resource_type13 | object | なし | 全値空なら省略 |
+| 15 | version14 | object | なし | 全値空なら省略 |
+| 16 | version_type15 | object | なし | 全値空なら省略 |
+| 17 | identifier16 | array | [i] | 空なら省略 |
+| 18 | identifier_registration17 | object | なし | 全値空なら省略 |
+| 19 | relation18 | relation | [i][j] | 空なら省略 |
+| 20 | temporal19 | array | [i] | 空なら省略 |
+| 21 | geolocation20 | geolocation | [i][j] | 空なら省略 |
+| 22 | funding_reference21 | funding | [i][j] | 空なら省略 |
+| 23 | source_identifier22 | array | [i] | 空なら省略 |
+| 24 | source_title23 | array | [i] | 空なら省略 |
+| 25 | volume_number24 | object | なし | 全値空なら省略 |
+| 26 | issue_number25 | object | なし | 全値空なら省略 |
+| 27 | number_of_pages26 | object | なし | 全値空なら省略 |
+| 28 | page_start27 | object | なし | 全値空なら省略 |
+| 29 | page_end28 | object | なし | 全値空なら省略 |
+| 30 | bibliographic29 | biblio | [j]（bibliographic_titlesのみ） | 空（null含む）なら省略 |
+| 31 | conference34 | conference | [i][j] | 空なら省略 |
+| - | apc5 | - | - | **常に除外**（EXCLUDED_KEYS かつ FIELD_DEFS 非定義） |
 | - | dissertation30〜degree33 | - | - | **常に除外** |
 | - | file35 | - | - | **常に除外** |
 | - | heading36〜item_1698624010 | - | - | **常に除外** |
