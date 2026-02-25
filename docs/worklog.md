@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-25（Crossref 複数日付取り込み）
+最終更新: 2026-02-25（更新チェック機能・インデックスID移行・更新概要5件制限）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,31 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約2900行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応）
+現在のファイル規模: **約3200行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応）
+
+---
+
+## 2026-02-25: 更新チェック機能・インデックスID移行・更新概要5件制限（issue #36）
+
+### 実装内容
+
+**更新チェック機能 (`checkForUpdate()`)**
+- ページ読み込み時に GitHub API (`repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1`) を呼び出し
+- 最新コミット日と HTML内の `LOCAL_VERSION` 定数を比較
+- 新しい版がある場合、version-info div 内に赤字リンクで通知表示
+- fetch失敗時（オフライン・レート制限）は静かに無視
+
+**インデックスID入力欄の削除**
+- HTML: DOI入力エリアの「インデックスID:」入力行を削除
+- CSS: `#pos-index-input` スタイル定義を削除
+- JS: `document.getElementById('pos-index-input').value` の3箇所を空文字 `''` に変更
+  - `renderSystemFields()` の `sys_pos` デフォルト値
+  - `mapToItemType()` の `pos_index`
+  - `buildEmptyMetadata()` の `pos_index`
+- POS_INDEX はシステム管理フィールド (`.POS_INDEX[0]`) で入力する方針に変更
+
+**更新概要テーブルを直近5件に制限**
+- 古い3件を削除し、今回の変更を先頭に追加して5件を維持
 
 ---
 

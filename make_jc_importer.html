@@ -32,14 +32,6 @@
     border: 1px solid #ccc;
     border-radius: 4px;
   }
-  #pos-index-input {
-    width: 200px;
-    padding: 6px 8px;
-    font-size: 0.9em;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-
   /* ===== ボタン ===== */
   button { padding: 8px 20px; font-size: 1em; border: none; border-radius: 4px; cursor: pointer; }
   #fetch-btn { background: #2c5f2e; color: white; }
@@ -374,6 +366,7 @@
   <div style="margin-bottom:6px;">
     <strong>最終更新:</strong> 2026-02-25 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
+    <span id="update-check"></span>
   </div>
   <table style="border-collapse:collapse; width:100%;">
     <thead>
@@ -383,6 +376,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-25</td>
+        <td style="padding:2px 0;">GitHub最新コミットとの更新チェック機能追加、インデックスID入力欄をシステム管理フィールドに移行、更新概要を直近5件に制限</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-25</td>
         <td style="padding:2px 0;">Crossref の受理日（accepted）・提出日（submitted）を日付フィールドに追加取得（Accepted / Submitted タイプ）</td>
@@ -399,26 +396,6 @@
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-24</td>
         <td style="padding:2px 0;">識別子逆引き：所属機関識別子（ROR）・助成機関識別子（ROR / Crossref Funder）から「名称を確認」ボタンでAPI逆引き、名称不一致時は「上書き」で置換可能</td>
       </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-23</td>
-        <td style="padding:2px 0;">JGN連携：JP始まりawardにCrossref JGN API照会、JST助成金の課題名（日英）・課題DOI URIを自動取得。JGN未登録時はKAKEN連携にフォールバック</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-22</td>
-        <td style="padding:2px 0;">Crossref ISBN・relation フィールドを関連情報に取り込み（book系はISBN→isIdenticalTo/ISBN、全資源タイプでrelation対応）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-22</td>
-        <td style="padding:2px 0;">DOI必須項目バッジ：資源タイプに応じてJaLC/CrossrefのDOI必須・条件付必須をセクションヘッダーに動的表示</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-19</td>
-        <td style="padding:2px 0;">NCID自動取得：ISSNからCiNii Research OpenSearch APIでNCIDを取得し収録物識別子に追加</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-18</td>
-        <td style="padding:2px 0;">KAKEN連携：JSPS助成時にCiNii Research APIから科研費課題名（日英）・課題ページURLを自動取得</td>
-      </tr>
     </tbody>
   </table>
 </div>
@@ -430,11 +407,6 @@
     <input type="text" id="doi-input" placeholder="例: 10.1016/j.advnut.2025.100480" value="">
     <button id="fetch-btn" onclick="fetchData()">データ取得</button>
     <button id="empty-btn" onclick="showEmptyFields()">空値で全フィールド表示</button>
-  </div>
-  <div class="input-row">
-    <label title="WEKOのインデックスID（.pos_index[0]）">インデックスID:</label>
-    <input type="text" id="pos-index-input" value="1718256617194" placeholder="例: 1718256617194">
-    <span style="color:#888;font-size:0.85em">（.pos_index[0] の値）</span>
   </div>
   <div id="loading" style="display:none">⏳ データを取得中です（ROR/ISNIも並行取得）...</div>
   <div id="apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ OpenAlex API Keyが設定されていません。設定しない場合、利用回数が制限されます。</div>
@@ -944,7 +916,7 @@ function renderSystemFields(systemData) {
     { label: '.id',                  hint: '新規登録時は空欄', key: 'sys_id',      type: 'text',   default: '' },
     { label: '.uri',                 hint: '新規登録時は空欄', key: 'sys_uri',     type: 'text',   default: '' },
     { label: '.IndexID[0]',          hint: '.metadata.path[0]', key: 'sys_path',  type: 'text',   default: '' },
-    { label: '.POS_INDEX[0]',        hint: '1718256617194',    key: 'sys_pos',     type: 'text',   default: document.getElementById('pos-index-input').value },
+    { label: '.POS_INDEX[0]',        hint: '1718256617194',    key: 'sys_pos',     type: 'text',   default: '' },
     { label: '.PUBLISH_STATUS',      hint: 'private / public', key: 'sys_status',  type: 'select', options: ['private','public'], default: 'private' },
     { label: '.FEEDBACK_MAIL[0]',    hint: '',                  key: 'sys_mail',   type: 'text',   default: '' },
     { label: '.CNRI',                hint: '',                  key: 'sys_cnri',   type: 'text',   default: '' },
@@ -1532,7 +1504,7 @@ async function mapToItemType(crJson, oaJson, rorMap) {
       id:             '',
       uri:            '',
       path:           '',
-      pos_index:      document.getElementById('pos-index-input').value,
+      pos_index:      '',
       publish_status: 'private',
       feedback_mail:  '',
       cnri:           '',
@@ -3149,7 +3121,7 @@ function buildEmptyMetadata() {
   return {
     system: {
       id: '', uri: '', path: '',
-      pos_index: document.getElementById('pos-index-input').value,
+      pos_index: '',
       publish_status: 'private', feedback_mail: '', cnri: '',
       doi_ra: '', doi: '', edit_mode: 'Keep', pubdate: todayStr(),
     },
@@ -3219,6 +3191,26 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
   document.getElementById('apikey-warning').style.display = 'block';
 }
+
+// ===== 更新チェック =====
+(async function checkForUpdate() {
+  const LOCAL_VERSION = '2026-02-25';
+  try {
+    const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
+    if (!res.ok) return;
+    const commits = await res.json();
+    if (!commits.length) return;
+    const remoteDate = commits[0].commit.committer.date.slice(0, 10);
+    if (remoteDate > LOCAL_VERSION) {
+      const el = document.getElementById('update-check');
+      if (el) {
+        el.innerHTML = ' &nbsp;| &nbsp;<a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" '
+          + 'style="color:#c62828; font-weight:bold; text-decoration:none;">'
+          + '\uD83D\uDD14 更新版があります（' + remoteDate + '）</a>';
+      }
+    }
+  } catch (_) { /* オフライン時は静かに無視 */ }
+})();
 </script>
 </body>
 </html>

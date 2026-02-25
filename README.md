@@ -112,6 +112,7 @@ APIキーを設定するとレート制限が緩和されます。
 
 | 日付 | 内容 |
 |------|------|
+| 2026-02-25 | GitHub 最新コミットとの比較による更新チェック機能追加、インデックスID入力欄をシステム管理フィールドに移行、更新概要を直近5件に制限（[#36](https://github.com/tzhaya/jc-import-file-maker/issues/36)） |
 | 2026-02-25 | Crossref の受理日（`accepted`）・提出日（`submitted`）を日付フィールドに追加取得し、Accepted / Submitted タイプとして記録（[#24](https://github.com/tzhaya/jc-import-file-maker/issues/24)） |
 | 2026-02-24 | JPCOAR スキーマ 2.0 資源タイプ語彙対応：`RESOURCE_TYPE_MAP` に v2.0 の31型（データセットサブタイプ・特許サブタイプ等）を追加し、セレクトメニューも更新（docs/resource_type_vocabulary.md も更新） |
 | 2026-02-24 | 出版タイプ選択時に出版タイプリソース URI を自動設定（COAR version type vocabulary、`VERSION_TYPE_MAP` 追加） |
