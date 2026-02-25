@@ -19,6 +19,7 @@ make_jc_importer.html
     -   CiNii Research Projects API (`https://cir.nii.ac.jp/opensearch/v2/projects`)
     -   CiNii Research Books API (`https://cir.nii.ac.jp/opensearch/v2/books`)
     -   Crossref Works API - JGN（Japan Grant Number）(`https://api.crossref.org/works/10.52926/{award}`)
+    -   GitHub API - Commits（更新チェック用）(`https://api.github.com/repos/tzhaya/jc-import-file-maker/commits`)
        
 **メタデータ構造定義**
 - `ItemType.json` ただし、要素から `title_i18n_temp` は除く。 
@@ -125,8 +126,13 @@ make_jc_importer.html
 -   **TSVダウンロード**: 
     -   編集されたメタデータをUTF-8 BOM付きのTSVファイルとしてダウンロードします。TSVヘッダーは特定のJAIRO Cloudアイテムタイプ（国際農研デフォルトアイテムタイプ）に対応するように構成されます。
 
--   **Open Accessステータスの表示**: 
+-   **Open Accessステータスの表示**:
     -   OpenAlexから取得した論文のOpen Accessステータスをバッジ形式で表示します。
+
+-   **更新チェック機能**:
+    -   ページ読み込み時に GitHub API で `make_jc_importer.html` の最新コミット日を取得し、HTML内の最終更新日（`LOCAL_VERSION`）と比較する
+    -   GitHub上の日付が新しい場合、version-info div 内に「更新版があります（日付）」リンクを表示する
+    -   オフライン環境やAPI制限時はエラーを表示せず静かに無視する
 
 ## フィールドに関する要件
 
