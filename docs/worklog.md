@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-24（JPCOAR 2.0 資源タイプ語彙対応 / 出版タイプリソース自動設定）
+最終更新: 2026-02-25（Crossref 複数日付取り込み）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,44 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約2900行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応）
+
+---
+
+## 2026-02-25: Crossref 複数日付取り込み（issue #24）
+
+### 問題
+
+Crossref API から取得する日付は `published-online` / `published-print` / `published` を優先順で1件取得し、`Issued` タイプとして記録するのみだった。
+Crossref には受理日（`accepted`）・提出日（`submitted`）フィールドもあり、これらが存在する場合は JPCOAR スキーマ定義（「関連する情報があれば必ず記入する」）に従って記録する必要があった。
+
+### 実装内容
+
+**`formatDateParts()` ヘルパー関数を追加**（`getPubDate()` の直前）
+
+- `date-parts` 配列を受け取り `YYYY-MM-DD` / `YYYY-MM` / `YYYY` 形式の文字列に変換する低レベルヘルパー
+- 既存の `getPubDate()` も `formatDateParts()` を利用するようリファクタリング
+
+**`mapToItemType()` に `acceptedDate` / `submittedDate` を追加**
+
+- `crJson.accepted?.['date-parts']?.[0]` → `acceptedDate`
+- `crJson.submitted?.['date-parts']?.[0]` → `submittedDate`
+
+**`item_30002_date11` を複数エントリ配列に拡張**
+
+```javascript
+item_30002_date11: [
+  pubDate       && { subitem_date_issued_datetime: pubDate,       subitem_date_issued_type: 'Issued' },
+  acceptedDate  && { subitem_date_issued_datetime: acceptedDate,  subitem_date_issued_type: 'Accepted' },
+  submittedDate && { subitem_date_issued_datetime: submittedDate, subitem_date_issued_type: 'Submitted' },
+].filter(Boolean)
+```
+
+`&&` + `.filter(Boolean)` により「フィールドが存在すれば必ず追加、存在しなければスキップ」を実現。
+
+### 対象外
+
+- `posted` → `Available`：JPCOAR スキーマで `Available` はエンブレッシュ解除日（`coar:accessRights = embargoed access` 時）の意味であり、プレプリント公開日とは意味が異なるため除外。
+- `created` / `deposited` / `indexed`：Crossref のシステム管理日でありコンテンツの日付ではないため除外。
 
 ---
 

@@ -372,7 +372,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-02-24 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-02-25 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
   </div>
   <table style="border-collapse:collapse; width:100%;">
@@ -383,6 +383,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-25</td>
+        <td style="padding:2px 0;">Crossref の受理日（accepted）・提出日（submitted）を日付フィールドに追加取得（Accepted / Submitted タイプ）</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-24</td>
         <td style="padding:2px 0;">JPCOAR 2.0 資源タイプ語彙対応：v2.0の31型（データセットサブタイプ・特許サブタイプ等）を RESOURCE_TYPE_MAP に追加、セレクトメニュー更新</td>
@@ -1282,15 +1286,20 @@ function processAbstract(raw) {
   return text;
 }
 
+// ===== 日付パーツフォーマット =====
+function formatDateParts(parts = []) {
+  if (!parts.length) return '';
+  if (parts.length >= 3) return `${parts[0]}-${String(parts[1]).padStart(2,'0')}-${String(parts[2]).padStart(2,'0')}`;
+  if (parts.length === 2) return `${parts[0]}-${String(parts[1]).padStart(2,'0')}`;
+  return String(parts[0]);
+}
+
 // ===== 発行日取得 =====
 function getPubDate(cr) {
   const parts = cr['published-online']?.['date-parts']?.[0]
     || cr['published-print']?.['date-parts']?.[0]
     || cr.published?.['date-parts']?.[0] || [];
-  if (!parts.length) return '';
-  if (parts.length >= 3) return `${parts[0]}-${String(parts[1]).padStart(2,'0')}-${String(parts[2]).padStart(2,'0')}`;
-  if (parts.length === 2) return `${parts[0]}-${String(parts[1]).padStart(2,'0')}`;
-  return String(parts[0]);
+  return formatDateParts(parts);
 }
 
 // ===== 4.3 著者マッピング =====
@@ -1432,8 +1441,10 @@ async function buildFunders(crFunders) {
 
 // ===== 4.1 メインマッピング関数 =====
 async function mapToItemType(crJson, oaJson, rorMap) {
-  const doi        = crJson.DOI || '';
-  const pubDate    = getPubDate(crJson);
+  const doi           = crJson.DOI || '';
+  const pubDate       = getPubDate(crJson);
+  const acceptedDate  = formatDateParts(crJson.accepted?.['date-parts']?.[0] || []);
+  const submittedDate = formatDateParts(crJson.submitted?.['date-parts']?.[0] || []);
   const isOa       = oaJson.open_access?.is_oa   || false;
   const oaStatus   = oaJson.open_access?.oa_status || '';
   const isGoldOa   = isOa && (oaStatus === 'gold' || oaStatus === 'hybrid');
@@ -1571,9 +1582,11 @@ async function mapToItemType(crJson, oaJson, rorMap) {
       : [],
 
     // ----- 日付 -----
-    item_30002_date11: pubDate
-      ? [{ subitem_date_issued_datetime: pubDate, subitem_date_issued_type: 'Issued' }]
-      : [],
+    item_30002_date11: [
+      pubDate       && { subitem_date_issued_datetime: pubDate,       subitem_date_issued_type: 'Issued' },
+      acceptedDate  && { subitem_date_issued_datetime: acceptedDate,  subitem_date_issued_type: 'Accepted' },
+      submittedDate && { subitem_date_issued_datetime: submittedDate, subitem_date_issued_type: 'Submitted' },
+    ].filter(Boolean),
 
     // ----- 言語 -----
     item_30002_language12: [{ subitem_language: 'eng' }],
