@@ -12,7 +12,10 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 ---
 
-## 2026-02-26: JaLC API対応（issue #6）
+## 2026-02-26: JaLC API対応・準備中（issue #6）
+
+### 状況
+マッピングコードは実装済みだが、JaLC REST API が CORS 非対応のためブラウザから直接アクセスできない。`fetchData()` の JaLC 分岐は無効化し、エラーメッセージ表示のままとしている。CORS 対策が解決次第、`await fetchJaLCData(doi)` に切り替えるだけで有効化できる。
 
 ### 実装内容
 

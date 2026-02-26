@@ -359,7 +359,7 @@
 <h1>🌾 JAIRO Cloud インポート用TSV生成ツール(β)</h1>
 
 <p>このツールはベータ版です。インポート用TSVファイルの生成機能は未実装です。</p>
-<p>現在のバージョンでは、Crossref / JaLC APIからのデータ取得が実装されています。</p>
+<p>現在のバージョンでは、Crossref APIおよびOpenAlex APIからのデータ取得が実装されています。JaLC DOI対応は準備中です。</p>
 <p>「DOI」にDOIを入力して「データ取得」ボタンを押すと、データを取得して表示します。</p>
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
@@ -378,7 +378,7 @@
     <tbody>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-26</td>
-        <td style="padding:2px 0;">JaLC API対応：JaLC DOIからのメタデータ取得・マッピングを実装。多言語著者名・所属（ROR付き）・ISSN・助成情報・抄録・ライセンス・キーワード・複数日付に対応</td>
+        <td style="padding:2px 0;">JaLC API対応（準備中）：JaLC DOIからのメタデータ取得・マッピングコードを追加（CORS制約により未有効化）</td>
       </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-25</td>
@@ -1261,7 +1261,7 @@ async function fetchData() {
     if (ra === 'Crossref') {
       await fetchCrossrefData(doi);
     } else if (ra === 'JaLC') {
-      await fetchJaLCData(doi);
+      showError('JaLC DOI のインポートは現在未対応です。今後のアップデートで対応予定です。');
     } else {
       showError(`この DOI の登録機関 (${ra}) は現在サポートされていません。`);
     }
