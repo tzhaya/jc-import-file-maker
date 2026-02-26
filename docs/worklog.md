@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-26（JaLC API対応）
+最終更新: 2026-02-27（プレビュー機能）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,53 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約3600行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応）
+現在のファイル規模: **約4450行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能）
+
+---
+
+## 2026-02-27: プレビュー機能追加（issue #37）
+
+### 実装内容
+
+**Step A: CSS・HTML**
+- モーダルオーバーレイCSS（`#preview-modal`, `.modal-inner`, `.modal-header`, `.modal-body`）
+- プレビュー用テーブルCSS（`.pv-table`, `.pv-section-header`, `.pv-inner-table`, `.pv-link`）
+- プレビューボタン（`#preview-btn`）をDOI入力エリアに追加
+- モーダルDOM（`#preview-modal` > `.modal-inner` > `.modal-body`）
+
+**Step B: collectFromDOM()（STEP 7）**
+- `getFieldVal(container, key)`: data-field-key から input/select/textarea の値取得
+- `SYS_KEY_MAP`: sys_id→id 等のDOMキー→JSONキーマッピング
+- `collectSystemFromDOM()`: #system-fields-body からシステムフィールド収集
+- `collectObjectField(section, def)`: object型フィールド収集
+- `collectArrayField(section, def)`: 単純array型フィールド収集
+- `buildPersonKeys(isCreator)`: creator/contributor のキー名マッピング生成
+- `collectOneAffiliation(affEl, keys)`: 1件の所属情報収集（level-3/4走査）
+- `collectPersonField(section, isCreator)`: creator/contributor収集（level-1→level-2走査、data-field-keyで判別）
+- `collectRelationField(section)`: 関連情報収集
+- `collectFundingField(section)`: 助成情報収集
+- `collectBiblioField(section)`: 書誌情報収集（全空→null）
+- `collectRightsHolderField(section)`: 権利者情報収集
+- `collectGeolocationField(section)`: 位置情報収集
+- `collectConferenceField(section)`: 会議記述収集
+- `collectFromDOM()`: FIELD_DEFS ループのメイン関数（Phase 2 TSVエクスポートの共通基盤）
+
+**Step C: プレビュー表示（STEP 8）**
+- `fmtVal(v, lang)`: 値+言語整形、URL検出→リンク化、HTMLエスケープ
+- `buildObjectPreview` / `buildArrayPreview`: 単純フィールドの2列テーブル表示
+- `buildPersonPreview`: 作成者/寄与者の内側テーブル（#/姓名/姓・名/識別子/所属）
+- `buildFundingPreview`: 助成情報の内側テーブル（#/機関名/識別子/課題番号/課題名）
+- `buildRelationPreview`: 関連情報のコンパクト表示
+- `buildBiblioPreview`: 書誌情報3行集約（雑誌名/巻号ページ/発行日）
+- `buildRightsHolderPreview` / `buildGeolocationPreview` / `buildConferencePreview`: 各型対応
+- `buildPreviewTable(metadata)`: 全体HTMLテーブル生成メイン
+- `showPreview()` / `closePreview()`: モーダル表示/非表示（Esc/オーバーレイクリック対応）
+
+### 設計ポイント
+- Person フィールドの DOM 走査: `nested-section-content` 内の `entry-group` の `data-field-key` で姓名/姓/名/識別子を判別
+- 所属機関: level-2 `item-content` → level-3 `nested-section-content` → level-4 `item-content` の3段走査
+- createNestedItem は `item-content`、createSection は `accordion-content`、createNestedSectionHeader は `nested-section-content` を使用
+- collectFromDOM() の出力は mapToItemType() と同じJSON構造（Phase 2 TSVエクスポートで `generateTsv(collectFromDOM())` として共有可能）
 
 ---
 

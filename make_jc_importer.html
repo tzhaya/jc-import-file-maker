@@ -353,6 +353,100 @@
   .lookup-result.ok   { color: #2e7d32; }
   .lookup-result.warn { color: #e65100; }
   .lookup-result.err  { color: #c62828; }
+
+  /* ===== プレビューモーダル ===== */
+  #preview-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.5);
+    overflow-y: auto;
+  }
+  .modal-inner {
+    background: white;
+    max-width: 900px;
+    margin: 40px auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #2c5f2e;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px 8px 0 0;
+    font-weight: bold;
+  }
+  .modal-close {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.5);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.2); }
+  .modal-body {
+    padding: 16px;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+  .pv-section-header {
+    background: #c8e6c9;
+    color: #1b5e20;
+    font-weight: bold;
+    font-size: 0.88em;
+    padding: 6px 12px;
+    margin: 12px 0 0;
+    border-radius: 4px 4px 0 0;
+  }
+  .pv-section-header:first-child { margin-top: 0; }
+  .pv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+    margin-bottom: 4px;
+  }
+  .pv-table th {
+    background: #e8f5e9;
+    color: #2c5f2e;
+    text-align: left;
+    padding: 5px 10px;
+    width: 160px;
+    white-space: nowrap;
+    vertical-align: top;
+    border-bottom: 1px solid #ddd;
+  }
+  .pv-table td {
+    padding: 5px 10px;
+    border-bottom: 1px solid #eee;
+    word-break: break-all;
+  }
+  .pv-inner-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+    margin-bottom: 4px;
+  }
+  .pv-inner-table thead th {
+    background: #f5f5f5;
+    color: #555;
+    font-size: 0.9em;
+    padding: 4px 8px;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+  }
+  .pv-inner-table td {
+    padding: 4px 8px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+  }
+  .pv-link { color: #1565c0; text-decoration: none; }
+  .pv-link:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -364,7 +458,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-02-26 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-02-27 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -376,6 +470,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-27</td>
+        <td style="padding:2px 0;">プレビュー機能追加：入力済みメタデータをJAIRO Cloud風コンパクトテーブルでモーダル表示。collectFromDOM()によるDOM→JSON変換基盤を実装</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-26</td>
         <td style="padding:2px 0;">JaLC API対応（準備中）：JaLC DOIからのメタデータ取得・マッピングコードを追加（CORS制約により未有効化）</td>
@@ -392,10 +490,6 @@
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-24</td>
         <td style="padding:2px 0;">JPCOAR 2.0 資源タイプ語彙対応：v2.0の31型（データセットサブタイプ・特許サブタイプ等）を RESOURCE_TYPE_MAP に追加、セレクトメニュー更新</td>
       </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-24</td>
-        <td style="padding:2px 0;">出版タイプ選択時に出版タイプリソース URI を自動設定（COAR version type vocabulary）</td>
-      </tr>
     </tbody>
   </table>
 </div>
@@ -407,6 +501,7 @@
     <input type="text" id="doi-input" placeholder="例: 10.1016/j.advnut.2025.100480" value="">
     <button id="fetch-btn" onclick="fetchData()">データ取得</button>
     <button id="empty-btn" onclick="showEmptyFields()">空値で全フィールド表示</button>
+    <button id="preview-btn" onclick="showPreview()" style="display:none; background:#1565c0; color:white;">プレビュー表示</button>
   </div>
   <div id="loading" style="display:none">⏳ データを取得中です（ROR/ISNIも並行取得）...</div>
   <div id="apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ OpenAlex API Keyが設定されていません。設定しない場合、利用回数が制限されます。</div>
@@ -441,6 +536,17 @@
   <!-- メタデータフィールド（アコーディオン） -->
   <div id="metadata-fields">
     <!-- JS で生成 -->
+  </div>
+</div>
+
+<!-- ===== プレビューモーダル ===== -->
+<div id="preview-modal">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <span>プレビュー</span>
+      <button class="modal-close" onclick="closePreview()">&times; 閉じる</button>
+    </div>
+    <div class="modal-body" id="preview-modal-body"></div>
   </div>
 </div>
 
@@ -3510,6 +3616,7 @@ function renderAll(metadata) {
   }
 
   document.getElementById('preview-area').style.display = 'block';
+  document.getElementById('preview-btn').style.display = '';
   updateDoiBadges();
 }
 
@@ -3579,6 +3686,740 @@ function buildEmptyMetadata() {
   };
 }
 
+// ================================================================
+// STEP 7: DOM データ収集層（プレビュー / TSVエクスポート用）
+// ================================================================
+
+function getFieldVal(container, key) {
+  const row = container.querySelector(`.field-row[data-field-key="${key}"]`);
+  if (!row) return '';
+  const el = row.querySelector('select') || row.querySelector('textarea') || row.querySelector('input');
+  return el ? el.value : '';
+}
+
+const SYS_KEY_MAP = {
+  sys_id: 'id', sys_uri: 'uri', sys_path: 'path',
+  sys_pos: 'pos_index', sys_status: 'publish_status',
+  sys_mail: 'feedback_mail', sys_cnri: 'cnri',
+  sys_doi_ra: 'doi_ra', sys_doi: 'doi',
+  sys_edit: 'edit_mode', sys_pubdate: 'pubdate',
+};
+
+function collectSystemFromDOM() {
+  const sys = {};
+  document.getElementById('system-fields-body').querySelectorAll('[data-key]').forEach(el => {
+    const jsonKey = SYS_KEY_MAP[el.dataset.key] || el.dataset.key;
+    sys[jsonKey] = el.value;
+  });
+  return sys;
+}
+
+function collectObjectField(section, def) {
+  const content = section.querySelector(':scope > .accordion-content');
+  if (!content) return {};
+  const obj = {};
+  for (const f of def.fields) {
+    obj[f.k] = getFieldVal(content, f.k);
+  }
+  return obj;
+}
+
+function collectArrayField(section, def) {
+  const items = [];
+  const content = section.querySelector(':scope > .accordion-content');
+  if (!content) return items;
+  content.querySelectorAll(':scope > .nested-item.level-1').forEach(itemEl => {
+    const ic = itemEl.querySelector(':scope > .item-content');
+    if (!ic) return;
+    const obj = {};
+    for (const f of def.fields) {
+      obj[f.k] = getFieldVal(ic, f.k);
+    }
+    items.push(obj);
+  });
+  return items;
+}
+
+function buildPersonKeys(isCreator) {
+  return {
+    typeKey: isCreator ? 'creatorType' : 'contributorType',
+    namesKey: isCreator ? 'creatorNames' : 'contributorNames',
+    nameKey: isCreator ? 'creatorName' : 'contributorName',
+    nameLangKey: isCreator ? 'creatorNameLang' : 'lang',
+    nameTypeKey: isCreator ? 'creatorNameType' : 'nameType',
+    affKey: isCreator ? 'creatorAffiliations' : 'contributorAffiliations',
+    affNameKey: isCreator ? 'affiliationNames' : 'contributorAffiliationNames',
+    affNameField: isCreator ? 'affiliationName' : 'contributorAffiliationName',
+    affNameLangField: isCreator ? 'affiliationNameLang' : 'contributorAffiliationNameLang',
+    affIdKey: isCreator ? 'affiliationNameIdentifiers' : 'contributorAffiliationNameIdentifiers',
+    affIdField: isCreator ? 'affiliationNameIdentifier' : 'contributorAffiliationNameIdentifier',
+    affIdSchemeField: isCreator ? 'affiliationNameIdentifierScheme' : 'contributorAffiliationScheme',
+    affIdUriField: isCreator ? 'affiliationNameIdentifierURI' : 'contributorAffiliationURI',
+  };
+}
+
+function collectOneAffiliation(affEl, keys) {
+  const ac = affEl.querySelector(':scope > .item-content');
+  if (!ac) return { [keys.affNameKey]: [], [keys.affIdKey]: [] };
+  const aff = { [keys.affNameKey]: [], [keys.affIdKey]: [] };
+
+  // 所属機関名: level-3 nested-section-content 内の entry-group
+  ac.querySelectorAll(':scope > .nested-item.level-3').forEach(l3 => {
+    const nsc = l3.querySelector(':scope > .nested-section-content');
+    if (!nsc) return;
+    // entry-group 内に affNameField があれば所属機関名セクション
+    nsc.querySelectorAll(':scope > .entry-group').forEach(grp => {
+      if (grp.querySelector(`[data-field-key="${keys.affNameField}"]`)) {
+        aff[keys.affNameKey].push({
+          [keys.affNameField]: getFieldVal(grp, keys.affNameField),
+          [keys.affNameLangField]: getFieldVal(grp, keys.affNameLangField),
+        });
+      }
+    });
+    // 所属識別子: level-4 nested-item 内の item-content
+    nsc.querySelectorAll(':scope > .nested-item.level-4').forEach(l4 => {
+      const l4c = l4.querySelector(':scope > .item-content');
+      if (!l4c || !l4c.querySelector(`[data-field-key="${keys.affIdField}"]`)) return;
+      aff[keys.affIdKey].push({
+        [keys.affIdField]: getFieldVal(l4c, keys.affIdField),
+        [keys.affIdSchemeField]: getFieldVal(l4c, keys.affIdSchemeField),
+        [keys.affIdUriField]: getFieldVal(l4c, keys.affIdUriField),
+      });
+    });
+  });
+  return aff;
+}
+
+function collectPersonField(section, isCreator) {
+  const keys = buildPersonKeys(isCreator);
+  const persons = [];
+  const content = section.querySelector(':scope > .accordion-content');
+  if (!content) return persons;
+
+  content.querySelectorAll(':scope > .nested-item.level-1').forEach(personEl => {
+    const pc = personEl.querySelector(':scope > .item-content');
+    if (!pc) return;
+    const person = {
+      [keys.typeKey]: getFieldVal(pc, keys.typeKey),
+      [keys.namesKey]: [],
+      familyNames: [],
+      givenNames: [],
+      nameIdentifiers: [],
+      [keys.affKey]: [],
+    };
+
+    // level-2 サブセクション走査
+    pc.querySelectorAll(':scope > .nested-item.level-2').forEach(l2 => {
+      const nsc = l2.querySelector(':scope > .nested-section-content');
+      if (nsc) {
+        // createNestedSectionHeader 由来: entry-group を走査
+        const groups = nsc.querySelectorAll(':scope > .entry-group');
+        if (groups.length > 0) {
+          const first = groups[0];
+          if (first.querySelector(`[data-field-key="${keys.nameKey}"]`)) {
+            groups.forEach(grp => {
+              person[keys.namesKey].push({
+                [keys.nameKey]: getFieldVal(grp, keys.nameKey),
+                [keys.nameLangKey]: getFieldVal(grp, keys.nameLangKey),
+                [keys.nameTypeKey]: getFieldVal(grp, keys.nameTypeKey),
+              });
+            });
+          } else if (first.querySelector('[data-field-key="familyName"]')) {
+            groups.forEach(grp => {
+              person.familyNames.push({
+                familyName: getFieldVal(grp, 'familyName'),
+                familyNameLang: getFieldVal(grp, 'familyNameLang'),
+              });
+            });
+          } else if (first.querySelector('[data-field-key="givenName"]')) {
+            groups.forEach(grp => {
+              person.givenNames.push({
+                givenName: getFieldVal(grp, 'givenName'),
+                givenNameLang: getFieldVal(grp, 'givenNameLang'),
+              });
+            });
+          } else if (first.querySelector('[data-field-key="nameIdentifier"]')) {
+            groups.forEach(grp => {
+              person.nameIdentifiers.push({
+                nameIdentifier: getFieldVal(grp, 'nameIdentifier'),
+                nameIdentifierScheme: getFieldVal(grp, 'nameIdentifierScheme'),
+                nameIdentifierURI: getFieldVal(grp, 'nameIdentifierURI'),
+              });
+            });
+          }
+        }
+        // 所属ヘッダー内の所属アイテム (nested-item.level-2 > item-content)
+        nsc.querySelectorAll(':scope > .nested-item.level-2').forEach(affEl => {
+          if (affEl.querySelector(':scope > .item-content')) {
+            person[keys.affKey].push(collectOneAffiliation(affEl, keys));
+          }
+        });
+      }
+    });
+
+    persons.push(person);
+  });
+  return persons;
+}
+
+function collectRelationField(section) {
+  const items = [];
+  const content = section.querySelector(':scope > .accordion-content');
+  if (!content) return items;
+  content.querySelectorAll(':scope > .nested-item.level-1').forEach(relEl => {
+    const rc = relEl.querySelector(':scope > .item-content');
+    if (!rc) return;
+    const rel = {
+      subitem_relation_type: getFieldVal(rc, 'subitem_relation_type'),
+      subitem_relation_type_id: {
+        subitem_relation_type_select: getFieldVal(rc, 'subitem_relation_type_select'),
+        subitem_relation_type_id_text: getFieldVal(rc, 'subitem_relation_type_id_text'),
+      },
+      subitem_relation_name: [],
+    };
+    rc.querySelectorAll('.entry-group').forEach(grp => {
+      if (grp.querySelector('[data-field-key="subitem_relation_name_text"]')) {
+        rel.subitem_relation_name.push({
+          subitem_relation_name_text: getFieldVal(grp, 'subitem_relation_name_text'),
+          subitem_relation_name_language: getFieldVal(grp, 'subitem_relation_name_language'),
+        });
+      }
+    });
+    items.push(rel);
+  });
+  return items;
+}
+
+function collectFundingField(section) {
+  const items = [];
+  const content = section.querySelector(':scope > .accordion-content');
+  if (!content) return items;
+  content.querySelectorAll(':scope > .nested-item.level-1').forEach(fundEl => {
+    const fc = fundEl.querySelector(':scope > .item-content');
+    if (!fc) return;
+    const funder = {
+      subitem_funder_names: [],
+      subitem_funder_identifiers: {
+        subitem_funder_identifier: getFieldVal(fc, 'subitem_funder_identifier'),
+        subitem_funder_identifier_type: getFieldVal(fc, 'subitem_funder_identifier_type'),
+      },
+      subitem_award_numbers: {
+        subitem_award_number: getFieldVal(fc, 'subitem_award_number'),
+        subitem_award_uri: getFieldVal(fc, 'subitem_award_uri'),
+      },
+      subitem_award_titles: [],
+    };
+    fc.querySelectorAll('.entry-group').forEach(grp => {
+      if (grp.querySelector('[data-field-key="subitem_funder_name"]')) {
+        funder.subitem_funder_names.push({
+          subitem_funder_name: getFieldVal(grp, 'subitem_funder_name'),
+          subitem_funder_name_language: getFieldVal(grp, 'subitem_funder_name_language'),
+        });
+      }
+      if (grp.querySelector('[data-field-key="subitem_award_title"]')) {
+        funder.subitem_award_titles.push({
+          subitem_award_title: getFieldVal(grp, 'subitem_award_title'),
+          subitem_award_title_language: getFieldVal(grp, 'subitem_award_title_language'),
+        });
+      }
+    });
+    items.push(funder);
+  });
+  return items;
+}
+
+function collectBiblioField(section) {
+  const content = section.querySelector(':scope > .accordion-content');
+  if (!content) return null;
+  // 「データなし」表示のみの場合
+  if (!content.querySelector('.nested-item') && !content.querySelector('.field-row')) return null;
+
+  const data = {
+    bibliographic_titles: [],
+    bibliographicVolumeNumber: getFieldVal(content, 'bibliographicVolumeNumber'),
+    bibliographicIssueNumber: getFieldVal(content, 'bibliographicIssueNumber'),
+    bibliographicPageStart: getFieldVal(content, 'bibliographicPageStart'),
+    bibliographicPageEnd: getFieldVal(content, 'bibliographicPageEnd'),
+    bibliographicNumberOfPages: getFieldVal(content, 'bibliographicNumberOfPages'),
+    bibliographicIssueDates: {
+      bibliographicIssueDate: getFieldVal(content, 'bibliographicIssueDate'),
+      bibliographicIssueDateType: getFieldVal(content, 'bibliographicIssueDateType'),
+    },
+  };
+
+  // 雑誌名: nested-section-content 内の field-row ペア（title + lang）
+  const nsc = content.querySelector('.nested-section-content');
+  if (nsc) {
+    const titleRows = nsc.querySelectorAll('.field-row[data-field-key="bibliographic_title"]');
+    const langRows = nsc.querySelectorAll('.field-row[data-field-key="bibliographic_titleLang"]');
+    titleRows.forEach((tr, i) => {
+      const titleEl = tr.querySelector('input');
+      const langEl = langRows[i]?.querySelector('select');
+      data.bibliographic_titles.push({
+        bibliographic_title: titleEl ? titleEl.value : '',
+        bibliographic_titleLang: langEl ? langEl.value : '',
+      });
+    });
+  }
+
+  const allEmpty = !data.bibliographic_titles.some(t => t.bibliographic_title) &&
+    !data.bibliographicVolumeNumber && !data.bibliographicIssueNumber &&
+    !data.bibliographicPageStart && !data.bibliographicPageEnd &&
+    !data.bibliographicNumberOfPages &&
+    !data.bibliographicIssueDates.bibliographicIssueDate;
+  return allEmpty ? null : data;
+}
+
+function collectRightsHolderField(section) {
+  const items = [];
+  const content = section.querySelector(':scope > .accordion-content');
+  if (!content) return items;
+  content.querySelectorAll(':scope > .nested-item.level-1').forEach(rhEl => {
+    const rc = rhEl.querySelector(':scope > .item-content');
+    if (!rc) return;
+    const rh = { rightHolderNames: [], nameIdentifiers: [] };
+    rc.querySelectorAll('.entry-group').forEach(grp => {
+      if (grp.querySelector('[data-field-key="rightHolderName"]')) {
+        rh.rightHolderNames.push({
+          rightHolderName: getFieldVal(grp, 'rightHolderName'),
+          rightHolderLanguage: getFieldVal(grp, 'rightHolderLanguage'),
+        });
+      }
+      if (grp.querySelector('[data-field-key="nameIdentifier"]')) {
+        rh.nameIdentifiers.push({
+          nameIdentifier: getFieldVal(grp, 'nameIdentifier'),
+          nameIdentifierScheme: getFieldVal(grp, 'nameIdentifierScheme'),
+          nameIdentifierURI: getFieldVal(grp, 'nameIdentifierURI'),
+        });
+      }
+    });
+    items.push(rh);
+  });
+  return items;
+}
+
+function collectGeolocationField(section) {
+  const items = [];
+  const content = section.querySelector(':scope > .accordion-content');
+  if (!content) return items;
+  content.querySelectorAll(':scope > .nested-item.level-1').forEach(geoEl => {
+    const gc = geoEl.querySelector(':scope > .item-content');
+    if (!gc) return;
+    const geo = {
+      subitem_geolocation_point: {
+        subitem_point_longitude: getFieldVal(gc, 'subitem_point_longitude'),
+        subitem_point_latitude: getFieldVal(gc, 'subitem_point_latitude'),
+      },
+      subitem_geolocation_box: {
+        subitem_west_longitude: getFieldVal(gc, 'subitem_west_longitude'),
+        subitem_east_longitude: getFieldVal(gc, 'subitem_east_longitude'),
+        subitem_south_latitude: getFieldVal(gc, 'subitem_south_latitude'),
+        subitem_north_latitude: getFieldVal(gc, 'subitem_north_latitude'),
+      },
+      subitem_geolocation_place: [],
+    };
+    gc.querySelectorAll('.entry-group').forEach(grp => {
+      if (grp.querySelector('[data-field-key="subitem_geolocation_place_text"]')) {
+        geo.subitem_geolocation_place.push({
+          subitem_geolocation_place_text: getFieldVal(grp, 'subitem_geolocation_place_text'),
+        });
+      }
+    });
+    items.push(geo);
+  });
+  return items;
+}
+
+function collectConferenceField(section) {
+  const items = [];
+  const content = section.querySelector(':scope > .accordion-content');
+  if (!content) return items;
+  content.querySelectorAll(':scope > .nested-item.level-1').forEach(confEl => {
+    const cc = confEl.querySelector(':scope > .item-content');
+    if (!cc) return;
+    const conf = {
+      subitem_conference_names: [],
+      subitem_conference_sequence: getFieldVal(cc, 'subitem_conference_sequence'),
+      subitem_conference_sponsors: [],
+      subitem_conference_date: {
+        subitem_conference_start_year: getFieldVal(cc, 'subitem_conference_start_year'),
+        subitem_conference_start_month: getFieldVal(cc, 'subitem_conference_start_month'),
+        subitem_conference_start_day: getFieldVal(cc, 'subitem_conference_start_day'),
+        subitem_conference_end_year: getFieldVal(cc, 'subitem_conference_end_year'),
+        subitem_conference_end_month: getFieldVal(cc, 'subitem_conference_end_month'),
+        subitem_conference_end_day: getFieldVal(cc, 'subitem_conference_end_day'),
+        subitem_conference_period: getFieldVal(cc, 'subitem_conference_period'),
+        subitem_conference_date_language: getFieldVal(cc, 'subitem_conference_date_language'),
+      },
+      subitem_conference_venues: [],
+      subitem_conference_places: [],
+      subitem_conference_country: getFieldVal(cc, 'subitem_conference_country'),
+    };
+    cc.querySelectorAll('.entry-group').forEach(grp => {
+      if (grp.querySelector('[data-field-key="subitem_conference_name"]')) {
+        conf.subitem_conference_names.push({
+          subitem_conference_name: getFieldVal(grp, 'subitem_conference_name'),
+          subitem_conference_name_language: getFieldVal(grp, 'subitem_conference_name_language'),
+        });
+      }
+      if (grp.querySelector('[data-field-key="subitem_conference_sponsor"]')) {
+        conf.subitem_conference_sponsors.push({
+          subitem_conference_sponsor: getFieldVal(grp, 'subitem_conference_sponsor'),
+          subitem_conference_sponsor_language: getFieldVal(grp, 'subitem_conference_sponsor_language'),
+        });
+      }
+      if (grp.querySelector('[data-field-key="subitem_conference_venue"]')) {
+        conf.subitem_conference_venues.push({
+          subitem_conference_venue: getFieldVal(grp, 'subitem_conference_venue'),
+          subitem_conference_venue_language: getFieldVal(grp, 'subitem_conference_venue_language'),
+        });
+      }
+      if (grp.querySelector('[data-field-key="subitem_conference_place"]')) {
+        conf.subitem_conference_places.push({
+          subitem_conference_place: getFieldVal(grp, 'subitem_conference_place'),
+          subitem_conference_place_language: getFieldVal(grp, 'subitem_conference_place_language'),
+        });
+      }
+    });
+    items.push(conf);
+  });
+  return items;
+}
+
+function collectFromDOM() {
+  const metadata = { system: collectSystemFromDOM() };
+  for (const def of FIELD_DEFS) {
+    const section = document.querySelector(`.field-section[data-key="${def.key}"]`);
+    if (!section) { metadata[def.key] = def.type === 'object' ? {} : (def.type === 'biblio' ? null : []); continue; }
+    switch (def.type) {
+      case 'object':      metadata[def.key] = collectObjectField(section, def); break;
+      case 'array':       metadata[def.key] = collectArrayField(section, def); break;
+      case 'creator':     metadata[def.key] = collectPersonField(section, true); break;
+      case 'contributor':  metadata[def.key] = collectPersonField(section, false); break;
+      case 'relation':    metadata[def.key] = collectRelationField(section); break;
+      case 'funding':     metadata[def.key] = collectFundingField(section); break;
+      case 'biblio':      metadata[def.key] = collectBiblioField(section); break;
+      case 'rightsHolder': metadata[def.key] = collectRightsHolderField(section); break;
+      case 'geolocation':  metadata[def.key] = collectGeolocationField(section); break;
+      case 'conference':   metadata[def.key] = collectConferenceField(section); break;
+    }
+  }
+  return metadata;
+}
+
+// ================================================================
+// STEP 8: プレビュー表示
+// ================================================================
+
+function fmtVal(v, lang) {
+  if (!v) return '';
+  let s = String(v);
+  if (/^https?:\/\//.test(s)) {
+    s = '<a href="' + s.replace(/"/g, '&quot;') + '" target="_blank" class="pv-link">' + s.replace(/</g, '&lt;') + '</a>';
+  } else {
+    s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  if (lang) s += ' <span style="color:#888">(' + lang + ')</span>';
+  return s;
+}
+
+function isEmptyVal(v) {
+  if (!v) return true;
+  if (typeof v === 'string') return !v.trim();
+  if (Array.isArray(v)) return v.length === 0;
+  if (typeof v === 'object') return Object.values(v).every(isEmptyVal);
+  return false;
+}
+
+function buildObjectPreview(def, obj) {
+  if (!obj) return '';
+  const rows = def.fields.filter(f => obj[f.k]).map(f =>
+    '<tr><th>' + f.l + '</th><td>' + fmtVal(obj[f.k]) + '</td></tr>'
+  );
+  return rows.length ? '<table class="pv-table">' + rows.join('') + '</table>' : '';
+}
+
+function buildArrayPreview(def, arr) {
+  if (!Array.isArray(arr) || !arr.length) return '';
+  const nonEmpty = arr.filter(item => def.fields.some(f => item[f.k]));
+  if (!nonEmpty.length) return '';
+
+  let html = '<table class="pv-table">';
+  nonEmpty.forEach((item, i) => {
+    // 言語フィールドを探す
+    const langField = def.fields.find(f => f.k.includes('language') || f.k.includes('Lang'));
+    const mainFields = def.fields.filter(f => f !== langField);
+    const lang = langField ? item[langField.k] : '';
+
+    if (mainFields.length === 1 && mainFields[0]) {
+      html += '<tr><th>' + def.label + '[' + i + ']</th><td>' + fmtVal(item[mainFields[0].k], lang) + '</td></tr>';
+    } else {
+      const parts = mainFields.filter(f => item[f.k]).map(f => fmtVal(item[f.k]));
+      if (lang) parts.push('(' + lang + ')');
+      html += '<tr><th>' + def.label + '[' + i + ']</th><td>' + parts.join(' / ') + '</td></tr>';
+    }
+  });
+  html += '</table>';
+  return html;
+}
+
+function buildPersonPreview(persons, isCreator) {
+  if (!Array.isArray(persons) || !persons.length) return '';
+  const keys = buildPersonKeys(isCreator);
+  const nonEmpty = persons.filter(p => {
+    const names = p[keys.namesKey] || [];
+    const family = p.familyNames || [];
+    return names.some(n => n[keys.nameKey]) || family.some(f => f.familyName);
+  });
+  if (!nonEmpty.length) return '';
+
+  let html = '<table class="pv-inner-table"><thead><tr>';
+  html += '<th>#</th><th>姓名</th><th>姓 / 名</th><th>識別子</th><th>所属</th>';
+  html += '</tr></thead><tbody>';
+
+  nonEmpty.forEach((p, i) => {
+    const names = (p[keys.namesKey] || []).filter(n => n[keys.nameKey])
+      .map(n => fmtVal(n[keys.nameKey], n[keys.nameLangKey])).join('<br>');
+    const fam = (p.familyNames || []).filter(f => f.familyName).map(f => fmtVal(f.familyName, f.familyNameLang));
+    const giv = (p.givenNames || []).filter(g => g.givenName).map(g => fmtVal(g.givenName, g.givenNameLang));
+    const famGiv = [...fam, ...giv].join(' / ');
+    const ids = (p.nameIdentifiers || []).filter(ni => ni.nameIdentifier)
+      .map(ni => (ni.nameIdentifierScheme ? ni.nameIdentifierScheme + ': ' : '') + fmtVal(ni.nameIdentifier))
+      .join('<br>');
+    const affs = (p[keys.affKey] || []).map(aff => {
+      const affNames = (aff[keys.affNameKey] || []).filter(an => an[keys.affNameField])
+        .map(an => fmtVal(an[keys.affNameField], an[keys.affNameLangField])).join(', ');
+      return affNames;
+    }).filter(Boolean).join('<br>');
+
+    html += '<tr><td>' + i + '</td><td>' + names + '</td><td>' + famGiv + '</td><td>' + ids + '</td><td>' + affs + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function buildRelationPreview(relations) {
+  if (!Array.isArray(relations) || !relations.length) return '';
+  const nonEmpty = relations.filter(r =>
+    r.subitem_relation_type || r.subitem_relation_type_id?.subitem_relation_type_id_text
+  );
+  if (!nonEmpty.length) return '';
+
+  let html = '<table class="pv-table">';
+  nonEmpty.forEach((r, i) => {
+    const id = r.subitem_relation_type_id || {};
+    const parts = [
+      r.subitem_relation_type || '',
+      id.subitem_relation_type_select ? '[' + id.subitem_relation_type_select + ']' : '',
+      fmtVal(id.subitem_relation_type_id_text),
+    ].filter(Boolean).join(' ');
+    html += '<tr><th>\u95A2\u9023[' + i + ']</th><td>' + parts + '</td></tr>';
+  });
+  html += '</table>';
+  return html;
+}
+
+function buildFundingPreview(funders) {
+  if (!Array.isArray(funders) || !funders.length) return '';
+  const nonEmpty = funders.filter(f =>
+    f.subitem_funder_names?.some(n => n.subitem_funder_name) ||
+    f.subitem_award_numbers?.subitem_award_number
+  );
+  if (!nonEmpty.length) return '';
+
+  let html = '<table class="pv-inner-table"><thead><tr>';
+  html += '<th>#</th><th>\u52A9\u6210\u6A5F\u95A2\u540D</th><th>\u8B58\u5225\u5B50</th><th>\u8AB2\u984C\u756A\u53F7</th><th>\u8AB2\u984C\u540D</th>';
+  html += '</tr></thead><tbody>';
+
+  nonEmpty.forEach((f, i) => {
+    const names = (f.subitem_funder_names || []).filter(n => n.subitem_funder_name)
+      .map(n => fmtVal(n.subitem_funder_name, n.subitem_funder_name_language)).join('<br>');
+    const fId = f.subitem_funder_identifiers || {};
+    const idStr = fId.subitem_funder_identifier
+      ? (fId.subitem_funder_identifier_type ? fId.subitem_funder_identifier_type + ': ' : '') + fmtVal(fId.subitem_funder_identifier)
+      : '';
+    const aw = f.subitem_award_numbers || {};
+    const awardStr = aw.subitem_award_number
+      ? fmtVal(aw.subitem_award_number) + (aw.subitem_award_uri ? ' (' + fmtVal(aw.subitem_award_uri) + ')' : '')
+      : '';
+    const titles = (f.subitem_award_titles || []).filter(t => t.subitem_award_title)
+      .map(t => fmtVal(t.subitem_award_title, t.subitem_award_title_language)).join('<br>');
+    html += '<tr><td>' + i + '</td><td>' + names + '</td><td>' + idStr + '</td><td>' + awardStr + '</td><td>' + titles + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function buildBiblioPreview(obj) {
+  if (!obj) return '';
+  let html = '<table class="pv-table">';
+  const titles = (obj.bibliographic_titles || []).filter(t => t.bibliographic_title)
+    .map(t => fmtVal(t.bibliographic_title, t.bibliographic_titleLang)).join(', ');
+  if (titles) html += '<tr><th>\u96D1\u8A8C\u540D</th><td>' + titles + '</td></tr>';
+  const parts = [
+    obj.bibliographicVolumeNumber ? 'Vol.' + obj.bibliographicVolumeNumber : '',
+    obj.bibliographicIssueNumber ? 'No.' + obj.bibliographicIssueNumber : '',
+    (obj.bibliographicPageStart || obj.bibliographicPageEnd)
+      ? 'pp.' + (obj.bibliographicPageStart || '?') + '\u2013' + (obj.bibliographicPageEnd || '?')
+      : '',
+    obj.bibliographicNumberOfPages ? '(' + obj.bibliographicNumberOfPages + 'p)' : '',
+  ].filter(Boolean).join(', ');
+  if (parts) html += '<tr><th>\u5DFB\u53F7\u30DA\u30FC\u30B8</th><td>' + parts + '</td></tr>';
+  const bd = obj.bibliographicIssueDates || {};
+  if (bd.bibliographicIssueDate) {
+    html += '<tr><th>\u767A\u884C\u65E5</th><td>' + bd.bibliographicIssueDate + (bd.bibliographicIssueDateType ? ' (' + bd.bibliographicIssueDateType + ')' : '') + '</td></tr>';
+  }
+  html += '</table>';
+  return html === '<table class="pv-table"></table>' ? '' : html;
+}
+
+function buildRightsHolderPreview(holders) {
+  if (!Array.isArray(holders) || !holders.length) return '';
+  const nonEmpty = holders.filter(rh => rh.rightHolderNames?.some(n => n.rightHolderName));
+  if (!nonEmpty.length) return '';
+
+  let html = '<table class="pv-inner-table"><thead><tr><th>#</th><th>\u6A29\u5229\u8005\u540D</th><th>\u8B58\u5225\u5B50</th></tr></thead><tbody>';
+  nonEmpty.forEach((rh, i) => {
+    const names = (rh.rightHolderNames || []).filter(n => n.rightHolderName)
+      .map(n => fmtVal(n.rightHolderName, n.rightHolderLanguage)).join('<br>');
+    const ids = (rh.nameIdentifiers || []).filter(ni => ni.nameIdentifier)
+      .map(ni => (ni.nameIdentifierScheme ? ni.nameIdentifierScheme + ': ' : '') + fmtVal(ni.nameIdentifier))
+      .join('<br>');
+    html += '<tr><td>' + i + '</td><td>' + names + '</td><td>' + ids + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function buildGeolocationPreview(geos) {
+  if (!Array.isArray(geos) || !geos.length) return '';
+  let html = '<table class="pv-table">';
+  let hasContent = false;
+  geos.forEach((geo, i) => {
+    const pt = geo.subitem_geolocation_point || {};
+    if (pt.subitem_point_longitude || pt.subitem_point_latitude) {
+      html += '<tr><th>\u70B9[' + i + ']</th><td>\u7D4C\u5EA6: ' + pt.subitem_point_longitude + ', \u7DEF\u5EA6: ' + pt.subitem_point_latitude + '</td></tr>';
+      hasContent = true;
+    }
+    const bx = geo.subitem_geolocation_box || {};
+    if (bx.subitem_west_longitude || bx.subitem_east_longitude) {
+      html += '<tr><th>\u7A7A\u9593[' + i + ']</th><td>W:' + bx.subitem_west_longitude + ' E:' + bx.subitem_east_longitude + ' S:' + bx.subitem_south_latitude + ' N:' + bx.subitem_north_latitude + '</td></tr>';
+      hasContent = true;
+    }
+    (geo.subitem_geolocation_place || []).forEach(pl => {
+      if (pl.subitem_geolocation_place_text) {
+        html += '<tr><th>\u5730\u540D[' + i + ']</th><td>' + fmtVal(pl.subitem_geolocation_place_text) + '</td></tr>';
+        hasContent = true;
+      }
+    });
+  });
+  html += '</table>';
+  return hasContent ? html : '';
+}
+
+function buildConferencePreview(confs) {
+  if (!Array.isArray(confs) || !confs.length) return '';
+  const nonEmpty = confs.filter(c => c.subitem_conference_names?.some(n => n.subitem_conference_name));
+  if (!nonEmpty.length) return '';
+
+  let html = '<table class="pv-table">';
+  nonEmpty.forEach((c, i) => {
+    const names = (c.subitem_conference_names || []).filter(n => n.subitem_conference_name)
+      .map(n => fmtVal(n.subitem_conference_name, n.subitem_conference_name_language)).join(', ');
+    if (names) html += '<tr><th>\u4F1A\u8B70\u540D[' + i + ']</th><td>' + names + '</td></tr>';
+    if (c.subitem_conference_sequence) html += '<tr><th>\u56DE\u6B21</th><td>' + c.subitem_conference_sequence + '</td></tr>';
+    const sponsors = (c.subitem_conference_sponsors || []).filter(s => s.subitem_conference_sponsor)
+      .map(s => fmtVal(s.subitem_conference_sponsor, s.subitem_conference_sponsor_language)).join(', ');
+    if (sponsors) html += '<tr><th>\u4E3B\u50AC\u6A5F\u95A2</th><td>' + sponsors + '</td></tr>';
+    const cd = c.subitem_conference_date || {};
+    const dateParts = [
+      cd.subitem_conference_start_year, cd.subitem_conference_start_month, cd.subitem_conference_start_day
+    ].filter(Boolean).join('/');
+    const dateEnd = [
+      cd.subitem_conference_end_year, cd.subitem_conference_end_month, cd.subitem_conference_end_day
+    ].filter(Boolean).join('/');
+    const dateStr = [dateParts, dateEnd].filter(Boolean).join(' \u2013 ') || cd.subitem_conference_period || '';
+    if (dateStr) html += '<tr><th>\u958B\u50AC\u671F\u9593</th><td>' + dateStr + '</td></tr>';
+    const venues = (c.subitem_conference_venues || []).filter(v => v.subitem_conference_venue)
+      .map(v => fmtVal(v.subitem_conference_venue, v.subitem_conference_venue_language)).join(', ');
+    if (venues) html += '<tr><th>\u958B\u50AC\u4F1A\u5834</th><td>' + venues + '</td></tr>';
+    const places = (c.subitem_conference_places || []).filter(p => p.subitem_conference_place)
+      .map(p => fmtVal(p.subitem_conference_place, p.subitem_conference_place_language)).join(', ');
+    if (places) html += '<tr><th>\u958B\u50AC\u5730</th><td>' + places + '</td></tr>';
+    if (c.subitem_conference_country) html += '<tr><th>\u958B\u50AC\u56FD</th><td>' + c.subitem_conference_country + '</td></tr>';
+  });
+  html += '</table>';
+  return html;
+}
+
+function buildSectionPreview(def, val) {
+  switch (def.type) {
+    case 'object':      return buildObjectPreview(def, val);
+    case 'array':       return buildArrayPreview(def, val);
+    case 'creator':     return buildPersonPreview(val, true);
+    case 'contributor':  return buildPersonPreview(val, false);
+    case 'relation':    return buildRelationPreview(val);
+    case 'funding':     return buildFundingPreview(val);
+    case 'biblio':      return buildBiblioPreview(val);
+    case 'rightsHolder': return buildRightsHolderPreview(val);
+    case 'geolocation':  return buildGeolocationPreview(val);
+    case 'conference':   return buildConferencePreview(val);
+    default: return '';
+  }
+}
+
+function buildPreviewTable(metadata) {
+  let html = '';
+
+  // システムフィールド
+  html += '<div class="pv-section-header">\u30B7\u30B9\u30C6\u30E0\uFF08\u7BA1\u7406\u30D5\u30A3\u30FC\u30EB\u30C9\uFF09</div>';
+  html += '<table class="pv-table">';
+  const sysLabels = {
+    id: '.id', uri: '.uri', path: '.IndexID[0]', pos_index: '.POS_INDEX[0]',
+    publish_status: '.PUBLISH_STATUS', feedback_mail: '.FEEDBACK_MAIL[0]',
+    cnri: '.CNRI', doi_ra: '.DOI_RA', doi: '.DOI', edit_mode: 'Keep/Upgrade',
+    pubdate: '\u516C\u958B\u65E5',
+  };
+  for (const [k, label] of Object.entries(sysLabels)) {
+    const v = metadata.system?.[k] || '';
+    if (!v) continue;
+    html += '<tr><th>' + label + '</th><td>' + fmtVal(v) + '</td></tr>';
+  }
+  html += '</table>';
+
+  // メタデータフィールド
+  for (const def of FIELD_DEFS) {
+    const val = metadata[def.key];
+    const sectionHtml = buildSectionPreview(def, val);
+    if (sectionHtml) {
+      html += '<div class="pv-section-header">' + def.label + '</div>';
+      html += sectionHtml;
+    }
+  }
+
+  return html;
+}
+
+function showPreview() {
+  const metadata = collectFromDOM();
+  const html = buildPreviewTable(metadata);
+  document.getElementById('preview-modal-body').innerHTML = html;
+  document.getElementById('preview-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closePreview() {
+  document.getElementById('preview-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePreview();
+});
+document.getElementById('preview-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closePreview();
+});
+
 // ===== Enter キー =====
 document.getElementById('doi-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') fetchData();
@@ -3591,7 +4432,7 @@ if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_K
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-02-26';
+  const LOCAL_VERSION = '2026-02-27';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
