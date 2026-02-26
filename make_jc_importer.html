@@ -359,12 +359,12 @@
 <h1>🌾 JAIRO Cloud インポート用TSV生成ツール(β)</h1>
 
 <p>このツールはベータ版です。インポート用TSVファイルの生成機能は未実装です。</p>
-<p>現在のバージョンでは、Crossref APIおよびOpenAlex APIからのデータ取得のみ実装されています。</p>
+<p>現在のバージョンでは、Crossref / JaLC APIからのデータ取得が実装されています。</p>
 <p>「DOI」にDOIを入力して「データ取得」ボタンを押すと、データを取得して表示します。</p>
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-02-25 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-02-26 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -376,6 +376,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-26</td>
+        <td style="padding:2px 0;">JaLC API対応：JaLC DOIからのメタデータ取得・マッピングを実装。多言語著者名・所属（ROR付き）・ISSN・助成情報・抄録・ライセンス・キーワード・複数日付に対応</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-25</td>
         <td style="padding:2px 0;">GitHub最新コミットとの更新チェック機能追加、インデックスID入力欄をシステム管理フィールドに移行、更新概要を直近5件に制限</td>
@@ -391,10 +395,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-24</td>
         <td style="padding:2px 0;">出版タイプ選択時に出版タイプリソース URI を自動設定（COAR version type vocabulary）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-24</td>
-        <td style="padding:2px 0;">識別子逆引き：所属機関識別子（ROR）・助成機関識別子（ROR / Crossref Funder）から「名称を確認」ボタンでAPI逆引き、名称不一致時は「上書き」で置換可能</td>
       </tr>
     </tbody>
   </table>
@@ -633,6 +633,15 @@ const CROSSREF_RELATION_ID_TYPE_MAP = {
   'uri':   'URI',
   'arxiv': 'arXiv',
   'pmid':  'PMID',
+};
+
+// ===== JaLC content_type → JPCOAR 資源タイプマッピング =====
+const JALC_CONTENT_TYPE_MAP = {
+  'JA': 'journal article',
+  'BK': 'book',
+  'RD': 'dataset',
+  'EL': 'learning object',
+  'GD': 'other',
 };
 
 // ===== 出版タイプ URI マッピング =====
@@ -1011,6 +1020,19 @@ async function fetchOpenAlex(doi) {
   return await resp.json();
 }
 
+// ===== 3.2b JaLC REST API =====
+async function fetchJaLC(doi) {
+  const resp = await fetch(`https://api.japanlinkcenter.org/v2/dois/${encodeURIComponent(doi)}`, {
+    headers: { 'Accept': 'application/json' },
+  });
+  if (!resp.ok) {
+    if (resp.status === 404) throw new Error('DOIが見つかりません（JaLC 404）');
+    throw new Error(`JaLC APIエラー: ${resp.status}`);
+  }
+  const json = await resp.json();
+  return json.data;
+}
+
 // ===== 3.3 ROR v2 API（単体） =====
 // rorUri: "https://ror.org/005pdtr14" 形式
 async function fetchRorDetails(rorUri) {
@@ -1198,6 +1220,26 @@ async function fetchCrossrefData(doi) {
   renderAll(metadata);
 }
 
+// ===== 3.6b JaLC 取得フロー =====
+async function fetchJaLCData(doi) {
+  const jalcJson = await fetchJaLC(doi);
+
+  // 情報バー表示（OAバッジなし）
+  const doiUrl = `https://doi.org/${doi}`;
+  const doiLink = document.getElementById('doi-link');
+  doiLink.href = doiUrl;
+  doiLink.textContent = doiUrl;
+  const badge = document.getElementById('oa-badge');
+  badge.textContent = '⚪ Unknown';
+  badge.style.background = '#999';
+  document.getElementById('info-bar').style.display = 'flex';
+
+  // マッピング → レンダリング
+  const metadata = await mapToItemTypeJaLC(jalcJson);
+  showHints = true;
+  renderAll(metadata);
+}
+
 // ===== 3.7 メイン取得フロー =====
 async function fetchData() {
   showError('');
@@ -1217,7 +1259,7 @@ async function fetchData() {
     if (ra === 'Crossref') {
       await fetchCrossrefData(doi);
     } else if (ra === 'JaLC') {
-      showError('JaLC DOI のインポートは現在未対応です。今後のアップデートで対応予定です。');
+      await fetchJaLCData(doi);
     } else {
       showError(`この DOI の登録機関 (${ra}) は現在サポートされていません。`);
     }
@@ -1348,6 +1390,91 @@ function buildAuthors(crAuthors, oaAuthorships, rorMap) {
   });
 }
 
+// ===== 4.3b JaLC 著者マッピング =====
+function buildJaLCAuthors(jalcCreators) {
+  return (jalcCreators || []).map(cr => {
+    // 多言語名を構築
+    const creatorNames = [];
+    const familyNames  = [];
+    const givenNames   = [];
+    (cr.names || []).forEach(n => {
+      const family = n.last_name  || '';
+      const given  = n.first_name || '';
+      const lang   = n.lang || '';
+      const fullName = family && given ? `${family}, ${given}` : family || given;
+      if (fullName) {
+        creatorNames.push({ creatorName: fullName, creatorNameLang: lang, creatorNameType: 'Personal' });
+      }
+      if (family) familyNames.push({ familyName: family, familyNameLang: lang });
+      if (given)  givenNames.push({ givenName: given, givenNameLang: lang });
+    });
+
+    // 研究者ID（e-Rad / ORCID）
+    const nameIdentifiers = [];
+    (cr.researcher_id_list || []).forEach(rid => {
+      const idType = (rid.type || '').toUpperCase();
+      if (idType === 'ORCID') {
+        const orcidId = (rid.id_code || '').replace(/^https?:\/\/orcid\.org\//i, '');
+        if (orcidId) nameIdentifiers.push({
+          nameIdentifier: orcidId, nameIdentifierScheme: 'ORCID',
+          nameIdentifierURI: `https://orcid.org/${orcidId}`,
+        });
+      } else if (idType === 'ERAD' || idType === 'E-RAD') {
+        if (rid.id_code) nameIdentifiers.push({
+          nameIdentifier: rid.id_code, nameIdentifierScheme: 'e-Rad',
+          nameIdentifierURI: `https://kaken.nii.ac.jp/search/?qe=${rid.id_code}`,
+        });
+      }
+    });
+
+    // 所属: affiliation_list から直接取得（ROR API不要）
+    const affiliations = (cr.affiliation_list || []).map(aff => {
+      const affiliationNames = (aff.affiliation_name_list || []).map(an => ({
+        affiliationName: an.affiliation_name || '',
+        affiliationNameLang: an.lang || '',
+      })).filter(an => an.affiliationName);
+
+      const affiliationNameIdentifiers = [];
+      (aff.affiliation_identifier_list || []).forEach(aid => {
+        const idType = (aid.type || '').toUpperCase();
+        const idVal  = aid.affiliation_identifier || '';
+        if (!idVal) return;
+        if (idType === 'ROR') {
+          const rorId = idVal.replace(/^https?:\/\/ror\.org\//i, '').replace(/\/$/, '');
+          affiliationNameIdentifiers.push({
+            affiliationNameIdentifier: rorId,
+            affiliationNameIdentifierScheme: 'ROR',
+            affiliationNameIdentifierURI: `https://ror.org/${rorId}`,
+          });
+        } else if (idType === 'ISNI') {
+          affiliationNameIdentifiers.push({
+            affiliationNameIdentifier: idVal,
+            affiliationNameIdentifierScheme: 'ISNI',
+            affiliationNameIdentifierURI: `https://isni.org/isni/${idVal}`,
+          });
+        } else if (idType === 'GRID' || idType === 'WIKIDATA') {
+          affiliationNameIdentifiers.push({
+            affiliationNameIdentifier: idVal,
+            affiliationNameIdentifierScheme: idType,
+            affiliationNameIdentifierURI: '',
+          });
+        }
+      });
+
+      return { affiliationNames, affiliationNameIdentifiers };
+    });
+
+    return {
+      creatorType: 'Author',
+      creatorNames,
+      familyNames,
+      givenNames,
+      nameIdentifiers,
+      creatorAffiliations: affiliations,
+    };
+  });
+}
+
 // ===== 4.4 助成情報マッピング =====
 async function buildFunders(crFunders) {
   const JSPS_DOI = '10.13039/501100001691';
@@ -1406,6 +1533,79 @@ async function buildFunders(crFunders) {
 
     if (awards.length === 0) return [await buildEntry('')];
     return Promise.all(awards.map(aw => buildEntry(aw)));
+  }));
+
+  return entries.flat();
+}
+
+// ===== 4.4b JaLC 助成情報マッピング =====
+async function buildJaLCFunders(jalcFundList) {
+  const JSPS_DOI = '10.13039/501100001691';
+
+  const entries = await Promise.all((jalcFundList || []).map(async (f) => {
+    // 助成機関名（多言語）
+    const funderNames = (f.funder_name || []).map(fn => ({
+      subitem_funder_name: fn.funder_name || '',
+      subitem_funder_name_language: fn.lang || '',
+    })).filter(fn => fn.subitem_funder_name);
+
+    // 助成機関識別子（FundRef DOI 抽出）
+    let funderDoi = '';
+    (f.funder_identifier_list || []).forEach(fi => {
+      if ((fi.type || '').toLowerCase() === 'fundref' && fi.funder_identifier) {
+        // "http://dx.doi.org/10.13039/..." → "10.13039/..."
+        const m = fi.funder_identifier.match(/\b(10\.\d{4,}\/\S+)/);
+        if (m) funderDoi = m[1];
+      }
+    });
+    const isJsps = funderDoi === JSPS_DOI;
+
+    const funderIdentifiers = funderDoi
+      ? { subitem_funder_identifier: `https://doi.org/${funderDoi}`, subitem_funder_identifier_type: 'Crossref Funder' }
+      : { subitem_funder_identifier: '', subitem_funder_identifier_type: '' };
+
+    // 課題番号を収集（カンマ区切りを分割）
+    const awardNumbers = [];
+    (f.award_number_group_list || []).forEach(ag => {
+      (ag.award_number_list || []).forEach(an => {
+        const raw = an.award_number || '';
+        if (!raw) return;
+        // カンマ区切りの場合は分割
+        raw.split(/[,、]\s*/).forEach(num => {
+          const trimmed = num.trim();
+          if (trimmed) awardNumbers.push(trimmed);
+        });
+      });
+    });
+
+    const buildEntry = async (awardNum) => {
+      const obj = { subitem_funder_names: funderNames, subitem_funder_identifiers: funderIdentifiers };
+
+      // JGN連携: award が JP で始まる場合
+      let kakenResult = null;
+      if (awardNum && /^JP/i.test(awardNum)) {
+        try { kakenResult = await fetchJgn(awardNum); } catch (e) {
+          console.warn(`JGN取得失敗 (${awardNum}):`, e.message);
+        }
+      }
+      // KAKEN連携: JSPS かつ JGN取得できなかった場合
+      if (isJsps && awardNum && !kakenResult) {
+        try { kakenResult = await fetchKaken(awardNum); } catch (e) {
+          console.warn(`KAKEN取得失敗 (${awardNum}):`, e.message);
+        }
+      }
+
+      obj.subitem_award_numbers = {
+        subitem_award_number:      awardNum,
+        subitem_award_number_type: '',
+        subitem_award_uri:         kakenResult?.kakenUrl || '',
+      };
+      obj.subitem_award_titles = kakenResult?.titles || [];
+      return obj;
+    };
+
+    if (awardNumbers.length === 0) return [await buildEntry('')];
+    return Promise.all(awardNumbers.map(aw => buildEntry(aw)));
   }));
 
   return entries.flat();
@@ -1711,6 +1911,201 @@ async function mapToItemType(crJson, oaJson, rorMap) {
     } : null,
 
     // ----- 会議記述（空）-----
+    item_30002_conference34: [],
+  };
+
+  return metadata;
+}
+
+// ===== 4.1b JaLC メインマッピング関数 =====
+async function mapToItemTypeJaLC(jalcJson) {
+  const doi = jalcJson.doi || '';
+
+  // ===== 発行日 =====
+  const pd = jalcJson.publication_date || {};
+  const pubYear  = pd.publication_year  || '';
+  const pubMonth = pd.publication_month || '';
+  const pubDay   = pd.publication_day   || '';
+  let pubDate = pubYear;
+  if (pubMonth) pubDate += `-${String(pubMonth).padStart(2, '0')}`;
+  if (pubMonth && pubDay) pubDate += `-${String(pubDay).padStart(2, '0')}`;
+
+  // date_list から追加日付（Accepted / Submitted）
+  const dateEntries = [
+    pubDate && { subitem_date_issued_datetime: pubDate, subitem_date_issued_type: 'Issued' },
+  ];
+  (jalcJson.date_list || []).forEach(d => {
+    const dt = d.date || '';
+    const tp = (d.type || '').toLowerCase();
+    if (!dt) return;
+    if (tp === 'accepted')  dateEntries.push({ subitem_date_issued_datetime: dt, subitem_date_issued_type: 'Accepted' });
+    if (tp === 'submitted') dateEntries.push({ subitem_date_issued_datetime: dt, subitem_date_issued_type: 'Submitted' });
+  });
+
+  // ===== タイトル（多言語）=====
+  const titles = (jalcJson.title_list || []).map(t => ({
+    subitem_title: t.title || '',
+    subitem_title_language: t.lang || '',
+  })).filter(t => t.subitem_title);
+
+  // ===== 作成者 =====
+  const creators = buildJaLCAuthors(jalcJson.creator_list);
+
+  // ===== 権利情報 =====
+  const rights = (jalcJson.rights_list || []).map(r => ({
+    subitem_rights:          r.rights || '',
+    subitem_rights_language: '',
+    subitem_rights_resource: r.uri || '',
+  }));
+
+  // ===== 主題（キーワード）=====
+  const subjects = (jalcJson.subject_list || []).map(s => ({
+    subitem_subject:          s.subject || '',
+    subitem_subject_language: s.lang || '',
+    subitem_subject_scheme:   '',
+    subitem_subject_uri:      '',
+  }));
+  if (!subjects.length) {
+    subjects.push({ subitem_subject: '', subitem_subject_language: '', subitem_subject_scheme: '', subitem_subject_uri: '' });
+  }
+
+  // ===== 資源タイプ =====
+  const contentType  = jalcJson.content_type || '';
+  const resourcetype = JALC_CONTENT_TYPE_MAP[contentType] || '';
+  const resourceuri  = resourcetype ? (RESOURCE_TYPE_MAP[resourcetype] || '') : '';
+
+  // ===== ISSN =====
+  const sourceIdentifiers = [];
+  (jalcJson.journal_id_list || []).forEach(j => {
+    if ((j.type || '').toUpperCase() !== 'ISSN') return;
+    const issnType = (j.issn_type || '').toLowerCase();
+    const itype = issnType === 'online' ? 'EISSN' : issnType === 'print' ? 'PISSN' : 'ISSN';
+    sourceIdentifiers.push({ subitem_source_identifier: j.journal_id || '', subitem_source_identifier_type: itype });
+  });
+
+  // ===== NCID =====
+  const allIssns = sourceIdentifiers.map(si => si.subitem_source_identifier);
+  if (allIssns.length) {
+    const ncid = await fetchNcid(allIssns);
+    if (ncid) {
+      sourceIdentifiers.push({ subitem_source_identifier: ncid, subitem_source_identifier_type: 'NCID', _ncidUrl: `https://ci.nii.ac.jp/ncid/${ncid}` });
+    }
+  }
+
+  // ===== 収録物名（多言語）=====
+  const sourceTitles = (jalcJson.journal_title_name_list || []).map(jt => ({
+    subitem_source_title: jt.journal_title_name || '',
+    subitem_source_title_language: jt.lang || '',
+  })).filter(st => st.subitem_source_title);
+
+  // ===== 内容記述（抄録等）=====
+  const descriptions = (jalcJson.description_list || []).filter(d => {
+    const tp = (d.type || '').toLowerCase();
+    return tp === 'abstract' || tp === '';
+  }).map(d => ({
+    subitem_description:          d.description || '',
+    subitem_description_language: d.lang || '',
+    subitem_description_type:     'Abstract',
+  }));
+
+  // ===== 出版者（多言語）=====
+  const publishers = (jalcJson.publisher_list || []).map(p => ({
+    subitem_publisher: p.publisher_name || '',
+    subitem_publisher_language: p.lang || '',
+  })).filter(p => p.subitem_publisher);
+
+  // ===== 書誌情報 =====
+  const volume    = jalcJson.volume     || '';
+  const issue     = jalcJson.issue      || '';
+  const firstPage = jalcJson.first_page || '';
+  const lastPage  = jalcJson.last_page  || '';
+
+  // ===== 言語 (ISO 639-1 → ISO 639-2) =====
+  const LANG_MAP = { 'ja': 'jpn', 'en': 'eng', 'zh': 'zho', 'ko': 'kor', 'fr': 'fra', 'de': 'deu', 'es': 'spa', 'pt': 'por', 'ru': 'rus', 'it': 'ita' };
+  const contentLang = jalcJson.content_language || '';
+  const lang639_2 = LANG_MAP[contentLang] || contentLang;
+
+  // ===== 関連情報 =====
+  const relations = [];
+  if (doi) {
+    relations.push({
+      subitem_relation_type: 'isIdenticalTo',
+      subitem_relation_type_id: { subitem_relation_type_id_text: `https://doi.org/${doi}`, subitem_relation_type_select: 'DOI' },
+      subitem_relation_name: [],
+    });
+  }
+  (jalcJson.relation_list || []).forEach(r => {
+    const relType = r.relation_type || '';
+    const idType  = r.identifier_type || '';
+    const id      = r.related_identifier || r.url || '';
+    if (!id) return;
+    const jpcoarRelType = relType || 'isReferencedBy';
+    const jpcoarIdType  = idType || 'URI';
+    relations.push({
+      subitem_relation_type: jpcoarRelType,
+      subitem_relation_type_id: { subitem_relation_type_id_text: id, subitem_relation_type_select: jpcoarIdType },
+      subitem_relation_name: [],
+    });
+  });
+
+  // ===== メタデータオブジェクト =====
+  const metadata = {
+    system: {
+      id: '', uri: '', path: '', pos_index: '',
+      publish_status: 'private', feedback_mail: '',
+      cnri: '', doi_ra: '', doi: '',
+      edit_mode: 'Keep', pubdate: todayStr(),
+    },
+
+    item_30002_title0: titles,
+    item_30002_alternative_title1: [],
+    item_30002_creator2: creators,
+    item_30002_contributor3: [],
+
+    item_30002_access_rights4: {
+      subitem_access_right:     'open access',
+      subitem_access_right_uri: 'http://purl.org/coar/access_right/c_abf2',
+    },
+
+    item_30002_rights6: rights,
+    item_30002_rights_holder7: [],
+    item_30002_subject8: subjects,
+    item_30002_description9: descriptions,
+    item_30002_publisher10: publishers,
+    item_30002_date11: dateEntries.filter(Boolean),
+    item_30002_language12: lang639_2 ? [{ subitem_language: lang639_2 }] : [],
+    item_30002_resource_type13: { resourcetype, resourceuri },
+    item_30002_version14: { subitem_version: '' },
+    item_30002_version_type15: { subitem_version_resource: '', subitem_version_type: '' },
+    item_30002_identifier16: [],
+    item_30002_identifier_registration17: { subitem_identifier_reg_text: '', subitem_identifier_reg_type: '' },
+    item_30002_relation18: relations,
+    item_30002_temporal19: [],
+    item_30002_geolocation20: [],
+    item_30002_funding_reference21: await buildJaLCFunders(jalcJson.fund_list),
+    item_30002_source_identifier22: sourceIdentifiers,
+    item_30002_source_title23: sourceTitles,
+    item_30002_volume_number24: { subitem_volume: volume },
+    item_30002_issue_number25: { subitem_issue: issue },
+    item_30002_number_of_pages26: { subitem_number_of_pages: '' },
+    item_30002_page_start27: { subitem_start_page: firstPage },
+    item_30002_page_end28: { subitem_end_page: lastPage },
+
+    item_30002_bibliographic_information29: sourceTitles.length ? {
+      bibliographicIssueDates: pubDate
+        ? { bibliographicIssueDate: pubDate, bibliographicIssueDateType: 'Issued' }
+        : {},
+      bibliographicIssueNumber:   issue,
+      bibliographicVolumeNumber:  volume,
+      bibliographicPageStart:     firstPage,
+      bibliographicPageEnd:       lastPage,
+      bibliographicNumberOfPages: '',
+      bibliographic_titles: sourceTitles.map(st => ({
+        bibliographic_title:     st.subitem_source_title,
+        bibliographic_titleLang: st.subitem_source_title_language,
+      })),
+    } : null,
+
     item_30002_conference34: [],
   };
 
@@ -3194,7 +3589,7 @@ if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_K
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-02-25';
+  const LOCAL_VERSION = '2026-02-26';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

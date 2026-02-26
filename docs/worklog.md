@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-25（更新チェック機能・インデックスID移行・更新概要5件制限）
+最終更新: 2026-02-26（JaLC API対応）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,45 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約3200行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応）
+現在のファイル規模: **約3600行**（STEP 1〜6 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応）
+
+---
+
+## 2026-02-26: JaLC API対応（issue #6）
+
+### 実装内容
+
+**JALC_CONTENT_TYPE_MAP 定数**
+- JaLC `content_type`（JA/BK/RD/EL/GD）→ JPCOAR 資源タイプラベルのマッピング（公式5値）
+
+**fetchJaLC(doi)**
+- JaLC REST API (`/v2/dois/{doi}`) からメタデータ取得
+- `Accept: application/json` ヘッダー、レスポンスの `.data` を返却
+
+**buildJaLCAuthors(jalcCreators)**
+- `names[]` の `lang` で ja/en を直接区別（`_warnLang` 不要）
+- `affiliation_list[].affiliation_identifier_list[]` から ROR URI を直接取得（ROR API呼び出し不要）
+- `researcher_id_list[]` から e-Rad番号・ORCID取得
+
+**buildJaLCFunders(jalcFundList)**
+- `funder_identifier_list[]` から FundRef DOI 抽出（`http://dx.doi.org/10.13039/...` → DOI部分）
+- カンマ区切り課題番号を分割して個別処理
+- JSPS判定 + JGN/KAKEN連携（既存の `fetchJgn()` / `fetchKaken()` を再利用）
+
+**mapToItemTypeJaLC(jalcJson)**
+- `mapToItemType()` と同じメタデータオブジェクト構造を返す
+- 多言語タイトル・出版者・雑誌名、抄録（`description_list`）、ライセンス（`rights_list`）、キーワード（`subject_list`）
+- `date_list[]` から Accepted/Submitted 日付取得
+- `publication_date` の year/month/day を結合（YYYY / YYYY-MM / YYYY-MM-DD）
+- `journal_id_list[]` から ISSN（print/online区別）→ `fetchNcid()` 再利用
+- `content_language` → ISO 639-2 変換（ja→jpn等）
+- 出版タイプは設定しない（OpenAlex不使用）
+
+**fetchJaLCData(doi)**
+- JaLC取得フロー: `fetchJaLC()` → info-bar表示（OAバッジは "Unknown"） → `mapToItemTypeJaLC()` → `renderAll()`
+
+**fetchData() 分岐変更**
+- `ra === 'JaLC'` 時の `showError()` を `await fetchJaLCData(doi)` に置換
 
 ---
 

@@ -6,7 +6,7 @@ make_jc_importer.html
 
 ## このツールの目的
 
-このドキュメントは、`JAIRO Cloud インポート用TSV生成ツール`  を作成するための要件を記述します。本ツールは、DOI (Digital Object Identifier) を入力として受け取り、CrossrefおよびOpenAlex APIから書誌情報を取得し、JAIRO Cloudへのインポートに適した表形式で表示することと、TSV形式のデータを生成することを目的としています。
+このドキュメントは、`JAIRO Cloud インポート用TSV生成ツール`  を作成するための要件を記述します。本ツールは、DOI (Digital Object Identifier) を入力として受け取り、Crossref・JaLC・OpenAlex APIから書誌情報を取得し、JAIRO Cloudへのインポートに適した表形式で表示することと、TSV形式のデータを生成することを目的としています。
 
 ## 技術詳細と依存関係
 
@@ -18,6 +18,7 @@ make_jc_importer.html
     -   ROR API (`https://api.ror.org/v2/organizations/`)
     -   CiNii Research Projects API (`https://cir.nii.ac.jp/opensearch/v2/projects`)
     -   CiNii Research Books API (`https://cir.nii.ac.jp/opensearch/v2/books`)
+    -   JaLC REST API (`https://api.japanlinkcenter.org/v2/dois/`)
     -   Crossref Works API - JGN（Japan Grant Number）(`https://api.crossref.org/works/10.52926/{award}`)
     -   GitHub API - Commits（更新チェック用）(`https://api.github.com/repos/tzhaya/jc-import-file-maker/commits`)
        
