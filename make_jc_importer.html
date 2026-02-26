@@ -1020,19 +1020,18 @@ async function fetchOpenAlex(doi) {
   return await resp.json();
 }
 
-// ===== 3.2b JaLC REST API（CORS プロキシ経由） =====
+// ===== 3.2b JaLC REST API =====
+// NOTE: JaLC API は CORS 非対応のため、ブラウザから直接アクセスすると
+// CORS エラーになる場合があります。その場合はブラウザ拡張等で対応してください。
 async function fetchJaLC(doi) {
-  // JaLC API は CORS 非対応のため allorigins.win プロキシを経由
-  const jalcUrl = `https://api.japanlinkcenter.org/v2/dois/${encodeURIComponent(doi)}`;
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(jalcUrl)}`;
-  const resp = await fetch(proxyUrl);
-  if (!resp.ok) throw new Error(`JaLC APIエラー（プロキシ）: ${resp.status}`);
-  const wrapper = await resp.json();
-  // allorigins /get は { contents: "...", status: { http_code } } 形式
-  const httpCode = wrapper.status?.http_code;
-  if (httpCode === 404) throw new Error('DOIが見つかりません（JaLC 404）');
-  if (httpCode && httpCode >= 400) throw new Error(`JaLC APIエラー: ${httpCode}`);
-  const json = JSON.parse(wrapper.contents);
+  const resp = await fetch(`https://api.japanlinkcenter.org/v2/dois/${encodeURIComponent(doi)}`, {
+    headers: { 'Accept': 'application/json' },
+  });
+  if (!resp.ok) {
+    if (resp.status === 404) throw new Error('DOIが見つかりません（JaLC 404）');
+    throw new Error(`JaLC APIエラー: ${resp.status}`);
+  }
+  const json = await resp.json();
   return json.data;
 }
 
