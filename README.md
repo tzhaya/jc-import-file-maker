@@ -48,6 +48,7 @@ APIキーを設定するとレート制限が緩和されます。
 ### Phase 1
 
 - DOIの入力により Crossref / OpenAlex API から書誌情報を自動取得
+- JaLC DOI対応（準備中）：JaLC REST APIからのメタデータ取得・マッピングコードは実装済みだが、CORS制約により未有効化
 - ROR API（v2）による機関情報の補完（ISNI・ROR ID取得）
 - 取得データをJPCOARスキーマにマッピングし、アコーディオン形式で表示・編集
   - JPCOARスキーマの28のフィールドに対応（タイトル・著者・抄録・出版社・関連情報・助成情報 等）
@@ -77,7 +78,7 @@ APIキーを設定するとレート制限が緩和されます。
 ## 技術スタック
 
 - HTML5 / CSS3 / JavaScript（依存ライブラリなし、単一HTMLファイル）
-- 外部API: [Crossref](https://api.crossref.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/), [CiNii Research](https://cir.nii.ac.jp/)
+- 外部API: [Crossref](https://api.crossref.org/), [JaLC](https://api.japanlinkcenter.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/), [CiNii Research](https://cir.nii.ac.jp/)
 
 ## ディレクトリ構成
 
@@ -98,6 +99,7 @@ APIキーを設定するとレート制限が緩和されます。
   - [Phase 1](docs/Implementation_phase1.md) 現在の実装計画書です。
   - [Phase 2](docs/Implementation_phase2.md) TSVファイル出力対応の実装計画書です。
   - [KAKEN対応](docs/Implementation_KAKEN.md) KAKEN APIからのデータ取得に関する実装計画書です。
+  - [JaLC API対応](docs/Implementation_JaLC.md) JaLC REST APIからのデータ取得に関する実装計画書です。
 - [作業ログ](docs/worklog.md) 実装作業時のログです。
 
 - [フィールドマッピング一覧](docs/fieldmapping.md) Crossref/OpenAlexとのマッピング表です。  
@@ -112,6 +114,7 @@ APIキーを設定するとレート制限が緩和されます。
 
 | 日付 | 内容 |
 |------|------|
+| 2026-02-26 | JaLC API対応（準備中）：JaLC DOIからのメタデータ取得・マッピングコードを追加。CORS制約により未有効化（[#6](https://github.com/tzhaya/jc-import-file-maker/issues/6)） |
 | 2026-02-25 | GitHub 最新コミットとの比較による更新チェック機能追加、インデックスID入力欄をシステム管理フィールドに移行、更新概要を直近5件に制限（[#36](https://github.com/tzhaya/jc-import-file-maker/issues/36)） |
 | 2026-02-25 | Crossref の受理日（`accepted`）・提出日（`submitted`）を日付フィールドに追加取得し、Accepted / Submitted タイプとして記録（[#24](https://github.com/tzhaya/jc-import-file-maker/issues/24)） |
 | 2026-02-24 | JPCOAR スキーマ 2.0 資源タイプ語彙対応：`RESOURCE_TYPE_MAP` に v2.0 の31型（データセットサブタイプ・特許サブタイプ等）を追加し、セレクトメニューも更新（docs/resource_type_vocabulary.md も更新） |
