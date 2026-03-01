@@ -1,0 +1,134 @@
+{
+  "status": "OK",
+  "apiType": "doi",
+  "apiVersion": "v2",
+  "message": {
+    "total": 1,
+    "rows": 1,
+    "totalPages": 1,
+    "page": 1
+  },
+  "data": {
+    "siteId": "SI/NII.JAIRO",
+    "content_type": "JA",
+    "doi": "10.34556/0002000089",
+    "url": "https://doi.org/10.34556/0002000089",
+    "ra": "JaLC",
+    "prefix": "10.34556",
+    "site_name": "機関リポジトリ／Institutional Repository",
+    "publisher_list": [
+      {
+        "publisher_name": "Japan International Research Center for Agricultural Sciences",
+        "lang": "en"
+      }
+    ],
+    "title_list": [
+      {
+        "lang": "ja",
+        "title": "タイ国の米貯蔵場所における貯穀害虫個体群制御に及ぼす天敵類の役割"
+      },
+      {
+        "lang": "en",
+        "title": "Role of Natural Enemies in the Regulation of Stored-Product Insect Populations in Rice Storages in Thailand"
+      }
+    ],
+    "creator_list": [
+      {
+        "sequence": "1",
+        "type": "person",
+        "names": [
+          {
+            "lang": "en",
+            "last_name": "VISARATHANONTH",
+            "first_name": "Porntip"
+          }
+        ]
+      },
+      {
+        "sequence": "2",
+        "type": "person",
+        "names": [
+          {
+            "lang": "en",
+            "last_name": "NAKAKITA",
+            "first_name": "Hiroshi"
+          }
+        ]
+      },
+      {
+        "sequence": "3",
+        "type": "person",
+        "names": [
+          {
+            "lang": "en",
+            "last_name": "SITTISUANG",
+            "first_name": "Prasoot"
+          }
+        ]
+      }
+    ],
+    "publication_date": {
+      "publication_year": "1994",
+      "publication_month": "10",
+      "publication_day": "01"
+    },
+    "edition": {
+      "variation": "VoR",
+      "format": "application/pdf"
+    },
+    "alternate_identifier_list": [
+      {
+        "alternate_identifier": "oai:irdb.nii.ac.jp:07496:0006003246",
+        "type": "OAIPMH"
+      }
+    ],
+    "content_language": "en",
+    "updated_date": "2024-02-12",
+    "article_type": "pub",
+    "journal_id_list": [
+      {
+        "journal_id": "13407686",
+        "type": "ISSN",
+        "issn_type": "print"
+      }
+    ],
+    "journal_title_name_list": [
+      {
+        "journal_title_name": "JIRCAS Journal",
+        "lang": "en"
+      }
+    ],
+    "volume": "1",
+    "issue": "1",
+    "first_page": "1",
+    "last_page": "7",
+    "date": "1994-10-01",
+    "keyword_list": [
+      {
+        "keyword": "predators",
+        "sequence": "1",
+        "lang": "en"
+      },
+      {
+        "keyword": "parasites",
+        "sequence": "2",
+        "lang": "en"
+      },
+      {
+        "keyword": "ants",
+        "sequence": "3",
+        "lang": "en"
+      },
+      {
+        "keyword": "spiders",
+        "sequence": "4",
+        "lang": "en"
+      },
+      {
+        "keyword": "pseudoscorpion",
+        "sequence": "5",
+        "lang": "en"
+      }
+    ]
+  }
+}

@@ -1,0 +1,324 @@
+{
+  "status": "OK",
+  "apiType": "doi",
+  "apiVersion": "v2",
+  "message": {
+    "total": 1,
+    "rows": 1,
+    "totalPages": 1,
+    "page": 1
+  },
+  "data": {
+    "siteId": "SI/NII.JAIRO",
+    "content_type": "BK",
+    "doi": "10.34556/0002000787",
+    "url": "https://doi.org/10.34556/0002000787",
+    "ra": "JaLC",
+    "prefix": "10.34556",
+    "site_name": "機関リポジトリ／Institutional Repository",
+    "publisher_list": [
+      {
+        "publisher_name": "国際農林水産業研究センター",
+        "lang": "ja"
+      }
+    ],
+    "title_list": [
+      {
+        "lang": "ja",
+        "title": "アジアモンスーン地域の生産力向上と持続性の両立に資する技術カタログ : Ver. 3.1"
+      }
+    ],
+    "creator_list": [
+      {
+        "sequence": "1",
+        "type": "person",
+        "names": [
+          {
+            "lang": "ja",
+            "first_name": "みどりの食料システム国際情報センター"
+          }
+        ]
+      }
+    ],
+    "publication_date": {
+      "publication_year": "2025",
+      "publication_month": "06",
+      "publication_day": "09"
+    },
+    "edition": {
+      "variation": "VoR",
+      "format": "application/pdf"
+    },
+    "relation_list": [
+      {
+        "content": "https://doi.org/10.34556/0002000833",
+        "type": "DOI",
+        "relation": "hasVersion"
+      },
+      {
+        "content": "https://www.jircas.go.jp/ja/greenasia/techcatalog",
+        "type": "URL",
+        "relation": "hasVersion"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000788",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000789",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000790",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000791",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000792",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000793",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000794",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000795",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000796",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000797",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000798",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000799",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000800",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000801",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000802",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000804",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000803",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000805",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000806",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000807",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000808",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000809",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000810",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000811",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000812",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000813",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000814",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000815",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000816",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000817",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000818",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000819",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000820",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000821",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000822",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000823",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000824",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000825",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000826",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000827",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000828",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000829",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000830",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000831",
+        "type": "DOI",
+        "relation": "hasPart"
+      },
+      {
+        "content": "https://doi.org/10.34556/0002000832",
+        "type": "DOI",
+        "relation": "hasPart"
+      }
+    ],
+    "alternate_identifier_list": [
+      {
+        "alternate_identifier": "oai:irdb.nii.ac.jp:07496:0006763315",
+        "type": "OAIPMH"
+      }
+    ],
+    "content_language": "ja",
+    "fund_list": [
+      {
+        "funder_name": [
+          {
+            "funder_name": "国立研究開発法人国際農林水産業研究センター",
+            "lang": "ja"
+          }
+        ],
+        "funder_identifier_list": [
+          {
+            "funder_identifier": "https://doi.org/10.13039/501100009472",
+            "type": "FundRef"
+          }
+        ],
+        "award_number_group_list": [
+          {
+            "award_number_list": [
+              {
+                "award_number": "05a1C5"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "updated_date": "2025-10-13",
+    "book_classification": "01"
+  }
+}
