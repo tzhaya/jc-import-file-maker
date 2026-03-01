@@ -458,7 +458,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-02-27 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-03-01 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -470,6 +470,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-01</td>
+        <td style="padding:2px 0;">関連情報の取得改善：関連DOIのURL形式統一（https://doi.org/プレフィックス付与）、関連名称（タイトル）の自動取得、JaLC APIフィールド名修正</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-27</td>
         <td style="padding:2px 0;">プレビュー機能追加：入力済みメタデータをJAIRO Cloud風コンパクトテーブルでモーダル表示。collectFromDOM()によるDOM→JSON変換基盤を実装</td>
@@ -485,10 +489,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-25</td>
         <td style="padding:2px 0;">Crossref の受理日（accepted）・提出日（submitted）を日付フィールドに追加取得（Accepted / Submitted タイプ）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-24</td>
-        <td style="padding:2px 0;">JPCOAR 2.0 資源タイプ語彙対応：v2.0の31型（データセットサブタイプ・特許サブタイプ等）を RESOURCE_TYPE_MAP に追加、セレクトメニュー更新</td>
       </tr>
     </tbody>
   </table>
@@ -1139,6 +1139,39 @@ async function fetchJaLC(doi) {
   }
   const json = await resp.json();
   return json.data;
+}
+
+// ===== 3.2a 関連DOIタイトル取得（Crossref）=====
+async function fetchRelationTitle(doi) {
+  const bareDoi = doi.replace(/^https?:\/\/doi\.org\//i, '');
+  try {
+    const resp = await fetch(`https://api.crossref.org/works/${encodeURIComponent(bareDoi)}`);
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const msg = data.message || {};
+    const title = (msg.title || [])[0] || '';
+    const lang = msg.language || 'en';
+    return title ? { title, lang } : null;
+  } catch {
+    return null;
+  }
+}
+
+// ===== 3.2b 関連DOIタイトル取得（JaLC）=====
+async function fetchRelationTitleJaLC(doi) {
+  const bareDoi = doi.replace(/^https?:\/\/doi\.org\//i, '');
+  try {
+    const resp = await fetch(`https://api.japanlinkcenter.org/v2/dois/${encodeURIComponent(bareDoi)}`, {
+      headers: { 'Accept': 'application/json' },
+    });
+    if (!resp.ok) return null;
+    const json = await resp.json();
+    const titles = (json.data || {}).title_list || [];
+    const first = titles[0];
+    return first?.title ? { title: first.title, lang: first.lang || 'ja' } : null;
+  } catch {
+    return null;
+  }
 }
 
 // ===== 3.3 ROR v2 API（単体） =====
@@ -1890,14 +1923,14 @@ async function mapToItemType(crJson, oaJson, rorMap) {
     item_30002_identifier_registration17: { subitem_identifier_reg_text: '', subitem_identifier_reg_type: '' },
 
     // ----- 関連情報 -----
-    item_30002_relation18: (() => {
+    item_30002_relation18: await (async () => {
       // relatedIdentifier.md に定義された識別子タイプ
       const VALID_RELATION_ID_TYPES = new Set([
         'ARK','ARXIV','DOI','HDL','ICHUSHI','ISBN','J-GLOBAL','LOCAL',
         'PISSN','EISSN','ISSN','NAID','NCID','PMID','PURL','SCOPUS','URI','WOS',
       ]);
       const relations = [];
-      // 1) Crossref DOI エントリ（テキストがないので subitem_relation_name: []）
+      // 1) Crossref DOI エントリ
       if (doi) {
         relations.push({
           subitem_relation_type: 'isIdenticalTo',
@@ -1957,15 +1990,34 @@ async function mapToItemType(crJson, oaJson, rorMap) {
           if (!jpcoarIdType) return;
           const id = item.id || '';
           if (!id) return;
+          const idText = jpcoarIdType === 'DOI' && !/^https?:\/\//i.test(id)
+            ? `https://doi.org/${id}` : id;
           relations.push({
             subitem_relation_type: jpcoarRelType,
             subitem_relation_type_id: {
-              subitem_relation_type_id_text: id,
+              subitem_relation_type_id_text: idText,
               subitem_relation_type_select: jpcoarIdType,
             },
             subitem_relation_name: [],
           });
         });
+      });
+      // 5) DOI タイプの関連エントリにタイトルを設定（isIdenticalTo は自身の識別子なので除外）
+      const doiRelEntries = [];
+      relations.forEach((rel, i) => {
+        if (rel.subitem_relation_type !== 'isIdenticalTo'
+            && rel.subitem_relation_type_id.subitem_relation_type_select === 'DOI') {
+          doiRelEntries.push({ index: i, doi: rel.subitem_relation_type_id.subitem_relation_type_id_text });
+        }
+      });
+      const relTitles = await Promise.all(doiRelEntries.map(e => fetchRelationTitle(e.doi)));
+      doiRelEntries.forEach((e, i) => {
+        if (relTitles[i]) {
+          relations[e.index].subitem_relation_name = [{
+            subitem_relation_name_text: relTitles[i].title,
+            subitem_relation_name_language: relTitles[i].lang,
+          }];
+        }
       });
       return relations;
     })(),
@@ -2143,17 +2195,36 @@ async function mapToItemTypeJaLC(jalcJson) {
     });
   }
   (jalcJson.relation_list || []).forEach(r => {
-    const relType = r.relation_type || '';
-    const idType  = r.identifier_type || '';
-    const id      = r.related_identifier || r.url || '';
+    const relType = r.relation || '';
+    const idType  = r.type || '';
+    const id      = r.content || '';
     if (!id) return;
     const jpcoarRelType = relType || 'isReferencedBy';
     const jpcoarIdType  = idType || 'URI';
+    const idText = jpcoarIdType === 'DOI' && !/^https?:\/\//i.test(id)
+      ? `https://doi.org/${id}` : id;
     relations.push({
       subitem_relation_type: jpcoarRelType,
-      subitem_relation_type_id: { subitem_relation_type_id_text: id, subitem_relation_type_select: jpcoarIdType },
+      subitem_relation_type_id: { subitem_relation_type_id_text: idText, subitem_relation_type_select: jpcoarIdType },
       subitem_relation_name: [],
     });
+  });
+  // DOI タイプの関連エントリにタイトルを設定（JaLC API 使用、isIdenticalTo は自身の識別子なので除外）
+  const doiRelEntries = [];
+  relations.forEach((rel, i) => {
+    if (rel.subitem_relation_type !== 'isIdenticalTo'
+        && rel.subitem_relation_type_id.subitem_relation_type_select === 'DOI') {
+      doiRelEntries.push({ index: i, doi: rel.subitem_relation_type_id.subitem_relation_type_id_text });
+    }
+  });
+  const relTitles = await Promise.all(doiRelEntries.map(e => fetchRelationTitleJaLC(e.doi)));
+  doiRelEntries.forEach((e, i) => {
+    if (relTitles[i]) {
+      relations[e.index].subitem_relation_name = [{
+        subitem_relation_name_text: relTitles[i].title,
+        subitem_relation_name_language: relTitles[i].lang,
+      }];
+    }
   });
 
   // ===== メタデータオブジェクト =====
@@ -4432,7 +4503,7 @@ if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_K
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-02-27';
+  const LOCAL_VERSION = '2026-03-01';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

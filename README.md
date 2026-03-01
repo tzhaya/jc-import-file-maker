@@ -114,6 +114,7 @@ APIキーを設定するとレート制限が緩和されます。
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-01 | 関連情報の取得改善：関連DOIのURL形式統一（`https://doi.org/`プレフィックス付与）、関連名称（タイトル）の自動取得（Crossref/JaLC API）、JaLC API relation_listフィールド名修正（[#42](https://github.com/tzhaya/jc-import-file-maker/issues/42)） |
 | 2026-02-27 | プレビュー機能追加：入力済みメタデータをJAIRO Cloud風コンパクトテーブルでモーダル表示。collectFromDOM()によるDOM→JSON変換基盤を実装（[#37](https://github.com/tzhaya/jc-import-file-maker/issues/37)） |
 | 2026-02-26 | JaLC API対応（準備中）：JaLC DOIからのメタデータ取得・マッピングコードを追加。CORS制約により未有効化（[#6](https://github.com/tzhaya/jc-import-file-maker/issues/6)） |
 | 2026-02-25 | GitHub 最新コミットとの比較による更新チェック機能追加、インデックスID入力欄をシステム管理フィールドに移行、更新概要を直近5件に制限（[#36](https://github.com/tzhaya/jc-import-file-maker/issues/36)） |
