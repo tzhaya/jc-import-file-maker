@@ -227,7 +227,10 @@ make_jc_importer.html
             -   識別子タイプ："key": "item_30002_relation18[].subitem_relation_type_id.subitem_relation_type_select"
                 -   `CROSSREF_RELATION_ID_TYPE_MAP` でマッピングした JPCOAR identifierType 値
             -   関連識別子："key": "item_30002_relation18[].subitem_relation_type_id.subitem_relation_type_id_text"
-                -   Crossref `relation[*][*].id` の値
+                -   Crossref `relation[*][*].id` の値。`id-type` が DOI の場合は `https://doi.org/` プレフィックスを付与してURL形式に統一する
+            -   関連名称："key": "item_30002_relation18[].subitem_relation_name[]"
+                -   `isIdenticalTo` 以外の DOI タイプの関連エントリについて、Crossref API（Crossref DOI の場合）または JaLC API（JaLC DOI の場合）から関連DOIのタイトルを自動取得し設定する
+                -   取得失敗時は空配列のまま（silent fail）
 
 **Crossref `relation` フィールドの例**
 ```json

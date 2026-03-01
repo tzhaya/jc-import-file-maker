@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-02-27（プレビュー機能）
+最終更新: 2026-03-01（関連情報の取得改善）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,32 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約4450行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能）
+現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-01: 関連情報の取得改善（issue #42）
+
+### 実装内容
+
+**Step 1: タイトル取得関数の新設（~L1145, L1161）**
+- `fetchRelationTitle(doi)`: Crossref API から関連DOIのタイトルと言語を取得。エラー時は null（silent fail）
+- `fetchRelationTitleJaLC(doi)`: JaLC API から関連DOIのタイトルと言語を取得。title_list の最初の1件を採用
+
+**Step 2: mapToItemType() の relation 部分修正（L1926）**
+- IIFE `(() => {...})()` → async IIFE `await (async () => {...})()` に変更（await 使用のため）
+- セクション4（Crossref relation エントリ）: DOI タイプの場合 `https://doi.org/` プレフィックスを付与してURL形式に統一
+- セクション5（新規追加）: isIdenticalTo 以外の DOI エントリを収集し、Promise.all で並列にタイトル取得して subitem_relation_name に設定
+
+**Step 3: mapToItemTypeJaLC() の relation 部分修正（L2197）**
+- JaLC API のフィールド名を実際のレスポンスに修正: `relation_type`→`relation`、`identifier_type`→`type`、`related_identifier||url`→`content`
+- DOI タイプの場合 `https://doi.org/` プレフィックスを付与
+- isIdenticalTo 以外の DOI エントリについて JaLC API（fetchRelationTitleJaLC）でタイトルを取得
+
+### 設計ポイント
+- fetchCrossref()/fetchJaLC() を再利用しない理由: 既存関数は 404 で throw するが、関連 DOI の取得失敗は正常系（silent fail）
+- isIdenticalTo は自身の DOI/OpenAlex IDs/ISBN のため名称取得対象外
+- JaLC DOI は Crossref に情報がないため JaLC API を使用
 
 ---
 
