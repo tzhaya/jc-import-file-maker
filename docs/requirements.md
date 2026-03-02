@@ -64,20 +64,34 @@ make_jc_importer.html
 
 ### 外部API サンプルデータ
 
-**サンプルデータ crossref データ**
-    `j.advnut.2025.100480.json`
+サンプルデータは `samples/` ディレクトリにAPIソース別のサブディレクトリで整理されています。
+
+**Crossref APIサンプルデータ**
+    - `samples/Crossref/j.advnut.2025.100480.json`
+    - `samples/Crossref/10.1038_s41467-023-40773-1.json`
 
 **サンプルデータ DOI**
     `https://doi.org/10.1016/j.advnut.2025.100480`
 
 **OpenAlex API 論文(Work)サンプルデータ**
-    - `openalex.org_W4412424744.json`
+    - `samples/OpenAlex/openalex.org_W4412424744.json`
 
 **OpenAlex API 著者(author)サンプルデータ**
-    - `openalex.org_a5000546253.json`
+    - `samples/OpenAlex/openalex.org_a5000546253.json`
+
+**JaLC APIサンプルデータ**
+    - `samples/JaLC/10.34556%252F0002000089.json`
+    - `samples/JaLC/10.34556%252F0002000787.json`
+
+**CiNii Research APIサンプルデータ**
+    - `samples/CiNii/cir.nii.ac.jp_19KK0341_en.json`
+    - `samples/CiNii/cir.nii.ac.jp_19KK0341_ja.json`
+
+**OpenPolicyFinder (SHERPA/RoMEO) サンプルデータ**
+    - `samples/OpenPolicyFinder/`
 
 **ROR サンプルデータ**
-    - `ror.org_005pdtr14.json`
+    - `samples/ror.org_005pdtr14.json`
 
 ## 主要機能
 
