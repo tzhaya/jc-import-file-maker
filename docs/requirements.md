@@ -214,6 +214,7 @@ make_jc_importer.html
             -   関連識別子："key": "item_30002_relation18[].subitem_relation_type_id.subitem_relation_type_id_text"
                 -   `key`に対する `value` の値
                 -   例：https://pubmed.ncbi.nlm.nih.gov/40653270
+                -   ただし `identifierType` が `PMID` の場合、IRDBは8桁までの数字のみを受け付けるため、PubMed URL プレフィックス（`https://pubmed.ncbi.nlm.nih.gov/`）を除去して番号のみ出力する
         -   Crossref APIの `isbn-type` / `ISBN` フィールドに含まれるISBNを関連情報に追加する（book 系資源タイプ固有）。`isbn-type` が存在する場合は優先し、なければ `ISBN` 配列にフォールバック。
             -   関連タイプ："key": "item_30002_relation18[].subitem_relation_type"
                 -   "value": "isIdenticalTo"
@@ -227,7 +228,7 @@ make_jc_importer.html
             -   識別子タイプ："key": "item_30002_relation18[].subitem_relation_type_id.subitem_relation_type_select"
                 -   `CROSSREF_RELATION_ID_TYPE_MAP` でマッピングした JPCOAR identifierType 値
             -   関連識別子："key": "item_30002_relation18[].subitem_relation_type_id.subitem_relation_type_id_text"
-                -   Crossref `relation[*][*].id` の値。`id-type` が DOI の場合は `https://doi.org/` プレフィックスを付与してURL形式に統一する
+                -   Crossref `relation[*][*].id` の値。`id-type` が DOI の場合は `https://doi.org/` プレフィックスを付与してURL形式に統一する。`id-type` が PMID の場合は PubMed URL プレフィックスを除去して番号のみ出力する
             -   関連名称："key": "item_30002_relation18[].subitem_relation_name[]"
                 -   `isIdenticalTo` 以外の DOI タイプの関連エントリについて、Crossref API（Crossref DOI の場合）または JaLC API（JaLC DOI の場合）から関連DOIのタイトルを自動取得し設定する
                 -   取得失敗時は空配列のまま（silent fail）

@@ -458,7 +458,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-03-01 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-03-02 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -470,6 +470,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-02</td>
+        <td style="padding:2px 0;">PMID識別子のURL除去：関連情報のidentifierType=PMID時にPubMed URLから番号のみを抽出（IRDB登録エラー対応）</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-01</td>
         <td style="padding:2px 0;">関連情報の取得改善：関連DOIのURL形式統一（https://doi.org/プレフィックス付与）、関連名称（タイトル）の自動取得、JaLC APIフィールド名修正</td>
@@ -485,10 +489,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-25</td>
         <td style="padding:2px 0;">GitHub最新コミットとの更新チェック機能追加、インデックスID入力欄をシステム管理フィールドに移行、更新概要を直近5件に制限</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-25</td>
-        <td style="padding:2px 0;">Crossref の受理日（accepted）・提出日（submitted）を日付フィールドに追加取得（Accepted / Submitted タイプ）</td>
       </tr>
     </tbody>
   </table>
@@ -1950,7 +1950,8 @@ async function mapToItemType(crJson, oaJson, rorMap) {
         relations.push({
           subitem_relation_type: 'isIdenticalTo',
           subitem_relation_type_id: {
-            subitem_relation_type_id_text: value,
+            subitem_relation_type_id_text: upperKey === 'PMID'
+              ? value.replace(/^https?:\/\/pubmed\.ncbi\.nlm\.nih\.gov\//, '') : value,
             subitem_relation_type_select: upperKey,
           },
           subitem_relation_name: [],
@@ -1991,7 +1992,10 @@ async function mapToItemType(crJson, oaJson, rorMap) {
           const id = item.id || '';
           if (!id) return;
           const idText = jpcoarIdType === 'DOI' && !/^https?:\/\//i.test(id)
-            ? `https://doi.org/${id}` : id;
+            ? `https://doi.org/${id}`
+            : jpcoarIdType === 'PMID'
+              ? id.replace(/^https?:\/\/pubmed\.ncbi\.nlm\.nih\.gov\//, '')
+              : id;
           relations.push({
             subitem_relation_type: jpcoarRelType,
             subitem_relation_type_id: {
@@ -4503,7 +4507,7 @@ if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_K
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-01';
+  const LOCAL_VERSION = '2026-03-02';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-01（使い方ガイド追加）
+最終更新: 2026-03-02（PMID識別子URL除去）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,27 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-02: PMID識別子のURL除去（issue #47）
+
+### 問題
+
+関連情報のidentifierType=PMIDの場合、Crossref APIやOpenAlex APIがPubMed URL（`https://pubmed.ncbi.nlm.nih.gov/41617642`）を返すが、IRDBは8桁までの数字のみを期待する。URL形式のまま出力するとIRDBで「8桁までの数字以外の値が設定されています」エラーが発生する。
+
+### 実装内容
+
+**Crossref relation エントリ（L1993付近）**
+- `jpcoarIdType === 'PMID'` の場合、`id.replace(/^https?:\/\/pubmed\.ncbi\.nlm\.nih\.gov\//, '')` でURLプレフィックスを除去し番号のみを出力
+
+**OpenAlex ids エントリ（L1953付近）**
+- `upperKey === 'PMID'` の場合、同様のreplaceでURLプレフィックスを除去
+
+### 影響範囲
+- Crossrefパス: mapToItemType() 内のセクション4（Crossref relation エントリ）
+- OpenAlexパス: mapToItemType() 内のセクション2（OpenAlex ids エントリ）
+- JaLCパス: 影響なし（relation に PMID が出現しない）
 
 ---
 
