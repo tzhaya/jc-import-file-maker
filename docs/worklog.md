@@ -897,9 +897,9 @@ const resourcetype = TITLE_MAPS.resourcetype.includes(crTypeLabel)
 | `requirements.md` | 要件定義 |
 | `ItemType.json` | フィールド構造・titleMap |
 | `sample.json` | 出力データ構造の確認用 |
-| `j.advnut.2025.100480.json` | Crossref サンプルデータ |
-| `openalex.org_W4412424744.json` | OpenAlex サンプルデータ |
-| `ror.org_005pdtr14.json` | ROR v2 サンプルデータ |
+| `samples/Crossref/j.advnut.2025.100480.json` | Crossref サンプルデータ |
+| `samples/OpenAlex/openalex.org_W4412424744.json` | OpenAlex サンプルデータ |
+| `samples/ror.org_005pdtr14.json` | ROR v2 サンプルデータ |
 | `resource_type_vocabulary.md` | 資源タイプ語彙 |
 | `accessrights.md` | アクセス権語彙 |
 | `JPCOARschme_guide.md` | JPCOARスキーマリンク |

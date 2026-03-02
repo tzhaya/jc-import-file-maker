@@ -1,0 +1,1263 @@
+{
+  "status": "ok",
+  "message-type": "work",
+  "message-version": "1.0.0",
+  "message": {
+    "indexed": {
+      "date-parts": [
+        [2026, 2, 26]
+      ],
+      "date-time": "2026-02-26T19:47:55Z",
+      "timestamp": 1772135275747,
+      "version": "3.50.1"
+    },
+    "reference-count": 77,
+    "publisher": "Springer Science and Business Media LLC",
+    "issue": "1",
+    "license": [
+      {
+        "start": {
+          "date-parts": [
+            [2023, 8, 19]
+          ],
+          "date-time": "2023-08-19T00:00:00Z",
+          "timestamp": 1692403200000
+        },
+        "content-version": "tdm",
+        "delay-in-days": 0,
+        "URL": "https://creativecommons.org/licenses/by/4.0"
+      },
+      {
+        "start": {
+          "date-parts": [
+            [2023, 8, 19]
+          ],
+          "date-time": "2023-08-19T00:00:00Z",
+          "timestamp": 1692403200000
+        },
+        "content-version": "vor",
+        "delay-in-days": 0,
+        "URL": "https://creativecommons.org/licenses/by/4.0"
+      }
+    ],
+    "funder": [
+      {
+        "DOI": "10.13039/501100001691",
+        "name": "MEXT | Japan Society for the Promotion of Science",
+        "doi-asserted-by": "publisher",
+        "award": [
+          "JP16K07412"
+        ],
+        "award-info": [
+          {
+            "award-number": [
+              "JP16K07412"
+            ]
+          }
+        ],
+        "id": [
+          {
+            "id": "10.13039/501100001691",
+            "id-type": "DOI",
+            "asserted-by": "publisher"
+          }
+        ]
+      },
+      {
+        "DOI": "10.13039/501100001691",
+        "name": "MEXT | Japan Society for the Promotion of Science",
+        "doi-asserted-by": "publisher",
+        "award": [
+          "JP21H02158"
+        ],
+        "award-info": [
+          {
+            "award-number": [
+              "JP21H02158"
+            ]
+          }
+        ],
+        "id": [
+          {
+            "id": "10.13039/501100001691",
+            "id-type": "DOI",
+            "asserted-by": "publisher"
+          }
+        ]
+      },
+      {
+        "DOI": "10.13039/501100001691",
+        "name": "MEXT | Japan Society for the Promotion of Science",
+        "doi-asserted-by": "publisher",
+        "award": [
+          "JP24510312"
+        ],
+        "award-info": [
+          {
+            "award-number": [
+              "JP24510312"
+            ]
+          }
+        ],
+        "id": [
+          {
+            "id": "10.13039/501100001691",
+            "id-type": "DOI",
+            "asserted-by": "publisher"
+          }
+        ]
+      },
+      {
+        "DOI": "10.13039/501100001691",
+        "name": "MEXT | Japan Society for the Promotion of Science",
+        "doi-asserted-by": "publisher",
+        "award": [
+          "JP18K05379"
+        ],
+        "award-info": [
+          {
+            "award-number": [
+              "JP18K05379"
+            ]
+          }
+        ],
+        "id": [
+          {
+            "id": "10.13039/501100001691",
+            "id-type": "DOI",
+            "asserted-by": "publisher"
+          }
+        ]
+      },
+      {
+        "DOI": "10.13039/501100001691",
+        "name": "MEXT | Japan Society for the Promotion of Science",
+        "doi-asserted-by": "publisher",
+        "award": [
+          "JP21H02158"
+        ],
+        "award-info": [
+          {
+            "award-number": [
+              "JP21H02158"
+            ]
+          }
+        ],
+        "id": [
+          {
+            "id": "10.13039/501100001691",
+            "id-type": "DOI",
+            "asserted-by": "publisher"
+          }
+        ]
+      },
+      {
+        "DOI": "10.13039/501100007173",
+        "name": "NARO | Bio-oriented Technology Research Advancement Institution",
+        "doi-asserted-by": "publisher",
+        "award": [
+          "JPJ009237"
+        ],
+        "award-info": [
+          {
+            "award-number": [
+              "JPJ009237"
+            ]
+          }
+        ],
+        "id": [
+          {
+            "id": "10.13039/501100007173",
+            "id-type": "DOI",
+            "asserted-by": "publisher"
+          }
+        ]
+      },
+      {
+        "DOI": "10.13039/501100009037",
+        "name": "MEXT | JST | Science and Technology Research Partnership for Sustainable Development",
+        "doi-asserted-by": "publisher",
+        "award": [
+          "JPMJSA1907"
+        ],
+        "award-info": [
+          {
+            "award-number": [
+              "JPMJSA1907"
+            ]
+          }
+        ],
+        "id": [
+          {
+            "id": "10.13039/501100009037",
+            "id-type": "DOI",
+            "asserted-by": "publisher"
+          }
+        ]
+      }
+    ],
+    "content-domain": {
+      "domain": [
+        "link.springer.com"
+      ],
+      "crossmark-restriction": false
+    },
+    "short-container-title": [
+      "Nat Commun"
+    ],
+    "abstract": "\u003Cjats:title\u003EAbstract\u003C/jats:title\u003E\n                  \u003Cjats:p\u003E\n                    Drought severely damages crop production, even under conditions so mild that the leaves show no signs of wilting. However, it is unclear how field-grown plants respond to mild drought. Here, we show through six years of field trials that ridges are a useful experimental tool to mimic mild drought stress in the field. Mild drought reduces inorganic phosphate levels in the leaves to activate the phosphate starvation response (PSR) in soybean plants in the field. Using\n                    \u003Cjats:italic\u003EArabidopsis thaliana\u003C/jats:italic\u003E\n                    and its mutant plants grown in pots under controlled environments, we demonstrate that PSR occurs before abscisic acid response under progressive mild drought and that PSR plays a crucial role in plant growth under mild drought. Our observations in the field and laboratory using model crop and experimental plants provide insight into the molecular response to mild drought in field-grown plants and the relationship between nutrition and drought stress response.\n                  \u003C/jats:p\u003E",
+    "DOI": "10.1038/s41467-023-40773-1",
+    "type": "journal-article",
+    "created": {
+      "date-parts": [
+        [2023, 8, 19]
+      ],
+      "date-time": "2023-08-19T08:01:26Z",
+      "timestamp": 1692432086000
+    },
+    "update-policy": "https://doi.org/10.1007/springer_crossmark_policy",
+    "source": "Crossref",
+    "is-referenced-by-count": 30,
+    "title": [
+      "Phosphate starvation response precedes abscisic acid response under progressive mild drought in plants"
+    ],
+    "prefix": "10.1038",
+    "volume": "14",
+    "author": [
+      {
+        "ORCID": "https://orcid.org/0000-0002-9029-7826",
+        "authenticated-orcid": false,
+        "given": "Yukari",
+        "family": "Nagatoshi",
+        "sequence": "first",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-5460-8570",
+        "authenticated-orcid": false,
+        "given": "Kenta",
+        "family": "Ikazaki",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-8357-6579",
+        "authenticated-orcid": false,
+        "given": "Yasufumi",
+        "family": "Kobayashi",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-2100-5575",
+        "authenticated-orcid": false,
+        "given": "Nobuyuki",
+        "family": "Mizuno",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0009-0000-0858-1821",
+        "authenticated-orcid": false,
+        "given": "Ryohei",
+        "family": "Sugita",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-4207-297X",
+        "authenticated-orcid": false,
+        "given": "Yumiko",
+        "family": "Takebayashi",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-2967-5082",
+        "authenticated-orcid": false,
+        "given": "Mikiko",
+        "family": "Kojima",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-5449-6492",
+        "authenticated-orcid": false,
+        "given": "Hitoshi",
+        "family": "Sakakibara",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-1279-7083",
+        "authenticated-orcid": false,
+        "given": "Natsuko I.",
+        "family": "Kobayashi",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-7545-2771",
+        "authenticated-orcid": false,
+        "given": "Keitaro",
+        "family": "Tanoi",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "given": "Kenichiro",
+        "family": "Fujii",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0009-0006-2311-482X",
+        "authenticated-orcid": false,
+        "given": "Junya",
+        "family": "Baba",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "given": "Eri",
+        "family": "Ogiso-Tanaka",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "given": "Masao",
+        "family": "Ishimoto",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-3804-7886",
+        "authenticated-orcid": false,
+        "given": "Yasuo",
+        "family": "Yasui",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-7839-7517",
+        "authenticated-orcid": false,
+        "given": "Tetsuji",
+        "family": "Oya",
+        "sequence": "additional",
+        "affiliation": []
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-5036-8319",
+        "authenticated-orcid": false,
+        "given": "Yasunari",
+        "family": "Fujita",
+        "sequence": "additional",
+        "affiliation": []
+      }
+    ],
+    "member": "297",
+    "published-online": {
+      "date-parts": [
+        [2023, 8, 19]
+      ]
+    },
+    "reference": [
+      {
+        "key": "40773_CR1",
+        "doi-asserted-by": "crossref",
+        "first-page": "171",
+        "DOI": "10.1126/science.320.5873.171",
+        "volume": "320",
+        "author": "E Pennisi",
+        "year": "2008",
+        "unstructured": "Pennisi, E. The blue revolution, drop by drop, gene by gene. Science 320, 171–173 (2008).",
+        "journal-title": "Science"
+      },
+      {
+        "key": "40773_CR2",
+        "doi-asserted-by": "crossref",
+        "first-page": "509",
+        "DOI": "10.1007/s10265-011-0412-3",
+        "volume": "124",
+        "author": "Y Fujita",
+        "year": "2011",
+        "unstructured": "Fujita, Y., Fujita, M., Shinozaki, K. & Yamaguchi-Shinozaki, K. ABA-mediated transcriptional regulation in response to osmotic stress in plants. J. Plant Res. 124, 509–525 (2011).",
+        "journal-title": "J. Plant Res."
+      },
+      {
+        "key": "40773_CR3",
+        "doi-asserted-by": "crossref",
+        "first-page": "104",
+        "DOI": "10.1038/s41576-021-00413-0",
+        "volume": "23",
+        "author": "H Zhang",
+        "year": "2022",
+        "unstructured": "Zhang, H., Zhu, J., Gong, Z. & Zhu, J. K. Abiotic stress responses in plants. Nat. Rev. Genet. 23, 104–119 (2022).",
+        "journal-title": "Nat. Rev. Genet."
+      },
+      {
+        "key": "40773_CR4",
+        "doi-asserted-by": "crossref",
+        "first-page": "212",
+        "DOI": "10.1038/nbt.1800",
+        "volume": "29",
+        "author": "A Skirycz",
+        "year": "2011",
+        "unstructured": "Skirycz, A. et al. Survival and growth of Arabidopsis plants given limited water are not equal. Nat. Biotechnol. 29, 212–214 (2011).",
+        "journal-title": "Nat. Biotechnol."
+      },
+      {
+        "key": "40773_CR5",
+        "doi-asserted-by": "crossref",
+        "first-page": "519",
+        "DOI": "10.1104/pp.113.234641",
+        "volume": "165",
+        "author": "H Claeys",
+        "year": "2014",
+        "unstructured": "Claeys, H., Van Landeghem, S., Dubois, M., Maleux, K. & Inzé, D. What is stress? Dose-response effects in commonly used in vitro stress assays. Plant Physiol. 165, 519–527 (2014).",
+        "journal-title": "Plant Physiol."
+      },
+      {
+        "key": "40773_CR6",
+        "doi-asserted-by": "crossref",
+        "first-page": "177",
+        "DOI": "10.1111/pce.12827",
+        "volume": "40",
+        "author": "PE Verslues",
+        "year": "2017",
+        "unstructured": "Verslues, P. E. Time to grow: factors that control plant growth during mild to moderate drought stress. Plant Cell Environ. 40, 177–179 (2017).",
+        "journal-title": "Plant Cell Environ."
+      },
+      {
+        "key": "40773_CR7",
+        "doi-asserted-by": "crossref",
+        "first-page": "1254",
+        "DOI": "10.1104/pp.110.161752",
+        "volume": "154",
+        "author": "A Harb",
+        "year": "2010",
+        "unstructured": "Harb, A., Krishnan, A., Ambavaram, M. M. R. & Pereira, A. Molecular and physiological analysis of drought stress in Arabidopsis reveals early responses leading to acclimation in plant growth. Plant Physiol. 154, 1254–1271 (2010).",
+        "journal-title": "Plant Physiol."
+      },
+      {
+        "key": "40773_CR8",
+        "doi-asserted-by": "crossref",
+        "first-page": "893",
+        "DOI": "10.1105/tpc.112.096180",
+        "volume": "24",
+        "author": "DL Des Marais",
+        "year": "2012",
+        "unstructured": "Des Marais, D. L. et al. Physiological genomics of response to soil drying in diverse Arabidopsis accessions. Plant Cell 24, 893–914 (2012).",
+        "journal-title": "Plant Cell"
+      },
+      {
+        "key": "40773_CR9",
+        "volume": "14",
+        "author": "X Ma",
+        "year": "2014",
+        "unstructured": "Ma, X., Sukiran, N. L., Ma, H. & Su, Z. Moderate drought causes dramatic floral transcriptomic reprogramming to ensure successful reproductive development in Arabidopsis. BMC Plant Biol. 14, 164 (2014).",
+        "journal-title": "BMC Plant Biol."
+      },
+      {
+        "key": "40773_CR10",
+        "doi-asserted-by": "crossref",
+        "first-page": "2417",
+        "DOI": "10.1105/tpc.16.00483",
+        "volume": "28",
+        "author": "P Clauw",
+        "year": "2016",
+        "unstructured": "Clauw, P. et al. Leaf growth response to mild drought: natural variation in Arabidopsis sheds light on trait architecture. Plant Cell 28, 2417–2434 (2016).",
+        "journal-title": "Plant Cell"
+      },
+      {
+        "key": "40773_CR11",
+        "doi-asserted-by": "crossref",
+        "first-page": "180",
+        "DOI": "10.1111/pce.12809",
+        "volume": "40",
+        "author": "M Dubois",
+        "year": "2017",
+        "unstructured": "Dubois, M., Claeys, H., Van den Broeck, L. & Inzé, D. Time of day determines Arabidopsis transcriptome and growth dynamics under mild drought. Plant Cell Environ. 40, 180–189 (2017).",
+        "journal-title": "Plant Cell Environ."
+      },
+      {
+        "key": "40773_CR12",
+        "doi-asserted-by": "crossref",
+        "first-page": "1768",
+        "DOI": "10.1104/pp.113.220921",
+        "volume": "162",
+        "author": "H Claeys",
+        "year": "2013",
+        "unstructured": "Claeys, H. & Inzé, D. The agony of choice: how plants balance growth and survival under water-limiting conditions. Plant Physiol. 162, 1768–1779 (2013).",
+        "journal-title": "Plant Physiol."
+      },
+      {
+        "key": "40773_CR13",
+        "doi-asserted-by": "crossref",
+        "first-page": "341",
+        "DOI": "10.5194/bg-13-341-2016",
+        "volume": "13",
+        "author": "Q Zhu",
+        "year": "2016",
+        "unstructured": "Zhu, Q., Riley, W. J., Tang, J. & Koven, C. D. Multiple soil nutrient competition between plants, microbes, and mineral surfaces: model development, parameterization, and example applications in several tropical forests. Biogeosciences 13, 341–363 (2016).",
+        "journal-title": "Biogeosciences"
+      },
+      {
+        "key": "40773_CR14",
+        "doi-asserted-by": "crossref",
+        "first-page": "989",
+        "DOI": "10.1104/pp.111.175448",
+        "volume": "156",
+        "author": "AE Richardson",
+        "year": "2011",
+        "unstructured": "Richardson, A. E. & Simpson, R. J. Soil microorganisms mediating phosphorus availability update on microbial phosphorus. Plant Physiol. 156, 989–996 (2011).",
+        "journal-title": "Plant Physiol."
+      },
+      {
+        "key": "40773_CR15",
+        "doi-asserted-by": "crossref",
+        "first-page": "e0024",
+        "DOI": "10.1199/tab.0024",
+        "volume": "1",
+        "author": "Y Poirier",
+        "year": "2002",
+        "unstructured": "Poirier, Y. & Bucher, M. Phosphate transport and homeostasis in Arabidopsis. Arabidopsis Book 1, e0024 (2002).",
+        "journal-title": "Arabidopsis Book"
+      },
+      {
+        "key": "40773_CR16",
+        "doi-asserted-by": "crossref",
+        "first-page": "185",
+        "DOI": "10.1146/annurev-arplant-042110-103849",
+        "volume": "62",
+        "author": "TJ Chiou",
+        "year": "2011",
+        "unstructured": "Chiou, T. J. & Lin, S. I. Signaling network in sensing phosphate availability in plants. Annu. Rev. Plant Biol. 62, 185–206 (2011).",
+        "journal-title": "Annu. Rev. Plant Biol."
+      },
+      {
+        "key": "40773_CR17",
+        "volume": "12",
+        "author": "MK Ried",
+        "year": "2021",
+        "unstructured": "Ried, M. K. et al. Inositol pyrophosphates promote the interaction of SPX domains with the coiled-coil motif of PHR transcription factors to regulate plant phosphate homeostasis. Nat. Commun. 12, 384 (2021).",
+        "journal-title": "Nat. Commun."
+      },
+      {
+        "key": "40773_CR18",
+        "volume": "12",
+        "author": "J Zhou",
+        "year": "2021",
+        "unstructured": "Zhou, J. et al. Mechanism of phosphate sensing and signaling revealed by rice SPX1-PHR2 complex structure. Nat. Commun. 12, 7040 (2021).",
+        "journal-title": "Nat. Commun."
+      },
+      {
+        "key": "40773_CR19",
+        "volume": "13",
+        "author": "Z Guan",
+        "year": "2022",
+        "unstructured": "Guan, Z. et al. Mechanistic insights into the regulation of plant phosphate homeostasis by the rice SPX2 - PHR2 complex. Nat. Commun. 13, 1581 (2022).",
+        "journal-title": "Nat. Commun."
+      },
+      {
+        "key": "40773_CR20",
+        "doi-asserted-by": "crossref",
+        "first-page": "499",
+        "DOI": "10.1104/pp.15.01336",
+        "volume": "170",
+        "author": "L Sun",
+        "year": "2016",
+        "unstructured": "Sun, L., Song, L., Zhang, Y., Zheng, Z. & Liu, D. Arabidopsis PHL2 and PHR1 act redundantly as the key components of the central regulatory system controlling transcriptional responses to phosphate starvation. Plant Physiol. 170, 499–514 (2016).",
+        "journal-title": "Plant Physiol."
+      },
+      {
+        "key": "40773_CR21",
+        "doi-asserted-by": "crossref",
+        "first-page": "513",
+        "DOI": "10.1038/nature21417",
+        "volume": "543",
+        "author": "G Castrillo",
+        "year": "2017",
+        "unstructured": "Castrillo, G. et al. Root microbiota drive direct integration of phosphate stress and immunity. Nature 543, 513–518 (2017).",
+        "journal-title": "Nature"
+      },
+      {
+        "key": "40773_CR22",
+        "doi-asserted-by": "crossref",
+        "first-page": "464",
+        "DOI": "10.1016/j.cell.2016.02.028",
+        "volume": "165",
+        "author": "K Hiruma",
+        "year": "2016",
+        "unstructured": "Hiruma, K. et al. Root endophyte Colletotrichum tofieldiae confers plant fitness benefits that are phosphate status dependent. Cell 165, 464–474 (2016).",
+        "journal-title": "Cell"
+      },
+      {
+        "key": "40773_CR23",
+        "doi-asserted-by": "crossref",
+        "first-page": "924",
+        "DOI": "10.1111/nph.12952",
+        "volume": "204",
+        "author": "M He",
+        "year": "2014",
+        "unstructured": "He, M. & Dijkstra, F. A. Drought effect on plant nitrogen and phosphorus: a meta-analysis. N. Phytol. 204, 924–931 (2014).",
+        "journal-title": "N. Phytol."
+      },
+      {
+        "key": "40773_CR24",
+        "doi-asserted-by": "crossref",
+        "first-page": "872",
+        "DOI": "10.1104/pp.017004",
+        "volume": "131",
+        "author": "PH Graham",
+        "year": "2003",
+        "unstructured": "Graham, P. H. & Vance, C. P. Legumes: importance and constraints to greater use. Plant Physiol. 131, 872–877 (2003).",
+        "journal-title": "Plant Physiol."
+      },
+      {
+        "key": "40773_CR25",
+        "unstructured": "FAO. Faostat-Production, F. A. O. “Crops and Livestock Products.” (FAO, 2022), accessed on July 2022."
+      },
+      {
+        "key": "40773_CR26",
+        "doi-asserted-by": "crossref",
+        "first-page": "1260",
+        "DOI": "10.1093/pcp/pcp082",
+        "volume": "50",
+        "author": "LP Manavalan",
+        "year": "2009",
+        "unstructured": "Manavalan, L. P., Guttikonda, S. K., Tran, L. S. P. & Nguyen, H. T. Physiological and molecular approaches to improve drought resistance in soybean. Plant Cell Physiol. 50, 1260–1276 (2009).",
+        "journal-title": "Plant Cell Physiol."
+      },
+      {
+        "key": "40773_CR27",
+        "doi-asserted-by": "crossref",
+        "first-page": "581127",
+        "DOI": "10.3389/fpls.2021.581127",
+        "volume": "12",
+        "author": "MG Gebre",
+        "year": "2021",
+        "unstructured": "Gebre, M. G. & Earl, H. J. Soil water deficit and fertilizer placement effects on root biomass distribution, soil water extraction, water use, yield, and yield components of soybean [Glycine max (L.) Merr.] grown in 1-m rooting columns. Front. Plant Sci. 12, 581127 (2021).",
+        "journal-title": "Front. Plant Sci."
+      },
+      {
+        "key": "40773_CR28",
+        "doi-asserted-by": "crossref",
+        "first-page": "77",
+        "DOI": "10.1093/pcp/pcy189",
+        "volume": "60",
+        "author": "Y Nagatoshi",
+        "year": "2019",
+        "unstructured": "Nagatoshi, Y. & Fujita, Y. Accelerating soybean breeding in a CO2-supplemented growth chamber. Plant Cell Physiol. 60, 77–84 (2019).",
+        "journal-title": "Plant Cell Physiol."
+      },
+      {
+        "key": "40773_CR29",
+        "doi-asserted-by": "crossref",
+        "first-page": "256",
+        "DOI": "10.1111/pbi.13682",
+        "volume": "20",
+        "author": "M Zhang",
+        "year": "2022",
+        "unstructured": "Zhang, M. et al. Progress in soybean functional genomics over the past decade. Plant Biotechnol. J. 20, 256–282 (2022).",
+        "journal-title": "Plant Biotechnol. J."
+      },
+      {
+        "key": "40773_CR30",
+        "doi-asserted-by": "crossref",
+        "first-page": "523",
+        "DOI": "10.1111/j.1365-313X.2005.02593.x",
+        "volume": "45",
+        "author": "PE Verslues",
+        "year": "2006",
+        "unstructured": "Verslues, P. E., Agarwal, M., Katiyar-Agarwal, S., Zhu, J. & Zhu, J. K. Methods and concepts in quantifying resistance to drought, salt and freezing, abiotic stresses that affect plant water status. Plant J. 45, 523–539 (2006).",
+        "journal-title": "Plant J."
+      },
+      {
+        "key": "40773_CR31",
+        "doi-asserted-by": "crossref",
+        "first-page": "342",
+        "DOI": "10.1111/tpj.15619",
+        "volume": "109",
+        "author": "T Kuromori",
+        "year": "2022",
+        "unstructured": "Kuromori, T., Fujita, M., Takahashi, F., Yamaguchi-Shinozaki, K. & Shinozaki, K. Inter-tissue and inter-organ signaling in drought stress response and phenotyping of drought tolerance. Plant J. 109, 342–358 (2022).",
+        "journal-title": "Plant J."
+      },
+      {
+        "key": "40773_CR32",
+        "first-page": "2027",
+        "volume": "68",
+        "author": "SJ Prince",
+        "year": "2017",
+        "unstructured": "Prince, S. J. et al. Root xylem plasticity to improve water use and yield in water-stressed soybean. J. Exp. Bot. 68, 2027–2036 (2017).",
+        "journal-title": "J. Exp. Bot."
+      },
+      {
+        "key": "40773_CR33",
+        "doi-asserted-by": "crossref",
+        "first-page": "277",
+        "DOI": "10.1111/pbi.12176",
+        "volume": "12",
+        "author": "H Nelissen",
+        "year": "2014",
+        "unstructured": "Nelissen, H., Moloney, M. & Inzé, D. Translational research: from pot to plot. Plant Biotechnol. J. 12, 277–285 (2014).",
+        "journal-title": "Plant Biotechnol. J."
+      },
+      {
+        "key": "40773_CR34",
+        "doi-asserted-by": "crossref",
+        "first-page": "448",
+        "DOI": "10.3389/fpls.2017.00448",
+        "volume": "8",
+        "author": "R Fuganti-Pagliarini",
+        "year": "2017",
+        "unstructured": "Fuganti-Pagliarini, R. et al. Characterization of soybean genetically modified for drought tolerance in field conditions. Front. Plant Sci. 8, 448 (2017).",
+        "journal-title": "Front. Plant Sci."
+      },
+      {
+        "key": "40773_CR35",
+        "doi-asserted-by": "crossref",
+        "first-page": "14",
+        "DOI": "10.3389/fenvs.2018.00014",
+        "volume": "6",
+        "author": "D Kundel",
+        "year": "2018",
+        "unstructured": "Kundel, D. et al. Design and manual to construct rainout-shelters for climate change experiments in agroecosystems. Front. Environ. Sci. 6, 14 (2018).",
+        "journal-title": "Front. Environ. Sci."
+      },
+      {
+        "key": "40773_CR36",
+        "doi-asserted-by": "crossref",
+        "first-page": "e02088",
+        "DOI": "10.1002/ecs2.2088",
+        "volume": "9",
+        "author": "DL Hoover",
+        "year": "2018",
+        "unstructured": "Hoover, D. L., Wilcox, K. R. & Young, K. E. Experimental droughts with rainout shelters: a methodological review. Ecosphere 9, e02088 (2018).",
+        "journal-title": "Ecosphere"
+      },
+      {
+        "key": "40773_CR37",
+        "doi-asserted-by": "crossref",
+        "first-page": "1577",
+        "DOI": "10.5194/hess-15-1577-2011",
+        "volume": "15",
+        "author": "MM Mekonnen",
+        "year": "2011",
+        "unstructured": "Mekonnen, M. M. & Hoekstra, A. Y. The green, blue and grey water footprint of crops and derived crop products. Hydrol. Earth Sys. Sci. 15, 1577–1600 (2011).",
+        "journal-title": "Hydrol. Earth Sys. Sci."
+      },
+      {
+        "key": "40773_CR38",
+        "doi-asserted-by": "crossref",
+        "first-page": "275",
+        "DOI": "10.1093/aob/mcr246",
+        "volume": "109",
+        "author": "C Li",
+        "year": "2012",
+        "unstructured": "Li, C. et al. Identification of soybean purple acid phosphatase genes and their expression responses to phosphorus availability and symbiosis. Ann. Bot. 109, 275–285 (2012).",
+        "journal-title": "Ann. Bot."
+      },
+      {
+        "key": "40773_CR39",
+        "doi-asserted-by": "crossref",
+        "first-page": "477",
+        "DOI": "10.1093/aob/mcu147",
+        "volume": "114",
+        "author": "Z Yao",
+        "year": "2014",
+        "unstructured": "Yao, Z., Tian, J. & Liao, H. Comparative characterization of GmSPX members reveals that GmSPX3 is involved in phosphate homeostasis in soybean. Ann. Bot. 114, 477–488 (2014).",
+        "journal-title": "Ann. Bot."
+      },
+      {
+        "key": "40773_CR40",
+        "doi-asserted-by": "crossref",
+        "first-page": "aag1550",
+        "DOI": "10.1126/science.aag1550",
+        "volume": "354",
+        "author": "L Song",
+        "year": "2016",
+        "unstructured": "Song, L. et al. A transcription factor hierarchy defines an environmental stress response network. Science 354, aag1550 (2016).",
+        "journal-title": "Science"
+      },
+      {
+        "key": "40773_CR41",
+        "doi-asserted-by": "crossref",
+        "first-page": "e1001102",
+        "DOI": "10.1371/journal.pgen.1001102",
+        "volume": "6",
+        "author": "R Bustos",
+        "year": "2010",
+        "unstructured": "Bustos, R. et al. A central regulatory system largely controls transcriptional activation and repression responses to phosphate starvation in Arabidopsis. PLoS Genet. 6, e1001102 (2010).",
+        "journal-title": "PLoS Genet."
+      },
+      {
+        "key": "40773_CR42",
+        "doi-asserted-by": "crossref",
+        "first-page": "1324",
+        "DOI": "10.1093/plphys/kiac521",
+        "volume": "191",
+        "author": "Z Wang",
+        "year": "2023",
+        "unstructured": "Wang, Z., Zheng, Z., Zhu, Y., Kong, S. & Liu, D. Phosphate response 1 family members act distinctly to regulate transcriptional responses to phosphate starvation. Plant Physiol. 191, 1324–1343 (2023).",
+        "journal-title": "Plant Physiol."
+      },
+      {
+        "key": "40773_CR43",
+        "doi-asserted-by": "crossref",
+        "first-page": "248",
+        "DOI": "10.1016/j.pbi.2018.05.012",
+        "volume": "45",
+        "author": "J Pang",
+        "year": "2018",
+        "unstructured": "Pang, J., Ryan, M. H., Lambers, H. & Siddique, K. H. Phosphorus acquisition and utilisation in crop legumes under global change. Curr. Opin. Plant Biol. 45, 248–254 (2018).",
+        "journal-title": "Curr. Opin. Plant Biol."
+      },
+      {
+        "key": "40773_CR44",
+        "first-page": "1044",
+        "volume": "7",
+        "author": "W Chen",
+        "year": "2016",
+        "unstructured": "Chen, W. et al. Identification and comparative analysis of differential gene expression in soybean leaf tissue under drought and flooding stress revealed by RNA-Seq. Front. Plant Sci. 7, 1044 (2016).",
+        "journal-title": "Front. Plant Sci."
+      },
+      {
+        "key": "40773_CR45",
+        "doi-asserted-by": "crossref",
+        "first-page": "e86402",
+        "DOI": "10.1371/journal.pone.0086402",
+        "volume": "9",
+        "author": "J Marcolino-Gomes",
+        "year": "2014",
+        "unstructured": "Marcolino-Gomes, J. et al. Diurnal oscillations of soybean circadian clock and drought responsive genes. PLoS ONE 9, e86402 (2014).",
+        "journal-title": "PLoS ONE"
+      },
+      {
+        "key": "40773_CR46",
+        "doi-asserted-by": "crossref",
+        "first-page": "1060529",
+        "DOI": "10.3389/fgene.2022.1060529",
+        "volume": "13",
+        "author": "M Li",
+        "year": "2022",
+        "unstructured": "Li, M. et al. Transcriptome analysis reveals key drought-stress-responsive genes in soybean. Front. Genet. 13, 1060529 (2022).",
+        "journal-title": "Front. Genet."
+      },
+      {
+        "key": "40773_CR47",
+        "doi-asserted-by": "crossref",
+        "first-page": "143",
+        "DOI": "10.1016/B978-0-12-800138-7.00004-8",
+        "volume": "124",
+        "author": "LDB Suriyagoda",
+        "year": "2014",
+        "unstructured": "Suriyagoda, L. D. B., Ryan, M. H., Renton, M. & Lambers, H. Plant responses to limited moisture and phosphorus availability: a meta-analysis. Adv. Agron. 124, 143–200 (2014).",
+        "journal-title": "Adv. Agron."
+      },
+      {
+        "key": "40773_CR48",
+        "doi-asserted-by": "crossref",
+        "first-page": "1620",
+        "DOI": "10.1104/pp.18.01185",
+        "volume": "179",
+        "author": "R Kalladan",
+        "year": "2019",
+        "unstructured": "Kalladan, R. et al. Natural variation in 9-cis-epoxycartenoid dioxygenase 3 and ABA accumulation. Plant Physiol. 179, 1620–1631 (2019).",
+        "journal-title": "Plant Physiol."
+      },
+      {
+        "key": "40773_CR49",
+        "doi-asserted-by": "crossref",
+        "first-page": "119",
+        "DOI": "10.1093/jxb/erl118",
+        "volume": "58",
+        "author": "HG Jones",
+        "year": "2007",
+        "unstructured": "Jones, H. G. Monitoring plant and soil water status: established and novel methods revisited and their relevance to studies of drought tolerance. J. Exp. Bot. 58, 119–130 (2007).",
+        "journal-title": "J. Exp. Bot."
+      },
+      {
+        "key": "40773_CR50",
+        "doi-asserted-by": "crossref",
+        "first-page": "205",
+        "DOI": "10.2480/agrmet.59.205",
+        "volume": "59",
+        "author": "HG Jones",
+        "year": "2003",
+        "unstructured": "Jones, H. G. & Leinonen, I. Thermal imaging for the study of plant water relations. J. Agric. Meteorol. 59, 205–217 (2003).",
+        "journal-title": "J. Agric. Meteorol."
+      },
+      {
+        "key": "40773_CR51",
+        "doi-asserted-by": "crossref",
+        "first-page": "733",
+        "DOI": "10.1146/annurev-arplant-042817-040218",
+        "volume": "69",
+        "author": "F Tardieu",
+        "year": "2018",
+        "unstructured": "Tardieu, F., Simonneau, T. & Muller, B. The physiological basis of drought tolerance in crop plants: A scenario-dependent probabilistic approach. Annu. Rev. Plant Biol. 69, 733–759 (2018).",
+        "journal-title": "Annu. Rev. Plant Biol."
+      },
+      {
+        "key": "40773_CR52",
+        "doi-asserted-by": "crossref",
+        "first-page": "266",
+        "DOI": "10.1126/science.aaz7614",
+        "volume": "368",
+        "author": "A Gupta",
+        "year": "2020",
+        "unstructured": "Gupta, A., Rico-Medina, A. & Cano-Delgado, A. I. The physiology of plant responses to drought. Science 368, 266–269 (2020).",
+        "journal-title": "Science"
+      },
+      {
+        "key": "40773_CR53",
+        "doi-asserted-by": "crossref",
+        "unstructured": "Approaching peak phosphorus. Nat Plants 8, 979 (2022).",
+        "DOI": "10.1038/s41477-022-01247-2"
+      },
+      {
+        "key": "40773_CR54",
+        "doi-asserted-by": "crossref",
+        "first-page": "178",
+        "DOI": "10.1038/nature08670",
+        "volume": "463",
+        "author": "J Schmutz",
+        "year": "2010",
+        "unstructured": "Schmutz, J. et al. Genome sequence of the palaeopolyploid soybean. Nature 463, 178–183 (2010).",
+        "journal-title": "Nature"
+      },
+      {
+        "key": "40773_CR55",
+        "doi-asserted-by": "crossref",
+        "first-page": "358127",
+        "DOI": "10.1155/2015/358127",
+        "volume": "2015",
+        "author": "M Shimomura",
+        "year": "2015",
+        "unstructured": "Shimomura, M. et al. The Glycine max cv. Enrei genome for improvement of Japanese soybean cultivars. Int. J. Genomics 2015, 358127 (2015).",
+        "journal-title": "Int. J. Genomics"
+      },
+      {
+        "key": "40773_CR56",
+        "unstructured": "Driessen, P., Deckers J., Spaargaren, O. & Nachtergaele, F. “Andosols” in Lecture Notes on the Major Soils of the World. World Soil Resources Rep. 94, (FAO, 2001)."
+      },
+      {
+        "key": "40773_CR57",
+        "doi-asserted-by": "crossref",
+        "unstructured": "Dane, J. H. & Hopmans, J. W. in Methods of Soil Analysis, Part 4: Physical Methods (eds Dane, J. H., Topp, G. C.) 688–690 (SSSA, Madison, 2002).",
+        "DOI": "10.2136/sssabookser5.4"
+      },
+      {
+        "key": "40773_CR58",
+        "unstructured": "Scanlon, B. R., Andraski, B. J. & Bilskie, J. in Methods of Soil Analysis, Part 4: Physical Methods (eds Dane, J. H., Topp, G. C.) 662–665 (SSSA, Madison, 2002)."
+      },
+      {
+        "key": "40773_CR59",
+        "doi-asserted-by": "crossref",
+        "first-page": "521",
+        "DOI": "10.1139/t94-061",
+        "volume": "31",
+        "author": "DG Fredlund",
+        "year": "1994",
+        "unstructured": "Fredlund, D. G. & Xing, A. Equations for the soil-water characteristic curve. Can. Geotech. J. 31, 521–532 (1994).",
+        "journal-title": "Can. Geotech. J."
+      },
+      {
+        "key": "40773_CR60",
+        "first-page": "407",
+        "volume": "4",
+        "author": "K Seki",
+        "year": "2007",
+        "unstructured": "Seki, K. SWRC fit—a nonlinear fitting program with a water retention curve for soils having unimodal and bimodal pore structure. Hydrol. Earth Syst. Sci. Discuss 4, 407–437 (2007).",
+        "journal-title": "Hydrol. Earth Syst. Sci. Discuss"
+      },
+      {
+        "key": "40773_CR61",
+        "doi-asserted-by": "crossref",
+        "first-page": "211",
+        "DOI": "10.1029/93WR02676",
+        "volume": "30",
+        "author": "W Durner",
+        "year": "1994",
+        "unstructured": "Durner, W. Hydraulic Conductivity estimation for soils with heterogeneous pore structure. Water Resour. Res. 30, 211–223 (1994).",
+        "journal-title": "Water Resour. Res."
+      },
+      {
+        "key": "40773_CR62",
+        "unstructured": "Van Reeuwijk, L. P. “Procedures for Soil Analysis” Tech. Paper Vol. 9 (International Soil Reference and Information Centre (ISRIC), Wageningen, 2002)."
+      },
+      {
+        "key": "40773_CR63",
+        "doi-asserted-by": "crossref",
+        "unstructured": "Bray, R. H. & Kurtz, L. T. Determination of total, organic, and available forms of phosphorus in soils. Soil Science 59, 39–46 (1945).",
+        "DOI": "10.1097/00010694-194501000-00006"
+      },
+      {
+        "key": "40773_CR64",
+        "doi-asserted-by": "crossref",
+        "first-page": "2114",
+        "DOI": "10.1093/bioinformatics/btu170",
+        "volume": "30",
+        "author": "AM Bolger",
+        "year": "2014",
+        "unstructured": "Bolger, A. M., Lohse, M. & Usadel, B. Trimmomatic: a flexible trimmer for Illumina sequence data. Bioinformatics 30, 2114–2120 (2014).",
+        "journal-title": "Bioinformatics"
+      },
+      {
+        "key": "40773_CR65",
+        "doi-asserted-by": "crossref",
+        "first-page": "15",
+        "DOI": "10.1093/bioinformatics/bts635",
+        "volume": "29",
+        "author": "A Dobin",
+        "year": "2013",
+        "unstructured": "Dobin, A. et al. STAR: ultrafast universal RNA-seq aligner. Bioinformatics 29, 15–21 (2013).",
+        "journal-title": "Bioinformatics"
+      },
+      {
+        "key": "40773_CR66",
+        "doi-asserted-by": "crossref",
+        "first-page": "511",
+        "DOI": "10.1038/nbt.1621",
+        "volume": "28",
+        "author": "C Trapnell",
+        "year": "2010",
+        "unstructured": "Trapnell, C. et al. Transcript assembly and quantification by RNA-Seq reveals unannotated transcripts and isoform switching during cell differentiation. Nat. Biotechnol. 28, 511–515 (2010).",
+        "journal-title": "Nat. Biotechnol."
+      },
+      {
+        "key": "40773_CR67",
+        "unstructured": "Warnes, G. R. et al. gplots: Various R Programming Tools for Plotting Data, 2016. https://cran.r-project.org/web/packages/gplots/index.html. (2016)."
+      },
+      {
+        "key": "40773_CR68",
+        "doi-asserted-by": "crossref",
+        "first-page": "284",
+        "DOI": "10.1089/omi.2011.0118",
+        "volume": "16",
+        "author": "G Yu",
+        "year": "2012",
+        "unstructured": "Yu, G., Wang, L. G., Han, Y. & He, Q. Y. clusterProfiler: an R package for comparing biological themes among gene clusters. OMICS 16, 284–287 (2012).",
+        "journal-title": "OMICS"
+      },
+      {
+        "key": "40773_CR69",
+        "unstructured": "Morgan, M., Carlson, M., Tenenbaum, D. & Arora, S. AnnotationHub: Client to Access AnnotationHub Resources. (R package version 2.10.1, 2017)."
+      },
+      {
+        "key": "40773_CR70",
+        "doi-asserted-by": "crossref",
+        "first-page": "1201",
+        "DOI": "10.1093/pcp/pcp057",
+        "volume": "50",
+        "author": "M Kojima",
+        "year": "2009",
+        "unstructured": "Kojima, M. et al. Highly sensitive and high-throughput analysis of plant hormones using MS-probe modification and liquid chromatography-tandem mass spectrometry: an application for hormone profiling in Oryza sativa. Plant Cell Physiol. 50, 1201–1214 (2009).",
+        "journal-title": "Plant Cell Physiol."
+      },
+      {
+        "key": "40773_CR71",
+        "doi-asserted-by": "crossref",
+        "first-page": "151",
+        "DOI": "10.1007/978-1-61779-995-2_11",
+        "volume": "918",
+        "author": "M Kojima",
+        "year": "2012",
+        "unstructured": "Kojima, M. & Sakakibara, H. Highly sensitive high-throughput profiling of six phytohormones using MS-probe modification and liquid chromatography-tandem mass spectrometry. Methods Mol. Biol. 918, 151–164 (2012).",
+        "journal-title": "Methods Mol. Biol."
+      },
+      {
+        "key": "40773_CR72",
+        "doi-asserted-by": "crossref",
+        "first-page": "237",
+        "DOI": "10.1111/tpj.12882",
+        "volume": "83",
+        "author": "Y Shinozaki",
+        "year": "2015",
+        "unstructured": "Shinozaki, Y. et al. Ethylene suppresses tomato (Solanum lycopersicum) fruit set through modification of gibberellin metabolism. Plant J. 83, 237–251 (2015).",
+        "journal-title": "Plant J."
+      },
+      {
+        "key": "40773_CR73",
+        "doi-asserted-by": "crossref",
+        "first-page": "115",
+        "DOI": "10.1016/0076-6879(66)08014-5",
+        "volume": "8",
+        "author": "BN Ames",
+        "year": "1966",
+        "unstructured": "Ames, B. N. Assay of inorganic phosphate, total phosphate and phosphatases. Methods Enzymol. 8, 115–118 (1966).",
+        "journal-title": "Methods Enzymol."
+      },
+      {
+        "key": "40773_CR74",
+        "doi-asserted-by": "crossref",
+        "first-page": "412",
+        "DOI": "10.1105/tpc.105.038943",
+        "volume": "18",
+        "author": "TJ Chiou",
+        "year": "2006",
+        "unstructured": "Chiou, T. J. et al. Regulation of phosphate homeostasis by microRNA in Arabidopsis. Plant Cell 18, 412–421 (2006).",
+        "journal-title": "Plant Cell"
+      },
+      {
+        "key": "40773_CR75",
+        "doi-asserted-by": "crossref",
+        "first-page": "923",
+        "DOI": "10.1093/bioinformatics/btt656",
+        "volume": "30",
+        "author": "Y Liao",
+        "year": "2014",
+        "unstructured": "Liao, Y., Smyth, G. K. & Shi, W. featureCounts: an efficient general purpose program for assigning sequence reads to genomic features. Bioinformatics 30, 923–930 (2014).",
+        "journal-title": "Bioinformatics"
+      },
+      {
+        "key": "40773_CR76",
+        "doi-asserted-by": "crossref",
+        "first-page": "1960",
+        "DOI": "10.1093/bioinformatics/bty896",
+        "volume": "35",
+        "author": "R Vera Alvarez",
+        "year": "2019",
+        "unstructured": "Vera Alvarez, R., Pongor, L. S., Mariño-Ramírez, L. & Landsman, D. TPMCalculator: one-step software to quantify mRNA abundance of genomic features. Bioinformatics 35, 1960–1962 (2019).",
+        "journal-title": "Bioinformatics"
+      },
+      {
+        "key": "40773_CR77",
+        "doi-asserted-by": "crossref",
+        "first-page": "139",
+        "DOI": "10.1093/bioinformatics/btp616",
+        "volume": "26",
+        "author": "MD Robinson",
+        "year": "2010",
+        "unstructured": "Robinson, M. D., McCarthy, D. J. & Smyth, G. K. edgeR: a Bioconductor package for differential expression analysis of digital gene expression data. Bioinformatics 26, 139–140 (2010).",
+        "journal-title": "Bioinformatics"
+      }
+    ],
+    "container-title": [
+      "Nature Communications"
+    ],
+    "original-title": [],
+    "language": "en",
+    "link": [
+      {
+        "URL": "https://www.nature.com/articles/s41467-023-40773-1.pdf",
+        "content-type": "application/pdf",
+        "content-version": "vor",
+        "intended-application": "text-mining"
+      },
+      {
+        "URL": "https://www.nature.com/articles/s41467-023-40773-1",
+        "content-type": "text/html",
+        "content-version": "vor",
+        "intended-application": "text-mining"
+      },
+      {
+        "URL": "https://www.nature.com/articles/s41467-023-40773-1.pdf",
+        "content-type": "application/pdf",
+        "content-version": "vor",
+        "intended-application": "similarity-checking"
+      }
+    ],
+    "deposited": {
+      "date-parts": [
+        [2023, 11, 17]
+      ],
+      "date-time": "2023-11-17T03:07:52Z",
+      "timestamp": 1700190472000
+    },
+    "score": 1,
+    "resource": {
+      "primary": {
+        "URL": "https://www.nature.com/articles/s41467-023-40773-1"
+      }
+    },
+    "subtitle": [],
+    "short-title": [],
+    "issued": {
+      "date-parts": [
+        [2023, 8, 19]
+      ]
+    },
+    "references-count": 77,
+    "journal-issue": {
+      "issue": "1",
+      "published-online": {
+        "date-parts": [
+          [2023, 12]
+        ]
+      }
+    },
+    "alternative-id": [
+      "40773"
+    ],
+    "URL": "https://doi.org/10.1038/s41467-023-40773-1",
+    "relation": {
+      "has-preprint": [
+        {
+          "id-type": "doi",
+          "id": "10.1101/2021.07.28.453724",
+          "asserted-by": "object"
+        }
+      ]
+    },
+    "ISSN": [
+      "2041-1723"
+    ],
+    "issn-type": [
+      {
+        "value": "2041-1723",
+        "type": "electronic"
+      }
+    ],
+    "subject": [],
+    "published": {
+      "date-parts": [
+        [2023, 8, 19]
+      ]
+    },
+    "assertion": [
+      {
+        "value": "2 September 2022",
+        "order": 1,
+        "name": "received",
+        "label": "Received",
+        "group": {
+          "name": "ArticleHistory",
+          "label": "Article History"
+        }
+      },
+      {
+        "value": "9 August 2023",
+        "order": 2,
+        "name": "accepted",
+        "label": "Accepted",
+        "group": {
+          "name": "ArticleHistory",
+          "label": "Article History"
+        }
+      },
+      {
+        "value": "19 August 2023",
+        "order": 3,
+        "name": "first_online",
+        "label": "First Online",
+        "group": {
+          "name": "ArticleHistory",
+          "label": "Article History"
+        }
+      },
+      {
+        "value": "The authors declare no competing interests.",
+        "order": 1,
+        "name": "Ethics",
+        "group": {
+          "name": "EthicsHeading",
+          "label": "Competing interests"
+        }
+      }
+    ],
+    "article-number": "5047"
+  }
+}
