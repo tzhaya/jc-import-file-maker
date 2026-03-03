@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-03（KAKEN/JGN番号から助成機関名・Funder ID自動設定）
+最終更新: 2026-03-03（助成情報検索ツール新規作成）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,26 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-03: 助成情報検索ツール新規作成（issue #54）
+
+### 背景
+
+issue #53 で実装済みの `fetchJgn()` / `fetchKaken()` の機能を活用し、科研費課題番号やJGN課題番号から助成機関情報を一括検索・表示するスタンドアロン HTML ページを作成。
+
+### 実装内容
+
+**新規ファイル: `funder_lookup.html`**
+- 単一HTMLファイルのスタンドアロンツール
+- 課題番号を改行区切りで複数入力、一括検索
+- `JP21H01234` / `21H01234` のいずれの形式も受付
+- JGN → KAKEN の順に検索し、助成機関名・識別子・課題名を表示
+- 本体 `make_jc_importer.html` のプレビュー表示（`buildFundingPreview`）に準拠した表形式
+- カラム: #, 課題番号, 助成機関名, 識別子, 課題名, ソース
+- 検索中はリアルタイムでローディング表示、エラー時はエラーメッセージ表示
+- 本体から `fetchJgn()`, `fetchKaken()`, JSPS定数, `fmtVal()` を移植
 
 ---
 
