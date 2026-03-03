@@ -73,6 +73,7 @@ APIキーを設定するとレート制限が緩和されます。
 - NCID自動取得：ISSNからCiNii Research OpenSearch APIでNCIDを取得し収録物識別子に追加（CiNii書誌ページへの参照リンク付き）
 - Crossref ISBN・relation フィールドの関連情報への取り込み：book系でISBNをisIdenticalTo/ISBNとして追加、全資源タイプでCrossref relationフィールドのエントリを関連情報に追加
 - JGN（Japan Grant Number）連携：award が `JP` で始まる場合に Crossref JGN API（prefix `10.52926`）を照会し、JST助成金の課題名（日英）と課題DOI URIを自動取得。JGN未登録の場合は既存のKAKEN連携（JSPS科研費）にフォールバック
+- KAKEN/JGN番号からの助成機関自動設定：課題番号からJGN/KAKEN APIで助成機関名・Crossref Funder IDを自動補完。UIの「助成機関を検索」ボタンで手動入力時も逆引き可能
 - 識別子からの機関名逆引き
   - 所属機関識別子（ROR）・助成機関識別子（ROR / Crossref Funder）を入力すると「名称を確認」ボタンが表示されます。
   - ボタンを押すと、APIから名称を取得します。「上書き」ボタンを押して現在の内容を置き換えることができます。
@@ -121,6 +122,7 @@ APIキーを設定するとレート制限が緩和されます。
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-03 | KAKEN/JGN番号から助成機関名・Crossref Funder IDを自動設定。研究課題番号入力欄に「助成機関を検索」ボタンを追加し、手動入力時もJGN/KAKEN APIから助成機関情報を逆引き可能に（[#52](https://github.com/tzhaya/jc-import-file-maker/issues/52)） |
 | 2026-03-02 | PMID識別子のURL除去：関連情報のidentifierType=PMID時にPubMed URLから番号のみを抽出し、IRDB登録エラーを回避（[#47](https://github.com/tzhaya/jc-import-file-maker/issues/47)） |
 | 2026-03-01 | 関連情報の取得改善：関連DOIのURL形式統一（`https://doi.org/`プレフィックス付与）、関連名称（タイトル）の自動取得（Crossref/JaLC API）、JaLC API relation_listフィールド名修正（[#42](https://github.com/tzhaya/jc-import-file-maker/issues/42)） |
 | 2026-02-27 | プレビュー機能追加：入力済みメタデータをJAIRO Cloud風コンパクトテーブルでモーダル表示。collectFromDOM()によるDOM→JSON変換基盤を実装（[#37](https://github.com/tzhaya/jc-import-file-maker/issues/37)） |

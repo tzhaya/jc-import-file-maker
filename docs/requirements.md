@@ -431,6 +431,7 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 - award番号が `JP` で始まる場合、Crossref の JGN（Japan Grant Number）API（`https://api.crossref.org/works/10.52926/{award}`）を照会する
 - レスポンスが `type: "grant"` の場合のみ処理実行
 - `project[0].project-title[].title` を課題名、`.language` を言語として `subitem_award_titles[]` に設定
+- `funder[0].name` を助成機関名、`funder[0].DOI` を助成機関識別子として返す（助成機関名・識別子が空の場合に補完）
 - `https://doi.org/10.52926/{award}` を `subitem_award_uri` に設定
 - 404（JGN未登録）の場合は null を返し、KAKEN連携にフォールバック
 - JGN連携が成功した場合、KAKEN連携はスキップ
@@ -443,8 +444,15 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 - 日本語・英語の課題名を並列取得し、`subitem_award_titles[]` に設定
   - 日英タイトルが同一の場合は日本語のみ設定
 - KAKEN 課題ページ URL を `subitem_award_uri` に設定
+- KAKEN成功時、助成機関名・識別子が空の場合はJSPS定数（日本学術振興会/Japan Society for the Promotion of Science、DOI: `10.13039/501100001691`）で補完
 - CiNii API がエラーの場合は警告のみ出力し、Crossref データを保持（フォールバック）
 - JSPS以外の funder、award番号が空、またはJGN連携成功済みの場合はKAKEN連携をスキップ
+
+**研究課題番号からの助成機関検索（UI）**:
+- 助成情報の研究課題番号入力欄に「助成機関を検索」ボタンを表示
+- クリック時: 入力された課題番号でJGN API → KAKEN APIの順に検索
+- 成功時: 助成機関名・助成機関識別子・研究課題名・研究課題番号URIを一括設定
+- JGN成功時はレスポンスのfunder情報、KAKEN成功時はJSPS固定値を使用
 
 **識別子からの機関名逆引き（ROR / Crossref Funders API）**:
 - 所属機関識別子セクション: Scheme が「ROR」の場合に「名称を確認」ボタンを表示し、URI フィールドの値を使って ROR v2 API から機関名（`ror_display` + `label` タイプ）を取得
