@@ -7,7 +7,7 @@
 <style>
   body {
     font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
-    max-width: 900px;
+    max-width: 960px;
     margin: 40px auto;
     padding: 0 20px;
     color: #333;
@@ -72,45 +72,90 @@
   #result {
     margin-top: 16px;
   }
-  /* 本体プレビューから移植 */
-  .pv-inner-table {
+  /* カード形式 */
+  .result-card {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    background: #fff;
+    overflow: hidden;
+  }
+  .result-card-header {
+    background: #e8f5e9;
+    padding: 8px 14px;
+    font-weight: bold;
+    font-size: 0.95em;
+    color: #1b5e20;
+    border-bottom: 1px solid #c8e6c9;
+  }
+  .result-card-header .source-badge {
+    float: right;
+    background: #4caf50;
+    color: #fff;
+    font-size: 0.75em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: normal;
+  }
+  .result-card-body {
+    padding: 0;
+  }
+  .pv-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.85em;
-    margin-bottom: 4px;
   }
-  .pv-inner-table thead th {
-    background: #f5f5f5;
+  .pv-table th {
+    background: #f9f9f9;
     color: #555;
-    font-size: 0.9em;
-    padding: 6px 10px;
     text-align: left;
-    border-bottom: 2px solid #ddd;
-  }
-  .pv-inner-table td {
-    padding: 6px 10px;
-    border-bottom: 1px solid #eee;
+    padding: 5px 12px;
+    width: 160px;
+    white-space: nowrap;
     vertical-align: top;
+    border-bottom: 1px solid #eee;
+  }
+  .pv-table td {
+    padding: 5px 12px;
+    border-bottom: 1px solid #eee;
+    word-break: break-all;
   }
   .pv-link { color: #1565c0; text-decoration: none; }
   .pv-link:hover { text-decoration: underline; }
-  .error-row td { color: #c62828; }
-  .loading-row td { color: #888; font-style: italic; }
+  .error-card .result-card-header {
+    background: #ffebee;
+    color: #c62828;
+    border-bottom-color: #ef9a9a;
+  }
+  .loading-card .result-card-header {
+    background: #f5f5f5;
+    color: #888;
+    border-bottom-color: #ddd;
+  }
 </style>
 </head>
 <body>
 <h1>助成情報検索ツール</h1>
 
 <div class="input-section">
-  <label for="award-input">課題番号（1行に1つ）</label>
-  <textarea id="award-input" placeholder="JP21H01234&#10;JPMJPR2024&#10;21K12345"></textarea>
-  <div class="hint">科研費課題番号（JP付き / なし）や JGN 課題番号を入力できます</div>
+  <label for="award-input">課題番号を1行に1つ、改行して入力してください。</label>
+  <textarea id="award-input" placeholder="JP21H01234&#10;JPMJSA1907&#10;21K12345"></textarea>
+  <div class="hint">科研費課題番号（JP付き / なし）や JGN 課題番号を入力できます。</div>
   <button class="btn" id="search-btn" onclick="doSearch()">検索</button>
 </div>
-
+<div class="hint">
+<p>科研費課題番号、JGN課題番号から助成情報の入力に必要な以下の情報を検索します。ただし、プログラム情報識別子は空欄となります。</p>
+<ul>
+  <li><a href="https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.1">助成機関識別子</a></li>
+  <li><a href="https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.2">助成機関名</a></li>
+  <li><a href="https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.3">プログラム情報識別子(空欄で表示します)</a></li>
+  <li><a href="https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.4">プログラム情報</a></li>
+  <li><a href="https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.5">研究課題名</a></li>
+</ul>
+<p>これらの項目に入力すべき情報の詳細は <a href="https://schema.irdb.nii.ac.jp/ja/schema/2.0/23">JPCOARスキーマガイドライン 2.0 「助成情報」</a>をご覧ください。</p>
+</div>
 <div id="status"></div>
 <div id="result"></div>
-
 <script>
 // ===== 設定 =====
 const CONFIG = {
@@ -125,8 +170,12 @@ const JSPS_FUNDER_NAMES = [
   { subitem_funder_name: '日本学術振興会',                                  subitem_funder_name_language: 'ja' },
   { subitem_funder_name: 'Japan Society for the Promotion of Science', subitem_funder_name_language: 'en' },
 ];
+const KAKENHI_FUNDING_STREAM = [
+  { fundingStream: '科学研究費助成事業',                                    fundingStreamLang: 'ja' },
+  { fundingStream: 'Grants-in-Aid for Scientific Research (KAKENHI)', fundingStreamLang: 'en' },
+];
 
-// ===== fetchJgn（make_jc_importer.html より移植） =====
+// ===== fetchJgn（make_jc_importer.html より移植・拡張） =====
 async function fetchJgn(awardNumber) {
   const url = `https://api.crossref.org/works/10.52926/${encodeURIComponent(awardNumber)}`;
   try {
@@ -136,7 +185,10 @@ async function fetchJgn(awardNumber) {
     const item = data.message;
     if (item.type !== 'grant') return null;
 
-    const projectTitles = item.project?.[0]?.['project-title'] || [];
+    const project = item.project?.[0] || {};
+
+    // 課題名
+    const projectTitles = project['project-title'] || [];
     const titles = projectTitles
       .filter(t => t.title)
       .map(t => ({
@@ -144,13 +196,30 @@ async function fetchJgn(awardNumber) {
         subitem_award_title_language: t.language || '',
       }));
 
-    const funder = item.funder?.[0];
-    const funderNames = funder?.name
-      ? [{ subitem_funder_name: funder.name, subitem_funder_name_language: 'en' }]
-      : [];
-    const funderDoi = funder?.DOI || '';
+    // 助成機関情報: project.funding[].funder から取得
+    const funding = project.funding?.[0] || {};
+    const funderObj = funding.funder || {};
+    let funderNames = [];
+    let funderDoi = '';
+    if (funderObj.name) {
+      funderNames = [{ subitem_funder_name: funderObj.name, subitem_funder_name_language: 'en' }];
+    }
+    // funder.id[] から DOI を取得
+    const funderIdEntry = (funderObj.id || []).find(x => x['id-type'] === 'DOI');
+    if (funderIdEntry) {
+      funderDoi = funderIdEntry.id || '';
+    }
+    // フォールバック: funding.funder が無い場合は publisher を使用
+    if (!funderNames.length && item.publisher) {
+      funderNames = [{ subitem_funder_name: item.publisher, subitem_funder_name_language: 'en' }];
+    }
 
-    return { titles, kakenUrl: `https://doi.org/10.52926/${awardNumber}`, funderNames, funderDoi };
+    // プログラム情報（scheme）: issue #34 JPCOAR 2.0 fundingStream
+    const fundingStreams = funding.scheme
+      ? [{ fundingStream: funding.scheme, fundingStreamLang: '' }]
+      : [];
+
+    return { titles, kakenUrl: `https://doi.org/10.52926/${awardNumber}`, funderNames, funderDoi, fundingStreams };
   } catch {
     return null;
   }
@@ -186,7 +255,7 @@ async function fetchKaken(awardNumber) {
     titles.push({ subitem_award_title: enTitle, subitem_award_title_language: 'en' });
   }
 
-  return { titles, kakenUrl, funderNames: [], funderDoi: '' };
+  return { titles, kakenUrl, funderNames: [], funderDoi: '', fundingStreams: [] };
 }
 
 // ===== fmtVal（make_jc_importer.html より移植） =====
@@ -207,15 +276,16 @@ async function lookupOne(awardNumber) {
   // JGN → KAKEN の順に試行
   const jgnResult = await fetchJgn(awardNumber);
   if (jgnResult) {
-    // JGN成功: funder情報はJGNから取得済み
     return {
       award: awardNumber,
       source: 'JGN',
       funderNames: jgnResult.funderNames,
       funderDoi: jgnResult.funderDoi,
+      funderIdType: jgnResult.funderDoi ? 'Crossref Funder' : '',
       awardNumber: awardNumber,
       awardUri: jgnResult.kakenUrl,
       titles: jgnResult.titles,
+      fundingStreams: jgnResult.fundingStreams,
     };
   }
 
@@ -225,33 +295,35 @@ async function lookupOne(awardNumber) {
     return {
       award: awardNumber,
       source: 'KAKEN',
-      funderNames: JSPS_FUNDER_NAMES,
+      funderNames: JSPS_FUNDER_NAMES.map(n => ({...n})),
       funderDoi: JSPS_FUNDER_DOI,
+      funderIdType: 'Crossref Funder',
       awardNumber: awardNumber,
       awardUri: kakenResult.kakenUrl,
       titles: kakenResult.titles,
+      fundingStreams: KAKENHI_FUNDING_STREAM,
     };
   }
 
   return { award: awardNumber, source: null, error: '該当なし（JGN・KAKEN いずれも見つかりません）' };
 }
 
-// ===== 結果テーブルを生成 =====
-function buildResultTable(results) {
-  let html = '<table class="pv-inner-table"><thead><tr>';
-  html += '<th>#</th><th>課題番号</th><th>助成機関名</th><th>識別子</th><th>課題名</th><th>ソース</th>';
-  html += '</tr></thead><tbody>';
-
-  results.forEach((r, i) => {
+// ===== 結果カードを生成 =====
+function buildResultCards(results) {
+  return results.map((r, i) => {
     if (r.error) {
-      html += '<tr class="error-row"><td>' + i + '</td><td>' + fmtVal(r.award) + '</td>';
-      html += '<td colspan="4">' + fmtVal(r.error) + '</td></tr>';
-      return;
+      return '<div class="result-card error-card">'
+        + '<div class="result-card-header">#' + i + ' ' + fmtVal(r.award) + '</div>'
+        + '<div class="result-card-body"><table class="pv-table">'
+        + '<tr><td style="color:#c62828">' + fmtVal(r.error) + '</td></tr>'
+        + '</table></div></div>';
     }
     if (r.loading) {
-      html += '<tr class="loading-row"><td>' + i + '</td><td>' + fmtVal(r.award) + '</td>';
-      html += '<td colspan="4">検索中...</td></tr>';
-      return;
+      return '<div class="result-card loading-card">'
+        + '<div class="result-card-header">#' + i + ' ' + fmtVal(r.award) + '</div>'
+        + '<div class="result-card-body"><table class="pv-table">'
+        + '<tr><td style="color:#888;font-style:italic">検索中...</td></tr>'
+        + '</table></div></div>';
     }
 
     const names = (r.funderNames || [])
@@ -259,26 +331,30 @@ function buildResultTable(results) {
       .map(n => fmtVal(n.subitem_funder_name, n.subitem_funder_name_language))
       .join('<br>');
 
-    const idStr = r.funderDoi
-      ? 'e-Rad_researcher: ' + fmtVal('https://doi.org/' + r.funderDoi)
-      : '';
-
-    const awardStr = r.awardNumber
-      ? fmtVal(r.awardNumber) + (r.awardUri ? ' (' + fmtVal(r.awardUri) + ')' : '')
-      : '';
+    const funderIdUrl = r.funderDoi ? 'https://doi.org/' + r.funderDoi : '';
 
     const titles = (r.titles || [])
       .filter(t => t.subitem_award_title)
       .map(t => fmtVal(t.subitem_award_title, t.subitem_award_title_language))
       .join('<br>');
 
-    html += '<tr><td>' + i + '</td><td>' + fmtVal(r.award) + '</td>';
-    html += '<td>' + names + '</td><td>' + idStr + '</td>';
-    html += '<td>' + titles + '</td><td>' + r.source + '</td></tr>';
-  });
+    let rows = '';
+    rows += '<tr><th>助成機関識別子</th><td>' + fmtVal(funderIdUrl) + '</td></tr>';
+    rows += '<tr><th>助成機関名</th><td>' + names + '</td></tr>';
+    rows += '<tr><th>プログラム情報識別子</th><td></td></tr>';
+    const streams = (r.fundingStreams || [])
+      .filter(s => s.fundingStream)
+      .map(s => fmtVal(s.fundingStream, s.fundingStreamLang))
+      .join('<br>');
+    rows += '<tr><th>プログラム情報</th><td>' + streams + '</td></tr>';
+    rows += '<tr><th>研究課題番号</th><td>' + fmtVal(r.awardNumber) + '</td></tr>';
+    rows += '<tr><th>研究課題名</th><td>' + titles + '</td></tr>';
 
-  html += '</tbody></table>';
-  return html;
+    return '<div class="result-card">'
+      + '<div class="result-card-header">#' + i + ' ' + fmtVal(r.award)
+      + '<span class="source-badge">' + r.source + '</span></div>'
+      + '<div class="result-card-body"><table class="pv-table">' + rows + '</table></div></div>';
+  }).join('');
 }
 
 // ===== メイン検索処理 =====
@@ -299,7 +375,7 @@ async function doSearch() {
 
   // 初期状態: 全件ローディング表示
   const results = numbers.map(n => ({ award: n, loading: true }));
-  resultEl.innerHTML = buildResultTable(results);
+  resultEl.innerHTML = buildResultCards(results);
   statusEl.textContent = `検索中... (0/${numbers.length})`;
 
   // 1件ずつ順番に検索（API負荷軽減）
@@ -310,12 +386,16 @@ async function doSearch() {
       results[i] = { award: numbers[i], error: 'エラー: ' + e.message };
     }
     statusEl.textContent = `検索中... (${i + 1}/${numbers.length})`;
-    resultEl.innerHTML = buildResultTable(results);
+    resultEl.innerHTML = buildResultCards(results);
   }
 
   statusEl.textContent = `完了（${numbers.length} 件）`;
   btn.disabled = false;
 }
 </script>
+<footer style="margin-top:32px;padding:12px 0;border-top:1px solid #ddd;color:#999;font-size:0.8em;text-align:center;">
+  <p>助成情報検索ツール — <a href="https://github.com/tzhaya/jc-import-file-maker" style="color:#999">tzhaya/jc-import-file-maker</a></p>
+  <p>ライセンス: <a href="https://creativecommons.org/publicdomain/zero/1.0/" style="color:#999">CC0 1.0</a></p>
+</footer>
 </body>
 </html>
