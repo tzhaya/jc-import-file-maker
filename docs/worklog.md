@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-02（PMID識別子URL除去）
+最終更新: 2026-03-03（KAKEN/JGN番号から助成機関名・Funder ID自動設定）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,38 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-03: KAKEN/JGN番号から助成機関名・Crossref Funder ID自動設定（issue #52）
+
+### 背景
+
+KAKEN/JGN連携で研究課題名とURIは取得していたが、助成機関名とCrossref Funder IDは設定されていなかった。JaLCパスやユーザー手動入力時に助成機関情報が空のままになるケースがあった。
+
+### 実装内容
+
+**JSPS定数のグローバル化**
+- `JSPS_FUNDER_DOI`（`10.13039/501100001691`）と `JSPS_FUNDER_NAMES`（日英）をグローバル定数として定義
+- `buildFunders()` / `buildJaLCFunders()` のローカル `JSPS_DOI` を統合
+
+**`fetchJgn()` の拡張**
+- JGN Crossrefレスポンスの `funder` 配列から助成機関名（`funder[0].name`）とDOI（`funder[0].DOI`）を抽出
+- 返り値に `funderNames` と `funderDoi` を追加
+
+**`fetchKaken()` の返り値統一**
+- `fetchJgn()` と同じ形式に統一（`funderNames: [], funderDoi: ''` を追加）
+
+**`buildFunders()` / `buildJaLCFunders()` の修正**
+- KAKEN/JGN結果がある場合に、助成機関名と識別子が空なら自動補完
+- JGN成功時: JGNレスポンスのfunder情報を使用
+- KAKEN成功時: JSPS定数を使用
+- 既存値がある場合は上書きしない（Crossref/JaLC元データ優先）
+
+**UI: 「助成機関を検索」ボタン**
+- `renderOneFunder()` 内の研究課題番号入力欄に「助成機関を検索」ボタンを追加
+- クリック時: JGN → KAKEN の順に試行し、助成機関名・識別子・課題名・URIをフォーム全体に設定
+- 結果表示は既存の `lookup-result` スタイルを使用
 
 ---
 

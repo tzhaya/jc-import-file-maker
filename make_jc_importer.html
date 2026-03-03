@@ -458,7 +458,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-03-02 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-03-03 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -470,6 +470,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-03</td>
+        <td style="padding:2px 0;">KAKEN/JGN番号から助成機関名・Crossref Funder IDを自動設定、研究課題番号からの助成機関検索ボタン追加</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-02</td>
         <td style="padding:2px 0;">PMID識別子のURL除去：関連情報のidentifierType=PMID時にPubMed URLから番号のみを抽出（IRDB登録エラー対応）</td>
@@ -485,10 +489,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-26</td>
         <td style="padding:2px 0;">JaLC API対応（準備中）：JaLC DOIからのメタデータ取得・マッピングコードを追加（CORS制約により未有効化）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-25</td>
-        <td style="padding:2px 0;">GitHub最新コミットとの更新チェック機能追加、インデックスID入力欄をシステム管理フィールドに移行、更新概要を直近5件に制限</td>
       </tr>
     </tbody>
   </table>
@@ -761,6 +761,13 @@ const VERSION_TYPE_MAP = {
   'EVoR': 'http://purl.org/coar/version/c_dc82b40f9837b551',
   'NA':   'http://purl.org/coar/version/c_be7fb7dd8ff6fe43',
 };
+
+// ===== JSPS 助成機関定数 =====
+const JSPS_FUNDER_DOI = '10.13039/501100001691';
+const JSPS_FUNDER_NAMES = [
+  { subitem_funder_name: '日本学術振興会',                                  subitem_funder_name_language: 'ja' },
+  { subitem_funder_name: 'Japan Society for the Promotion of Science', subitem_funder_name_language: 'en' },
+];
 
 // ===== アクセス権マッピング =====
 const ACCESS_RIGHTS_MAP = {
@@ -1280,7 +1287,7 @@ async function fetchKaken(awardNumber) {
     titles.push({ subitem_award_title: enTitle, subitem_award_title_language: 'en' });
   }
 
-  return { titles, kakenUrl };
+  return { titles, kakenUrl, funderNames: [], funderDoi: '' };
 }
 
 // ===== 3.5.2 Crossref JGN（Japan Grant Number）API =====
@@ -1301,7 +1308,14 @@ async function fetchJgn(awardNumber) {
         subitem_award_title_language: t.language || '',
       }));
 
-    return { titles, kakenUrl: `https://doi.org/10.52926/${awardNumber}` };
+    // 助成機関情報を抽出
+    const funder = item.funder?.[0];
+    const funderNames = funder?.name
+      ? [{ subitem_funder_name: funder.name, subitem_funder_name_language: 'en' }]
+      : [];
+    const funderDoi = funder?.DOI || '';
+
+    return { titles, kakenUrl: `https://doi.org/10.52926/${awardNumber}`, funderNames, funderDoi };
   } catch {
     return null;
   }
@@ -1618,15 +1632,13 @@ function buildJaLCAuthors(jalcCreators) {
 
 // ===== 4.4 助成情報マッピング =====
 async function buildFunders(crFunders) {
-  const JSPS_DOI = '10.13039/501100001691';
-
   const entries = await Promise.all((crFunders || []).map(async (f) => {
     const name      = f.name  || '';
     const funderDoi = f.DOI   || '';
     const awards    = f.award || [];
 
     // JSPS判定: funder DOI が JSPS（APIキー不要）
-    const isJsps = funderDoi === JSPS_DOI;
+    const isJsps = funderDoi === JSPS_FUNDER_DOI;
 
     const buildEntry = async (awardNum) => {
       const obj = {};
@@ -1662,6 +1674,22 @@ async function buildFunders(crFunders) {
         }
       }
 
+      // KAKEN/JGN 結果から助成機関名・識別子を補完（既存値がある場合は上書きしない）
+      if (kakenResult) {
+        if (!obj.subitem_funder_names.length) {
+          obj.subitem_funder_names = kakenResult.funderNames?.length
+            ? kakenResult.funderNames
+            : JSPS_FUNDER_NAMES.map(n => ({...n}));
+        }
+        if (!obj.subitem_funder_identifiers.subitem_funder_identifier) {
+          const doi = kakenResult.funderDoi || JSPS_FUNDER_DOI;
+          obj.subitem_funder_identifiers = {
+            subitem_funder_identifier:      `https://doi.org/${doi}`,
+            subitem_funder_identifier_type: 'Crossref Funder',
+          };
+        }
+      }
+
       obj.subitem_award_numbers = {
         subitem_award_number:      awardNum,
         subitem_award_number_type: '',
@@ -1681,8 +1709,6 @@ async function buildFunders(crFunders) {
 
 // ===== 4.4b JaLC 助成情報マッピング =====
 async function buildJaLCFunders(jalcFundList) {
-  const JSPS_DOI = '10.13039/501100001691';
-
   const entries = await Promise.all((jalcFundList || []).map(async (f) => {
     // 助成機関名（多言語）
     const funderNames = (f.funder_name || []).map(fn => ({
@@ -1699,7 +1725,7 @@ async function buildJaLCFunders(jalcFundList) {
         if (m) funderDoi = m[1];
       }
     });
-    const isJsps = funderDoi === JSPS_DOI;
+    const isJsps = funderDoi === JSPS_FUNDER_DOI;
 
     const funderIdentifiers = funderDoi
       ? { subitem_funder_identifier: `https://doi.org/${funderDoi}`, subitem_funder_identifier_type: 'Crossref Funder' }
@@ -1733,6 +1759,22 @@ async function buildJaLCFunders(jalcFundList) {
       if (isJsps && awardNum && !kakenResult) {
         try { kakenResult = await fetchKaken(awardNum); } catch (e) {
           console.warn(`KAKEN取得失敗 (${awardNum}):`, e.message);
+        }
+      }
+
+      // KAKEN/JGN 結果から助成機関名・識別子を補完（既存値がある場合は上書きしない）
+      if (kakenResult) {
+        if (!obj.subitem_funder_names.length) {
+          obj.subitem_funder_names = kakenResult.funderNames?.length
+            ? kakenResult.funderNames
+            : JSPS_FUNDER_NAMES.map(n => ({...n}));
+        }
+        if (!obj.subitem_funder_identifiers.subitem_funder_identifier) {
+          const doi = kakenResult.funderDoi || JSPS_FUNDER_DOI;
+          obj.subitem_funder_identifiers = {
+            subitem_funder_identifier:      `https://doi.org/${doi}`,
+            subitem_funder_identifier_type: 'Crossref Funder',
+          };
         }
       }
 
@@ -3305,9 +3347,14 @@ function renderOneFunder(funder, idx, defLabel) {
   });
   updateFunderLookup = updateFV;
 
-  // 研究課題番号（fieldset）
+  // 研究課題番号（fieldset）+ 助成機関を検索ボタン
   const aw = funder.subitem_award_numbers || {};
-  fundContent.appendChild(createFieldRow('研究課題番号', aw.subitem_award_number || '', 'text', null, { fieldKey: 'subitem_award_number' }));
+  const awardRow = createFieldRow('研究課題番号', aw.subitem_award_number || '', 'text', null, { fieldKey: 'subitem_award_number' });
+  const awardLookupBtn = document.createElement('button');
+  awardLookupBtn.textContent = '助成機関を検索';
+  awardLookupBtn.className = 'btn-add';
+  awardRow.appendChild(awardLookupBtn);
+  fundContent.appendChild(awardRow);
   fundContent.appendChild(createFieldRow('研究課題番号URI', aw.subitem_award_uri || '', 'text', null, { fieldKey: 'subitem_award_uri' }));
 
   // 研究課題名（配列）
@@ -3326,6 +3373,87 @@ function renderOneFunder(funder, idx, defLabel) {
     atCont.appendChild(grp);
   });
   fundContent.appendChild(atWrap);
+
+  // 助成機関を検索ボタンの結果表示エリアとイベントハンドラ
+  const awardResultEl = document.createElement('div');
+  awardResultEl.className = 'lookup-result';
+  fundContent.appendChild(awardResultEl);
+
+  awardLookupBtn.onclick = async (e) => {
+    e.preventDefault();
+    const awardInput = fundContent.querySelector('[data-field-key="subitem_award_number"] input');
+    const awardNum = awardInput?.value.trim() || '';
+    if (!awardNum) return;
+
+    awardLookupBtn.disabled = true;
+    awardResultEl.className = 'lookup-result';
+    awardResultEl.textContent = '検索中...';
+    try {
+      // JGN → KAKEN の順に試行
+      let result = null;
+      if (/^JP/i.test(awardNum)) {
+        try { result = await fetchJgn(awardNum); } catch { /* ignore */ }
+      }
+      if (!result) {
+        try { result = await fetchKaken(awardNum); } catch { /* ignore */ }
+      }
+
+      if (!result) {
+        awardResultEl.className = 'lookup-result warn';
+        awardResultEl.textContent = '⚠ 助成情報が見つかりませんでした。';
+        return;
+      }
+
+      // 助成機関名を設定
+      const names = result.funderNames?.length
+        ? result.funderNames
+        : JSPS_FUNDER_NAMES.map(n => ({...n}));
+      [...fnCont.querySelectorAll(':scope > .entry-group')].forEach(g => g.remove());
+      names.forEach(({ subitem_funder_name: nm, subitem_funder_name_language: lang }) => {
+        const { grp, delBtn } = createEntryGroup();
+        grp.appendChild(createFieldRow('助成機関名', nm, 'text', null, { fieldKey: 'subitem_funder_name' }));
+        grp.appendChild(createFieldRow('言語', lang || 'en', 'select', 'language', { fieldKey: 'subitem_funder_name_language' }));
+        grp.appendChild(delBtn);
+        fnCont.appendChild(grp);
+      });
+
+      // 助成機関識別子を設定
+      const doi = result.funderDoi || JSPS_FUNDER_DOI;
+      const idInput = fundContent.querySelector('[data-field-key="subitem_funder_identifier"] input');
+      const typeSelect = fundContent.querySelector('[data-field-key="subitem_funder_identifier_type"] select');
+      if (idInput) idInput.value = `https://doi.org/${doi}`;
+      if (typeSelect) typeSelect.value = 'Crossref Funder';
+      updateFunderLookup();
+
+      // 研究課題名を設定
+      if (result.titles?.length) {
+        [...atCont.querySelectorAll(':scope > .entry-group')].forEach(g => g.remove());
+        result.titles.forEach(({ subitem_award_title: t, subitem_award_title_language: lang }) => {
+          const { grp, delBtn } = createEntryGroup();
+          grp.appendChild(createFieldRow('研究課題名', t, 'text', null, { fieldKey: 'subitem_award_title' }));
+          grp.appendChild(createFieldRow('言語', lang || '', 'select', 'language', { fieldKey: 'subitem_award_title_language' }));
+          grp.appendChild(delBtn);
+          atCont.appendChild(grp);
+        });
+      }
+
+      // 研究課題番号URIを設定
+      const uriInput = fundContent.querySelector('[data-field-key="subitem_award_uri"] input');
+      if (uriInput && result.kakenUrl) uriInput.value = result.kakenUrl;
+
+      // ヘッダーラベルを更新
+      const headerSpan = fundItem.querySelector('.nested-item-header span:last-child');
+      if (headerSpan) {
+        const newName = names[0]?.subitem_funder_name || '';
+        headerSpan.textContent = `${defLabel}[${idx}]${newName ? ': '+newName.substring(0,40) : ''}`;
+      }
+
+      awardResultEl.className = 'lookup-result ok';
+      awardResultEl.textContent = '✓ 設定完了: ' + names.map(n => n.subitem_funder_name).join(', ');
+    } finally {
+      awardLookupBtn.disabled = false;
+    }
+  };
 
   return fundItem;
 }
@@ -4507,7 +4635,7 @@ if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_K
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-02';
+  const LOCAL_VERSION = '2026-03-03';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
