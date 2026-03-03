@@ -22,6 +22,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 付属ツールとして、助成情報検索ツール `funder_lookup.html` を作成しました。
 `funder_lookup.html` をダウンロードし、ブラウザで開いて科研費課題番号やJGN課題番号を入力すると、
 JPCOAR 2.0 準拠の助成情報（助成機関識別子・助成機関名・プログラム情報・研究課題名）を検索できます。
+論文の謝辞（Acknowledgement）からも抽出ができます。
 
 ### API Key の設定
 
