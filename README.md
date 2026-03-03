@@ -1,6 +1,6 @@
 # JAIRO Cloud インポート用TSV生成ツール(β)
 
-DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO Cloud](https://jairo.nii.ac.jp/)へのインポート用TSVファイルを生成するツールです。
+DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO Cloud](https://jpcoar.org/support/jairo-cloud/)へのインポート用TSVファイルを生成するツールです。
 
 ## 使い方
 
@@ -17,9 +17,17 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 詳しい使い方は[使い方ガイド](docs/user_guide.md)を参照ください。
 
+### 助成情報検索ツール
+
+付属ツールとして、助成情報検索ツール `funder_lookup.html` を作成しました。
+`funder_lookup.html` をダウンロードし、ブラウザで開いて科研費課題番号やJGN課題番号を入力すると、
+JPCOAR 2.0 準拠の助成情報（助成機関識別子・助成機関名・プログラム情報・研究課題名）を検索できます。
+
 ### API Key の設定
 
 `make_jc_importer.html` をテキストエディタで開き、ファイル冒頭付近の `CONFIG` 定数にAPIキーを設定してください。
+
+助成情報検索ツール `funder_lookup.html`でも、同様にCiNii APIキーを設定できます。
 
 ```js
 const CONFIG = {
@@ -92,6 +100,7 @@ APIキーを設定するとレート制限が緩和されます。
 
 ```
 ├── make_jc_importer.html   # メインツール（単一HTMLファイル）
+├── funder_lookup.html      # 助成情報検索ツール（課題番号→助成機関情報一括検索）
 ├── data/                   # 参照・設定データ
 │   ├── ItemType.json       # JAIRO Cloud アイテムタイプ定義
 │   ├── tsv_headers.json    # TSVヘッダー定義
@@ -113,6 +122,7 @@ APIキーを設定するとレート制限が緩和されます。
 - [フィールドマッピング一覧](docs/fieldmapping.md) Crossref/OpenAlexとのマッピング表です。  
 - [JPCOARスキーマ フィールド一覧](docs/fields.md) 「デフォルトアイテムタイプ（フル）」に含まれるフィールド一覧です。
 - [JPCOARスキーマ 項目別説明リンク一覧](docs/JPCOARschema_guide.md)
+- [助成情報検索ツール](docs/Implementation_funder_lookup.md) 助成情報検索ツールの実装記録です。
 
 ## ライセンス
 
