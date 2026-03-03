@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-03（助成情報検索ツール新規作成）
+最終更新: 2026-03-03（助成情報検索ツール拡張: プログラム情報識別子自動設定・Acknowledgements抽出）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,27 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-03: 助成情報検索ツール拡張 — プログラム情報識別子自動設定・Acknowledgements抽出（issue #56）
+
+### 背景
+
+issue #34 の調査で、JPCOAR 2.0 の「プログラム情報識別子」に `JGN_fundingStream` タイプが定義されていること、JGN課題番号にNISTEP体系的番号のプログラムコードが埋め込まれていることが判明。また、論文のAcknowledgementsテキストから課題番号を自動抽出する需要を確認。
+
+### 実装内容
+
+**機能A: プログラム情報識別子（fundingStreamIdentifier）の自動設定**
+- `fetchJgn()`: 正規表現 `/^JP([A-Z]+)\d/i` で課題番号からJGN_fundingStreamコードを抽出（例: JPMJPR2125 → MJPR）
+- `lookupOne()`: JGN結果に `fundingStreamId` / `fundingStreamIdType: 'JGN_fundingStream'` を追加
+- `buildResultCards()`: プログラム情報識別子行にコードとタイプを表示
+- 科研費番号はJP直後が数字のため空欄のまま
+
+**機能B: Acknowledgementsテキストからの課題番号自動抽出**
+- ラジオボタンで「課題番号」/「Acknowledgementsテキスト」入力モードを切替
+- `updatePlaceholder()`: モードに応じてラベル・placeholder・ヒント文を動的切替
+- `doSearch()`: Ackモード時は `/JP[A-Za-z0-9]+/g` で課題番号を抽出（Setで重複排除）
 
 ---
 

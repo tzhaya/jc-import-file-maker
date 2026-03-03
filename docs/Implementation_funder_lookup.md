@@ -34,9 +34,10 @@ issue #53 で実装済みの `fetchJgn()` / `fetchKaken()` の機能を活用し
 |-----------|------------|-------------|
 | 助成機関識別子 | 23-.1 | JGN: `funding.funder.id[].id` / KAKEN: JSPS定数 |
 | 助成機関名 | 23-.2 | JGN: `funding.funder.name` / KAKEN: JSPS定数 |
-| プログラム情報識別子 | 23-.3 | 常に空欄（JGN APIから取得不可） |
+| プログラム情報識別子 | 23-.3 | JGN: 課題番号から JGN_fundingStream コードを自動抽出（#56） |
 | プログラム情報 | 23-.4 | JGN: `funding.scheme` / KAKEN: 科学研究費助成事業（定数） |
 | 研究課題番号 | 23-.5 | 入力値 |
+| 研究課題番号URI | 23-.5 | JGN: `https://doi.org/10.52926/{番号}` / KAKEN: CiNii Research URL |
 | 研究課題名 | 23-.5 | JGN: `project-title` / KAKEN: CiNii Research API |
 
 ### 移植・新規コード
@@ -58,3 +59,76 @@ issue #53 で実装済みの `fetchJgn()` / `fetchKaken()` の機能を活用し
   - `JP21H01234` / `21H01234`（KAKEN科研費番号 — JP付き/なし）
   - `JPMJSA1907`（JGN JST番号 — funder情報が `project.funding` 内にある例）
   - 存在しない番号（エラーハンドリング確認）
+
+---
+
+## 拡張: プログラム情報識別子自動設定 + Acknowledgements課題番号抽出（#56）
+
+> **ステータス: 実装完了（2026-03-03）**
+
+### 背景
+
+issue #34 の調査で、JPCOAR 2.0 の「プログラム情報識別子」(`fundingStreamIdentifier`) に `JGN_fundingStream` タイプが定義されていることが判明。JGN の課題番号には [NISTEP 体系的番号](https://www.nistep.go.jp/taikei) のプログラムコードが埋め込まれており、自動抽出が可能。
+
+### 機能A: プログラム情報識別子（fundingStreamIdentifier）の自動設定
+
+#### 体系的番号の構造
+
+| 課題番号 | 分解 | JGN_fundingStream コード |
+|---|---|---|
+| JPMJPR2125 | JP + **MJPR** + 2125 | MJPR（さきがけ/PRESTO） |
+| JPMJSA1907 | JP + **MJSA** + 1907 | MJSA（SATREPS） |
+| JPMJMS0001 | JP + **MJMS** + 0001 | MJMS（ムーンショット） |
+
+#### 実装
+
+- `fetchJgn()`: 正規表現 `/^JP([A-Z]+)\d/i` で JP 直後のアルファベット部分を抽出し `fundingStreamId` として返却
+- `lookupOne()`: JGN 結果に `fundingStreamId` / `fundingStreamIdType: 'JGN_fundingStream'` を追加
+- `buildResultCards()`: プログラム情報識別子行にコードとタイプを表示
+- 科研費番号（`JP21H01234` 等）は JP 直後が数字のため抽出されない（空欄のまま）
+
+#### Crossref Funder タイプについて
+
+`fundingStreamIdentifierType` には `Crossref Funder`（子プログラムの Funder DOI）も定義されているが、以下の理由で現時点では対応しない:
+- Crossref Funder Registry の `hierarchy-names` は英語名のみ、JGN の `scheme` は日本語で言語マッチング困難
+- 全 descendants の個別 API 呼び出し（JST で37件）は負荷が大きい
+
+#### Crossref Funder Registry の階層例（JST）
+
+| レベル | Funder DOI | 名称 | JPCOAR 項目 |
+|---|---|---|---|
+| 親 | `10.13039/501100001700` | MEXT（文部科学省） | ― |
+| 子 | `10.13039/501100002241` | JST（科学技術振興機構） | 助成機関識別子 |
+| 孫 | `10.13039/501100009023` | さきがけ / PRESTO | プログラム情報識別子 |
+| ひ孫 | Crossref DOI type `grant` | 個別の研究課題 | 研究課題番号 |
+
+### 機能B: Acknowledgementsテキストからの課題番号自動抽出
+
+#### 実装
+
+- ラジオボタンで「課題番号」/「Acknowledgementsテキスト」モードを切替
+- `updatePlaceholder()`: モードに応じてラベル・placeholder・ヒント文を動的切替
+- `doSearch()`: Ack モード時は `/JP[A-Za-z0-9]+/g` で課題番号を抽出（`Set` で重複排除）
+- 課題番号モードは従来通り改行区切り
+
+#### エラー時の NISTEP リンク表示
+
+- `lookupOne()`: JP で始まり英字を含む番号（`/^JP[A-Z]/i`）で JGN・KAKEN いずれも見つからなかった場合、エラーカードに[最新の体系的番号一覧（NISTEP）](https://www.nistep.go.jp/taikei/)へのリンクを表示
+- `nistepHint` プロパティとして HTML リンクを返し、`buildResultCards()` でエスケープせずに挿入
+- 科研費番号（JP + 数字で始まるもの）やJP接頭辞のない番号ではリンク非表示
+
+### 検証方法
+
+#### 機能A: fundingStreamIdentifier
+- `JPMJPR2125` → プログラム情報識別子: `MJPR` (JGN_fundingStream) が表示
+- `JPMJSA1907` → プログラム情報識別子: `MJSA` (JGN_fundingStream) が表示
+- `21K12345` → KAKEN 結果、プログラム情報識別子: 空欄
+- `JP21H01234` → KAKEN 結果、プログラム情報識別子: 空欄
+
+#### 機能B: Acknowledgements 抽出
+- Ack モードで以下のテキストを貼り付けて検索:
+  ```
+  This work was supported by ... (Grant Nos. JP18K05379 to Y.N.; JP21H02158 to Y.N., Y.F.; JP16K07412, JP24510312 to Y.F.), ... (Grant No. JPJ009237), ... (Grant No. JPMJSA1907) ...
+  ```
+- 6件の課題番号が抽出・検索されること: JP18K05379, JP21H02158, JP16K07412, JP24510312, JPJ009237, JPMJSA1907
+- 重複排除されること
