@@ -49,15 +49,15 @@ OpenAlex APIは、APIキーなしでの利用回数に制限があります。�
 - [OpenAlex API設定ページ](https://openalex.org/settings/api) からAPIキーを取得してください。
 - 未設定の場合、ページ上部に警告メッセージが表示されます。未設定でも利用可能ですが、利用回数の制限を超えるとデータ取得時にエラーが表示されます。
 
-#### CiNii API Key（任意）
+#### CiNii API Key（KAKEN API利用時は必須）
+
+- KAKEN APIは利用にあたり CiNii API Key が必要です。
+- [CiNiiウェブAPI 利用登録](https://support.nii.ac.jp/ja/cinii/api/developer) からAPIキーを取得してください。
 
 CiNii APIキー未設定でも、以下の機能が動作します：
+
 - JSPS（日本学術振興会）が助成機関に含まれる場合に、CiNii Research Projects API を通じて科研費の課題名（日英）とKAKEN課題ページURLを自動取得
 - ISSNをもとにCiNii Research OpenSearch APIからNCID（NACSIS-CAT書誌ID）を自動取得
-
-APIキーを設定するとレート制限が緩和されます。
-
-- [CiNiiウェブAPI 利用登録](https://support.nii.ac.jp/ja/cinii/api/developer) からAPIキーを取得してください。
 
 ## 機能
 
@@ -95,7 +95,7 @@ APIキーを設定するとレート制限が緩和されます。
 ## 技術スタック
 
 - HTML5 / CSS3 / JavaScript（依存ライブラリなし、単一HTMLファイル）
-- 外部API: [Crossref](https://api.crossref.org/), [JaLC](https://api.japanlinkcenter.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/), [CiNii Research](https://cir.nii.ac.jp/)
+- 外部API: [Crossref](https://api.crossref.org/), [JaLC](https://api.japanlinkcenter.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/), [CiNii Research](https://cir.nii.ac.jp/), [KAKEN API](https://support.nii.ac.jp/ja/kaken/api/api_outline)
 
 ## ディレクトリ構成
 
@@ -129,10 +129,21 @@ APIキーを設定するとレート制限が緩和されます。
 
 このプロジェクトは [CC0 1.0 Universal (CC0 1.0) Public Domain Dedication](https://creativecommons.org/publicdomain/zero/1.0/) の下で公開されています。詳細は [LICENSE](LICENSE) ファイルを参照してください。
 
+外部APIから得られたデータの利用については、それぞれの利用規約に従ってください。
+
+  -  [Crossref](https://api.crossref.org/)
+  -  [JaLC](https://api.japanlinkcenter.org/api-docs/index.html)
+  -  [OpenAlex](https://api.openalex.org/)
+  -  [ROR](https://ror.org/about/terms/),
+  -  [CiNii Research、KAKEN API](https://support.nii.ac.jp/ja/cinii/terms)
+
+
 ## 変更履歴
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-05 | KAKEN XML API CORS対応：fetchKakenXml()にtry/catch追加、CiNii Research OpenSearchを常に最終フォールバックに変更、補助金番号検出時のKAKEN検索リンク表示（[#58](https://github.com/tzhaya/jc-import-file-maker/issues/58)） |
+| 2026-03-04 | KAKEN XML API対応：補助金の研究課題番号から正規の研究課題/領域番号への自動解決、CiNii APIキー未設定時はCiNii Research OpenSearchにフォールバック（[#58](https://github.com/tzhaya/jc-import-file-maker/issues/58)） |
 | 2026-03-03 | 助成情報検索ツール拡張：JGN課題番号からプログラム情報識別子（JGN_fundingStream）を自動設定、Acknowledgementsテキストからの課題番号自動抽出モードを追加（[#56](https://github.com/tzhaya/jc-import-file-maker/issues/56)） |
 | 2026-03-03 | 助成情報検索ツール（`funder_lookup.html`）を新規作成。課題番号からJPCOAR 2.0準拠の助成情報（助成機関識別子・助成機関名・プログラム情報・研究課題名）を一括検索（[#54](https://github.com/tzhaya/jc-import-file-maker/issues/54)） |
 | 2026-03-03 | KAKEN/JGN番号から助成機関名・Crossref Funder IDを自動設定。研究課題番号入力欄に「助成機関を検索」ボタンを追加し、手動入力時もJGN/KAKEN APIから助成機関情報を逆引き可能に（[#52](https://github.com/tzhaya/jc-import-file-maker/issues/52)） |

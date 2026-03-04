@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-03（助成情報検索ツール拡張: プログラム情報識別子自動設定・Acknowledgements抽出）
+最終更新: 2026-03-05（KAKEN XML API CORS対応: フォールバック修正・補助金番号KAKEN検索リンク）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,58 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-05: KAKEN XML API CORS対応 — フォールバック修正・補助金番号KAKEN検索リンク（issue #58）
+
+### 背景
+
+KAKEN XML API (`kaken.nii.ac.jp`) が CORS 非対応のため、ブラウザから直接アクセスするとエラーになることが判明。CiNii Research OpenSearch フォールバックが APIキー設定時にスキップされるバグも発見。
+
+### 実装内容
+
+**両ファイル共通:**
+- `fetchKakenXml()`: try/catch 追加（CORS エラー時 `null` 返却でフォールバック自動遷移）
+- CiNii Research OpenSearch フォールバック: `!hasCiNiiKey` 条件を削除、常に最終フォールバックとして試行
+- 補助金番号パターン（JP除去後 `/^\d+[A-Z]/i`）で検索失敗時、KAKEN検索リンク表示
+  - リンク: `https://kaken.nii.ac.jp/ja/search/?qb={番号}`
+
+### 変更箇所
+
+- `make_jc_importer.html`: fetchKakenXml（try/catch）, buildFunders, buildJaLCFunders, renderOneFunder（フォールバック条件修正 + KAKEN検索リンク）
+- `funder_lookup.html`: fetchKakenXml（try/catch）, lookupOne（フォールバック条件修正 + kakenSearchHint）, buildResultCards（kakenSearchHint表示）
+- `.gitignore`: `funder_lookup_test.html` 追加
+
+---
+
+## 2026-03-04: KAKEN XML API 対応 — 補助金番号→正規番号自動解決（issue #58）
+
+### 背景
+
+論文の謝辞に「補助金の研究課題番号」（例: `23H03160`）が記載されるケースがある。CiNii Research OpenSearch APIではこの番号で検索がヒットしないが、KAKEN XML API（`kaken.nii.ac.jp/opensearch/`）では `normalizedValue` として正規番号を取得可能。
+
+### 実装内容
+
+**make_jc_importer.html:**
+- `fetchKakenXml()` 新規追加: KAKEN XML API（CiNii APIキー必須、DOMParser でXML解析）
+- `fetchKaken()` → `fetchKakenCiNii()` リネーム（フォールバック用に残存）
+- `buildFunders()` / `buildJaLCFunders()`: 検索優先順位変更（KAKEN XML → JGN → CiNii Research OpenSearch）
+- `renderOneFunder()`: 補助金番号修正時の警告表示 + ボタンハンドラ更新
+- `#cinii-apikey-warning` div + ページ読み込み時チェック追加
+
+**funder_lookup.html:**
+- `fetchKakenXml()` 新規追加（`fundingStreams` フィールド付き）
+- `fetchKaken()` → `fetchKakenCiNii()` リネーム
+- `lookupOne()`: 検索優先順位変更 + 補助金番号検出 + `supplementaryWarning`
+- `buildResultCards()`: 警告行追加
+
+### 変更箇所
+
+- `make_jc_importer.html`: fetchKakenXml, fetchKakenCiNii, buildFunders, buildJaLCFunders, renderOneFunder, HTML警告div, APIキーチェック
+- `funder_lookup.html`: fetchKakenXml, fetchKakenCiNii, lookupOne, buildResultCards
+- `docs/Implementation_KAKEN.md`: Issue #58 セクション追記 + 返り値修正
+- `docs/Implementation_funder_lookup.md`: Issue #58 セクション追記
 
 ---
 

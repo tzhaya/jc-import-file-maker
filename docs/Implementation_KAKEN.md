@@ -99,7 +99,7 @@ async function fetchKaken(awardNumber) {
     titles.push({ subitem_award_title: enTitle, subitem_award_title_language: 'en' });
   }
 
-  return { titles, kakenUrl };
+  return { titles, kakenUrl, funderNames: [], funderDoi: '' };
 }
 ```
 
@@ -108,6 +108,7 @@ async function fetchKaken(awardNumber) {
 - `appid` はAPIキー設定済みの場合のみ付加（`CiNii_API_KEY` は任意）
 - `items` が空の場合は `null` を返す（呼び出し元で空フィールド維持）
 - 日英タイトルが同一なら英語タイトルを除外
+- `funderNames`/`funderDoi` は空を返す（呼び出し元で JSPS 定数に補完、Issue #52 で追加）
 
 ### Step 4: buildFunders() の async化（~L1227-1288）
 
@@ -265,6 +266,80 @@ fetchData()
 | JSPS助成あり（JGN登録済み） | `10.1016/j.advnut.2025.100480` | JGN経由で課題名・URIが入力される |
 | JSPS助成あり（JGN未登録） | JSPS funderで JGN未登録 DOI | KAKEN経由で課題名・URLが入力される |
 | JSPS助成なし | 任意の非JSPS DOI | 従来通りの動作（助成情報にCiNiiフィールドなし） |
-| CiNii_API_KEY未設定 | 任意 | appidなしでKAKEN API呼び出し、正常動作 |
+| CiNii_API_KEY未設定 | 任意 | CiNii Research OpenSearch（fetchKakenCiNii）でフォールバック |
 | 存在しない課題番号 | JSPS funderで無効な番号 | CiNii由来フィールドが空のまま |
 | 空フィールド表示 | 「空の入力フィールド」ボタン | エラーなく表示される |
+
+---
+
+## 拡張: KAKEN XML API 対応（Issue #58）
+
+> **ステータス: 実装完了（2026-03-04）**
+
+### 背景
+
+論文の謝辞に「補助金の研究課題番号」（例: `23H03160`）が記載されるケースがある。CiNii Research OpenSearch API（`cir.nii.ac.jp`）ではこの番号で検索がヒットしない。KAKEN XML API（`kaken.nii.ac.jp/opensearch/`）を使えば補助金番号でもヒットし、正規の「研究課題/領域番号」（例: `JP23K27850`）を `normalizedValue` として取得できる。
+
+### 変更概要
+
+```
+make_jc_importer.html
+├── 新規: fetchKakenXml()          … KAKEN XML API（CiNii APIキー必須）
+├── リネーム: fetchKaken() → fetchKakenCiNii()  … フォールバック用に残存
+├── buildFunders() buildEntry()    … 優先順位変更 + 補助金番号検出
+├── buildJaLCFunders() buildEntry() … 同上
+├── renderOneFunder()              … 警告表示 + ボタンハンドラ更新
+├── HTML: #cinii-apikey-warning    … CiNii APIキー未設定警告
+└── APIキー未設定警告チェック追加
+```
+
+### fetchKakenXml()
+
+KAKEN XML API を使用して課題番号から助成情報を取得する。CiNii APIキー必須。
+
+```
+https://kaken.nii.ac.jp/opensearch/?appid={CiNii API Key}&qb={番号}&format=xml
+```
+
+返り値:
+```js
+{
+  titles, kakenUrl, funderNames: [], funderDoi: '',
+  normalizedValue: 'JP23K27850',           // 正規課題番号
+  allAwardNumbers: ['23K27850', '23H03160'] // 全番号（参考用）
+}
+```
+
+XML パース: `DOMParser` で `normalizedValue`、`<summary xml:lang>` の `<title>`、`<urlList><url>` を抽出。
+
+### 検索優先順位の変更
+
+```
+buildFunders() / buildJaLCFunders() の buildEntry():
+
+  1. fetchKakenXml()    ← KAKEN XML API 優先（CiNii APIキーあり かつ JSPS判定あり）
+  2. fetchJgn()         ← JGN フォールバック（JP接頭辞あり）
+  3. fetchKakenCiNii()  ← CiNii Research OpenSearch フォールバック（JSPS判定あり）
+```
+
+**NOTE:** KAKEN XML API は CORS 非対応のため、ブラウザから直接アクセスすると CORS エラーで失敗する。
+`fetchKakenXml()` 内部の try/catch で捕捉し `null` を返すため、後続のフォールバックに自動遷移する。
+
+### 補助金番号の検出と修正
+
+入力番号と `normalizedValue` を比較し、異なる場合:
+- 研究課題番号を `normalizedValue` に自動修正
+- `_supplementaryWarning` フィールドに警告メッセージを付与
+- `renderOneFunder()` で警告を表示
+
+例: `23H03160` → `JP23K27850`（「補助金の研究課題番号」→「研究課題/領域番号」）
+
+### エラーハンドリング
+
+| シナリオ | 挙動 |
+|---------|------|
+| CiNii APIキー未設定 | KAKEN XML API スキップ → JGN → CiNii Research OpenSearch |
+| KAKEN XML API CORS エラー | try/catch で捕捉、JGN → CiNii Research OpenSearch にフォールバック |
+| KAKEN XML API その他エラー | 同上 |
+| 補助金番号検出 | 正規番号に自動修正 + 警告表示 |
+| 補助金番号検出（CORS時） | KAKEN検索リンク (`kaken.nii.ac.jp/ja/search/?qb=`) を表示 |

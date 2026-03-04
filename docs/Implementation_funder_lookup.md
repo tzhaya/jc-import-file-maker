@@ -132,3 +132,56 @@ issue #34 の調査で、JPCOAR 2.0 の「プログラム情報識別子」(`fun
   ```
 - 6件の課題番号が抽出・検索されること: JP18K05379, JP21H02158, JP16K07412, JP24510312, JPJ009237, JPMJSA1907
 - 重複排除されること
+
+---
+
+## 拡張: KAKEN XML API 対応 + 補助金番号自動解決（#58）
+
+> **ステータス: 実装完了（2026-03-04）**
+
+### 背景
+
+論文の謝辞に「補助金の研究課題番号」（例: `23H03160`）が記載されるケースがある。CiNii Research OpenSearch API では検索不可だが、KAKEN XML API（`kaken.nii.ac.jp/opensearch/`）では補助金番号でもヒットし、正規の「研究課題/領域番号」（例: `JP23K27850`）に解決できる。
+
+### 変更概要
+
+| コード | 変更 |
+|--------|------|
+| `fetchKaken()` | `fetchKakenCiNii()` にリネーム（フォールバック用に残存） |
+| `fetchKakenXml()` | 新規追加: KAKEN XML API（CiNii APIキー必須） |
+| `lookupOne()` | 検索優先順位変更 + 補助金番号検出 |
+| `buildResultCards()` | `supplementaryWarning` 行追加 |
+
+### 検索優先順位の変更
+
+```
+  1. fetchKakenXml()    ← KAKEN XML API 優先（CiNii APIキーあり時）
+  2. fetchJgn()         ← JGN フォールバック（JP接頭辞あり）
+  3. fetchKakenCiNii()  ← CiNii Research OpenSearch フォールバック
+```
+
+**NOTE:** KAKEN XML API は CORS 非対応のため、ブラウザから直接アクセスすると CORS エラーで失敗する。
+`fetchKakenXml()` 内部の try/catch で捕捉し `null` を返すため、後続のフォールバックに自動遷移する。
+
+### 補助金番号の検出と修正
+
+- 入力番号と KAKEN XML API の `normalizedValue` を比較
+- 異なる場合: 正規番号に自動修正 + `supplementaryWarning` を結果に付与
+- カード表示で警告行を表示（色: `#e65100`）
+- 例: `23H03160` → `JP23K27850`
+
+### CORS 対応とフォールバック
+
+- KAKEN XML API は CORS 非対応 → `fetchKakenXml()` 内 try/catch で `null` 返却
+- CiNii Research OpenSearch は常に最終フォールバックとして試行（APIキーの有無に関わらず）
+- 補助金番号パターン（JP除去後 `/^\d+[A-Z]/i`）で検索失敗時、KAKEN検索リンクを表示
+  - リンク: `https://kaken.nii.ac.jp/ja/search/?qb={JP除去後の番号}`
+- CiNii APIキー未設定時は「CiNii APIキーが設定されていません」メッセージを表示
+
+### 検証方法
+
+- CiNii APIキー設定状態で `23H03160`（補助金番号）を入力 → `JP23K27850` に修正、警告表示
+- CiNii APIキー設定状態で `JP23K27850`（正規番号）を入力 → 修正なし、警告なし
+- CiNii APIキー未設定で `JP23K27850` → CiNii Research OpenSearch フォールバックでヒット
+- CiNii APIキー未設定で `23H03160` → ヒットしない（制約通り）
+- JST課題番号（例: `JPMJSA1907`）→ KAKEN不一致、JGNフォールバック動作確認
