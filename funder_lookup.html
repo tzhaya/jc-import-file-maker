@@ -237,44 +237,51 @@ async function fetchJgn(awardNumber) {
 }
 
 // ===== fetchKakenXml（KAKEN XML API） =====
+// NOTE: KAKEN XML API は CORS 非対応のため、ブラウザから直接アクセスすると
+// CORS エラーになる場合があります。その場合は JGN / CiNii Research OpenSearch にフォールバックします。
 async function fetchKakenXml(awardNumber) {
   if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') return null;
 
   const projectId = awardNumber.replace(/^JP/i, '');
   const url = `https://kaken.nii.ac.jp/opensearch/?appid=${encodeURIComponent(CONFIG.CiNii_API_KEY)}&qb=${encodeURIComponent(projectId)}&format=xml`;
 
-  const resp = await fetch(url);
-  if (!resp.ok) return null;
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
 
-  const text = await resp.text();
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(text, 'application/xml');
-  if (xmlDoc.querySelector('parsererror')) return null;
+    const text = await resp.text();
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(text, 'application/xml');
+    if (xmlDoc.querySelector('parsererror')) return null;
 
-  const award = xmlDoc.querySelector('grantAward');
-  if (!award) return null;
+    const award = xmlDoc.querySelector('grantAward');
+    if (!award) return null;
 
-  const normalizedValue = award.querySelector('identifier[type="nationalAwardNumber"] normalizedValue')?.textContent?.trim() || '';
-  const kakenUrl = award.querySelector('urlList url')?.textContent?.trim() || '';
+    const normalizedValue = award.querySelector('identifier[type="nationalAwardNumber"] normalizedValue')?.textContent?.trim() || '';
+    const kakenUrl = award.querySelector('urlList url')?.textContent?.trim() || '';
 
-  const titles = [];
-  award.querySelectorAll('summary').forEach(summary => {
-    const lang = summary.getAttribute('xml:lang') || '';
-    const titleText = summary.querySelector('title')?.textContent?.trim() || '';
-    if (titleText && (lang === 'ja' || lang === 'en')) {
-      if (!titles.some(t => t.subitem_award_title === titleText)) {
-        titles.push({ subitem_award_title: titleText, subitem_award_title_language: lang });
+    const titles = [];
+    award.querySelectorAll('summary').forEach(summary => {
+      const lang = summary.getAttribute('xml:lang') || '';
+      const titleText = summary.querySelector('title')?.textContent?.trim() || '';
+      if (titleText && (lang === 'ja' || lang === 'en')) {
+        if (!titles.some(t => t.subitem_award_title === titleText)) {
+          titles.push({ subitem_award_title: titleText, subitem_award_title_language: lang });
+        }
       }
-    }
-  });
+    });
 
-  const allAwardNumbers = [];
-  award.querySelectorAll('summary awardNumber').forEach(el => {
-    const num = el.getAttribute('awardNumber');
-    if (num) allAwardNumbers.push(num);
-  });
+    const allAwardNumbers = [];
+    award.querySelectorAll('summary awardNumber').forEach(el => {
+      const num = el.getAttribute('awardNumber');
+      if (num) allAwardNumbers.push(num);
+    });
 
-  return { titles, kakenUrl, funderNames: [], funderDoi: '', fundingStreams: [], normalizedValue, allAwardNumbers };
+    return { titles, kakenUrl, funderNames: [], funderDoi: '', fundingStreams: [], normalizedValue, allAwardNumbers };
+  } catch (e) {
+    console.warn(`KAKEN XML API エラー (${awardNumber}):`, e.message);
+    return null;
+  }
 }
 
 // ===== fetchKakenCiNii（CiNii Research OpenSearch、フォールバック用） =====
@@ -375,8 +382,8 @@ async function lookupOne(awardNumber) {
     }
   }
 
-  // CiNii Research OpenSearch フォールバック（APIキーなし）
-  if (!hasCiNiiKey) {
+  // CiNii Research OpenSearch フォールバック（KAKEN XML・JGN いずれも失敗時）
+  {
     const ciNiiResult = await fetchKakenCiNii(awardNumber);
     if (ciNiiResult) {
       return {
@@ -396,8 +403,12 @@ async function lookupOne(awardNumber) {
   const nistepHint = /^JP[A-Z]/i.test(awardNumber)
     ? '<a href="https://www.nistep.go.jp/taikei/" target="_blank" class="pv-link">最新の体系的番号一覧（NISTEP）</a>から目視で確認できます。'
     : '';
+  const strippedNumber = awardNumber.replace(/^JP/i, '');
+  const kakenSearchHint = /^\d+[A-Z]/i.test(strippedNumber)
+    ? '補助金番号の可能性があります。<a href="https://kaken.nii.ac.jp/ja/search/?qb=' + encodeURIComponent(strippedNumber) + '" target="_blank" class="pv-link">KAKENで検索</a>して正規の研究課題番号を確認してください。'
+    : '';
   const noKeyHint = !hasCiNiiKey ? 'CiNii APIキーが設定されていません。KAKEN APIによる補助金番号の自動解決は利用できません。' : '';
-  return { award: awardNumber, source: null, error: noKeyHint || '該当なし（JGN・KAKEN いずれも見つかりません）', nistepHint: noKeyHint ? '' : nistepHint };
+  return { award: awardNumber, source: null, error: noKeyHint || '該当なし（JGN・KAKEN いずれも見つかりません）', nistepHint: noKeyHint ? '' : nistepHint, kakenSearchHint };
 }
 
 // ===== 結果カードを生成 =====
@@ -408,6 +419,7 @@ function buildResultCards(results) {
         + '<div class="result-card-header">#' + i + ' ' + fmtVal(r.award) + '</div>'
         + '<div class="result-card-body"><table class="pv-table">'
         + '<tr><td style="color:#c62828">' + fmtVal(r.error)
+        + (r.kakenSearchHint ? '<br>' + r.kakenSearchHint : '')
         + (r.nistepHint ? '<br>' + r.nistepHint : '') + '</td></tr>'
         + '</table></div></div>';
     }

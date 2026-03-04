@@ -142,6 +142,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-05 | KAKEN XML API CORS対応：fetchKakenXml()にtry/catch追加、CiNii Research OpenSearchを常に最終フォールバックに変更、補助金番号検出時のKAKEN検索リンク表示（[#58](https://github.com/tzhaya/jc-import-file-maker/issues/58)） |
 | 2026-03-04 | KAKEN XML API対応：補助金の研究課題番号から正規の研究課題/領域番号への自動解決、CiNii APIキー未設定時はCiNii Research OpenSearchにフォールバック（[#58](https://github.com/tzhaya/jc-import-file-maker/issues/58)） |
 | 2026-03-03 | 助成情報検索ツール拡張：JGN課題番号からプログラム情報識別子（JGN_fundingStream）を自動設定、Acknowledgementsテキストからの課題番号自動抽出モードを追加（[#56](https://github.com/tzhaya/jc-import-file-maker/issues/56)） |
 | 2026-03-03 | 助成情報検索ツール（`funder_lookup.html`）を新規作成。課題番号からJPCOAR 2.0準拠の助成情報（助成機関識別子・助成機関名・プログラム情報・研究課題名）を一括検索（[#54](https://github.com/tzhaya/jc-import-file-maker/issues/54)） |

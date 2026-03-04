@@ -317,14 +317,13 @@ XML パース: `DOMParser` で `normalizedValue`、`<summary xml:lang>` の `<ti
 ```
 buildFunders() / buildJaLCFunders() の buildEntry():
 
-CiNii APIキーあり:
-  1. fetchKakenXml()    ← KAKEN XML API 優先（JSPS判定あり）
+  1. fetchKakenXml()    ← KAKEN XML API 優先（CiNii APIキーあり かつ JSPS判定あり）
   2. fetchJgn()         ← JGN フォールバック（JP接頭辞あり）
-
-CiNii APIキーなし:
-  1. fetchJgn()         ← JGN（JP接頭辞あり）
-  2. fetchKakenCiNii()  ← CiNii Research OpenSearch フォールバック（JSPS判定あり）
+  3. fetchKakenCiNii()  ← CiNii Research OpenSearch フォールバック（JSPS判定あり）
 ```
+
+**NOTE:** KAKEN XML API は CORS 非対応のため、ブラウザから直接アクセスすると CORS エラーで失敗する。
+`fetchKakenXml()` 内部の try/catch で捕捉し `null` を返すため、後続のフォールバックに自動遷移する。
 
 ### 補助金番号の検出と修正
 
@@ -339,7 +338,8 @@ CiNii APIキーなし:
 
 | シナリオ | 挙動 |
 |---------|------|
-| CiNii APIキー未設定 | KAKEN XML API スキップ → CiNii Research OpenSearch フォールバック |
-| KAKEN XML API エラー | JGN フォールバック |
+| CiNii APIキー未設定 | KAKEN XML API スキップ → JGN → CiNii Research OpenSearch |
+| KAKEN XML API CORS エラー | try/catch で捕捉、JGN → CiNii Research OpenSearch にフォールバック |
+| KAKEN XML API その他エラー | 同上 |
 | 補助金番号検出 | 正規番号に自動修正 + 警告表示 |
-| CORS エラー | try/catch で捕捉、フォールバックへ |
+| 補助金番号検出（CORS時） | KAKEN検索リンク (`kaken.nii.ac.jp/ja/search/?qb=`) を表示 |

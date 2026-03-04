@@ -155,14 +155,13 @@ issue #34 の調査で、JPCOAR 2.0 の「プログラム情報識別子」(`fun
 ### 検索優先順位の変更
 
 ```
-CiNii APIキーあり:
-  1. fetchKakenXml()    ← KAKEN XML API 優先
+  1. fetchKakenXml()    ← KAKEN XML API 優先（CiNii APIキーあり時）
   2. fetchJgn()         ← JGN フォールバック（JP接頭辞あり）
-
-CiNii APIキーなし:
-  1. fetchJgn()         ← JGN（JP接頭辞あり）
-  2. fetchKakenCiNii()  ← CiNii Research OpenSearch フォールバック
+  3. fetchKakenCiNii()  ← CiNii Research OpenSearch フォールバック
 ```
+
+**NOTE:** KAKEN XML API は CORS 非対応のため、ブラウザから直接アクセスすると CORS エラーで失敗する。
+`fetchKakenXml()` 内部の try/catch で捕捉し `null` を返すため、後続のフォールバックに自動遷移する。
 
 ### 補助金番号の検出と修正
 
@@ -171,11 +170,13 @@ CiNii APIキーなし:
 - カード表示で警告行を表示（色: `#e65100`）
 - 例: `23H03160` → `JP23K27850`
 
-### CiNii APIキー未設定時
+### CORS 対応とフォールバック
 
-- KAKEN XML API は利用不可
-- JGN → CiNii Research OpenSearch の従来フローにフォールバック
-- 検索失敗時のエラーメッセージに「CiNii APIキーが設定されていません」を表示
+- KAKEN XML API は CORS 非対応 → `fetchKakenXml()` 内 try/catch で `null` 返却
+- CiNii Research OpenSearch は常に最終フォールバックとして試行（APIキーの有無に関わらず）
+- 補助金番号パターン（JP除去後 `/^\d+[A-Z]/i`）で検索失敗時、KAKEN検索リンクを表示
+  - リンク: `https://kaken.nii.ac.jp/ja/search/?qb={JP除去後の番号}`
+- CiNii APIキー未設定時は「CiNii APIキーが設定されていません」メッセージを表示
 
 ### 検証方法
 

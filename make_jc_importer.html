@@ -1256,6 +1256,8 @@ async function fetchAllRorData(oaJson) {
 }
 
 // ===== 3.5 KAKEN XML API =====
+// NOTE: KAKEN XML API は CORS 非対応のため、ブラウザから直接アクセスすると
+// CORS エラーになる場合があります。その場合は JGN / CiNii Research OpenSearch にフォールバックします。
 async function fetchKakenXml(awardNumber) {
   // CiNii APIキー必須
   if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') return null;
@@ -1263,6 +1265,7 @@ async function fetchKakenXml(awardNumber) {
   const projectId = awardNumber.replace(/^JP/i, '');
   const url = `https://kaken.nii.ac.jp/opensearch/?appid=${encodeURIComponent(CONFIG.CiNii_API_KEY)}&qb=${encodeURIComponent(projectId)}&format=xml`;
 
+  try {
   const resp = await fetch(url);
   if (!resp.ok) return null;
 
@@ -1300,6 +1303,10 @@ async function fetchKakenXml(awardNumber) {
   });
 
   return { titles, kakenUrl, funderNames: [], funderDoi: '', normalizedValue, allAwardNumbers };
+  } catch (e) {
+    console.warn(`KAKEN XML API エラー (${awardNumber}):`, e.message);
+    return null;
+  }
 }
 
 // ===== 3.5b CiNii Research KAKEN API（フォールバック用）=====
@@ -1724,8 +1731,8 @@ async function buildFunders(crFunders) {
         }
       }
 
-      // CiNii Research OpenSearch フォールバック（APIキーなし かつ JSPS）
-      if (!kakenResult && !hasCiNiiKey && isJsps && awardNum) {
+      // CiNii Research OpenSearch フォールバック（KAKEN XML・JGN いずれも失敗時）
+      if (!kakenResult && isJsps && awardNum) {
         try {
           kakenResult = await fetchKakenCiNii(awardNum);
         } catch (e) {
@@ -1834,8 +1841,8 @@ async function buildJaLCFunders(jalcFundList) {
         }
       }
 
-      // CiNii Research OpenSearch フォールバック（APIキーなし かつ JSPS）
-      if (!kakenResult && !hasCiNiiKey && isJsps && awardNum) {
+      // CiNii Research OpenSearch フォールバック（KAKEN XML・JGN いずれも失敗時）
+      if (!kakenResult && isJsps && awardNum) {
         try { kakenResult = await fetchKakenCiNii(awardNum); } catch (e) {
           console.warn(`KAKEN CiNii取得失敗 (${awardNum}):`, e.message);
         }
@@ -3507,14 +3514,20 @@ function renderOneFunder(funder, idx, defLabel) {
         try { result = await fetchJgn(awardNum); } catch { /* ignore */ }
       }
 
-      // CiNii Research OpenSearch フォールバック（APIキーなし）
-      if (!result && !hasCiNiiKey) {
+      // CiNii Research OpenSearch フォールバック（KAKEN XML・JGN いずれも失敗時）
+      if (!result) {
         try { result = await fetchKakenCiNii(awardNum); } catch { /* ignore */ }
       }
 
       if (!result) {
         awardResultEl.className = 'lookup-result warn';
-        awardResultEl.textContent = '⚠ 助成情報が見つかりませんでした。';
+        const strippedNum = awardNum.replace(/^JP/i, '');
+        if (/^\d+[A-Z]/i.test(strippedNum)) {
+          awardResultEl.innerHTML = '⚠ 助成情報が見つかりませんでした。補助金番号の可能性があります。<a href="https://kaken.nii.ac.jp/ja/search/?qb='
+            + encodeURIComponent(strippedNum) + '" target="_blank" style="color:#1565c0">KAKENで検索</a>して正規の研究課題番号を確認してください。';
+        } else {
+          awardResultEl.textContent = '⚠ 助成情報が見つかりませんでした。';
+        }
         return;
       }
 

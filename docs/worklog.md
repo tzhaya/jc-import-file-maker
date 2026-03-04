@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-04（KAKEN XML API対応: 補助金番号→正規番号自動解決）
+最終更新: 2026-03-05（KAKEN XML API CORS対応: フォールバック修正・補助金番号KAKEN検索リンク）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,28 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-05: KAKEN XML API CORS対応 — フォールバック修正・補助金番号KAKEN検索リンク（issue #58）
+
+### 背景
+
+KAKEN XML API (`kaken.nii.ac.jp`) が CORS 非対応のため、ブラウザから直接アクセスするとエラーになることが判明。CiNii Research OpenSearch フォールバックが APIキー設定時にスキップされるバグも発見。
+
+### 実装内容
+
+**両ファイル共通:**
+- `fetchKakenXml()`: try/catch 追加（CORS エラー時 `null` 返却でフォールバック自動遷移）
+- CiNii Research OpenSearch フォールバック: `!hasCiNiiKey` 条件を削除、常に最終フォールバックとして試行
+- 補助金番号パターン（JP除去後 `/^\d+[A-Z]/i`）で検索失敗時、KAKEN検索リンク表示
+  - リンク: `https://kaken.nii.ac.jp/ja/search/?qb={番号}`
+
+### 変更箇所
+
+- `make_jc_importer.html`: fetchKakenXml（try/catch）, buildFunders, buildJaLCFunders, renderOneFunder（フォールバック条件修正 + KAKEN検索リンク）
+- `funder_lookup.html`: fetchKakenXml（try/catch）, lookupOne（フォールバック条件修正 + kakenSearchHint）, buildResultCards（kakenSearchHint表示）
+- `.gitignore`: `funder_lookup_test.html` 追加
 
 ---
 
