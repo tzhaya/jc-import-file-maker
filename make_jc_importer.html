@@ -505,6 +505,7 @@
   </div>
   <div id="loading" style="display:none">⏳ データを取得中です（ROR/ISNIも並行取得）...</div>
   <div id="apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ OpenAlex API Keyが設定されていません。設定しない場合、利用回数が制限されます。</div>
+  <div id="cinii-apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ CiNii APIキーが設定されていません。KAKEN APIによる補助金番号の自動解決は利用できません。</div>
   <div id="error-msg"></div>
   <div id="info-bar" style="display:none">
     <a id="doi-link" href="" target="_blank"></a>
@@ -1254,8 +1255,55 @@ async function fetchAllRorData(oaJson) {
   return rorMap;
 }
 
-// ===== 3.5 CiNii Research KAKEN API =====
-async function fetchKaken(awardNumber) {
+// ===== 3.5 KAKEN XML API =====
+async function fetchKakenXml(awardNumber) {
+  // CiNii APIキー必須
+  if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') return null;
+
+  const projectId = awardNumber.replace(/^JP/i, '');
+  const url = `https://kaken.nii.ac.jp/opensearch/?appid=${encodeURIComponent(CONFIG.CiNii_API_KEY)}&qb=${encodeURIComponent(projectId)}&format=xml`;
+
+  const resp = await fetch(url);
+  if (!resp.ok) return null;
+
+  const text = await resp.text();
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(text, 'application/xml');
+  if (xmlDoc.querySelector('parsererror')) return null;
+
+  const award = xmlDoc.querySelector('grantAward');
+  if (!award) return null;
+
+  // 正規課題番号
+  const normalizedValue = award.querySelector('identifier[type="nationalAwardNumber"] normalizedValue')?.textContent?.trim() || '';
+
+  // KAKEN URL
+  const kakenUrl = award.querySelector('urlList url')?.textContent?.trim() || '';
+
+  // 課題名（日英）
+  const titles = [];
+  award.querySelectorAll('summary').forEach(summary => {
+    const lang = summary.getAttribute('xml:lang') || '';
+    const titleText = summary.querySelector('title')?.textContent?.trim() || '';
+    if (titleText && (lang === 'ja' || lang === 'en')) {
+      if (!titles.some(t => t.subitem_award_title === titleText)) {
+        titles.push({ subitem_award_title: titleText, subitem_award_title_language: lang });
+      }
+    }
+  });
+
+  // 全課題番号（参考用）
+  const allAwardNumbers = [];
+  award.querySelectorAll('summary awardNumber').forEach(el => {
+    const num = el.getAttribute('awardNumber');
+    if (num) allAwardNumbers.push(num);
+  });
+
+  return { titles, kakenUrl, funderNames: [], funderDoi: '', normalizedValue, allAwardNumbers };
+}
+
+// ===== 3.5b CiNii Research KAKEN API（フォールバック用）=====
+async function fetchKakenCiNii(awardNumber) {
   // JP プレフィックス除去
   const projectId = awardNumber.replace(/^JP/i, '');
   const appidParam = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY'
@@ -1655,9 +1703,20 @@ async function buildFunders(crFunders) {
         obj.subitem_funder_identifiers = { subitem_funder_identifier: '', subitem_funder_identifier_type: '' };
       }
 
-      // JGN連携: award が JP で始まる場合（JST助成金等）
+      const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
       let kakenResult = null;
-      if (awardNum && /^JP/i.test(awardNum)) {
+
+      // KAKEN XML API 優先（CiNii APIキーあり かつ JSPS）
+      if (hasCiNiiKey && isJsps && awardNum) {
+        try {
+          kakenResult = await fetchKakenXml(awardNum);
+        } catch (e) {
+          console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
+        }
+      }
+
+      // JGN連携: award が JP で始まる場合（JST助成金等）
+      if (!kakenResult && awardNum && /^JP/i.test(awardNum)) {
         try {
           kakenResult = await fetchJgn(awardNum);
         } catch (e) {
@@ -1665,12 +1724,12 @@ async function buildFunders(crFunders) {
         }
       }
 
-      // KAKEN連携: JSPS かつ award番号あり かつ JGN取得できなかった場合
-      if (isJsps && awardNum && !kakenResult) {
+      // CiNii Research OpenSearch フォールバック（APIキーなし かつ JSPS）
+      if (!kakenResult && !hasCiNiiKey && isJsps && awardNum) {
         try {
-          kakenResult = await fetchKaken(awardNum);
+          kakenResult = await fetchKakenCiNii(awardNum);
         } catch (e) {
-          console.warn(`KAKEN取得失敗 (${awardNum}):`, e.message);
+          console.warn(`KAKEN CiNii取得失敗 (${awardNum}):`, e.message);
         }
       }
 
@@ -1690,8 +1749,18 @@ async function buildFunders(crFunders) {
         }
       }
 
+      // 補助金番号の検出と修正
+      let correctedAwardNum = awardNum;
+      if (kakenResult?.normalizedValue) {
+        const inputNorm = /^JP/i.test(awardNum) ? awardNum.toUpperCase() : 'JP' + awardNum.toUpperCase();
+        if (inputNorm !== kakenResult.normalizedValue.toUpperCase()) {
+          correctedAwardNum = kakenResult.normalizedValue;
+          obj._supplementaryWarning = `研究課題番号に「補助金の研究課題番号」が入力されたため「研究課題番号」に変更しました（${awardNum} → ${kakenResult.normalizedValue}）`;
+        }
+      }
+
       obj.subitem_award_numbers = {
-        subitem_award_number:      awardNum,
+        subitem_award_number:      correctedAwardNum,
         subitem_award_number_type: '',
         subitem_award_uri:         kakenResult?.kakenUrl || '',
       };
@@ -1748,17 +1817,27 @@ async function buildJaLCFunders(jalcFundList) {
     const buildEntry = async (awardNum) => {
       const obj = { subitem_funder_names: funderNames, subitem_funder_identifiers: funderIdentifiers };
 
-      // JGN連携: award が JP で始まる場合
+      const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
       let kakenResult = null;
-      if (awardNum && /^JP/i.test(awardNum)) {
+
+      // KAKEN XML API 優先（CiNii APIキーあり かつ JSPS）
+      if (hasCiNiiKey && isJsps && awardNum) {
+        try { kakenResult = await fetchKakenXml(awardNum); } catch (e) {
+          console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
+        }
+      }
+
+      // JGN連携: award が JP で始まる場合
+      if (!kakenResult && awardNum && /^JP/i.test(awardNum)) {
         try { kakenResult = await fetchJgn(awardNum); } catch (e) {
           console.warn(`JGN取得失敗 (${awardNum}):`, e.message);
         }
       }
-      // KAKEN連携: JSPS かつ JGN取得できなかった場合
-      if (isJsps && awardNum && !kakenResult) {
-        try { kakenResult = await fetchKaken(awardNum); } catch (e) {
-          console.warn(`KAKEN取得失敗 (${awardNum}):`, e.message);
+
+      // CiNii Research OpenSearch フォールバック（APIキーなし かつ JSPS）
+      if (!kakenResult && !hasCiNiiKey && isJsps && awardNum) {
+        try { kakenResult = await fetchKakenCiNii(awardNum); } catch (e) {
+          console.warn(`KAKEN CiNii取得失敗 (${awardNum}):`, e.message);
         }
       }
 
@@ -1778,8 +1857,18 @@ async function buildJaLCFunders(jalcFundList) {
         }
       }
 
+      // 補助金番号の検出と修正
+      let correctedAwardNum = awardNum;
+      if (kakenResult?.normalizedValue) {
+        const inputNorm = /^JP/i.test(awardNum) ? awardNum.toUpperCase() : 'JP' + awardNum.toUpperCase();
+        if (inputNorm !== kakenResult.normalizedValue.toUpperCase()) {
+          correctedAwardNum = kakenResult.normalizedValue;
+          obj._supplementaryWarning = `研究課題番号に「補助金の研究課題番号」が入力されたため「研究課題番号」に変更しました（${awardNum} → ${kakenResult.normalizedValue}）`;
+        }
+      }
+
       obj.subitem_award_numbers = {
-        subitem_award_number:      awardNum,
+        subitem_award_number:      correctedAwardNum,
         subitem_award_number_type: '',
         subitem_award_uri:         kakenResult?.kakenUrl || '',
       };
@@ -3355,6 +3444,13 @@ function renderOneFunder(funder, idx, defLabel) {
   awardLookupBtn.className = 'btn-add';
   awardRow.appendChild(awardLookupBtn);
   fundContent.appendChild(awardRow);
+  // 補助金番号修正の警告表示
+  if (funder._supplementaryWarning) {
+    const warnEl = document.createElement('div');
+    warnEl.className = 'lookup-result warn';
+    warnEl.textContent = '⚠ ' + funder._supplementaryWarning;
+    fundContent.appendChild(warnEl);
+  }
   fundContent.appendChild(createFieldRow('研究課題番号URI', aw.subitem_award_uri || '', 'text', null, { fieldKey: 'subitem_award_uri' }));
 
   // 研究課題名（配列）
@@ -3389,13 +3485,31 @@ function renderOneFunder(funder, idx, defLabel) {
     awardResultEl.className = 'lookup-result';
     awardResultEl.textContent = '検索中...';
     try {
-      // JGN → KAKEN の順に試行
+      const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
       let result = null;
-      if (/^JP/i.test(awardNum)) {
+      let supplementaryWarning = '';
+
+      // KAKEN XML API 優先（CiNii APIキーあり）
+      if (hasCiNiiKey) {
+        try { result = await fetchKakenXml(awardNum); } catch { /* ignore */ }
+        // 補助金番号の検出
+        if (result?.normalizedValue) {
+          const inputNorm = /^JP/i.test(awardNum) ? awardNum.toUpperCase() : 'JP' + awardNum.toUpperCase();
+          if (inputNorm !== result.normalizedValue.toUpperCase()) {
+            supplementaryWarning = `研究課題番号に「補助金の研究課題番号」が入力されたため「研究課題番号」に変更しました（${awardNum} → ${result.normalizedValue}）`;
+            if (awardInput) awardInput.value = result.normalizedValue;
+          }
+        }
+      }
+
+      // JGN フォールバック（JP接頭辞あり）
+      if (!result && /^JP/i.test(awardNum)) {
         try { result = await fetchJgn(awardNum); } catch { /* ignore */ }
       }
-      if (!result) {
-        try { result = await fetchKaken(awardNum); } catch { /* ignore */ }
+
+      // CiNii Research OpenSearch フォールバック（APIキーなし）
+      if (!result && !hasCiNiiKey) {
+        try { result = await fetchKakenCiNii(awardNum); } catch { /* ignore */ }
       }
 
       if (!result) {
@@ -3448,8 +3562,13 @@ function renderOneFunder(funder, idx, defLabel) {
         headerSpan.textContent = `${defLabel}[${idx}]${newName ? ': '+newName.substring(0,40) : ''}`;
       }
 
-      awardResultEl.className = 'lookup-result ok';
-      awardResultEl.textContent = '✓ 設定完了: ' + names.map(n => n.subitem_funder_name).join(', ');
+      if (supplementaryWarning) {
+        awardResultEl.className = 'lookup-result warn';
+        awardResultEl.textContent = '⚠ ' + supplementaryWarning;
+      } else {
+        awardResultEl.className = 'lookup-result ok';
+        awardResultEl.textContent = '✓ 設定完了: ' + names.map(n => n.subitem_funder_name).join(', ');
+      }
     } finally {
       awardLookupBtn.disabled = false;
     }
@@ -4631,6 +4750,9 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 // ===== APIキー未設定警告 =====
 if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
   document.getElementById('apikey-warning').style.display = 'block';
+}
+if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') {
+  document.getElementById('cinii-apikey-warning').style.display = 'block';
 }
 
 // ===== 更新チェック =====

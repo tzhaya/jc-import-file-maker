@@ -437,22 +437,26 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 - JGN連携が成功した場合、KAKEN連携はスキップ
 - JSTの体系的番号（`JPMJXXXXXXXX` 形式）が主な対象（JSPS科研費はJGN未登録のためKAKENにフォールバック）
 
-**KAKEN連携（CiNii Research Projects API）**:
-- Crossref の funder 情報に JSPS（日本学術振興会、funder DOI: `10.13039/501100001691`）が含まれる場合、かつJGN連携が成功しなかった場合に、CiNii Research Projects API を使って科研費の課題名と KAKEN 課題ページ URL を自動取得する
-- CiNii APIキー（`CONFIG.CiNii_API_KEY`）は任意（未設定でも動作、設定時はレート制限緩和）
-- award番号から `JP` プレフィックスを除去して CiNii API の `projectId` パラメータに使用
-- 日本語・英語の課題名を並列取得し、`subitem_award_titles[]` に設定
+**KAKEN連携（KAKEN XML API + CiNii Research Projects API）**:
+- CiNii APIキー設定時: KAKEN XML API（`kaken.nii.ac.jp/opensearch/`）を優先使用
+  - 「補助金の研究課題番号」（例: `23H03160`）でも検索可能
+  - `normalizedValue` で正規番号（例: `JP23K27850`）に自動解決
+  - 補助金番号検出時は警告表示 + 番号を自動修正
+- CiNii APIキー未設定時: CiNii Research OpenSearch API（`cir.nii.ac.jp`）にフォールバック（APIキー不要、補助金番号検索は不可）
+- Crossref の funder 情報に JSPS（funder DOI: `10.13039/501100001691`）が含まれる場合に連携
+- award番号から `JP` プレフィックスを除去して検索
+- 日本語・英語の課題名を取得し、`subitem_award_titles[]` に設定
   - 日英タイトルが同一の場合は日本語のみ設定
 - KAKEN 課題ページ URL を `subitem_award_uri` に設定
-- KAKEN成功時、助成機関名・識別子が空の場合はJSPS定数（日本学術振興会/Japan Society for the Promotion of Science、DOI: `10.13039/501100001691`）で補完
-- CiNii API がエラーの場合は警告のみ出力し、Crossref データを保持（フォールバック）
+- KAKEN成功時、助成機関名・識別子が空の場合はJSPS定数で補完
 - JSPS以外の funder、award番号が空、またはJGN連携成功済みの場合はKAKEN連携をスキップ
 
 **研究課題番号からの助成機関検索（UI）**:
 - 助成情報の研究課題番号入力欄に「助成機関を検索」ボタンを表示
-- クリック時: 入力された課題番号でJGN API → KAKEN APIの順に検索
+- クリック時: KAKEN XML API → JGN → CiNii Research OpenSearchの順に検索
 - 成功時: 助成機関名・助成機関識別子・研究課題名・研究課題番号URIを一括設定
-- JGN成功時はレスポンスのfunder情報、KAKEN成功時はJSPS固定値を使用
+- KAKEN XML/JGN成功時はレスポンス情報、CiNii Research OpenSearch成功時はJSPS固定値を使用
+- 補助金番号検出時: 番号を自動修正し警告表示
 
 **識別子からの機関名逆引き（ROR / Crossref Funders API）**:
 - 所属機関識別子セクション: Scheme が「ROR」の場合に「名称を確認」ボタンを表示し、URI フィールドの値を使って ROR v2 API から機関名（`ror_display` + `label` タイプ）を取得
