@@ -1713,14 +1713,15 @@ async function buildFunders(crFunders) {
       const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
       let kakenResult = null;
 
-      // KAKEN XML API 優先（CiNii APIキーあり かつ JSPS）
-      if (hasCiNiiKey && isJsps && awardNum) {
-        try {
-          kakenResult = await fetchKakenXml(awardNum);
-        } catch (e) {
-          console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
-        }
-      }
+      // [暫定スキップ] KAKEN XML API は CORS 非対応のためブラウザから利用不可。
+      // CORS 解消時は下記コメントを外して有効化すること。
+      // if (hasCiNiiKey && isJsps && awardNum) {
+      //   try {
+      //     kakenResult = await fetchKakenXml(awardNum);
+      //   } catch (e) {
+      //     console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
+      //   }
+      // }
 
       // JGN連携: award が JP で始まる場合（JST助成金等）
       if (!kakenResult && awardNum && /^JP/i.test(awardNum)) {
@@ -1827,12 +1828,13 @@ async function buildJaLCFunders(jalcFundList) {
       const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
       let kakenResult = null;
 
-      // KAKEN XML API 優先（CiNii APIキーあり かつ JSPS）
-      if (hasCiNiiKey && isJsps && awardNum) {
-        try { kakenResult = await fetchKakenXml(awardNum); } catch (e) {
-          console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
-        }
-      }
+      // [暫定スキップ] KAKEN XML API は CORS 非対応のためブラウザから利用不可。
+      // CORS 解消時は下記コメントを外して有効化すること。
+      // if (hasCiNiiKey && isJsps && awardNum) {
+      //   try { kakenResult = await fetchKakenXml(awardNum); } catch (e) {
+      //     console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
+      //   }
+      // }
 
       // JGN連携: award が JP で始まる場合
       if (!kakenResult && awardNum && /^JP/i.test(awardNum)) {
@@ -3496,18 +3498,19 @@ function renderOneFunder(funder, idx, defLabel) {
       let result = null;
       let supplementaryWarning = '';
 
-      // KAKEN XML API 優先（CiNii APIキーあり）
-      if (hasCiNiiKey) {
-        try { result = await fetchKakenXml(awardNum); } catch { /* ignore */ }
-        // 補助金番号の検出
-        if (result?.normalizedValue) {
-          const inputNorm = /^JP/i.test(awardNum) ? awardNum.toUpperCase() : 'JP' + awardNum.toUpperCase();
-          if (inputNorm !== result.normalizedValue.toUpperCase()) {
-            supplementaryWarning = `研究課題番号に「補助金の研究課題番号」が入力されたため「研究課題番号」に変更しました（${awardNum} → ${result.normalizedValue}）`;
-            if (awardInput) awardInput.value = result.normalizedValue;
-          }
-        }
-      }
+      // [暫定スキップ] KAKEN XML API は CORS 非対応のためブラウザから利用不可。
+      // CORS 解消時は下記コメントを外して有効化すること。
+      // if (hasCiNiiKey) {
+      //   try { result = await fetchKakenXml(awardNum); } catch { /* ignore */ }
+      //   // 補助金番号の検出
+      //   if (result?.normalizedValue) {
+      //     const inputNorm = /^JP/i.test(awardNum) ? awardNum.toUpperCase() : 'JP' + awardNum.toUpperCase();
+      //     if (inputNorm !== result.normalizedValue.toUpperCase()) {
+      //       supplementaryWarning = `研究課題番号に「補助金の研究課題番号」が入力されたため「研究課題番号」に変更しました（${awardNum} → ${result.normalizedValue}）`;
+      //       if (awardInput) awardInput.value = result.normalizedValue;
+      //     }
+      //   }
+      // }
 
       // JGN フォールバック（JP接頭辞あり）
       if (!result && /^JP/i.test(awardNum)) {

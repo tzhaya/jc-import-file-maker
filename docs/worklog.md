@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-05（KAKEN XML API CORS対応: フォールバック修正・補助金番号KAKEN検索リンク）
+最終更新: 2026-03-05（KAKEN XML API 暫定スキップ: CORS非対応による処理時間短縮）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,22 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-05: KAKEN XML API 暫定スキップ — CORS非対応による処理時間短縮（issue #59）
+
+### 背景
+
+KAKEN XML API は CORS 非対応のため、ブラウザから呼び出すと必ずエラーとなりフォールバックに遷移する。無駄なリクエスト・待機時間を削減するため、CORS 解消まで fetchKakenXml() 呼び出しを暫定的にスキップする。
+
+### 実装内容
+
+- `make_jc_importer.html`: buildFunders(), buildJaLCFunders(), renderOneFunder() 内の fetchKakenXml() 呼び出し3箇所をコメントアウト
+- `funder_lookup.html`: lookupOne() 内の fetchKakenXml() 呼び出し1箇所をコメントアウト
+- 全箇所に `// [暫定スキップ]` と `// CORS 解消時は下記コメントを外して有効化すること。` のガイドコメント付与
+- fetchKakenXml() 関数自体は残置（復元容易性のため）
+- 検索順序: JGN → CiNii Research OpenSearch に短縮
 
 ---
 
