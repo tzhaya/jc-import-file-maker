@@ -458,7 +458,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-03-03 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-03-05 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -471,24 +471,24 @@
     </thead>
     <tbody>
       <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-05</td>
+        <td style="padding:2px 0;">OPF参照リンク：ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加（ISSN付き雑誌論文のOAポリシー確認）</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-05</td>
+        <td style="padding:2px 0;">KAKEN XML API CORS対応：fetchKakenXml()にtry/catch追加、暫定スキップ実装（CORS非対応による処理時間短縮）、CiNii Research OpenSearchを常に最終フォールバックに変更</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-04</td>
+        <td style="padding:2px 0;">KAKEN XML API対応：補助金番号から正規の研究課題番号への自動解決（CiNii APIキー未設定時はCiNii Research OpenSearchにフォールバック）</td>
+      </tr>
+      <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-03</td>
         <td style="padding:2px 0;">KAKEN/JGN番号から助成機関名・Crossref Funder IDを自動設定、研究課題番号からの助成機関検索ボタン追加</td>
       </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-02</td>
         <td style="padding:2px 0;">PMID識別子のURL除去：関連情報のidentifierType=PMID時にPubMed URLから番号のみを抽出（IRDB登録エラー対応）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-01</td>
-        <td style="padding:2px 0;">関連情報の取得改善：関連DOIのURL形式統一（https://doi.org/プレフィックス付与）、関連名称（タイトル）の自動取得、JaLC APIフィールド名修正</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-27</td>
-        <td style="padding:2px 0;">プレビュー機能追加：入力済みメタデータをJAIRO Cloud風コンパクトテーブルでモーダル表示。collectFromDOM()によるDOM→JSON変換基盤を実装</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-02-26</td>
-        <td style="padding:2px 0;">JaLC API対応（準備中）：JaLC DOIからのメタデータ取得・マッピングコードを追加（CORS制約により未有効化）</td>
       </tr>
     </tbody>
   </table>
