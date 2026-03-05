@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-05（KAKEN XML API 暫定スキップ: CORS非対応による処理時間短縮）
+最終更新: 2026-03-05（OPF参照リンク: ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,32 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-05: OPF参照リンク — ISSNベースのOpen Policy Finder検索リンク追加（issue #62）
+
+### 背景
+
+Issue #50 で実装予定だった OPF API 連携は CORS 制限により利用できないため、代替として ISSN を元に Open Policy Finder の Web 検索ページへの参照リンクを提供する。
+
+### 実装内容
+
+- `make_jc_importer.html`:
+  - info-bar HTML に `#opf-link-row` を追加（DOI リンク + OA バッジの次行）
+  - 表示テキスト: 「📖 オープンアクセスポリシーをOpen Policy Finderで確認する」
+  - `target="_blank"` + `rel="noopener noreferrer"` で別タブ表示
+  - `fetchCrossrefData()` 内で `mapToItemType()` 完了後に metadata から ISSN を取得し、OPF 検索 URL を生成
+  - ISSN がない場合はリンク非表示
+  - `fetchData()` 内でリセット処理追加
+
+### OPF 検索 URL 仕様
+
+```
+https://openpolicyfinder.jisc.ac.uk/search?search={ISSN}&per_page=10&publication_page=1&publisher_page=1&funder_page=1
+```
+
+- 検索結果が1件のみの場合、OPF サイト側で自動的に雑誌ポリシーページにリダイレクト
 
 ---
 
