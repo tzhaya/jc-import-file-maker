@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-05（KAKEN XML API 暫定スキップ: CORS非対応による処理時間短縮）
+最終更新: 2026-03-05（Open Policy Finder 連携基盤 + ポリシー表示UIモーダル: issue #50）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,48 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+現在のファイル規模: **約4670行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + OPF連携）
+
+---
+
+## 2026-03-05: Open Policy Finder 連携基盤 + ポリシー表示UIモーダル（issue #50）
+
+### 背景
+
+機関リポジトリ担当者が論文のOAポリシー（公開可能な版・エンバーゴ・ライセンス等）をツール内で確認できるよう、Open Policy Finder (OPF) API と連携する機能を追加した。
+
+### 実装内容
+
+**Step 1: OPF API連携基盤**
+- `CONFIG.OPF_API_KEY` 追加
+- `fetchOpenPolicyFinder(issns)` 新規追加（ISSN配列を順次試行、fetchNcid パターン準拠）
+  - エンドポイント: `https://api.openpolicyfinder.jisc.ac.uk/retrieve_by_id`
+  - 認証: `x-api-key` ヘッダー
+- OPF連携 ON/OFF チェックボックス（`#opf-enabled`）を DOI入力行に追加
+  - APIキー未設定時: disabled + 「APIキー未設定」表示
+- `mapToItemType()` 内で `fetchNcid` と `Promise.all` 並行実行
+  - `lastOpfData` / `lastOpfStatus` グローバル変数で結果を保持
+- `fetchCrossrefData()` 内で `lastOpfStatus` を参照し info-bar にOPFリンク/状態を表示
+  - found: 雑誌名+「OAポリシー」リンク（クリックでモーダル表示）
+  - not-found: 「OPFに収録なし」
+  - no-issn: 「ISSNが不明のためOPF利用不可」
+  - disabled: 非表示
+
+**Step 2: ポリシー表示UIモーダル**
+- `#opf-modal` 追加（青系ヘッダー `#1565c0`）
+- `buildOpfModalHtml()`: 雑誌基本情報（出版社・URL・DOAJ・OPF URI）+ `permitted_oa` カード表示
+  - エントリ単位でカード化（1エントリが複数 article_version を持つ場合も対応）
+  - 表示項目: バージョン / ライセンス / OA Fee / エンバーゴ / 公開場所 / 条件
+  - データ値は `_phrases` フィールドの英語テキストをそのまま表示（CC BY-NC-ND 制約）
+  - `publisher_policy[].urls[]` をポリシー参考URLリンクとして表示
+  - モーダルフッターに CC BY-NC-ND 帰属表示
+- `showOpfModal()` / `closeOpfModal()`
+- Escキーハンドラを両モーダル対応に拡張
+
+**CORSの可否**: Step 1 実装後にテストで確認予定。CORSエラーの場合は issue にて代替策を検討。
+
+### 計画
+`docs/Implementation_OPF.md`（実装修正点は同ドキュメント末尾「実装上の修正点」セクションに追記）
 
 ---
 

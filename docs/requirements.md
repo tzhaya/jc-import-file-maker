@@ -21,6 +21,7 @@ make_jc_importer.html
     -   JaLC REST API (`https://api.japanlinkcenter.org/v2/dois/`)
     -   Crossref Works API - JGN（Japan Grant Number）(`https://api.crossref.org/works/10.52926/{award}`)
     -   GitHub API - Commits（更新チェック用）(`https://api.github.com/repos/tzhaya/jc-import-file-maker/commits`)
+    -   Open Policy Finder API (`https://api.openpolicyfinder.jisc.ac.uk/retrieve_by_id`、認証: `x-api-key` ヘッダー)
        
 **メタデータ構造定義**
 - `ItemType.json` ただし、要素から `title_i18n_temp` は除く。 

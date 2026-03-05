@@ -39,6 +39,9 @@ const CONFIG = {
     // CiNii APIキー（任意）
     // CiNiiウェブAPI 利用登録 https://support.nii.ac.jp/ja/cinii/api/developer で取得したキーを貼り付けてください
     CiNii_API_KEY: "YOUR_CiNii_API_KEY",
+
+    // Open Policy Finder APIキー（任意）
+    OPF_API_KEY: "YOUR_OPF_API_KEY",
 };
 ```
 
@@ -59,6 +62,11 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 - JSPS（日本学術振興会）が助成機関に含まれる場合に、CiNii Research Projects API を通じて科研費の課題名（日英）とKAKEN課題ページURLを自動取得
 - ISSNをもとにCiNii Research OpenSearch APIからNCID（NACSIS-CAT書誌ID）を自動取得
 
+#### Open Policy Finder API Key（OPF連携時は必須）
+
+- OPF連携機能を使用するには、[Open Policy Finder](https://openpolicyfinder.jisc.ac.uk/) でAPIキーを取得してください。
+- APIキー未設定の場合は、「OPF連携」チェックボックスが無効になります。
+
 ## 機能
 
 ### Phase 1
@@ -75,6 +83,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
   - 要確認項目へのワーニング表示（⚠ 要確認）
   - 参考用の元データ値の表示とURLのリンク
 - OA バッジ表示（Gold / Green / Hybrid / Closed）
+- Open Policy Finder (OPF) 連携：ISSNをもとにOPF APIから雑誌のOAポリシーを取得し、情報バーにリンクを表示。クリックでポリシー詳細モーダルを開き、公開可能な版・ライセンス・エンバーゴ・公開場所・条件を一覧表示（[#50](https://github.com/tzhaya/jc-import-file-maker/issues/50)）
 - JATS XML 形式のDescription(内容記述)からタグの除去
 - Crossref と OpenAlex の著者情報マッチング（姓名一致 → インデックスフォールバック）
 - 空フィールドのみの表示
@@ -95,7 +104,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 ## 技術スタック
 
 - HTML5 / CSS3 / JavaScript（依存ライブラリなし、単一HTMLファイル）
-- 外部API: [Crossref](https://api.crossref.org/), [JaLC](https://api.japanlinkcenter.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/), [CiNii Research](https://cir.nii.ac.jp/), [KAKEN API](https://support.nii.ac.jp/ja/kaken/api/api_outline)
+- 外部API: [Crossref](https://api.crossref.org/), [JaLC](https://api.japanlinkcenter.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/), [CiNii Research](https://cir.nii.ac.jp/), [KAKEN API](https://support.nii.ac.jp/ja/kaken/api/api_outline), [Open Policy Finder](https://openpolicyfinder.jisc.ac.uk/)
 
 ## ディレクトリ構成
 
@@ -142,6 +151,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-05 | Open Policy Finder (OPF) 連携基盤 + ポリシー表示UIモーダルを実装。ISSNからOPF APIで雑誌OAポリシーを取得し、公開可能な版・ライセンス・エンバーゴ・公開場所・条件をモーダル表示。OPF連携チェックボックスとOPF_API_KEY設定を追加（[#50](https://github.com/tzhaya/jc-import-file-maker/issues/50)） |
 | 2026-03-05 | KAKEN XML API 暫定スキップ：CORS非対応による処理時間短縮のためfetchKakenXml()呼び出しをコメントアウト（[#59](https://github.com/tzhaya/jc-import-file-maker/issues/59)） |
 | 2026-03-05 | KAKEN XML API CORS対応：fetchKakenXml()にtry/catch追加、CiNii Research OpenSearchを常に最終フォールバックに変更、補助金番号検出時のKAKEN検索リンク表示（[#58](https://github.com/tzhaya/jc-import-file-maker/issues/58)） |
 | 2026-03-04 | KAKEN XML API対応：補助金の研究課題番号から正規の研究課題/領域番号への自動解決、CiNii APIキー未設定時はCiNii Research OpenSearchにフォールバック（[#58](https://github.com/tzhaya/jc-import-file-maker/issues/58)） |

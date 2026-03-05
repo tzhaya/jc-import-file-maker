@@ -354,6 +354,63 @@
   .lookup-result.warn { color: #e65100; }
   .lookup-result.err  { color: #c62828; }
 
+  /* ===== OPFモーダル ===== */
+  #opf-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.5);
+    overflow-y: auto;
+  }
+  #opf-modal .modal-header { background: #1565c0; }
+  .opf-journal-info {
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 0.88em;
+    line-height: 1.7;
+  }
+  .opf-journal-info a { color: #1565c0; }
+  .opf-policy-block {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .opf-policy-block + .opf-policy-block { margin-top: 0; }
+  .opf-version-header {
+    background: #e8eaf6;
+    color: #283593;
+    font-weight: bold;
+    font-size: 0.88em;
+    padding: 6px 12px;
+    border-bottom: 1px solid #c5cae9;
+  }
+  .opf-policy-body {
+    padding: 8px 12px;
+    font-size: 0.85em;
+    line-height: 1.6;
+  }
+  .opf-policy-row { display: flex; gap: 8px; margin-bottom: 2px; }
+  .opf-policy-label { color: #555; min-width: 90px; flex-shrink: 0; }
+  .opf-policy-value { flex: 1; }
+  .opf-condition-list { margin: 2px 0 0 0; padding-left: 16px; }
+  .opf-condition-list li { font-size: 0.9em; color: #444; }
+  .opf-urls { margin-top: 10px; font-size: 0.85em; }
+  .opf-urls a { color: #1565c0; }
+  .opf-footer {
+    background: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+    padding: 8px 16px;
+    font-size: 0.78em;
+    color: #666;
+    text-align: center;
+  }
+  .opf-footer a { color: #1565c0; }
+
   /* ===== プレビューモーダル ===== */
   #preview-modal {
     display: none;
@@ -502,14 +559,20 @@
     <button id="fetch-btn" onclick="fetchData()">データ取得</button>
     <button id="empty-btn" onclick="showEmptyFields()">空値で全フィールド表示</button>
     <button id="preview-btn" onclick="showPreview()" style="display:none; background:#1565c0; color:white;">プレビュー表示</button>
+    <label id="opf-toggle-label" style="margin-left:8px; font-size:0.9em; cursor:pointer;">
+      <input type="checkbox" id="opf-enabled"> OPF連携
+    </label>
+    <span id="opf-apikey-missing" style="display:none; font-size:0.85em; color:#888;">（APIキー未設定）</span>
   </div>
   <div id="loading" style="display:none">⏳ データを取得中です（ROR/ISNIも並行取得）...</div>
   <div id="apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ OpenAlex API Keyが設定されていません。設定しない場合、利用回数が制限されます。</div>
   <div id="cinii-apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ CiNii APIキーが設定されていません。KAKEN APIによる補助金番号の自動解決は利用できません。</div>
+  <div id="opf-apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ Open Policy Finder APIキーが設定されていません。OPF連携を使用するにはAPIキーが必要です。</div>
   <div id="error-msg"></div>
   <div id="info-bar" style="display:none">
     <a id="doi-link" href="" target="_blank"></a>
     <span id="oa-badge" class="oa-badge"></span>
+    <span id="opf-link-area"></span>
   </div>
 </div>
 
@@ -540,6 +603,17 @@
   </div>
 </div>
 
+<!-- ===== OPFモーダル ===== -->
+<div id="opf-modal">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <span>📋 OAポリシー</span>
+      <button class="modal-close" onclick="closeOpfModal()">&times; 閉じる</button>
+    </div>
+    <div class="modal-body" id="opf-modal-body"></div>
+  </div>
+</div>
+
 <!-- ===== プレビューモーダル ===== -->
 <div id="preview-modal">
   <div class="modal-inner">
@@ -564,6 +638,10 @@ const CONFIG = {
     // CiNii APIキー（任意）
     // CiNiiウェブAPI 利用登録 https://support.nii.ac.jp/ja/cinii/api/developer で取得したキーを貼り付けてください
     CiNii_API_KEY: "YOUR_CiNii_API_KEY",
+
+    // Open Policy Finder APIキー（任意）
+    // https://openpolicyfinder.jisc.ac.uk/ で取得したキーを貼り付けてください
+    OPF_API_KEY: "YOUR_OPF_API_KEY",
 };
 
 // ===== 除外フィールドリスト =====
@@ -1002,6 +1080,10 @@ function renderHint(val) {
 
 // 参照値表示フラグ（API取得時 true、空値表示時 false）
 let showHints = false;
+// OPF APIレスポンス全体（info-bar / モーダル共用）
+let lastOpfData = null;
+// OPF取得ステータス: 'found' | 'not-found' | 'no-issn' | 'disabled'
+let lastOpfStatus = 'disabled';
 
 // ===== エラー表示 =====
 function showError(msg) {
@@ -1395,6 +1477,30 @@ async function fetchNcid(issns) {
   return null;
 }
 
+// ===== 3.5.2 Open Policy Finder ISSN検索 =====
+async function fetchOpenPolicyFinder(issns) {
+  const apiKey = CONFIG.OPF_API_KEY;
+  if (!apiKey || apiKey === 'YOUR_OPF_API_KEY') return null;
+  for (const issn of issns) {
+    try {
+      const params = new URLSearchParams({
+        'item-type': 'publication',
+        'format': 'Json',
+        'identifier': issn
+      });
+      const resp = await fetch(
+        `https://api.openpolicyfinder.jisc.ac.uk/retrieve_by_id?${params}`,
+        { headers: { 'x-api-key': apiKey } }
+      );
+      if (resp.status === 404) continue;
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      if (data.items?.length) return data;
+    } catch { continue; }
+  }
+  return null;
+}
+
 // ===== 3.6 Crossref DOI データ取得 =====
 async function fetchCrossrefData(doi) {
   // Crossref + OpenAlex を並列取得
@@ -1424,8 +1530,25 @@ async function fetchCrossrefData(doi) {
   badge.style.background = isOa ? '#4caf50' : '#999';
   document.getElementById('info-bar').style.display = 'flex';
 
-  // マッピング → レンダリング
+  // マッピング → レンダリング（OPFデータは mapToItemType 内で lastOpfData に格納）
   const metadata = await mapToItemType(crJson, oaJson, rorMap);
+
+  // OPF リンクを info-bar に表示（lastOpfData / lastOpfStatus は mapToItemType 内で設定）
+  const opfLinkArea = document.getElementById('opf-link-area');
+  if (opfLinkArea) {
+    if (lastOpfStatus === 'found') {
+      const uri = lastOpfData?.items?.[0]?.system_metadata?.uri || '';
+      const journalTitle = lastOpfData?.items?.[0]?.title?.[0]?.title || 'OAポリシー';
+      opfLinkArea.innerHTML = `｜<a href="${uri || '#'}" target="_blank" onclick="event.preventDefault(); showOpfModal();" style="cursor:pointer;">📋 ${journalTitle} OAポリシー</a>`;
+    } else if (lastOpfStatus === 'not-found') {
+      opfLinkArea.textContent = '｜OPFに収録なし';
+    } else if (lastOpfStatus === 'no-issn') {
+      opfLinkArea.textContent = '｜ISSNが不明のためOPF利用不可';
+    } else {
+      opfLinkArea.innerHTML = '';
+    }
+  }
+
   showHints = true;
   renderAll(metadata);
 }
@@ -1960,13 +2083,27 @@ async function mapToItemType(crJson, oaJson, rorMap) {
     (crJson.ISSN || []).forEach(i => sourceIdentifiers.push({ subitem_source_identifier: i, subitem_source_identifier_type: 'ISSN' }));
   }
 
-  // ===== NCID (CiNii Research) =====
+  // ===== NCID (CiNii Research) + OPF (Open Policy Finder) =====
   const allIssns = sourceIdentifiers.map(si => si.subitem_source_identifier);
+  const opfEnabled = document.getElementById('opf-enabled')?.checked;
   if (allIssns.length) {
-    const ncid = await fetchNcid(allIssns);
+    const [ncid, opfData] = await Promise.all([
+      fetchNcid(allIssns),
+      opfEnabled ? fetchOpenPolicyFinder(allIssns) : Promise.resolve(null)
+    ]);
     if (ncid) {
       sourceIdentifiers.push({ subitem_source_identifier: ncid, subitem_source_identifier_type: 'NCID', _ncidUrl: `https://ci.nii.ac.jp/ncid/${ncid}` });
     }
+    if (!opfEnabled) {
+      lastOpfData = null; lastOpfStatus = 'disabled';
+    } else if (opfData) {
+      lastOpfData = opfData; lastOpfStatus = 'found';
+    } else {
+      lastOpfData = null; lastOpfStatus = 'not-found';
+    }
+  } else {
+    lastOpfData = null;
+    lastOpfStatus = opfEnabled ? 'no-issn' : 'disabled';
   }
 
   // ===== 収録物名 =====
@@ -4751,11 +4888,88 @@ function closePreview() {
   document.body.style.overflow = '';
 }
 
+// ===== OPFモーダル =====
+function buildOpfModalHtml(opfData) {
+  const item = opfData?.items?.[0];
+  if (!item) return '<p>データがありません。</p>';
+
+  const journalTitle = item.title?.[0]?.title || '';
+  const publisher = item.publishers?.[0]?.publisher?.name?.[0]?.name || '';
+  const journalUrl = item.url || '';
+  const doaj = item.listed_in_doaj_phrases?.[0]?.phrase || item.listed_in_doaj || '';
+  const opfUri = item.system_metadata?.uri || '';
+
+  let html = '<div class="opf-journal-info">';
+  if (journalTitle) html += `<strong>${journalTitle}</strong><br>`;
+  if (publisher) html += `出版社: ${publisher}<br>`;
+  if (journalUrl) html += `雑誌サイト: <a href="${journalUrl}" target="_blank">${journalUrl}</a><br>`;
+  html += `DOAJ収録: ${doaj || '不明'}<br>`;
+  if (opfUri) html += `OPF詳細: <a href="${opfUri}" target="_blank">${opfUri}</a>`;
+  html += '</div>';
+
+  const policies = item.publisher_policy || [];
+  for (const policy of policies) {
+    const permittedOa = policy.permitted_oa || [];
+    for (const oa of permittedOa) {
+      const versions = (oa.article_version_phrases || []).map(p => p.phrase).join(', ');
+      const licenses = (oa.license || []).map(l => l.license_phrases?.[0]?.phrase || l.license).join(', ');
+      const fee = oa.additional_oa_fee_phrases?.[0]?.phrase || oa.additional_oa_fee || '';
+      const locations = (oa.location?.location_phrases || []).map(p => p.phrase).join(', ');
+      const embargo = oa.embargo ? `${oa.embargo.amount} ${oa.embargo.units}` : '';
+      const conditions = oa.conditions || [];
+
+      html += '<div class="opf-policy-block">';
+      html += `<div class="opf-version-header">${versions || '(バージョン不明)'}</div>`;
+      html += '<div class="opf-policy-body">';
+      if (licenses) html += `<div class="opf-policy-row"><span class="opf-policy-label">ライセンス:</span><span class="opf-policy-value">${licenses}</span></div>`;
+      if (fee) html += `<div class="opf-policy-row"><span class="opf-policy-label">OA Fee:</span><span class="opf-policy-value">${fee}</span></div>`;
+      if (embargo) html += `<div class="opf-policy-row"><span class="opf-policy-label">エンバーゴ:</span><span class="opf-policy-value">${embargo}</span></div>`;
+      if (locations) html += `<div class="opf-policy-row"><span class="opf-policy-label">公開場所:</span><span class="opf-policy-value">${locations}</span></div>`;
+      if (conditions.length) {
+        html += '<div class="opf-policy-row"><span class="opf-policy-label">条件:</span><span class="opf-policy-value"><ul class="opf-condition-list">';
+        for (const c of conditions) html += `<li>${c}</li>`;
+        html += '</ul></span></div>';
+      }
+      html += '</div></div>';
+    }
+
+    const urls = policy.urls || [];
+    if (urls.length) {
+      html += '<div class="opf-urls">ポリシー参考URL:<ul>';
+      for (const u of urls) {
+        html += `<li><a href="${u.url}" target="_blank">${u.description || u.url}</a></li>`;
+      }
+      html += '</ul></div>';
+    }
+  }
+
+  html += `<div class="opf-footer">データ提供: <a href="https://openpolicyfinder.jisc.ac.uk/" target="_blank">Open Policy Finder</a> (CC BY-NC-ND)</div>`;
+  return html;
+}
+
+function showOpfModal() {
+  if (!lastOpfData) return;
+  document.getElementById('opf-modal-body').innerHTML = buildOpfModalHtml(lastOpfData);
+  document.getElementById('opf-modal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeOpfModal() {
+  document.getElementById('opf-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closePreview();
+  if (e.key === 'Escape') {
+    closeOpfModal();
+    closePreview();
+  }
 });
 document.getElementById('preview-modal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closePreview();
+});
+document.getElementById('opf-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeOpfModal();
 });
 
 // ===== Enter キー =====
@@ -4769,6 +4983,11 @@ if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_K
 }
 if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') {
   document.getElementById('cinii-apikey-warning').style.display = 'block';
+}
+if (!CONFIG.OPF_API_KEY || CONFIG.OPF_API_KEY === 'YOUR_OPF_API_KEY') {
+  const cb = document.getElementById('opf-enabled');
+  if (cb) { cb.disabled = true; cb.checked = false; }
+  document.getElementById('opf-apikey-missing').style.display = 'inline';
 }
 
 // ===== 更新チェック =====

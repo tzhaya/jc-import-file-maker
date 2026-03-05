@@ -231,3 +231,53 @@ const [ncid, opfData] = await Promise.all([
 1. **Step 1** を実装 → CORSテスト → 成否を確認
 2. CORSが通れば Steps 2-3 を順次実装、Step 4 はUIラベルのみ日本語化
 3. CORSが通らなければ Issue にて代替策（プロキシ等）を検討
+
+---
+
+## 実装上の修正点（レビュー後追記）
+
+### M-1. チェックボックスの配置位置
+`#input-area` の `</div>` 直前（L505付近）、既存ボタン行の後ろに追加。
+
+### M-2. OPFデータの保持方法
+`metadata._opfData` への格納ではなく、モジュールスコープのグローバル変数で保持する：
+
+```js
+let lastOpfData = null;  // OPF APIレスポンス全体を保持（info-bar/モーダル共用）
+```
+
+`mapToItemType()` の返り値には含めない（TSVエクスポート対象外のため）。
+
+### M-3. Promise.all の範囲
+既存の `allIssns.length` ガード内で `fetchNcid` と `fetchOpenPolicyFinder` を並行実行：
+
+```js
+const [ncid, opfData] = await Promise.all([
+    fetchNcid(allIssns),
+    opfEnabled ? fetchOpenPolicyFinder(allIssns) : Promise.resolve(null)
+]);
+lastOpfData = opfData;
+```
+
+### M-4. info-bar OPFリンクの表示タイミング
+`fetchCrossrefData()` 内、`mapToItemType()` 完了後（`renderAll()` の直前）に表示する。
+`mapToItemType()` 内では `lastOpfData` への代入のみ行い、DOM操作は `fetchCrossrefData()` に集約。
+
+### M-5. Escハンドラ・オーバーレイの拡張
+既存の単一 `closePreview()` 呼び出しを両モーダル対応に変更：
+
+```js
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeOpfModal();
+        closePreview();
+    }
+});
+```
+
+OPFモーダルのオーバーレイクリックも同様に `closeOpfModal()` を登録。
+
+### M-6. permitted_oa の表示単位
+1エントリが複数 `article_version` を持つ場合があるため（例: `["submitted", "accepted"]`）、
+`permitted_oa` エントリ単位でカードを表示し、バージョン名を複数並記する。
+version別グループ化は行わない。
