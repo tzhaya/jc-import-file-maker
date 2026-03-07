@@ -136,6 +136,11 @@
 </head>
 <body>
 <h1>助成情報検索ツール</h1>
+<p style="font-size:0.82em; color:#555; margin:4px 0 12px;">
+  最終更新: 2026-03-06 &nbsp;|&nbsp;
+  <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#555;">github.com/tzhaya/jc-import-file-maker</a>
+  <span id="update-check"></span>
+</p>
 
 <div class="input-section">
   <div style="margin-bottom:6px;font-size:0.9em">
@@ -527,6 +532,26 @@ async function doSearch() {
   statusEl.textContent = `完了（${numbers.length} 件）`;
   btn.disabled = false;
 }
+
+// ===== 更新チェック =====
+(async function checkForUpdate() {
+  const LOCAL_VERSION = '2026-03-06';
+  try {
+    const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
+    if (!res.ok) return;
+    const commits = await res.json();
+    if (!commits.length) return;
+    const remoteDate = commits[0].commit.committer.date.slice(0, 10);
+    if (remoteDate > LOCAL_VERSION) {
+      const el = document.getElementById('update-check');
+      if (el) {
+        el.innerHTML = ' &nbsp;| &nbsp;<a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" '
+          + 'style="color:#c62828; font-weight:bold; text-decoration:none;">'
+          + '🔔 更新版があります（' + remoteDate + '）</a>';
+      }
+    }
+  } catch (_) { /* オフライン時は静かに無視 */ }
+})();
 </script>
 <footer style="margin-top:32px;padding:12px 0;border-top:1px solid #ddd;color:#999;font-size:0.8em;text-align:center;">
   <p>助成情報検索ツール — <a href="https://github.com/tzhaya/jc-import-file-maker" style="color:#999">tzhaya/jc-import-file-maker</a></p>
