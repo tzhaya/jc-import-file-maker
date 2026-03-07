@@ -185,3 +185,62 @@ issue #34 の調査で、JPCOAR 2.0 の「プログラム情報識別子」(`fun
 - CiNii APIキー未設定で `JP23K27850` → CiNii Research OpenSearch フォールバックでヒット
 - CiNii APIキー未設定で `23H03160` → ヒットしない（制約通り）
 - JST課題番号（例: `JPMJSA1907`）→ KAKEN不一致、JGNフォールバック動作確認
+
+---
+
+## 拡張: 更新チェック機能（#65）
+
+> **ステータス: 実装予定**
+
+### 背景
+
+Issue #36 で `make_jc_importer.html` に実装した更新チェック機能（GitHub API でリモートのコミット日と HTML 内の `LOCAL_VERSION` を比較）を `funder_lookup.html` にも追加する。
+
+### 変更概要
+
+| 場所 | 変更内容 |
+|------|----------|
+| `<h1>` 直後 HTML | 最終更新日 + GitHubリンク + `<span id="update-check">` を追加 |
+| スクリプト末尾 | `checkForUpdate()` IIFE を追加 |
+
+### 実装詳細
+
+#### HTML（`<h1>` の直後に追加）
+
+```html
+<p style="font-size:0.82em; color:#555; margin:4px 0 12px;">
+  最終更新: 2026-03-06 &nbsp;|&nbsp;
+  <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#555;">github.com/tzhaya/jc-import-file-maker</a>
+  <span id="update-check"></span>
+</p>
+```
+
+#### JavaScript（スクリプト末尾に追加）
+
+```js
+// ===== 更新チェック =====
+(async function checkForUpdate() {
+  const LOCAL_VERSION = '2026-03-06';
+  try {
+    const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
+    if (!res.ok) return;
+    const commits = await res.json();
+    if (!commits.length) return;
+    const remoteDate = commits[0].commit.committer.date.slice(0, 10);
+    if (remoteDate > LOCAL_VERSION) {
+      const el = document.getElementById('update-check');
+      if (el) {
+        el.innerHTML = ' &nbsp;| &nbsp;<a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" '
+          + 'style="color:#c62828; font-weight:bold; text-decoration:none;">'
+          + '🔔 更新版があります（' + remoteDate + '）</a>';
+      }
+    }
+  } catch (_) { /* オフライン時は静かに無視 */ }
+})();
+```
+
+### 検証方法
+
+- `funder_lookup.html` をブラウザで開いた際、ヘッダー下部に最終更新日が表示されること
+- オフライン時はエラーなく動作すること
+- GitHub上のコミット日が `LOCAL_VERSION` より新しい場合に「更新版があります（YYYY-MM-DD）」が赤字リンクで表示されること（`LOCAL_VERSION` を古い日付に変更して確認）
