@@ -105,28 +105,68 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 ```
 ├── make_jc_importer.html   # メインツール（単一HTMLファイル）
 ├── funder_lookup.html      # 助成情報検索ツール（課題番号→助成機関情報一括検索）
+├── api-flow.md             # APIフロー整理（Crossref/OpenAlex等の取得順・JPCOARマッピング）
 ├── data/                   # 参照・設定データ
 │   ├── ItemType.json       # JAIRO Cloud アイテムタイプ定義
 │   ├── tsv_headers.json    # TSVヘッダー定義
 │   └── crossref_fields.json　# Crossrefフィールド定義
 ├── docs/                   # 仕様・設計ドキュメント
+│   ├── requirements.md         # 要件定義
+│   ├── user_guide.md           # 使い方ガイド
+│   ├── worklog.md              # 作業ログ
+│   ├── fieldmapping.md         # Crossref/OpenAlexとのフィールドマッピング一覧
+│   ├── fields.md               # JPCOARスキーマ フィールド一覧
+│   ├── JPCOARschema_guide.md   # JPCOARスキーマ 項目別説明リンク一覧
+│   ├── accessrights.md         # アクセス権 統制語彙
+│   ├── relatedIdentifier.md    # 関連識別子 統制語彙
+│   ├── resource_type_vocabulary.md       # 資源タイプ語彙別表（JPCOAR 2.0対応）
+│   ├── attribute_value_mlt.md           # attribute_value_mlt と配列記法のルール
+│   ├── crossref_type_mapping.md         # Crossref type → JPCOAR 資源タイプ マッピング
+│   ├── JPCOAR_JaLC_Crossref_requirements.md  # JPCOAR/JaLC/Crossref 必須項目マッピング
+│   ├── pipeline_comparison.md           # TSVエクスポート パイプライン比較
+│   ├── Implementation_phase1.md         # Phase 1 実装計画
+│   ├── Implementation_phase2.md         # Phase 2 実装計画（TSVエクスポート）
+│   ├── Implementation_JaLC.md           # JaLC API対応 実装計画
+│   ├── Implementation_KAKEN.md          # KAKEN API対応 実装計画
+│   ├── Implementation_OPF.md            # Open Policy Finder連携 実装計画
+│   ├── Implementation_doi_badges.md     # DOI必須項目バッジ表示 実装計画
+│   ├── Implementation_issue17.md        # Issue #17 識別子からの機関名逆引き 実装計画
+│   ├── Implementation_issue42.md        # Issue #42 関連情報取得改善 実装計画
+│   └── Implementation_funder_lookup.md  # 助成情報検索ツール 実装記録
 └── samples/                # サンプルデータ（API レスポンス等）
 ```
 
 ## ドキュメント
 
 - [要件定義](docs/requirements.md)
-- 実装計画
-  - [Phase 1](docs/Implementation_phase1.md) 現在の実装計画書です。
-  - [Phase 2](docs/Implementation_phase2.md) TSVファイル出力対応の実装計画書です。
-  - [KAKEN対応](docs/Implementation_KAKEN.md) KAKEN APIからのデータ取得に関する実装計画書です。
-  - [JaLC API対応](docs/Implementation_JaLC.md) JaLC REST APIからのデータ取得に関する実装計画書です。
+- [使い方ガイド](docs/user_guide.md)
 - [作業ログ](docs/worklog.md) 実装作業時のログです。
+- [APIフロー整理](api-flow.md) Crossref/OpenAlex等の取得順・JPCOARマッピングの概要です。
 
-- [フィールドマッピング一覧](docs/fieldmapping.md) Crossref/OpenAlexとのマッピング表です。  
+### 実装計画・実装記録
+
+- [Phase 1](docs/Implementation_phase1.md) 現在の実装計画書です。
+- [Phase 2](docs/Implementation_phase2.md) TSVファイル出力対応の実装計画書です。
+- [KAKEN対応](docs/Implementation_KAKEN.md) KAKEN APIからのデータ取得に関する実装計画書です。
+- [JaLC API対応](docs/Implementation_JaLC.md) JaLC REST APIからのデータ取得に関する実装計画書です。
+- [Open Policy Finder連携](docs/Implementation_OPF.md) OPF API/参照リンク対応の実装計画書です。
+- [DOI必須項目バッジ表示](docs/Implementation_doi_badges.md) DOI必須項目バッジ表示機能の実装計画書です。
+- [Issue #17 識別子からの機関名逆引き](docs/Implementation_issue17.md)
+- [Issue #42 関連情報取得改善](docs/Implementation_issue42.md)
+- [助成情報検索ツール](docs/Implementation_funder_lookup.md) 助成情報検索ツールの実装記録です。
+
+### フィールド・語彙リファレンス
+
+- [フィールドマッピング一覧](docs/fieldmapping.md) Crossref/OpenAlexとのマッピング表です。
 - [JPCOARスキーマ フィールド一覧](docs/fields.md) 「デフォルトアイテムタイプ（フル）」に含まれるフィールド一覧です。
 - [JPCOARスキーマ 項目別説明リンク一覧](docs/JPCOARschema_guide.md)
-- [助成情報検索ツール](docs/Implementation_funder_lookup.md) 助成情報検索ツールの実装記録です。
+- [資源タイプ語彙別表](docs/resource_type_vocabulary.md) JPCOAR 2.0対応の資源タイプ語彙一覧です。
+- [Crossref type → JPCOAR 資源タイプ マッピング](docs/crossref_type_mapping.md)
+- [JPCOAR/JaLC/Crossref 必須項目マッピング](docs/JPCOAR_JaLC_Crossref_requirements.md)
+- [アクセス権 統制語彙](docs/accessrights.md)
+- [関連識別子 統制語彙](docs/relatedIdentifier.md)
+- [attribute_value_mlt と配列記法のルール](docs/attribute_value_mlt.md)
+- [TSVエクスポート パイプライン比較](docs/pipeline_comparison.md)
 
 ## ライセンス
 
@@ -145,6 +185,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-07 | funder_lookup.html に更新チェック機能を追加：GitHubリポジトリとの最終更新日比較で新バージョンを通知（[#65](https://github.com/tzhaya/jc-import-file-maker/issues/65)） |
 | 2026-03-05 | OPF参照リンク：ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加。ISSN付き雑誌論文でOAポリシーを別タブで確認可能に（[#62](https://github.com/tzhaya/jc-import-file-maker/issues/62)） |
 | 2026-03-05 | KAKEN XML API 暫定スキップ：CORS非対応による処理時間短縮のためfetchKakenXml()呼び出しをコメントアウト（[#59](https://github.com/tzhaya/jc-import-file-maker/issues/59)） |
 | 2026-03-05 | KAKEN XML API CORS対応：fetchKakenXml()にtry/catch追加、CiNii Research OpenSearchを常に最終フォールバックに変更、補助金番号検出時のKAKEN検索リンク表示（[#58](https://github.com/tzhaya/jc-import-file-maker/issues/58)） |
