@@ -26,7 +26,7 @@ Crossref / OpenAlex / ROR API から取得したデータを、JPCOARスキー�
 | 18 | **関連情報** (relation) | `DOI` → 'isIdenticalTo' | `ids` (ARXIV, PMIDなど、DOI・OPENALEX除外) | 19種の識別子タイプに対応 |
 | 19 | **時間的範囲** (temporal) | — | — | 空（未実装） |
 | 20 | **位置情報** (geolocation) | — | — | 空（未実装） |
-| 21 | **助成情報** (funding_reference) | `funder[].name`, `funder[].DOI`, `funder[].award[]` | — | DOIはURL形式に変換 |
+| 21 | **助成情報** (funding_reference) | `funder[].name`, `funder[].DOI`, `funder[].award[]` | — | DOIはURL形式に変換。JGN/KAKEN連携で課題名・URI・プログラム情報を補完（#14, #52） |
 | 22 | **収録物識別子** (source_identifier) | `issn-type[].value` / `ISSN[]` | — | electronic→EISSN, print→PISSN |
 | 23 | **収録物名** (source_title) | `container-title[0]` | — | 言語は'en'固定 |
 | 24 | **巻** (volume) | `volume` | — | 直接マッピング |
@@ -75,11 +75,14 @@ Crossrefの `funder[]` 配列から助成情報を構築します。1つのfunde
 | **助成機関識別子タイプURI** | `subitem_funder_identifiers.subitem_funder_identifier_type_uri` | — | 空（未使用） |
 | **研究課題番号** | `subitem_award_numbers.subitem_award_number` | `funder[].award[]` | 各awardごとに1エントリ生成 |
 | **研究課題番号タイプ** | `subitem_award_numbers.subitem_award_number_type` | — | 空（未使用） |
-| **研究課題番号URI** | `subitem_award_numbers.subitem_award_uri` | — | 空（未使用） |
-| **プログラム情報** | `subitem_funding_streams` | — | 空（未実装） |
-| **プログラム情報識別子** | `subitem_funding_stream_identifiers` | — | 空（未実装） |
-| **研究課題名** | `subitem_award_titles.subitem_award_title` | — | 空（Crossrefに課題名なし） |
-| **研究課題名 言語** | `subitem_award_titles.subitem_award_title_language` | — | 空（Crossrefに課題名なし） |
+| **研究課題番号URI** | `subitem_award_numbers.subitem_award_uri` | JGN: `https://doi.org/10.52926/{番号}` / KAKEN: CiNii Research URL | JGN/KAKEN連携で設定（#14, #2） |
+| **プログラム情報** | `subitem_funding_streams[].subitem_funding_stream` | JGN: `funding.scheme` / KAKEN: 科学研究費助成事業（定数、日英） | JGN/KAKEN連携で取得（#14, #52） |
+| **プログラム情報 言語** | `subitem_funding_streams[].subitem_funding_stream_language` | JGN: 空 / KAKEN: ja/en | JPCOAR 2.0（#34） |
+| **プログラム情報識別子** | `subitem_funding_stream_identifiers.subitem_funding_stream_identifier` | JGN: 課題番号から自動抽出 | `/^JP([A-Z]+)\d/i` で JGN_fundingStream コード抽出（#56） |
+| **プログラム情報識別子タイプ** | `subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type` | JGN: `JGN_fundingStream` | fundingStreamId が存在する場合に設定 |
+| **プログラム情報識別子タイプURI** | `subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri` | — | 空（未使用） |
+| **研究課題名** | `subitem_award_titles[].subitem_award_title` | JGN: `project-title` / KAKEN: CiNii Research API | JGN/KAKEN連携で取得（#14, #2） |
+| **研究課題名 言語** | `subitem_award_titles[].subitem_award_title_language` | JGN/KAKEN: 空 | 言語自動判定なし |
 
 ### 助成機関識別子の変換ロジック
 
@@ -189,3 +192,11 @@ Crossrefの `date-parts` 配列をISO 8601形式に変換します。取得優�
 | **Crossref** | `https://api.crossref.org/works/{DOI}` | 書誌データの主要ソース |
 | **OpenAlex** | `https://api.openalex.org/works/doi:{DOI}` | 著者所属・OA情報の補完 |
 | **ROR v2** | `https://api.ror.org/v2/organizations/{ror_id}` | 機関名・ISNI情報の取得（並列フェッチ） |
+
+## TSVプロパティキーの命名規則
+
+助成情報フィールドのTSVキー構造（`subitem_award_numbers`, `subitem_funder_identifiers` 等）の詳細は [weko3_property_key_naming.md](weko3_property_key_naming.md) を参照。
+
+- 2行目（プロパティキー）と3行目（日本語ラベル）の全14列の対応表
+- 配列フィールドとオブジェクトフィールドの区別
+- リポジトリ間でのプレフィックスの違い（`item_30002_funding_reference21` vs `item_1708699025255` 等）
