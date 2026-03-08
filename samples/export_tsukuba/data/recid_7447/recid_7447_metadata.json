@@ -1,0 +1,213 @@
+{
+  "_buckets": {
+    "deposit": "77a9b8df-c7a7-4672-bb05-0a2fa7976160"
+  },
+  "_deposit": {
+    "created_by": 290,
+    "id": "7447",
+    "owners": [
+      290
+    ],
+    "pid": {
+      "revision_id": 0,
+      "type": "depid",
+      "value": "7447"
+    },
+    "status": "published"
+  },
+  "_oai": {
+    "id": "oai:tsukuba.repo.nii.ac.jp:00007447",
+    "sets": [
+      "1722555831928"
+    ]
+  },
+  "author_link": [],
+  "item_1644910766877": {
+    "attribute_name": "出版タイプ",
+    "attribute_value_mlt": [
+      {
+        "subitem_version_resource": "http://purl.org/coar/version/c_970fb48d4fbd8a85",
+        "subitem_version_type": "VoR"
+      }
+    ]
+  },
+  "item_1722561470159": {
+    "attribute_name": "著者情報",
+    "attribute_value_mlt": [
+      {
+        "subitem_link_text": "数理物質系; 佐野, 伸行; サノ, ノブユキ; SANO, Nobuyuki",
+        "subitem_link_url": "http://trios.tsukuba.ac.jp/researcher/0000000707"
+      }
+    ]
+  },
+  "item_5_biblio_info_6": {
+    "attribute_name": "書誌情報",
+    "attribute_value_mlt": [
+      {
+        "bibliographicIssueDates": {
+          "bibliographicIssueDate": "2004-11",
+          "bibliographicIssueDateType": "Issued"
+        },
+        "bibliographicIssueNumber": "18",
+        "bibliographicPageEnd": "4210",
+        "bibliographicPageStart": "4208",
+        "bibliographicVolumeNumber": "85",
+        "bibliographic_titles": [
+          {
+            "bibliographic_title": "Applied Physics Letters",
+            "bibliographic_titleLang": "en"
+          }
+        ]
+      }
+    ]
+  },
+  "item_5_publisher_27": {
+    "attribute_name": "出版者",
+    "attribute_value_mlt": [
+      {
+        "subitem_publisher": "AIP Publishing",
+        "subitem_publisher_language": "en"
+      }
+    ]
+  },
+  "item_5_relation_11": {
+    "attribute_name": "DOI",
+    "attribute_value_mlt": [
+      {
+        "subitem_relation_type": "isIdenticalTo",
+        "subitem_relation_type_id": {
+          "subitem_relation_type_id_text": "https://doi.org/10.1063/1.1812812",
+          "subitem_relation_type_select": "DOI"
+        }
+      }
+    ]
+  },
+  "item_5_rights_12": {
+    "attribute_name": "権利情報",
+    "attribute_value_mlt": [
+      {
+        "subitem_rights": "© 2004 American Institute of Physics",
+        "subitem_rights_language": "en"
+      }
+    ]
+  },
+  "item_5_source_id_7": {
+    "attribute_name": "ISSN",
+    "attribute_value_mlt": [
+      {
+        "subitem_source_identifier": "0003-6951",
+        "subitem_source_identifier_type": "PISSN"
+      }
+    ]
+  },
+  "item_5_source_id_9": {
+    "attribute_name": "NCID",
+    "attribute_value_mlt": [
+      {
+        "subitem_source_identifier": "AA00543431",
+        "subitem_source_identifier_type": "NCID"
+      }
+    ]
+  },
+  "item_access_right": {
+    "attribute_name": "アクセス権",
+    "attribute_value_mlt": [
+      {
+        "subitem_access_right": "open access",
+        "subitem_access_right_uri": "http://purl.org/coar/access_right/c_abf2"
+      }
+    ]
+  },
+  "item_creator": {
+    "attribute_name": "著者",
+    "attribute_type": "creator",
+    "attribute_value_mlt": [
+      {
+        "creatorMails": [
+          {
+            "creatorMail": "sano@esys.tsukuba.ac.jp"
+          }
+        ],
+        "creatorNames": [
+          {
+            "creatorName": "SANO Nobuyuki",
+            "creatorNameLang": "en"
+          }
+        ]
+      }
+    ]
+  },
+  "item_files": {
+    "attribute_name": "ファイル情報",
+    "attribute_type": "file",
+    "attribute_value_mlt": [
+      {
+        "accessrole": "open_date",
+        "date": [
+          {
+            "dateType": "Available",
+            "dateValue": "2013-12-18"
+          }
+        ],
+        "displaytype": "detail",
+        "filename": "APL_85-29.pdf",
+        "filesize": [
+          {
+            "value": "117.5 kB"
+          }
+        ],
+        "format": "application/pdf",
+        "mimetype": "application/pdf",
+        "url": {
+          "objectType": "fulltext",
+          "url": "https://tsukuba.repo.nii.ac.jp/record/7447/files/APL_85-29.pdf"
+        },
+        "version_id": "0144d15b-cd61-46bd-ae3a-bc26a3ab80fa"
+      }
+    ]
+  },
+  "item_language": {
+    "attribute_name": "言語",
+    "attribute_value_mlt": [
+      {
+        "subitem_language": "eng"
+      }
+    ]
+  },
+  "item_resource_type": {
+    "attribute_name": "資源タイプ",
+    "attribute_value_mlt": [
+      {
+        "resourcetype": "journal article",
+        "resourceuri": "http://purl.org/coar/resource_type/c_6501"
+      }
+    ]
+  },
+  "item_title": "Kinetic study of velocity distributions in nanoscale semiconductor devices under room-temperature operation",
+  "item_titles": {
+    "attribute_name": "タイトル",
+    "attribute_value_mlt": [
+      {
+        "subitem_title": "Kinetic study of velocity distributions in nanoscale semiconductor devices under room-temperature operation",
+        "subitem_title_language": "en"
+      }
+    ]
+  },
+  "item_type_id": "5",
+  "owner": "290",
+  "path": [
+    "1722555831928"
+  ],
+  "pubdate": {
+    "attribute_name": "PubDate",
+    "attribute_value": "2007-03-22"
+  },
+  "publish_date": "2007-03-22",
+  "publish_status": "0",
+  "recid": "7447",
+  "relation_version_is_last": true,
+  "title": [
+    "Kinetic study of velocity distributions in nanoscale semiconductor devices under room-temperature operation"
+  ],
+  "weko_shared_id": -1
+}

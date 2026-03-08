@@ -209,10 +209,94 @@ TSVの2行目では、プロパティキーは `.metadata.` プレフィック�
 - `[0]`, `[1]` 等: 配列フィールドの繰り返しインデックス（TSV上での展開）
 - `.subitem_xxx`: 子要素名（プロパティ定義内のJSON Schemaで定義）
 
+## 助成情報フィールドの構造（Issue #67 向け）
+
+サンプルTSV 3種（30002テンプレート、40039エクスポート、つくばリポジトリ）を照合した結果、助成情報のsub-item構造（2行目のプロパティキーのプレフィックス以降）は全サンプルで同一であることを確認した。
+
+### 2行目（プロパティキー）の助成情報列
+
+プレフィックス（`.metadata.item_30002_funding_reference21` / `.metadata.item_1708699025255` 等）以降は共通:
+
+| # | sub-itemパス | JPCOAR |
+|---|-------------|--------|
+| 1 | `[N].subitem_award_numbers.subitem_award_number` | 1.0/2.0 |
+| 2 | `[N].subitem_award_numbers.subitem_award_number_type` | 1.0/2.0 |
+| 3 | `[N].subitem_award_numbers.subitem_award_uri` | 1.0/2.0 |
+| 4 | `[N].subitem_award_titles[0].subitem_award_title` | 1.0/2.0 |
+| 5 | `[N].subitem_award_titles[0].subitem_award_title_language` | 1.0/2.0 |
+| 6 | `[N].subitem_funder_identifiers.subitem_funder_identifier` | 1.0/2.0 |
+| 7 | `[N].subitem_funder_identifiers.subitem_funder_identifier_type` | 1.0/2.0 |
+| 8 | `[N].subitem_funder_names[0].subitem_funder_name` | 1.0/2.0 |
+| 9 | `[N].subitem_funder_names[0].subitem_funder_name_language` | 1.0/2.0 |
+| 10 | `[N].subitem_funding_stream_identifiers.subitem_funding_stream_identifier` | **2.0のみ** |
+| 11 | `[N].subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type` | **2.0のみ** |
+| 12 | `[N].subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri` | **2.0のみ** |
+| 13 | `[N].subitem_funding_streams[0].subitem_funding_stream` | **2.0のみ** |
+| 14 | `[N].subitem_funding_streams[0].subitem_funding_stream_language` | **2.0のみ** |
+
+### 3行目（日本語ラベル）の助成情報列
+
+トップレベルラベルはリポジトリによって異なる:
+
+| リポジトリ | トップレベルラベル | プレフィックスの例 |
+|------------|-------------------|-------------------|
+| 30002テンプレート / 40039エクスポート | `助成情報` | `助成情報[0].研究課題番号.研究課題番号` |
+| つくばリポジトリ(5) | `研究課題番号` | `研究課題番号[0].研究課題番号.研究課題番号` |
+
+sub-itemラベルは共通（トップレベルラベル以降）:
+
+| # | sub-itemラベル | 対応する2行目 |
+|---|---------------|--------------|
+| 1 | `[N].研究課題番号.研究課題番号` | `subitem_award_numbers.subitem_award_number` |
+| 2 | `[N].研究課題番号.研究課題番号タイプ` | `subitem_award_numbers.subitem_award_number_type` |
+| 3 | `[N].研究課題番号.研究課題番号URI` | `subitem_award_numbers.subitem_award_uri` |
+| 4 | `[N].研究課題名[0].研究課題名` | `subitem_award_titles[0].subitem_award_title` |
+| 5 | `[N].研究課題名[0].言語` | `subitem_award_titles[0].subitem_award_title_language` |
+| 6 | `[N].助成機関識別子.助成機関識別子` | `subitem_funder_identifiers.subitem_funder_identifier` |
+| 7 | `[N].助成機関識別子.識別子タイプ` | `subitem_funder_identifiers.subitem_funder_identifier_type` |
+| 8 | `[N].助成機関名[0].助成機関名` | `subitem_funder_names[0].subitem_funder_name` |
+| 9 | `[N].助成機関名[0].言語` | `subitem_funder_names[0].subitem_funder_name_language` |
+| 10 | `[N].プログラム情報識別子.プログラム情報識別子` | `subitem_funding_stream_identifiers.subitem_funding_stream_identifier` |
+| 11 | `[N].プログラム情報識別子.プログラム情報識別子タイプ` | `subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type` |
+| 12 | `[N].プログラム情報識別子.プログラム情報識別子タイプURI` | `subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri` |
+| 13 | `[N].プログラム情報[0].プログラム情報` | `subitem_funding_streams[0].subitem_funding_stream` |
+| 14 | `[N].プログラム情報[0].言語` | `subitem_funding_streams[0].subitem_funding_stream_language` |
+
+### 30002テンプレートの3行目の誤り
+
+`samples/デフォルトアイテムタイプ（フル）(30002).tsv` の3行目において、プログラム情報識別子の最初のサブフィールドラベルに誤りがある:
+
+| 列 | 30002テンプレート | 40039エクスポート / つくば |
+|----|-------------------|---------------------------|
+| #10 | `プログラム情報識別子.研究課題番号タイプ` | `プログラム情報識別子.プログラム情報識別子` |
+
+30002テンプレートの「研究課題番号タイプ」は誤りで、正しくは「プログラム情報識別子」。WEKO3側のテンプレート生成のバグと推定される。2行目のプロパティキー（`subitem_funding_stream_identifier`）は正しいため、インポート処理に影響はない（WEKO3は2行目を使用してJSONを生成する）。
+
+### 配列フィールドとオブジェクトフィールドの区別
+
+| 子要素 | 構造 | 備考 |
+|--------|------|------|
+| `subitem_award_numbers` | オブジェクト | 研究課題番号は1件のみ |
+| `subitem_award_titles` | **配列** `[0]` | 研究課題名は多言語対応 |
+| `subitem_funder_identifiers` | オブジェクト | 助成機関識別子は1件のみ |
+| `subitem_funder_names` | **配列** `[0]` | 助成機関名は多言語対応 |
+| `subitem_funding_stream_identifiers` | オブジェクト | プログラム情報識別子は1件のみ |
+| `subitem_funding_streams` | **配列** `[0]` | プログラム情報は多言語対応 |
+
 ## 参考資料
+
+### WEKO3 ソースコード
 
 - [RCOSDP/weko - GitHub](https://github.com/RCOSDP/weko) — WEKO3ソースコード
 - [register_item_types.py](https://github.com/RCOSDP/weko/blob/main/scripts/demo/register_item_types.py) — デフォルトアイテムタイプ登録スクリプト
 - [item_type_config.py](https://github.com/RCOSDP/weko/blob/main/scripts/demo/item_types/item_type_config.py) — アイテムタイプID定数定義
 - [create_itemtype.js](https://github.com/RCOSDP/weko/blob/main/modules/weko-itemtypes-ui/weko_itemtypes_ui/static/js/weko_itemtypes_ui/create_itemtype.js) — Web UIキー生成コード
 - [properties/](https://github.com/RCOSDP/weko/tree/main/scripts/demo/properties) — プロパティ定義ファイル群
+
+### 検証に使用したサンプルTSV
+
+| ファイル | 用途 | パターン |
+|----------|------|----------|
+| [デフォルトアイテムタイプ（フル）(30002).tsv](../samples/デフォルトアイテムタイプ（フル）(30002).tsv) | テンプレート（WEKO3標準出力） | パターン1: `item_30002_*` |
+| [国際農研デフォルトアイテムタイプ（フル）(40039).tsv](../samples/export/data/国際農研デフォルトアイテムタイプ（フル）(40039).tsv) | 実データエクスポート（30002コピー＋独自追加） | パターン1 + パターン2 |
+| [アイテムタイプJ(5).tsv](../samples/export_tsukuba/data/アイテムタイプJ(5).tsv) | 実データエクスポート（WEKO2移行＋後日追加） | パターン1 + パターン2 + パターン3 |
