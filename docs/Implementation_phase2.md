@@ -27,6 +27,19 @@ DOM の構造・フィールドキー・語彙が固まってから TSV 出力�
 
 - **編集**: `make_jc_importer.html`（単一ファイルアプリ）
 - **参照**: `samples/デフォルトアイテムタイプ（フル）(30002).tsv`（出力フォーマットの基準）
+- **参照**: [weko3_property_key_naming.md](weko3_property_key_naming.md) — プロパティキーの命名規則（3パターン）と助成情報フィールド構造
+
+### プロパティキーの可変性に関する注意
+
+TSV_COL_GROUPS のプロパティキー（`item_30002_funding_reference21` 等）は 30002 テンプレート基準だが、実際のリポジトリではプロパティキーが異なる場合がある（詳細は [weko3_property_key_naming.md](weko3_property_key_naming.md) 参照）:
+
+| パターン | 例 | 発生条件 |
+|----------|-----|----------|
+| `item_{item_type_id}_{name}{idx}` | `item_30002_funding_reference21` | 30002 からコピーしたアイテムタイプ |
+| `item_{timestamp}` | `item_1708699025255` | Web UI から後日追加されたプロパティ |
+| `item_{name}` | `item_creator` | WEKO2 からの移行 |
+
+Phase 2 の TSV 出力では 30002 基準のキーを使用するが、将来的にユーザのリポジトリに合わせたキー設定が必要になる可能性がある（Issue #67 の funder_lookup.html では TSV ヘッダー貼り付けによる自動検出方式を採用）。
 
 ## 出力ルール
 
