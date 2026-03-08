@@ -17,14 +17,14 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 5. 「プレビュー表示」ボタンでプレビューができます。
 6. TSVファイルとしてダウンロードができます（準備中）
 
-詳しい使い方は[使い方ガイド](docs/user_guide.md)を参照ください。
+詳しい使い方と取得したデータの取り扱いは[使い方ガイド](docs/user_guide.md)を参照ください。
 
 ### 助成情報検索ツール
 
 - 付属ツールとして、助成情報検索ツール `funder_lookup.html` を作成しました。
 - [funder_lookup.html](https://github.com/tzhaya/jc-import-file-maker/blob/master/funder_lookup.html) ←このリンクを右クリック→「名前をつけてリンク(先)を保存」で保存してご利用ください。
 - 保存したファイルをブラウザで開いて科研費課題番号やJGN課題番号を入力すると、JPCOAR 2.0 準拠の助成情報（助成機関識別子・助成機関名・プログラム情報・研究課題名）を検索できます。
-- 論文の謝辞（Acknowledgement）からも抽出ができます。
+- 論文の謝辞（Acknowledgement）をコピー＆ペーストして科研費課題番号の抽出ができます。
 
 ### API Key の設定
 
