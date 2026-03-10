@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>JAIRO Cloud インポートツール — 設定</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      font-size: 14px;
+      margin: 0;
+      padding: 24px;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0 0 4px;
+      color: #1a237e;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 24px;
+    }
+    .section {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+    }
+    .section h2 {
+      font-size: 14px;
+      font-weight: bold;
+      margin: 0 0 12px;
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: #555;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: monospace;
+    }
+    input:focus {
+      outline: none;
+      border-color: #3f51b5;
+      box-shadow: 0 0 0 2px rgba(63,81,181,0.15);
+    }
+    .hint {
+      font-size: 11px;
+      color: #888;
+      margin-top: 3px;
+    }
+    .hint a {
+      color: #3f51b5;
+    }
+    button {
+      background: #3f51b5;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 20px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #303f9f;
+    }
+    #status {
+      display: inline-block;
+      margin-left: 12px;
+      font-size: 12px;
+      color: #388e3c;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #status.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <h1>JAIRO Cloud インポート支援ツール — 設定</h1>
+  <p class="subtitle">APIキーはブラウザのローカルストレージに保存されます。外部に送信されることはありません。</p>
+
+  <div class="section">
+    <h2>OpenAlex API</h2>
+    <div class="field">
+      <label for="openalex-key">API Key</label>
+      <input type="text" id="openalex-key" placeholder="YOUR_OpenAlex_API_KEY">
+      <p class="hint">未設定でも動作しますが、レート制限が厳しくなります。
+        <a href="https://openalex.org/accounts/login" target="_blank" rel="noopener">OpenAlex</a> で取得できます。</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>CiNii Research API（KAKEN連携・NCID取得に使用）</h2>
+    <div class="field">
+      <label for="cinii-key">API Key (appid)</label>
+      <input type="text" id="cinii-key" placeholder="YOUR_CiNii_API_KEY">
+      <p class="hint">未設定でも基本機能は動作します。KAKEN XML APIを利用するには設定が必要です。
+        <a href="https://support.nii.ac.jp/ja/cir/r_api" target="_blank" rel="noopener">CiNii Research API</a> で取得できます。</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Open Policy Finder (OPF) API</h2>
+    <div class="field">
+      <label for="opf-key">API Key</label>
+      <input type="password" id="opf-key" placeholder="YOUR_OPF_API_KEY">
+      <p class="hint">雑誌のOAポリシー情報を取得します（CORS非対応のためChrome拡張経由でのみ動作）。
+        <a href="https://openpolicyfinder.jisc.ac.uk/" target="_blank" rel="noopener">Open Policy Finder</a> で取得できます。</p>
+    </div>
+  </div>
+
+  <button id="save-btn">保存</button>
+  <span id="status">✓ 保存しました</span>
+
+  <script src="options.js"></script>
+</body>
+</html>

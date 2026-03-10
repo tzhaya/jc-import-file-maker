@@ -1049,6 +1049,63 @@ const resourcetype = TITLE_MAPS.resourcetype.includes(crTypeLabel)
 
 ---
 
+### Chrome拡張化 + OPF API連携 ✅（2026-03-10）
+
+**背景:** 以下の3つのAPIがCORS非対応のためブラウザから直接アクセスできず、機能が無効化・コメントアウトされていた（[Issue #70](https://github.com/tzhaya/jc-import-file-maker/issues/70)）。また、Open Policy Finder API連携の実装（PR [#61](https://github.com/tzhaya/jc-import-file-maker/pull/61)・[Issue #50](https://github.com/tzhaya/jc-import-file-maker/issues/50)）がCORS制約により単体では動作不可だった。
+- KAKEN XML API (`https://kaken.nii.ac.jp/opensearch/`)
+- JaLC API (`https://api.japanlinkcenter.org/`)
+- Open Policy Finder API (`https://api.openpolicyfinder.jisc.ac.uk/`)
+
+さらに、OpenAlex・CiNii の APIキーがHTMLソースにハードコードされており、Git管理に課題があった。
+
+**実装内容:**
+
+1. **`manifest.json` 新規作成（Manifest V3）:**
+   - `permissions`: `storage`, `sidePanel`
+   - `host_permissions`: KAKEN/JaLC/OPF の各APIエンドポイント
+   - `side_panel.default_path`: `make_jc_importer.html`（ツールバーボタンでサイドパネルとして起動）
+   - `options_page`: `options.html`
+
+2. **`background.js` 新規作成（Service Worker）:**
+   - `chrome.sidePanel.setPanelBehavior()` でツールバーボタンクリック時にサイドパネルを開く
+   - `chrome.runtime.onMessage.addListener()` で `{ type: 'FETCH', url, options }` メッセージを受信し、CORS制約なしでAPIを呼び出してレスポンスを返す
+
+3. **`options.html` 新規作成（APIキー管理 UI）:**
+   - OpenAlex API Key / CiNii API Key / OPF API Key の3項目を入力フォームで設定
+   - `chrome.storage.local.set()` で保存、読み込みは `chrome.storage.local.get()`
+   - 保存時に「保存しました」フィードバック表示
+
+4. **`make_jc_importer.html` の更新:**
+   - **`CONFIG` に `OPF_API_KEY` を追加**
+   - **`loadConfig()` 関数を追加:** `chrome.storage.local.get()` でAPIキーを読み込みCONFIGを更新。拡張外環境ではno-op
+   - **`extensionFetch()` 関数を追加:** Chrome拡張利用可能時は `chrome.runtime.sendMessage()` 経由でService WorkerにfetchをProxy。不可時は通常の `fetch()` にフォールバック
+   - **KAKEN XML API 有効化:** `fetchKakenXml()` 内の `fetch()` を `extensionFetch()` に変更。`buildFunders()` の3箇所のコメントアウトを解除して有効化
+   - **JaLC API 有効化:** `fetchJaLC()` 内の `fetch()` を `extensionFetch()` に変更。`fetchData()` の `ra === 'JaLC'` 分岐でChrome拡張利用可能時に `fetchJaLCData(doi)` を呼び出すよう変更（不可時は「拡張版のみ対応」メッセージ）
+   - **OPF API 連携（PR #61 対応）:**
+     - `fetchOpenPolicyFinder(issns)`: `extensionFetch()` でOPF APIを呼び出し、ISSNを順次試行
+     - `updateOpfStatus(issns)`: OPF取得を実行し、info-barのバッジを更新（取得中→見つかった/なし）
+     - `openOpfModal()` / `closeOpfModal()` / `renderOpfModal()`: OPFポリシーモーダルの表示制御
+     - info-bar に「📋 OAポリシー」バッジを追加（クリックでモーダル表示）
+     - `#opf-modal` HTML要素をHTMLに追加
+     - Escキーハンドラで `closeOpfModal()` も対象に追加
+     - `fetchCrossrefData()` / `fetchJaLCData()` にOPF呼び出しを追加
+   - **`fetchData()` に `await loadConfig()` を追加**
+
+5. **`funder_lookup.html` の更新:**
+   - `loadConfig()` と `extensionFetch()` を追加（`make_jc_importer.html` と同様）
+   - `fetchKakenXml()` 内の `fetch()` を `extensionFetch()` に変更
+   - `lookupOne()` 内のKAKEN XML API呼び出しのコメントアウトを解除
+   - `doSearch()` の先頭に `await loadConfig()` を追加
+
+**検証方法:**
+- Chrome拡張として読み込み（`chrome://extensions/` → デベロッパーモード → パッケージ化されていない拡張機能を読み込む）
+- `options.html` で各APIキーを設定・保存
+- サイドパネルで `make_jc_importer.html` を開き、Crossref DOIで KAKEN XML API / OPF API が動作すること
+- JaLC DOIでメタデータ取得が動作すること
+- 通常ブラウザ（拡張なし）での既存動作が維持されること
+
+---
+
 ## 未完了タスク
 
 ### Phase 2: TSVエクスポート機能（未着手）

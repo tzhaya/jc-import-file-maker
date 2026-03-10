@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAIRO Cloud インポート用TSV生成ツール</title>
+<style>
+  /* ===== ナビゲーション ===== */
+  .ext-nav { display:flex; gap:0; margin-bottom:12px; border-bottom:2px solid #c8e6c9; }
+  .ext-nav a { padding:6px 16px; text-decoration:none; font-size:0.9em; color:#555; border:1px solid transparent; border-bottom:none; border-radius:4px 4px 0 0; }
+  .ext-nav a.active { background:#fff; color:#2c5f2e; font-weight:bold; border-color:#c8e6c9; margin-bottom:-2px; }
+  .ext-nav a:hover:not(.active) { background:#e8f5e9; }
+  /* ===== ベーススタイル ===== */
+  body { font-family: sans-serif; margin: 20px; background: #f5f5f5; }
+  h1 { color: #2c5f2e; font-size: 1.4em; margin-bottom: 16px; }
+
+  /* ===== 入力エリア ===== */
+  #input-area {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .input-row label { font-weight: bold; white-space: nowrap; }
+  #doi-input {
+    width: 380px;
+    padding: 8px;
+    font-size: 1em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  /* ===== ボタン ===== */
+  button { padding: 8px 20px; font-size: 1em; border: none; border-radius: 4px; cursor: pointer; }
+  #fetch-btn { background: #2c5f2e; color: white; }
+  #fetch-btn:hover { background: #1e4020; }
+  #empty-btn { background: #546e7a; color: white; }
+  #empty-btn:hover { background: #37474f; }
+
+  /* ===== ローディング・エラー・情報バー ===== */
+  #error-msg {
+    color: #c62828;
+    background: #ffebee;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 8px;
+    display: none;
+  }
+  #loading { color: #555; margin-top: 8px; display: none; }
+  #info-bar {
+    display: none;
+    margin-top: 10px;
+    font-size: 0.92em;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  #info-bar a { font-weight: bold; color: #1565c0; word-break: break-all; }
+  .oa-badge {
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.82em;
+    font-weight: bold;
+    color: white;
+  }
+
+  /* ===== プレビューエリア ===== */
+  #preview-area {
+    display: none;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  #preview-area h2 {
+    background: #2c5f2e;
+    color: white;
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 1em;
+  }
+
+  /* ===== システムフィールドテーブル ===== */
+  #system-fields {
+    padding: 12px 16px;
+    border-bottom: 2px solid #e8f5e9;
+  }
+  #system-fields h3 {
+    color: #1b5e20;
+    font-size: 0.9em;
+    margin: 0 0 8px 0;
+    padding: 4px 8px;
+    background: #c8e6c9;
+    border-radius: 4px;
+  }
+  .sys-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82em;
+  }
+  .sys-table th {
+    background: #e8f5e9;
+    color: #2c5f2e;
+    text-align: left;
+    padding: 5px 8px;
+    font-size: 0.82em;
+  }
+  .sys-table td {
+    padding: 3px 8px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+  }
+  .sys-table td:first-child { color: #444; width: 220px; white-space: nowrap; }
+  .sys-table td:nth-child(2) { color: #777; width: 180px; font-size: 0.85em; }
+  .sys-table input[type=text],
+  .sys-table select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 0.82em;
+    font-family: sans-serif;
+  }
+
+  /* ===== メタデータフィールド（アコーディオン）エリア ===== */
+  #metadata-fields { padding: 8px 0; }
+
+  /* ===== アコーディオン: フィールドセクション ===== */
+  .field-section { border-bottom: 1px solid #e8f5e9; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    background: #f1f8e9;
+    border-left: 4px solid #2c5f2e;
+    user-select: none;
+    font-size: 0.88em;
+    font-weight: bold;
+    color: #1b5e20;
+  }
+  .section-header:hover { background: #e8f5e9; }
+  .section-header .toggle-icon { font-size: 0.8em; color: #555; flex-shrink: 0; }
+  .section-header a { color: #1565c0; text-decoration: none; }
+  .section-header a:hover { text-decoration: underline; }
+  .section-header .summary {
+    color: #666;
+    font-weight: normal;
+    font-size: 0.9em;
+    display: none;
+    margin-left: 4px;
+  }
+
+  .accordion-content { display: block; }
+
+  /* ===== ネスト項目 ===== */
+  .nested-item {
+    margin: 4px 0;
+  }
+
+  /* Level 1 */
+  .level-1 {
+    margin-left: 16px;
+    border-left: 3px solid #4caf50;
+    padding-left: 8px;
+  }
+  /* Level 2 */
+  .level-2 {
+    margin-left: 32px;
+    border-left: 3px solid #81c784;
+    padding-left: 8px;
+  }
+  /* Level 3 */
+  .level-3 {
+    margin-left: 48px;
+    border-left: 3px solid #a5d6a7;
+    padding-left: 8px;
+  }
+  /* Level 4 */
+  .level-4 {
+    margin-left: 64px;
+    border-left: 3px solid #c8e6c9;
+    padding-left: 8px;
+  }
+
+  .item-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #f9fbe7;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    font-size: 0.82em;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+  }
+  .item-header:hover { background: #f1f8e9; }
+  .item-header .toggle-icon { font-size: 0.8em; color: #555; }
+  .item-header .item-label { flex: 1; }
+  .item-header .item-summary {
+    color: #888;
+    font-weight: normal;
+    font-size: 0.9em;
+    display: none;
+  }
+
+  .item-content { display: block; }
+
+  /* ===== フィールド行 ===== */
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    font-size: 0.82em;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  .field-row:hover { background: #fafff8; }
+  .field-row .field-label {
+    color: #555;
+    white-space: nowrap;
+    min-width: 180px;
+    width: 220px;
+    flex-shrink: 0;
+    font-size: 0.92em;
+  }
+  .field-row input[type=text],
+  .field-row textarea,
+  .field-row select {
+    flex: 1;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 0.82em;
+    font-family: sans-serif;
+  }
+  .field-row textarea { resize: vertical; min-height: 60px; }
+  .field-row select { flex: 0 0 auto; width: auto; min-width: 120px; }
+
+  /* ===== 追加・削除ボタン ===== */
+  .btn-add {
+    background: #e8f5e9;
+    color: #2c5f2e;
+    border: 1px solid #a5d6a7;
+    padding: 2px 10px;
+    font-size: 0.78em;
+    border-radius: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-add:hover { background: #c8e6c9; }
+  .btn-delete {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+    padding: 2px 10px;
+    font-size: 0.78em;
+    border-radius: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-delete:hover { background: #ffcdd2; }
+
+  /* ===== エントリグループ（姓名・識別子等サブ配列1件） ===== */
+  .entry-group {
+    border-left: 2px solid #e0e0e0;
+    margin: 4px 0 4px 16px;
+    padding: 4px 0 4px 8px;
+  }
+  .btn-delete-inline {
+    display: block;
+    margin: 4px 0;
+    font-size: 0.8em;
+    padding: 2px 10px;
+  }
+
+  /* ===== ネストセクションヘッダー（Level 2+） ===== */
+  .nested-section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    font-size: 0.82em;
+    font-weight: bold;
+    color: #444;
+    cursor: pointer;
+    user-select: none;
+  }
+  .nested-section-header:hover { background: #f9fbe7; }
+  .nested-section-header .toggle-icon { font-size: 0.75em; color: #777; }
+  .nested-section-content { display: block; }
+
+  /* ===== 警告表示 ===== */
+  .warn-badge {
+    color: #e65100;
+    font-size: 0.75em;
+    cursor: help;
+    flex-shrink: 0;
+  }
+
+  /* ===== レベルアイコン ===== */
+  .level-icon { flex-shrink: 0; }
+
+  /* ===== 参照値（ヒント）セル ===== */
+  .hint-cell {
+    flex: 0 1 auto;
+    max-width: 220px;
+    color: #888;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: #f8f8f4;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px dashed #ddd;
+  }
+  .hint-cell a { color: #1565c0; text-decoration: none; }
+  .hint-cell a:hover { text-decoration: underline; }
+
+  /* ===== DOI必須項目バッジ ===== */
+  .doi-badge {
+    display: inline-block;
+    font-size: 0.7em;
+    font-weight: normal;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 4px;
+    cursor: help;
+    vertical-align: middle;
+  }
+  .doi-badge.jalc-required    { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+  .doi-badge.jalc-conditional { background: #e3f2fd; color: #1565c0; border: 1px dashed #90caf9; }
+  .doi-badge.crossref-required    { background: #fce4ec; color: #c62828; border: 1px solid #ef9a9a; }
+  .doi-badge.crossref-conditional { background: #fce4ec; color: #c62828; border: 1px dashed #ef9a9a; }
+  /* ===== 識別子逆引き結果エリア ===== */
+  .lookup-result {
+    margin: 2px 16px 4px;
+    font-size: 0.82em;
+    min-height: 1.2em;
+  }
+  .lookup-result.ok   { color: #2e7d32; }
+  .lookup-result.warn { color: #e65100; }
+  .lookup-result.err  { color: #c62828; }
+
+  /* ===== プレビューモーダル ===== */
+  #preview-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.5);
+    overflow-y: auto;
+  }
+  .modal-inner {
+    background: white;
+    max-width: 900px;
+    margin: 40px auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #2c5f2e;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px 8px 0 0;
+    font-weight: bold;
+  }
+  .modal-close {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.5);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.2); }
+  .modal-body {
+    padding: 16px;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+  .pv-section-header {
+    background: #c8e6c9;
+    color: #1b5e20;
+    font-weight: bold;
+    font-size: 0.88em;
+    padding: 6px 12px;
+    margin: 12px 0 0;
+    border-radius: 4px 4px 0 0;
+  }
+  .pv-section-header:first-child { margin-top: 0; }
+  .pv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+    margin-bottom: 4px;
+  }
+  .pv-table th {
+    background: #e8f5e9;
+    color: #2c5f2e;
+    text-align: left;
+    padding: 5px 10px;
+    width: 160px;
+    white-space: nowrap;
+    vertical-align: top;
+    border-bottom: 1px solid #ddd;
+  }
+  .pv-table td {
+    padding: 5px 10px;
+    border-bottom: 1px solid #eee;
+    word-break: break-all;
+  }
+  .pv-inner-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+    margin-bottom: 4px;
+  }
+  .pv-inner-table thead th {
+    background: #f5f5f5;
+    color: #555;
+    font-size: 0.9em;
+    padding: 4px 8px;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+  }
+  .pv-inner-table td {
+    padding: 4px 8px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+  }
+  .pv-link { color: #1565c0; text-decoration: none; }
+  .pv-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<nav class="ext-nav">
+  <a href="panel.html" class="active">DOIインポート</a>
+  <a href="funder_panel.html">助成情報検索</a>
+</nav>
+<h1>🌾 JAIRO Cloud インポート用TSV生成ツール(β)</h1>
+
+<p>このツールはベータ版です。インポート用TSVファイルの生成機能は未実装です。</p>
+<p>現在のバージョンでは、Crossref APIおよびOpenAlex APIからのデータ取得が実装されています。JaLC DOI対応は準備中です。</p>
+<p>「DOI」にDOIを入力して「データ取得」ボタンを押すと、データを取得して表示します。</p>
+
+<div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
+  <div style="margin-bottom:6px;">
+    <strong>最終更新:</strong> 2026-03-05 &nbsp;|&nbsp;
+    <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
+    <span id="update-check"></span>
+  </div>
+  <table style="border-collapse:collapse; width:100%;">
+    <thead>
+      <tr style="border-bottom:1px solid #ddd;">
+        <th style="text-align:left; padding:2px 10px 2px 0; white-space:nowrap; font-weight:bold; color:#444;">日付</th>
+        <th style="text-align:left; padding:2px 0; font-weight:bold; color:#444;">更新概要</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-05</td>
+        <td style="padding:2px 0;">OPF参照リンク：ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加（ISSN付き雑誌論文のOAポリシー確認）</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-05</td>
+        <td style="padding:2px 0;">KAKEN XML API CORS対応：fetchKakenXml()にtry/catch追加、暫定スキップ実装（CORS非対応による処理時間短縮）、CiNii Research OpenSearchを常に最終フォールバックに変更</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-04</td>
+        <td style="padding:2px 0;">KAKEN XML API対応：補助金番号から正規の研究課題番号への自動解決（CiNii APIキー未設定時はCiNii Research OpenSearchにフォールバック）</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-03</td>
+        <td style="padding:2px 0;">KAKEN/JGN番号から助成機関名・Crossref Funder IDを自動設定、研究課題番号からの助成機関検索ボタン追加</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-02</td>
+        <td style="padding:2px 0;">PMID識別子のURL除去：関連情報のidentifierType=PMID時にPubMed URLから番号のみを抽出（IRDB登録エラー対応）</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== DOI入力エリア ===== -->
+<div id="input-area">
+  <div class="input-row">
+    <label>DOI:</label>
+    <input type="text" id="doi-input" placeholder="例: 10.1016/j.advnut.2025.100480" value="">
+    <button id="fetch-btn">データ取得</button>
+    <button id="empty-btn">空値で全フィールド表示</button>
+    <button id="preview-btn" style="display:none; background:#1565c0; color:white;">プレビュー表示</button>
+  </div>
+  <div id="loading" style="display:none">⏳ データを取得中です（ROR/ISNIも並行取得）...</div>
+  <div id="apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ OpenAlex API Keyが設定されていません。設定しない場合、利用回数が制限されます。</div>
+  <div id="cinii-apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ CiNii APIキーが設定されていません。</div>
+  <div id="error-msg"></div>
+  <div id="info-bar" style="display:none">
+    <a id="doi-link" href="" target="_blank"></a>
+    <span id="oa-badge" class="oa-badge"></span>
+    <span id="opf-badge" style="display:none; cursor:pointer; font-size:0.82em; padding:2px 8px; border-radius:10px; background:#e3f2fd; color:#1565c0; border:1px solid #90caf9;">📋 OAポリシー</span>
+    <div id="opf-link-row" style="display:none; width:100%;">
+      <a id="opf-link" href="" target="_blank" rel="noopener noreferrer"
+         style="font-size:0.88em; color:#1565c0;">📖 オープンアクセスポリシーをOpen Policy Finderで確認する</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== メタデータプレビュー ===== -->
+<div id="preview-area">
+  <h2>📋 メタデータ確認・編集</h2>
+
+  <!-- システム管理フィールド -->
+  <div id="system-fields">
+    <h3>システム（管理フィールド）</h3>
+    <table class="sys-table">
+      <thead>
+        <tr>
+          <th>フィールド名</th>
+          <th>候補値</th>
+          <th>値（編集可能）</th>
+        </tr>
+      </thead>
+      <tbody id="system-fields-body">
+        <!-- JS で生成 -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- メタデータフィールド（アコーディオン） -->
+  <div id="metadata-fields">
+    <!-- JS で生成 -->
+  </div>
+</div>
+
+<!-- ===== OPF ポリシーモーダル ===== -->
+<div id="opf-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; overflow-y:auto;">
+  <div style="background:#fff; margin:40px auto; max-width:700px; border-radius:8px; box-shadow:0 4px 24px rgba(0,0,0,0.25); overflow:hidden;">
+    <div style="background:#1565c0; color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:1.1em; font-weight:bold;">📋 OAポリシー（Open Policy Finder）</span>
+      <button style="background:transparent; border:none; color:#fff; font-size:1.4em; cursor:pointer; line-height:1;">&times;</button>
+    </div>
+    <div id="opf-modal-body" style="padding:20px; font-size:0.9em; line-height:1.6;">
+      <!-- JS で生成 -->
+    </div>
+    <div style="padding:10px 20px; font-size:0.78em; color:#888; border-top:1px solid #eee;">
+      データ提供: <a href="https://openpolicyfinder.jisc.ac.uk/" target="_blank" rel="noopener" style="color:#1565c0;">Open Policy Finder (Jisc)</a>
+      · ポリシーデータは <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" rel="noopener" style="color:#1565c0;">CC BY-NC-ND 4.0</a> ライセンスで提供されています
+    </div>
+  </div>
+</div>
+
+<!-- ===== プレビューモーダル ===== -->
+<div id="preview-modal">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <span>プレビュー</span>
+      <button class="modal-close">&times; 閉じる</button>
+    </div>
+    <div class="modal-body" id="preview-modal-body"></div>
+  </div>
+</div>
+
+<script src="make_jc_importer.js"></script>
+</body>
+</html>
