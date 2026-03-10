@@ -227,6 +227,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-11 | 「書誌情報」収録誌名の追加・削除UI修正：雑誌名（`bibliographic_titles`）に追加・削除ボタンを追加（[#75](https://github.com/tzhaya/jc-import-file-maker/issues/75)） |
 | 2026-03-10 | Chrome拡張化（[#70](https://github.com/tzhaya/jc-import-file-maker/issues/70)）：Manifest V3 Chrome拡張を追加。Service Worker経由でCORS非対応API（KAKEN XML・JaLC・OPF）を有効化。options.htmlでAPIキーをchrome.storage.localに安全に保存。KAKEN XML API・JaLC APIを本有効化。OPF APIポリシー取得・モーダル表示を実装（[#50](https://github.com/tzhaya/jc-import-file-maker/issues/50)・PR [#61](https://github.com/tzhaya/jc-import-file-maker/pull/61)同時対応） |
 | 2026-03-07 | funder_lookup.html に更新チェック機能を追加：GitHubリポジトリとの最終更新日比較で新バージョンを通知（[#65](https://github.com/tzhaya/jc-import-file-maker/issues/65)） |
 | 2026-03-05 | OPF参照リンク：ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加。ISSN付き雑誌論文でOAポリシーを別タブで確認可能に（[#62](https://github.com/tzhaya/jc-import-file-maker/issues/62)） |
