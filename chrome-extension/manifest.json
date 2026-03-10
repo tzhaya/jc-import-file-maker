@@ -13,7 +13,7 @@
     "service_worker": "background.js"
   },
   "side_panel": {
-    "default_path": "make_jc_importer.html"
+    "default_path": "panel.html"
   },
   "action": {
     "default_title": "JAIRO Cloud インポートツール"
