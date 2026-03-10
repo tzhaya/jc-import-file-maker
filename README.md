@@ -159,6 +159,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 - [Phase 1](docs/Implementation_phase1.md) 現在の実装計画書です。
 - [Phase 2](docs/Implementation_phase2.md) TSVファイル出力対応の実装計画書です。
+- [Chrome拡張化（Issue #70 + PR #61）](docs/Implementation_issue70.md) Chrome拡張（CORS回避・APIキー管理・OPF API連携）の実装記録です。
 - [KAKEN対応](docs/Implementation_KAKEN.md) KAKEN APIからのデータ取得に関する実装計画書です。
 - [JaLC API対応](docs/Implementation_JaLC.md) JaLC REST APIからのデータ取得に関する実装計画書です。
 - [Open Policy Finder連携](docs/Implementation_OPF.md) OPF API/参照リンク対応の実装計画書です。
