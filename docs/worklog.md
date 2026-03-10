@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-05（OPF参照リンク: ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加）
+最終更新: 2026-03-11（書誌情報・収録誌名の追加・削除UI修正: issue #75）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,25 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-11: 「書誌情報」収録誌名の追加・削除UI修正（issue #75）
+
+### 背景
+
+「書誌情報」フィールドの「雑誌名」（`bibliographic_titles`）は配列構造だが、`renderBiblioField()` が `createEntryGroup()` / `onAdd` コールバックを使わずに単純ループで描画していたため、追加・削除ボタンが存在しなかった。
+
+### 実装内容
+
+- `make_jc_importer.html` および `chrome-extension/make_jc_importer.js`:
+  - `renderBiblioField()`: `createNestedSectionHeader('雑誌名', 2)` に `onAdd` コールバックを追加（「+ 追加」ボタン有効化）
+  - 各既存エントリを `createEntryGroup()` でラップし削除ボタン（×）を付与
+  - `collectBiblioField()`: インデックスベースの収集（`querySelectorAll` + 添字対応）を `.entry-group` 単位の収集に変更（`getFieldVal` 使用）
+
+### 変更パターン
+
+権利者名（`renderOneRightsHolder`）の実装に合わせて統一。
 
 ---
 

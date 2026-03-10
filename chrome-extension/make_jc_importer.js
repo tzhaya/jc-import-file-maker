@@ -3309,10 +3309,19 @@ function renderBiblioField(def, obj) {
   }
 
   // 雑誌名（配列）
-  const { wrapper: btWrap, content: btCont } = createNestedSectionHeader('雑誌名', 2);
+  const { wrapper: btWrap, content: btCont } = createNestedSectionHeader('雑誌名', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('タイトル', '', 'text', null, { fieldKey: 'bibliographic_title' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'bibliographic_titleLang' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
   (data.bibliographic_titles || []).forEach(bt => {
-    btCont.appendChild(createFieldRow('タイトル', bt.bibliographic_title || '', 'text', null, { fieldKey: 'bibliographic_title' }));
-    btCont.appendChild(createFieldRow('言語', bt.bibliographic_titleLang || '', 'select', 'language', { fieldKey: 'bibliographic_titleLang' }));
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('タイトル', bt.bibliographic_title || '', 'text', null, { fieldKey: 'bibliographic_title' }));
+    grp.appendChild(createFieldRow('言語', bt.bibliographic_titleLang || '', 'select', 'language', { fieldKey: 'bibliographic_titleLang' }));
+    grp.appendChild(delBtn);
+    btCont.appendChild(grp);
   });
   content.appendChild(btWrap);
 
@@ -3963,17 +3972,13 @@ function collectBiblioField(section) {
     },
   };
 
-  // 雑誌名: nested-section-content 内の field-row ペア（title + lang）
+  // 雑誌名: entry-group 単位で収集
   const nsc = content.querySelector('.nested-section-content');
   if (nsc) {
-    const titleRows = nsc.querySelectorAll('.field-row[data-field-key="bibliographic_title"]');
-    const langRows = nsc.querySelectorAll('.field-row[data-field-key="bibliographic_titleLang"]');
-    titleRows.forEach((tr, i) => {
-      const titleEl = tr.querySelector('input');
-      const langEl = langRows[i]?.querySelector('select');
+    nsc.querySelectorAll('.entry-group').forEach(grp => {
       data.bibliographic_titles.push({
-        bibliographic_title: titleEl ? titleEl.value : '',
-        bibliographic_titleLang: langEl ? langEl.value : '',
+        bibliographic_title:     getFieldVal(grp, 'bibliographic_title'),
+        bibliographic_titleLang: getFieldVal(grp, 'bibliographic_titleLang'),
       });
     });
   }

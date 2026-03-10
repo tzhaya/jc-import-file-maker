@@ -458,7 +458,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-03-05 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-03-11 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -471,6 +471,14 @@
     </thead>
     <tbody>
       <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-11</td>
+        <td style="padding:2px 0;">書誌情報・収録誌名の追加・削除UI修正：雑誌名に「+ 追加」「×」削除ボタンを追加</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-10</td>
+        <td style="padding:2px 0;">Chrome拡張化：Manifest V3拡張追加、Service Worker経由でJaLC/KAKEN XML/OPF APIを有効化、OPFポリシーモーダル表示実装</td>
+      </tr>
+      <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-05</td>
         <td style="padding:2px 0;">OPF参照リンク：ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加（ISSN付き雑誌論文のOAポリシー確認）</td>
       </tr>
@@ -481,14 +489,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-04</td>
         <td style="padding:2px 0;">KAKEN XML API対応：補助金番号から正規の研究課題番号への自動解決（CiNii APIキー未設定時はCiNii Research OpenSearchにフォールバック）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-03</td>
-        <td style="padding:2px 0;">KAKEN/JGN番号から助成機関名・Crossref Funder IDを自動設定、研究課題番号からの助成機関検索ボタン追加</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-02</td>
-        <td style="padding:2px 0;">PMID識別子のURL除去：関連情報のidentifierType=PMID時にPubMed URLから番号のみを抽出（IRDB登録エラー対応）</td>
       </tr>
     </tbody>
   </table>
@@ -3882,10 +3882,19 @@ function renderBiblioField(def, obj) {
   }
 
   // 雑誌名（配列）
-  const { wrapper: btWrap, content: btCont } = createNestedSectionHeader('雑誌名', 2);
+  const { wrapper: btWrap, content: btCont } = createNestedSectionHeader('雑誌名', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('タイトル', '', 'text', null, { fieldKey: 'bibliographic_title' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'bibliographic_titleLang' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
   (data.bibliographic_titles || []).forEach(bt => {
-    btCont.appendChild(createFieldRow('タイトル', bt.bibliographic_title || '', 'text', null, { fieldKey: 'bibliographic_title' }));
-    btCont.appendChild(createFieldRow('言語', bt.bibliographic_titleLang || '', 'select', 'language', { fieldKey: 'bibliographic_titleLang' }));
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('タイトル', bt.bibliographic_title || '', 'text', null, { fieldKey: 'bibliographic_title' }));
+    grp.appendChild(createFieldRow('言語', bt.bibliographic_titleLang || '', 'select', 'language', { fieldKey: 'bibliographic_titleLang' }));
+    grp.appendChild(delBtn);
+    btCont.appendChild(grp);
   });
   content.appendChild(btWrap);
 
@@ -4536,17 +4545,13 @@ function collectBiblioField(section) {
     },
   };
 
-  // 雑誌名: nested-section-content 内の field-row ペア（title + lang）
+  // 雑誌名: entry-group 単位で収集
   const nsc = content.querySelector('.nested-section-content');
   if (nsc) {
-    const titleRows = nsc.querySelectorAll('.field-row[data-field-key="bibliographic_title"]');
-    const langRows = nsc.querySelectorAll('.field-row[data-field-key="bibliographic_titleLang"]');
-    titleRows.forEach((tr, i) => {
-      const titleEl = tr.querySelector('input');
-      const langEl = langRows[i]?.querySelector('select');
+    nsc.querySelectorAll('.entry-group').forEach(grp => {
       data.bibliographic_titles.push({
-        bibliographic_title: titleEl ? titleEl.value : '',
-        bibliographic_titleLang: langEl ? langEl.value : '',
+        bibliographic_title:     getFieldVal(grp, 'bibliographic_title'),
+        bibliographic_titleLang: getFieldVal(grp, 'bibliographic_titleLang'),
       });
     });
   }
@@ -5027,7 +5032,7 @@ if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-05';
+  const LOCAL_VERSION = '2026-03-11';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
