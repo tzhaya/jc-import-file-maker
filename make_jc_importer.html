@@ -2547,10 +2547,12 @@ async function mapToItemTypeJaLC(jalcJson) {
   }
 
   // ===== 収録物名（多言語）=====
-  const sourceTitles = (jalcJson.journal_title_name_list || []).map(jt => ({
-    subitem_source_title: jt.journal_title_name || '',
-    subitem_source_title_language: jt.lang || '',
-  })).filter(st => st.subitem_source_title);
+  const sourceTitles = (jalcJson.journal_title_name_list || [])
+    .filter(jt => (jt.type || '').toLowerCase() === 'full')
+    .map(jt => ({
+      subitem_source_title: jt.journal_title_name || '',
+      subitem_source_title_language: jt.lang || '',
+    })).filter(st => st.subitem_source_title);
 
   // ===== 内容記述（抄録等）=====
   const descriptions = (jalcJson.description_list || []).filter(d => {
