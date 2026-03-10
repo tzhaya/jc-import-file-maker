@@ -510,6 +510,7 @@
   <div id="info-bar" style="display:none">
     <a id="doi-link" href="" target="_blank"></a>
     <span id="oa-badge" class="oa-badge"></span>
+    <span id="opf-badge" style="display:none; cursor:pointer; font-size:0.82em; padding:2px 8px; border-radius:10px; background:#e3f2fd; color:#1565c0; border:1px solid #90caf9;" onclick="openOpfModal()">📋 OAポリシー</span>
     <div id="opf-link-row" style="display:none; width:100%;">
       <a id="opf-link" href="" target="_blank" rel="noopener noreferrer"
          style="font-size:0.88em; color:#1565c0;">📖 オープンアクセスポリシーをOpen Policy Finderで確認する</a>
@@ -544,6 +545,22 @@
   </div>
 </div>
 
+<!-- ===== OPF ポリシーモーダル ===== -->
+<div id="opf-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; overflow-y:auto;">
+  <div style="background:#fff; margin:40px auto; max-width:700px; border-radius:8px; box-shadow:0 4px 24px rgba(0,0,0,0.25); overflow:hidden;">
+    <div style="background:#1565c0; color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:1.1em; font-weight:bold;">📋 OAポリシー（Open Policy Finder）</span>
+      <button onclick="closeOpfModal()" style="background:transparent; border:none; color:#fff; font-size:1.4em; cursor:pointer; line-height:1;">&times;</button>
+    </div>
+    <div id="opf-modal-body" style="padding:20px; font-size:0.9em; line-height:1.6;">
+      <!-- JS で生成 -->
+    </div>
+    <div style="padding:10px 20px; font-size:0.78em; color:#888; border-top:1px solid #eee;">
+      提供: <a href="https://openpolicyfinder.jisc.ac.uk/" target="_blank" rel="noopener" style="color:#1565c0;">Open Policy Finder (Jisc)</a>
+    </div>
+  </div>
+</div>
+
 <!-- ===== プレビューモーダル ===== -->
 <div id="preview-modal">
   <div class="modal-inner">
@@ -561,14 +578,51 @@
 // ================================================================
 
 const CONFIG = {
-    // OpenAlex APIキー（必須）
+    // OpenAlex APIキー（任意）
     // https://openalex.org/settings/api からご自身のキーを取得して貼り付けてください
+    // Chrome拡張版では options.html で設定できます
     OpenAlex_API_KEY: "YOUR_OpenAlex_API_KEY",
 
     // CiNii APIキー（任意）
     // CiNiiウェブAPI 利用登録 https://support.nii.ac.jp/ja/cinii/api/developer で取得したキーを貼り付けてください
+    // Chrome拡張版では options.html で設定できます
     CiNii_API_KEY: "YOUR_CiNii_API_KEY",
+
+    // Open Policy Finder APIキー（任意・Chrome拡張版のみ有効）
+    // https://openpolicyfinder.jisc.ac.uk/ で取得できます
+    OPF_API_KEY: "YOUR_OPF_API_KEY",
 };
+
+// ===== Chrome拡張: chrome.storage.local からAPIキーを読み込む =====
+async function loadConfig() {
+  if (typeof chrome === 'undefined' || !chrome.storage) return;
+  try {
+    const stored = await chrome.storage.local.get(['OpenAlex_API_KEY', 'CiNii_API_KEY', 'OPF_API_KEY']);
+    if (stored.OpenAlex_API_KEY) CONFIG.OpenAlex_API_KEY = stored.OpenAlex_API_KEY;
+    if (stored.CiNii_API_KEY)    CONFIG.CiNii_API_KEY    = stored.CiNii_API_KEY;
+    if (stored.OPF_API_KEY)      CONFIG.OPF_API_KEY      = stored.OPF_API_KEY;
+  } catch { /* 拡張外環境では無視 */ }
+}
+
+// ===== Chrome拡張: CORS非対応APIへのfetchをService Worker経由でプロキシ =====
+// 拡張外（通常ブラウザ）では通常のfetch()にフォールバック
+async function extensionFetch(url, options = {}) {
+  if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
+    const result = await chrome.runtime.sendMessage({ type: 'FETCH', url, options });
+    if (result.error) throw new Error(result.error);
+    return {
+      ok: result.ok,
+      status: result.status,
+      text: () => Promise.resolve(result.text),
+      json: () => Promise.resolve(JSON.parse(result.text)),
+    };
+  }
+  return fetch(url, options);
+}
+
+// ===== OPF連携グローバル状態 =====
+let lastOpfData   = null;   // 最後に取得したOPFデータ
+let lastOpfStatus = 'none'; // 'none' | 'no-issn' | 'disabled' | 'not-found' | 'found'
 
 // ===== 除外フィールドリスト =====
 const EXCLUDED_KEYS = new Set([
@@ -1139,10 +1193,10 @@ async function fetchOpenAlex(doi) {
 }
 
 // ===== 3.2b JaLC REST API =====
-// NOTE: JaLC API は CORS 非対応のため、ブラウザから直接アクセスすると
-// CORS エラーになる場合があります。その場合はブラウザ拡張等で対応してください。
+// NOTE: JaLC API は CORS 非対応のため、Chrome拡張の extensionFetch() 経由で呼び出します。
+// 拡張なし環境ではCORSエラーになります。
 async function fetchJaLC(doi) {
-  const resp = await fetch(`https://api.japanlinkcenter.org/v2/dois/${encodeURIComponent(doi)}`, {
+  const resp = await extensionFetch(`https://api.japanlinkcenter.org/v2/dois/${encodeURIComponent(doi)}`, {
     headers: { 'Accept': 'application/json' },
   });
   if (!resp.ok) {
@@ -1260,8 +1314,8 @@ async function fetchAllRorData(oaJson) {
 }
 
 // ===== 3.5 KAKEN XML API =====
-// NOTE: KAKEN XML API は CORS 非対応のため、ブラウザから直接アクセスすると
-// CORS エラーになる場合があります。その場合は JGN / CiNii Research OpenSearch にフォールバックします。
+// NOTE: KAKEN XML API は CORS 非対応のため、Chrome拡張の extensionFetch() 経由で呼び出します。
+// 拡張なし環境ではCORSエラーになるため自動的にフォールバックします。
 async function fetchKakenXml(awardNumber) {
   // CiNii APIキー必須
   if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') return null;
@@ -1270,7 +1324,7 @@ async function fetchKakenXml(awardNumber) {
   const url = `https://kaken.nii.ac.jp/opensearch/?appid=${encodeURIComponent(CONFIG.CiNii_API_KEY)}&qb=${encodeURIComponent(projectId)}&format=xml`;
 
   try {
-  const resp = await fetch(url);
+  const resp = await extensionFetch(url);
   if (!resp.ok) return null;
 
   const text = await resp.text();
@@ -1399,6 +1453,125 @@ async function fetchNcid(issns) {
   return null;
 }
 
+// ===== 3.5.2 Open Policy Finder API =====
+// CORS非対応のため Chrome拡張の extensionFetch() 経由で呼び出します。
+// 拡張なし環境では OPF 連携チェックボックスが無効化されるため、この関数は呼ばれません。
+async function fetchOpenPolicyFinder(issns) {
+  if (!CONFIG.OPF_API_KEY || CONFIG.OPF_API_KEY === 'YOUR_OPF_API_KEY') return null;
+  for (const issn of issns) {
+    try {
+      const resp = await extensionFetch(
+        `https://api.openpolicyfinder.jisc.ac.uk/retrieve_by_id?type=issn&id=${encodeURIComponent(issn)}`,
+        { headers: { 'x-api-key': CONFIG.OPF_API_KEY } }
+      );
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      if (data && (data.publisher || data.policies?.length)) return data;
+    } catch { continue; }
+  }
+  return null;
+}
+
+// ===== 3.5.3 OPF ステータス更新・モーダル制御 =====
+async function updateOpfStatus(issns) {
+  const badge = document.getElementById('opf-badge');
+  if (!badge) return;
+
+  const hasKey = CONFIG.OPF_API_KEY && CONFIG.OPF_API_KEY !== 'YOUR_OPF_API_KEY';
+  const isExtension = typeof chrome !== 'undefined' && chrome.runtime?.id;
+
+  if (!isExtension || !hasKey) {
+    badge.style.display = 'none';
+    lastOpfStatus = 'disabled';
+    lastOpfData = null;
+    return;
+  }
+  if (!issns.length) {
+    badge.style.display = 'none';
+    lastOpfStatus = 'no-issn';
+    lastOpfData = null;
+    return;
+  }
+
+  badge.textContent = '⏳ OAポリシー取得中…';
+  badge.style.display = '';
+  try {
+    lastOpfData = await fetchOpenPolicyFinder(issns);
+    if (lastOpfData) {
+      lastOpfStatus = 'found';
+      badge.textContent = '📋 OAポリシー';
+      badge.style.background = '#e3f2fd';
+      badge.style.color = '#1565c0';
+    } else {
+      lastOpfStatus = 'not-found';
+      badge.textContent = '📋 OAポリシー（情報なし）';
+      badge.style.background = '#f5f5f5';
+      badge.style.color = '#999';
+    }
+  } catch (e) {
+    lastOpfStatus = 'not-found';
+    lastOpfData = null;
+    badge.textContent = '📋 OAポリシー（取得失敗）';
+    badge.style.background = '#f5f5f5';
+    badge.style.color = '#999';
+    console.warn('OPF取得失敗:', e.message);
+  }
+}
+
+function openOpfModal() {
+  const modal = document.getElementById('opf-modal');
+  const body  = document.getElementById('opf-modal-body');
+  body.innerHTML = renderOpfModal(lastOpfData, lastOpfStatus);
+  modal.style.display = '';
+}
+
+function closeOpfModal() {
+  document.getElementById('opf-modal').style.display = 'none';
+}
+
+function renderOpfModal(data, status) {
+  if (status === 'disabled') return '<p>OPF APIキーが設定されていないか、Chrome拡張版でご利用ください。</p>';
+  if (status === 'no-issn')  return '<p>ISSNが取得できなかったためOAポリシーを検索できません。</p>';
+  if (!data)                 return '<p>OAポリシー情報が見つかりませんでした。</p>';
+
+  const pub = data.publisher || {};
+  const policies = data.policies || [];
+
+  let html = '';
+  if (pub.name) html += `<p><strong>出版社:</strong> ${escHtml(pub.name)}</p>`;
+  if (pub.doaj_seal) html += `<p><span style="background:#4caf50;color:#fff;border-radius:4px;padding:1px 6px;font-size:0.85em;">DOAJ</span> DOAJ認定誌</p>`;
+
+  if (!policies.length) {
+    html += '<p>ポリシー情報はありません。</p>';
+    return html;
+  }
+
+  policies.forEach(pol => {
+    const vtype = pol.open_access_prohibited ? '🔴 OA禁止' : (pol.version || '不明');
+    html += `<div style="border:1px solid #ddd; border-radius:6px; padding:12px; margin-bottom:12px;">`;
+    html += `<div style="font-weight:bold; margin-bottom:6px;">📄 ${escHtml(String(vtype))}</div>`;
+    if (pol.license?.length) {
+      html += `<p style="margin:2px 0;"><strong>ライセンス:</strong> ${pol.license.map(l => escHtml(l)).join(' / ')}</p>`;
+    }
+    if (pol.embargo_months) {
+      html += `<p style="margin:2px 0;"><strong>エンバーゴ:</strong> ${pol.embargo_months}ヶ月</p>`;
+    }
+    if (pol.public_note) {
+      html += `<p style="margin:2px 0; font-size:0.88em; color:#555;">${escHtml(pol.public_note)}</p>`;
+    }
+    if (pol.urls?.length) {
+      const links = pol.urls.map(u => `<a href="${escHtml(u)}" target="_blank" rel="noopener" style="color:#1565c0;">${escHtml(u)}</a>`).join('<br>');
+      html += `<p style="margin:4px 0; font-size:0.85em;">${links}</p>`;
+    }
+    html += `</div>`;
+  });
+  return html;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ===== 3.6 Crossref DOI データ取得 =====
 async function fetchCrossrefData(doi) {
   // Crossref + OpenAlex を並列取得
@@ -1431,12 +1604,14 @@ async function fetchCrossrefData(doi) {
   // マッピング → レンダリング
   const metadata = await mapToItemType(crJson, oaJson, rorMap);
 
-  // OPF 参照リンク設定
-  const opfRow = document.getElementById('opf-link-row');
-  const opfAnchor = document.getElementById('opf-link');
+  // ISSN抽出
   const issns = (metadata.item_30002_source_identifier22 || [])
     .filter(si => ['ISSN','PISSN','EISSN'].includes(si.subitem_source_identifier_type))
     .map(si => si.subitem_source_identifier);
+
+  // OPF 参照リンク設定
+  const opfRow = document.getElementById('opf-link-row');
+  const opfAnchor = document.getElementById('opf-link');
   if (issns.length) {
     const searchUrl = `https://openpolicyfinder.jisc.ac.uk/search?search=${encodeURIComponent(issns[0])}&per_page=10&publication_page=1&publisher_page=1&funder_page=1`;
     opfAnchor.href = searchUrl;
@@ -1444,6 +1619,9 @@ async function fetchCrossrefData(doi) {
   } else {
     opfRow.style.display = 'none';
   }
+
+  // OPF API 連携（Chrome拡張 + OPF_API_KEY 設定時のみ）
+  await updateOpfStatus(issns);
 
   showHints = true;
   renderAll(metadata);
@@ -1465,6 +1643,13 @@ async function fetchJaLCData(doi) {
 
   // マッピング → レンダリング
   const metadata = await mapToItemTypeJaLC(jalcJson);
+
+  // ISSN抽出 + OPF API 連携
+  const issns = (metadata.item_30002_source_identifier22 || [])
+    .filter(si => ['ISSN','PISSN','EISSN'].includes(si.subitem_source_identifier_type))
+    .map(si => si.subitem_source_identifier);
+  await updateOpfStatus(issns);
+
   showHints = true;
   renderAll(metadata);
 }
@@ -1472,6 +1657,7 @@ async function fetchJaLCData(doi) {
 // ===== 3.7 メイン取得フロー =====
 async function fetchData() {
   showError('');
+  await loadConfig();  // Chrome拡張のstorage.localからAPIキーを読み込む
   const rawDoi = document.getElementById('doi-input').value.trim();
   if (!rawDoi) { showError('DOIを入力してください。'); return; }
   const doi = normalizeDoi(rawDoi);
@@ -1489,7 +1675,11 @@ async function fetchData() {
     if (ra === 'Crossref') {
       await fetchCrossrefData(doi);
     } else if (ra === 'JaLC') {
-      showError('JaLC DOI のインポートは現在未対応です。今後のアップデートで対応予定です。');
+      if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
+        await fetchJaLCData(doi);
+      } else {
+        showError('JaLC DOI のインポートはChrome拡張版のみ対応しています。拡張をインストールしてご利用ください。');
+      }
     } else {
       showError(`この DOI の登録機関 (${ra}) は現在サポートされていません。`);
     }
@@ -1733,15 +1923,14 @@ async function buildFunders(crFunders) {
       const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
       let kakenResult = null;
 
-      // [暫定スキップ] KAKEN XML API は CORS 非対応のためブラウザから利用不可。
-      // CORS 解消時は下記コメントを外して有効化すること。
-      // if (hasCiNiiKey && isJsps && awardNum) {
-      //   try {
-      //     kakenResult = await fetchKakenXml(awardNum);
-      //   } catch (e) {
-      //     console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
-      //   }
-      // }
+      // KAKEN XML API（Chrome拡張経由でCORS回避）
+      if (hasCiNiiKey && isJsps && awardNum) {
+        try {
+          kakenResult = await fetchKakenXml(awardNum);
+        } catch (e) {
+          console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
+        }
+      }
 
       // JGN連携: award が JP で始まる場合（JST助成金等）
       if (!kakenResult && awardNum && /^JP/i.test(awardNum)) {
@@ -1848,13 +2037,12 @@ async function buildJaLCFunders(jalcFundList) {
       const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
       let kakenResult = null;
 
-      // [暫定スキップ] KAKEN XML API は CORS 非対応のためブラウザから利用不可。
-      // CORS 解消時は下記コメントを外して有効化すること。
-      // if (hasCiNiiKey && isJsps && awardNum) {
-      //   try { kakenResult = await fetchKakenXml(awardNum); } catch (e) {
-      //     console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
-      //   }
-      // }
+      // KAKEN XML API（Chrome拡張経由でCORS回避）
+      if (hasCiNiiKey && isJsps && awardNum) {
+        try { kakenResult = await fetchKakenXml(awardNum); } catch (e) {
+          console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
+        }
+      }
 
       // JGN連携: award が JP で始まる場合
       if (!kakenResult && awardNum && /^JP/i.test(awardNum)) {
@@ -3518,19 +3706,18 @@ function renderOneFunder(funder, idx, defLabel) {
       let result = null;
       let supplementaryWarning = '';
 
-      // [暫定スキップ] KAKEN XML API は CORS 非対応のためブラウザから利用不可。
-      // CORS 解消時は下記コメントを外して有効化すること。
-      // if (hasCiNiiKey) {
-      //   try { result = await fetchKakenXml(awardNum); } catch { /* ignore */ }
-      //   // 補助金番号の検出
-      //   if (result?.normalizedValue) {
-      //     const inputNorm = /^JP/i.test(awardNum) ? awardNum.toUpperCase() : 'JP' + awardNum.toUpperCase();
-      //     if (inputNorm !== result.normalizedValue.toUpperCase()) {
-      //       supplementaryWarning = `研究課題番号に「補助金の研究課題番号」が入力されたため「研究課題番号」に変更しました（${awardNum} → ${result.normalizedValue}）`;
-      //       if (awardInput) awardInput.value = result.normalizedValue;
-      //     }
-      //   }
-      // }
+      // KAKEN XML API（Chrome拡張経由でCORS回避）
+      if (hasCiNiiKey) {
+        try { result = await fetchKakenXml(awardNum); } catch { /* ignore */ }
+        // 補助金番号の検出
+        if (result?.normalizedValue) {
+          const inputNorm = /^JP/i.test(awardNum) ? awardNum.toUpperCase() : 'JP' + awardNum.toUpperCase();
+          if (inputNorm !== result.normalizedValue.toUpperCase()) {
+            supplementaryWarning = `研究課題番号に「補助金の研究課題番号」が入力されたため「研究課題番号」に変更しました（${awardNum} → ${result.normalizedValue}）`;
+            if (awardInput) awardInput.value = result.normalizedValue;
+          }
+        }
+      }
 
       // JGN フォールバック（JP接頭辞あり）
       if (!result && /^JP/i.test(awardNum)) {
@@ -4772,7 +4959,7 @@ function closePreview() {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closePreview();
+  if (e.key === 'Escape') { closePreview(); closeOpfModal(); }
 });
 document.getElementById('preview-modal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closePreview();

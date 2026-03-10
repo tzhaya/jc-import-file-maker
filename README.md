@@ -28,19 +28,28 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 ### API Key の設定
 
+#### Chrome拡張版（推奨）
+
+Chrome拡張版では `options.html`（拡張の設定ページ）でAPIキーをまとめて設定できます。設定値はブラウザのローカルストレージに保存され、ソースコードに書き込む必要がありません。また、CORS非対応のAPI（KAKEN XML API・JaLC API・Open Policy Finder API）が Chrome拡張のService Worker経由で利用可能になります。
+
+#### 通常ブラウザ版
+
 `make_jc_importer.html` をテキストエディタで開き、ファイル冒頭付近の `CONFIG` 定数にAPIキーを設定してください。
 
-助成情報検索ツール `funder_lookup.html`でも、同様にCiNii APIキーを設定できます。
+助成情報検索ツール `funder_lookup.html` でも、同様にCiNii APIキーを設定できます。
 
 ```js
 const CONFIG = {
-    // OpenAlex APIキー（必須）
+    // OpenAlex APIキー（任意）
     // https://openalex.org/settings/api からご自身のキーを取得して貼り付けてください
     OpenAlex_API_KEY: "YOUR_OpenAlex_API_KEY",
 
     // CiNii APIキー（任意）
     // CiNiiウェブAPI 利用登録 https://support.nii.ac.jp/ja/cinii/api/developer で取得したキーを貼り付けてください
     CiNii_API_KEY: "YOUR_CiNii_API_KEY",
+
+    // Open Policy Finder APIキー（任意・Chrome拡張版のみ有効）
+    OPF_API_KEY: "YOUR_OPF_API_KEY",
 };
 ```
 
@@ -66,7 +75,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 ### Phase 1
 
 - DOIの入力により Crossref / OpenAlex API から書誌情報を自動取得
-- JaLC DOI対応（準備中）：JaLC REST APIからのメタデータ取得・マッピングコードは実装済みだが、CORS制約により未有効化
+- JaLC DOI対応：JaLC REST APIからのメタデータ取得・マッピング（Chrome拡張版のみ有効・CORS非対応のため）
 - ROR API（v2）による機関情報の補完（ISNI・ROR ID取得）
 - 取得データをJPCOARスキーマにマッピングし、アコーディオン形式で表示・編集
   - JPCOARスキーマの28のフィールドに対応（タイトル・著者・抄録・出版社・関連情報・助成情報 等）
@@ -77,7 +86,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
   - 要確認項目へのワーニング表示（⚠ 要確認）
   - 参考用の元データ値の表示とURLのリンク
 - OA バッジ表示（Gold / Green / Hybrid / Closed）
-- Open Policy Finder 参照リンク：ISSN付き雑誌論文のDOI取得時に、Open Policy Finderでの雑誌OAポリシー確認リンクを表示
+- Open Policy Finder 連携：ISSN付き雑誌論文のDOI取得時に、Open Policy Finderでの雑誌OAポリシー確認リンクを表示。Chrome拡張版ではOPF APIへの直接アクセスでモーダル内にポリシー情報を表示
 - JATS XML 形式のDescription(内容記述)からタグの除去
 - Crossref と OpenAlex の著者情報マッチング（姓名一致 → インデックスフォールバック）
 - 空フィールドのみの表示
@@ -105,6 +114,9 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 ```
 ├── make_jc_importer.html   # メインツール（単一HTMLファイル）
 ├── funder_lookup.html      # 助成情報検索ツール（課題番号→助成機関情報一括検索）
+├── manifest.json           # Chrome拡張 Manifest V3（CORS回避・APIキー管理）
+├── background.js           # Chrome拡張 Service Worker（fetch プロキシ）
+├── options.html            # Chrome拡張 設定ページ（APIキー管理 UI）
 ├── api-flow.md             # APIフロー整理（Crossref/OpenAlex等の取得順・JPCOARマッピング）
 ├── data/                   # 参照・設定データ
 │   ├── ItemType.json       # JAIRO Cloud アイテムタイプ定義
@@ -185,6 +197,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-10 | Chrome拡張化（[#70](https://github.com/tzhaya/jc-import-file-maker/issues/70)）：Manifest V3 Chrome拡張を追加。Service Worker経由でCORS非対応API（KAKEN XML・JaLC・OPF）を有効化。options.htmlでAPIキーをchrome.storage.localに安全に保存。KAKEN XML API・JaLC APIを本有効化。OPF APIポリシー取得・モーダル表示を実装（[#50](https://github.com/tzhaya/jc-import-file-maker/issues/50)・PR [#61](https://github.com/tzhaya/jc-import-file-maker/pull/61)同時対応） |
 | 2026-03-07 | funder_lookup.html に更新チェック機能を追加：GitHubリポジトリとの最終更新日比較で新バージョンを通知（[#65](https://github.com/tzhaya/jc-import-file-maker/issues/65)） |
 | 2026-03-05 | OPF参照リンク：ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加。ISSN付き雑誌論文でOAポリシーを別タブで確認可能に（[#62](https://github.com/tzhaya/jc-import-file-maker/issues/62)） |
 | 2026-03-05 | KAKEN XML API 暫定スキップ：CORS非対応による処理時間短縮のためfetchKakenXml()呼び出しをコメントアウト（[#59](https://github.com/tzhaya/jc-import-file-maker/issues/59)） |

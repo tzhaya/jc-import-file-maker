@@ -172,8 +172,33 @@
 const CONFIG = {
   // CiNii APIキー（任意）
   // CiNiiウェブAPI 利用登録 https://support.nii.ac.jp/ja/cinii/api/developer で取得したキーを貼り付けてください
+  // Chrome拡張版では options.html で設定できます
   CiNii_API_KEY: "YOUR_CiNii_API_KEY",
 };
+
+// ===== Chrome拡張: chrome.storage.local からAPIキーを読み込む =====
+async function loadConfig() {
+  if (typeof chrome === 'undefined' || !chrome.storage) return;
+  try {
+    const stored = await chrome.storage.local.get(['CiNii_API_KEY']);
+    if (stored.CiNii_API_KEY) CONFIG.CiNii_API_KEY = stored.CiNii_API_KEY;
+  } catch { /* 拡張外環境では無視 */ }
+}
+
+// ===== Chrome拡張: CORS非対応APIへのfetchをService Worker経由でプロキシ =====
+async function extensionFetch(url, options = {}) {
+  if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
+    const result = await chrome.runtime.sendMessage({ type: 'FETCH', url, options });
+    if (result.error) throw new Error(result.error);
+    return {
+      ok: result.ok,
+      status: result.status,
+      text: () => Promise.resolve(result.text),
+      json: () => Promise.resolve(JSON.parse(result.text)),
+    };
+  }
+  return fetch(url, options);
+}
 
 // ===== JSPS 助成機関定数 =====
 const JSPS_FUNDER_DOI = '10.13039/501100001691';
@@ -242,8 +267,7 @@ async function fetchJgn(awardNumber) {
 }
 
 // ===== fetchKakenXml（KAKEN XML API） =====
-// NOTE: KAKEN XML API は CORS 非対応のため、ブラウザから直接アクセスすると
-// CORS エラーになる場合があります。その場合は JGN / CiNii Research OpenSearch にフォールバックします。
+// NOTE: KAKEN XML API は CORS 非対応のため、Chrome拡張の extensionFetch() 経由で呼び出します。
 async function fetchKakenXml(awardNumber) {
   if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') return null;
 
@@ -251,7 +275,7 @@ async function fetchKakenXml(awardNumber) {
   const url = `https://kaken.nii.ac.jp/opensearch/?appid=${encodeURIComponent(CONFIG.CiNii_API_KEY)}&qb=${encodeURIComponent(projectId)}&format=xml`;
 
   try {
-    const resp = await fetch(url);
+    const resp = await extensionFetch(url);
     if (!resp.ok) return null;
 
     const text = await resp.text();
@@ -339,34 +363,33 @@ function fmtVal(v, lang) {
 async function lookupOne(awardNumber) {
   const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
 
-  // [暫定スキップ] KAKEN XML API は CORS 非対応のためブラウザから利用不可。
-  // CORS 解消時は下記コメントを外して有効化すること。
-  // if (hasCiNiiKey) {
-  //   const kakenXmlResult = await fetchKakenXml(awardNumber);
-  //   if (kakenXmlResult) {
-  //     // 補助金番号の検出
-  //     let supplementaryWarning = '';
-  //     const canonicalNumber = kakenXmlResult.normalizedValue || awardNumber;
-  //     if (kakenXmlResult.normalizedValue) {
-  //       const inputNorm = /^JP/i.test(awardNumber) ? awardNumber.toUpperCase() : 'JP' + awardNumber.toUpperCase();
-  //       if (inputNorm !== kakenXmlResult.normalizedValue.toUpperCase()) {
-  //         supplementaryWarning = `研究課題番号に「補助金の研究課題番号」が入力されたため「研究課題番号」に変更しました（${awardNumber} → ${canonicalNumber}）`;
-  //       }
-  //     }
-  //     return {
-  //       award: awardNumber,
-  //       source: 'KAKEN',
-  //       funderNames: JSPS_FUNDER_NAMES.map(n => ({...n})),
-  //       funderDoi: JSPS_FUNDER_DOI,
-  //       funderIdType: 'Crossref Funder',
-  //       awardNumber: canonicalNumber,
-  //       awardUri: kakenXmlResult.kakenUrl,
-  //       titles: kakenXmlResult.titles,
-  //       fundingStreams: KAKENHI_FUNDING_STREAM,
-  //       supplementaryWarning,
-  //     };
-  //   }
-  // }
+  // KAKEN XML API（Chrome拡張経由でCORS回避）
+  if (hasCiNiiKey) {
+    const kakenXmlResult = await fetchKakenXml(awardNumber);
+    if (kakenXmlResult) {
+      // 補助金番号の検出
+      let supplementaryWarning = '';
+      const canonicalNumber = kakenXmlResult.normalizedValue || awardNumber;
+      if (kakenXmlResult.normalizedValue) {
+        const inputNorm = /^JP/i.test(awardNumber) ? awardNumber.toUpperCase() : 'JP' + awardNumber.toUpperCase();
+        if (inputNorm !== kakenXmlResult.normalizedValue.toUpperCase()) {
+          supplementaryWarning = `研究課題番号に「補助金の研究課題番号」が入力されたため「研究課題番号」に変更しました（${awardNumber} → ${canonicalNumber}）`;
+        }
+      }
+      return {
+        award: awardNumber,
+        source: 'KAKEN',
+        funderNames: JSPS_FUNDER_NAMES.map(n => ({...n})),
+        funderDoi: JSPS_FUNDER_DOI,
+        funderIdType: 'Crossref Funder',
+        awardNumber: canonicalNumber,
+        awardUri: kakenXmlResult.kakenUrl,
+        titles: kakenXmlResult.titles,
+        fundingStreams: KAKENHI_FUNDING_STREAM,
+        supplementaryWarning,
+      };
+    }
+  }
 
   // JGN フォールバック（JP接頭辞あり）
   if (/^JP/i.test(awardNumber)) {
@@ -494,6 +517,7 @@ function updatePlaceholder() {
 
 // ===== メイン検索処理 =====
 async function doSearch() {
+  await loadConfig();  // Chrome拡張のstorage.localからAPIキーを読み込む
   const input = document.getElementById('award-input').value.trim();
   if (!input) return;
 
