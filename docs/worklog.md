@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-11（書誌情報・収録誌名の追加・削除UI修正: issue #75）
+最終更新: 2026-03-11（JaLCデータ取り込み修正: issue #77）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,27 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-11: JaLCデータ取り込み修正（issue #77）
+
+### 背景
+
+JaLC APIからのデータ取り込みで以下の問題があった:
+1. `keyword_list` が未参照で主題として取り込まれていなかった
+2. `journal_title_name_list` に `type: full` がない場合、収録物名が空になっていた
+3. `publisher_list` の並び順が固定で、本文言語と一致する出版者名が先頭に来ない場合があった
+4. 出版タイプ（`item_30002_version_type15`）がJaLCパスでは常に空欄になっていた
+
+### 実装内容
+
+`make_jc_importer.html` および `chrome-extension/make_jc_importer.js` の `mapToItemTypeJaLC()` を修正:
+
+1. **主題（`keyword_list`）**: `subject_list`（`subitem_subject_scheme: ''`）に加え、`keyword_list`（`subitem_subject_scheme: 'Other'`）を結合して取り込み
+2. **収録物名フォールバック**: `type: 'full'` エントリが存在する場合はそれを優先。存在しない場合は `type` プロパティ自体がないエントリから `lang: 'ja'` と `lang: 'en'` の先頭1件ずつを取得（`abbreviation` / `before` / `after` は取得しない）
+3. **出版者言語優先**: `content_language` と一致する `lang` の出版者を先頭に並べ替え（言語情報取得ブロックを出版者ブロック前に移動）
+4. **出版タイプデフォルト**: `article_type === 'preprint'` の場合は `AO`、それ以外（`'pub'` 等）または未設定の場合は `VoR` をデフォルト設定
 
 ---
 
