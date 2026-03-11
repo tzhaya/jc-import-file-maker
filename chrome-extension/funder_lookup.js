@@ -421,7 +421,7 @@ const DEFAULT_LABEL  = '助成情報';
 
 // ===== テンプレート解析 =====
 function parseTsvTemplate(text) {
-  const result = { prefix: DEFAULT_PREFIX, label: DEFAULT_LABEL, startIndex: null, warn: '' };
+  const result = { prefix: DEFAULT_PREFIX, label: DEFAULT_LABEL, warn: '' };
   if (!text.trim()) return result;
 
   const lines = text.split(/\r?\n/);
@@ -453,15 +453,6 @@ function parseTsvTemplate(text) {
     }
   }
 
-  // 最大配列インデックスを検出
-  const idxPattern = new RegExp(result.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\[(\\d+)\\]');
-  let maxIdx = -1;
-  for (const col of cols2) {
-    const im = col.match(idxPattern);
-    if (im) maxIdx = Math.max(maxIdx, parseInt(im[1], 10));
-  }
-  if (maxIdx >= 0) result.startIndex = maxIdx + 1;
-
   // 3行目からトップレベルラベルを抽出
   if (row2idx + 1 < lines.length) {
     const row3 = lines[row2idx + 1];
@@ -491,11 +482,6 @@ function generateTsv() {
   const parsed = parseTsvTemplate(templateText);
 
   let startIdx = parseInt(document.getElementById('tsv-start-index').value, 10) || 0;
-  // テンプレートから自動検出された開始値があり、ユーザが手動変更していなければ反映
-  if (parsed.startIndex !== null && document.getElementById('tsv-start-index').value === '0') {
-    startIdx = parsed.startIndex;
-    document.getElementById('tsv-start-index').value = startIdx;
-  }
 
   const prefix = parsed.prefix;
   const label = parsed.label;
