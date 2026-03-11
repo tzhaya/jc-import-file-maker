@@ -158,6 +158,16 @@ make_jc_importer.html
     -   モーダルは Esc キー、閉じるボタン、オーバーレイクリックで閉じる
     -   データ収集は `collectFromDOM()` で DOM の現在値を構造化 JSON に変換する（Phase 2 TSVエクスポートの共通基盤）
 
+-   **OpenSearch検索機能**（Chrome拡張版のみ、[issue #72](https://github.com/tzhaya/jc-import-file-maker/issues/72)）:
+    -   サイドパネルに「OpenSearch検索」タブを追加し、JAIRO Cloud機関リポジトリの OpenSearch API を用いた文献検索を提供する
+    -   検索条件: リポジトリURL・タイトル・内容記述・資源タイプ（全47種）
+    -   対応リポジトリ: `*.repo.nii.ac.jp` および個別許可ホスト（ALLOWED_HOSTS_EXTRA）
+    -   結果一覧: タイトル・著者・書誌情報（雑誌名・巻・号・ページ・発行日）・ファイルリンク・アイテムURL
+    -   詳細展開: タイトルクリックで JPCOAR 要素の詳細テーブルを展開表示
+    -   ページング: 1ページ20件固定、前へ/次へボタンで移動
+    -   Service Worker経由のfetchラッパー（CORS回避）を使用
+    -   `options.html` にデフォルトリポジトリURL設定欄を追加。`chrome.storage.local` の `defaultRepositoryUrl` に保存し、タブ開放時に自動入力する
+
 -   **更新チェック機能**:
     -   ページ読み込み時に GitHub API で `make_jc_importer.html` の最新コミット日を取得し、HTML内の最終更新日（`LOCAL_VERSION`）と比較する
     -   GitHub上の日付が新しい場合、version-info div 内に「更新版があります（日付）」リンクを表示する

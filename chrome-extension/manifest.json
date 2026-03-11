@@ -7,7 +7,26 @@
   "host_permissions": [
     "https://kaken.nii.ac.jp/*",
     "https://api.japanlinkcenter.org/*",
-    "https://api.openpolicyfinder.jisc.ac.uk/*"
+    "https://api.openpolicyfinder.jisc.ac.uk/*",
+    "https://*.repo.nii.ac.jp/*",
+    "https://repository.nii.ac.jp/*",
+    "https://d-repo.ier.hit-u.ac.jp/*",
+    "https://repository.lib.tottori-u.ac.jp/*",
+    "https://ismrepo.ism.ac.jp/*",
+    "https://repository.ninjal.ac.jp/*",
+    "https://ir.soken.ac.jp/*",
+    "https://repository.dl.itc.u-tokyo.ac.jp/*",
+    "https://teapot.lib.ocha.ac.jp/*",
+    "https://kutarr.kochi-tech.ac.jp/*",
+    "https://ir.jikei.ac.jp/*",
+    "https://ir.kagoshima-u.ac.jp/*",
+    "https://amcor.asahikawa-med.ac.jp/*",
+    "https://repository.ffpri.go.jp/*",
+    "https://repository.jircas.go.jp/*",
+    "https://repository.naro.go.jp/*",
+    "https://ir.ide.go.jp/*",
+    "https://repo.qst.go.jp/*",
+    "https://repo-tkfd.jp/*"
   ],
   "background": {
     "service_worker": "background.js"

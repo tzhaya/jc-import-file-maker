@@ -458,16 +458,17 @@
 <nav class="ext-nav">
   <a href="panel.html" class="active">DOIインポート</a>
   <a href="funder_panel.html">助成情報検索</a>
+  <a href="opensearch_panel.html">OpenSearch検索</a>
 </nav>
 <h1>🌾 JAIRO Cloud インポート用TSV生成ツール(β)</h1>
 
 <p>このツールはベータ版です。インポート用TSVファイルの生成機能は未実装です。</p>
-<p>現在のバージョンでは、Crossref APIおよびOpenAlex APIからのデータ取得が実装されています。JaLC DOI対応は準備中です。</p>
+<p>現在のバージョンでは、Crossref APIおよびOpenAlex APIからのデータ取得が実装されています。Chrome拡張では、JaLC DOIにも対応しています。</p>
 <p>「DOI」にDOIを入力して「データ取得」ボタンを押すと、データを取得して表示します。</p>
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-03-11 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-03-11 (issue #72) &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -479,6 +480,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-11</td>
+        <td style="padding:2px 0;">OpenSearch検索タブ追加：JAIRO Cloud OpenSearchクライアントをChrome拡張に統合、リポジトリURL設定・資源タイプフィルタ・ページング対応</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-11</td>
         <td style="padding:2px 0;">JaLCデータ取り込み修正：keyword_list→主題取り込み、収録物名type無しフォールバック、出版者言語優先、出版タイプVoRデフォルト設定</td>
@@ -494,10 +499,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-05</td>
         <td style="padding:2px 0;">OPF参照リンク：ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加（ISSN付き雑誌論文のOAポリシー確認）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-05</td>
-        <td style="padding:2px 0;">KAKEN XML API CORS対応：fetchKakenXml()にtry/catch追加、暫定スキップ実装（CORS非対応による処理時間短縮）、CiNii Research OpenSearchを常に最終フォールバックに変更</td>
       </tr>
     </tbody>
   </table>
