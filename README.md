@@ -235,6 +235,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-11 | funder_lookup.html に助成情報TSV出力機能を追加：検索結果をWEKO3インポート用TSV形式で生成、TSVヘッダー貼り付けによるプレフィックス自動検出、JPCOAR 1.0/2.0切替、クリップボードコピー対応（[#67](https://github.com/tzhaya/jc-import-file-maker/issues/67)） |
 | 2026-03-11 | JAIRO Cloud OpenSearchクライアントをChrome拡張に統合：「OpenSearch検索」タブを追加、リポジトリURL設定・資源タイプフィルタ・ページング対応、options.htmlにデフォルトリポジトリURL設定欄を追加（[#72](https://github.com/tzhaya/jc-import-file-maker/issues/72)） |
 | 2026-03-11 | JaLCデータ取り込み修正：`keyword_list`を主題（scheme: Other）として取り込み、収録物名のtypeなし時フォールバック追加、出版者をcontent_language優先に並べ替え、出版タイプをVoRデフォルト設定（[#77](https://github.com/tzhaya/jc-import-file-maker/issues/77)） |
 | 2026-03-11 | 「書誌情報」収録誌名の追加・削除UI修正：雑誌名（`bibliographic_titles`）に追加・削除ボタンを追加（[#75](https://github.com/tzhaya/jc-import-file-maker/issues/75)） |

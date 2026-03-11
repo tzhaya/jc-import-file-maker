@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-11（JaLCデータ取り込み修正: issue #77）
+最終更新: 2026-03-11（助成情報TSV出力機能: issue #67）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,27 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-11: 助成情報TSV出力機能（issue #67）
+
+### 背景
+
+funder_lookup.html で検索した助成情報を、WEKO3インポート用TSV形式で出力する機能が必要。検索結果をExcel等に貼り付けて既存のインポートファイルに挿入するユースケースに対応する。
+
+### 実装内容
+
+- `funder_lookup.html` および `chrome-extension/funder_lookup.js`:
+  - TSV出力セクションUI追加（検索結果の下に配置）
+  - JPCOAR 1.0/2.0選択ラジオボタン（1.0: 9列、2.0: 14列）
+  - テンプレート解析（`parseTsvTemplate()`）：TSVヘッダー貼り付けからプレフィックス・ラベル・開始インデックスを自動検出
+  - TSV生成（`generateTsv()`）：3行ヘッダー（空行・プロパティキー・日本語ラベル）+ データ行
+  - 横スクロール可能なHTMLテーブルプレビュー
+  - クリップボードコピー（`navigator.clipboard.writeText`）
+  - 列定義は `weko3_property_key_naming.md` の14列構造に準拠
+- `chrome-extension/funder_panel.html`: TSV出力セクションHTML/CSS追加、最終更新日同期
+- デフォルト値: `item_30002_funding_reference21` + `助成情報`ラベル
 
 ---
 
