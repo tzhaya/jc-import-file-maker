@@ -132,12 +132,98 @@
     color: #888;
     border-bottom-color: #ddd;
   }
+  /* TSV出力セクション */
+  .tsv-section {
+    margin-top: 32px;
+    border: 1px solid #c8e6c9;
+    border-radius: 6px;
+    background: #fff;
+    padding: 16px 20px;
+  }
+  .tsv-section h2 {
+    font-size: 1.1em;
+    color: #1b5e20;
+    margin: 0 0 12px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 6px;
+  }
+  .tsv-section label {
+    font-size: 0.9em;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .tsv-section .radio-group {
+    margin-bottom: 12px;
+    font-size: 0.9em;
+  }
+  .tsv-section .radio-group label {
+    display: inline;
+    font-weight: normal;
+  }
+  .tsv-section textarea {
+    min-height: 80px;
+    font-size: 0.82em;
+  }
+  .tsv-section .field-row {
+    margin-bottom: 10px;
+  }
+  .tsv-section input[type="number"] {
+    width: 80px;
+    padding: 4px 8px;
+    font-size: 0.95em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  .tsv-note {
+    color: #e65100;
+    font-size: 0.82em;
+    margin-top: 2px;
+  }
+  .tsv-preview-wrap {
+    margin-top: 16px;
+    overflow-x: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fafafa;
+  }
+  .tsv-preview-wrap table {
+    border-collapse: collapse;
+    font-size: 0.78em;
+    white-space: nowrap;
+  }
+  .tsv-preview-wrap th,
+  .tsv-preview-wrap td {
+    border: 1px solid #ddd;
+    padding: 3px 8px;
+    text-align: left;
+  }
+  .tsv-preview-wrap thead tr:nth-child(1) th { background: #f5f5f5; color: #999; }
+  .tsv-preview-wrap thead tr:nth-child(2) th { background: #e3f2fd; font-family: 'Consolas','Monaco',monospace; font-size: 0.9em; }
+  .tsv-preview-wrap thead tr:nth-child(3) th { background: #e8f5e9; }
+  .tsv-preview-wrap tbody td { background: #fff; }
+  .tsv-warn {
+    color: #e65100;
+    font-size: 0.85em;
+    margin-top: 6px;
+  }
+  .btn-copy {
+    background: #1565c0;
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    font-size: 0.9em;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  .btn-copy:hover { background: #0d47a1; }
 </style>
 </head>
 <body>
 <h1>助成情報検索ツール</h1>
 <p style="font-size:0.82em; color:#555; margin:4px 0 12px;">
-  最終更新: 2026-03-07 &nbsp;|&nbsp;
+  最終更新: 2026-03-11 &nbsp;|&nbsp;
   <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#555;">github.com/tzhaya/jc-import-file-maker</a>
   <span id="update-check"></span>
 </p>
@@ -167,6 +253,34 @@
 </div>
 <div id="status"></div>
 <div id="result"></div>
+
+<div class="tsv-section" id="tsv-section" style="display:none">
+  <h2>TSV出力</h2>
+
+  <div class="radio-group">
+    <span style="font-weight:bold;margin-right:8px;">JPCOARスキーマ:</span>
+    <label><input type="radio" name="jpcoar-version" value="2.0" checked onchange="updateJpcoarNote()"> 2.0（プログラム情報あり）</label>
+    <label style="margin-left:12px"><input type="radio" name="jpcoar-version" value="1.0" onchange="updateJpcoarNote()"> 1.0（プログラム情報なし）</label>
+    <div class="tsv-note" id="jpcoar-note" style="display:none">JPCOAR 1.0ではプログラム情報（5列）が出力されません。</div>
+  </div>
+
+  <div class="field-row">
+    <label for="tsv-template">テンプレート（任意）</label>
+    <textarea id="tsv-template" placeholder="インポート/エクスポートしたTSVファイルのヘッダー行（先頭5行）を貼り付けてください。&#10;空の場合はデフォルト（item_30002_funding_reference21）を使用します。"></textarea>
+    <div class="hint">2行目の <code>.metadata.item_XXXXX_funding_referenceNN</code> のようなプレフィックスと、3行目の日本語ラベルを自動検出します。行全体や複数行の貼り付けも可能です。</div>
+  </div>
+
+  <div class="field-row">
+    <label for="tsv-start-index">開始インデックス</label>
+    <input type="number" id="tsv-start-index" value="0" min="0">
+    <span class="hint" style="margin-left:8px">既存の助成情報がN件ある場合、Nを入力してください。</span>
+  </div>
+
+  <button class="btn" onclick="generateTsv()">TSV生成</button>
+
+  <div id="tsv-output"></div>
+</div>
+
 <script>
 // ===== 設定 =====
 const CONFIG = {
@@ -498,6 +612,9 @@ function buildResultCards(results) {
   }).join('');
 }
 
+// ===== 検索結果の保持（TSV出力用） =====
+let lastResults = [];
+
 // ===== 入力モード切替 =====
 function updatePlaceholder() {
   const mode = document.querySelector('input[name="input-mode"]:checked').value;
@@ -555,11 +672,197 @@ async function doSearch() {
 
   statusEl.textContent = `完了（${numbers.length} 件）`;
   btn.disabled = false;
+
+  // 成功結果がある場合、TSV出力セクションを表示
+  lastResults = results;
+  const hasSuccess = results.some(r => !r.error && !r.loading);
+  document.getElementById('tsv-section').style.display = hasSuccess ? '' : 'none';
+  document.getElementById('tsv-output').innerHTML = '';
+}
+
+// ===== TSV列定義（weko3_property_key_naming.md 準拠） =====
+const FUNDING_COLUMNS = [
+  // [subItemPath, jaLabel, dataExtractor, jpcoar]
+  ['.subitem_award_numbers.subitem_award_number',      '.研究課題番号.研究課題番号',           r => r.awardNumber || '',  '1.0'],
+  ['.subitem_award_numbers.subitem_award_number_type',  '.研究課題番号.研究課題番号タイプ',     r => '',                   '1.0'],
+  ['.subitem_award_numbers.subitem_award_uri',          '.研究課題番号.研究課題番号URI',        r => r.awardUri || '',     '1.0'],
+  ['.subitem_award_titles[0].subitem_award_title',          '.研究課題名[0].研究課題名',   r => (r.titles || [])[0]?.subitem_award_title || '',          '1.0'],
+  ['.subitem_award_titles[0].subitem_award_title_language', '.研究課題名[0].言語',         r => (r.titles || [])[0]?.subitem_award_title_language || '', '1.0'],
+  ['.subitem_funder_identifiers.subitem_funder_identifier',      '.助成機関識別子.助成機関識別子', r => r.funderDoi ? 'https://doi.org/' + r.funderDoi : '', '1.0'],
+  ['.subitem_funder_identifiers.subitem_funder_identifier_type', '.助成機関識別子.識別子タイプ',   r => r.funderIdType || '',                                 '1.0'],
+  ['.subitem_funder_names[0].subitem_funder_name',          '.助成機関名[0].助成機関名', r => (r.funderNames || [])[0]?.subitem_funder_name || '',          '1.0'],
+  ['.subitem_funder_names[0].subitem_funder_name_language', '.助成機関名[0].言語',       r => (r.funderNames || [])[0]?.subitem_funder_name_language || '', '1.0'],
+  // JPCOAR 2.0 のみ
+  ['.subitem_funding_stream_identifiers.subitem_funding_stream_identifier',          '.プログラム情報識別子.プログラム情報識別子',         r => r.fundingStreamId || '',     '2.0'],
+  ['.subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type',     '.プログラム情報識別子.プログラム情報識別子タイプ',   r => r.fundingStreamIdType || '', '2.0'],
+  ['.subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri', '.プログラム情報識別子.プログラム情報識別子タイプURI', r => '',                          '2.0'],
+  ['.subitem_funding_streams[0].subitem_funding_stream',          '.プログラム情報[0].プログラム情報', r => (r.fundingStreams || [])[0]?.fundingStream || '',     '2.0'],
+  ['.subitem_funding_streams[0].subitem_funding_stream_language', '.プログラム情報[0].言語',           r => (r.fundingStreams || [])[0]?.fundingStreamLang || '', '2.0'],
+];
+
+const DEFAULT_PREFIX = '.metadata.item_30002_funding_reference21';
+const DEFAULT_LABEL  = '助成情報';
+
+// ===== テンプレート解析 =====
+function parseTsvTemplate(text) {
+  const result = { prefix: DEFAULT_PREFIX, label: DEFAULT_LABEL, warn: '' };
+  if (!text.trim()) return result;
+
+  const lines = text.split(/\r?\n/);
+
+  // 2行目を探す: .metadata.item_XXX[N].subitem_award_numbers を含む行
+  let row2 = null, row2idx = -1, row3 = null;
+  for (let i = 0; i < lines.length; i++) {
+    if (/\.metadata\.[^\t]*subitem_award_numbers/.test(lines[i])) {
+      row2 = lines[i];
+      row2idx = i;
+      break;
+    }
+  }
+
+  if (!row2) {
+    result.warn = '助成情報のフィールドが見つかりませんでした。デフォルト値を使用します。';
+    return result;
+  }
+
+  // プレフィックスを抽出
+  const cols2 = row2.split('\t');
+  let prefixCol = -1;
+  for (let j = 0; j < cols2.length; j++) {
+    const m = cols2[j].match(/^(\.metadata\.[^\[]+)\[\d+\]\.subitem_award_numbers/);
+    if (m) {
+      result.prefix = m[1];
+      prefixCol = j;
+      break;
+    }
+  }
+
+  // 3行目からトップレベルラベルを抽出
+  if (row2idx + 1 < lines.length) {
+    row3 = lines[row2idx + 1];
+    const cols3 = row3.split('\t');
+    if (prefixCol >= 0 && prefixCol < cols3.length) {
+      const lm = cols3[prefixCol].match(/^([^\[]+)\[/);
+      if (lm) result.label = lm[1];
+    }
+  }
+
+  return result;
+}
+
+// ===== JPCOARバージョン注記 =====
+function updateJpcoarNote() {
+  const ver = document.querySelector('input[name="jpcoar-version"]:checked').value;
+  document.getElementById('jpcoar-note').style.display = ver === '1.0' ? '' : 'none';
+}
+
+// ===== TSV生成 =====
+function generateTsv() {
+  const successResults = lastResults.filter(r => !r.error && !r.loading);
+  if (!successResults.length) return;
+
+  const ver = document.querySelector('input[name="jpcoar-version"]:checked').value;
+  const templateText = document.getElementById('tsv-template').value;
+  const parsed = parseTsvTemplate(templateText);
+
+  let startIdx = parseInt(document.getElementById('tsv-start-index').value, 10) || 0;
+
+  const prefix = parsed.prefix;
+  const label = parsed.label;
+
+  // バージョンに応じて列をフィルタ
+  const cols = ver === '1.0'
+    ? FUNDING_COLUMNS.filter(c => c[3] === '1.0')
+    : FUNDING_COLUMNS;
+
+  // TSV行を構築
+  const tsvRows = [];
+
+  // 1行目: 空
+  tsvRows.push(cols.map(() => '').join('\t'));
+
+  // 2行目: プロパティキー（各結果ごとに [N], [N+1], ... を展開）
+  const row2 = [];
+  for (let i = 0; i < successResults.length; i++) {
+    const n = startIdx + i;
+    for (const col of cols) {
+      row2.push(prefix + '[' + n + ']' + col[0]);
+    }
+  }
+  tsvRows.push(row2.join('\t'));
+
+  // 3行目: 日本語ラベル
+  const row3 = [];
+  for (let i = 0; i < successResults.length; i++) {
+    const n = startIdx + i;
+    for (const col of cols) {
+      row3.push(label + '[' + n + ']' + col[1]);
+    }
+  }
+  tsvRows.push(row3.join('\t'));
+
+  // データ行: 1行（全結果を横に展開）
+  const dataRow = [];
+  for (const r of successResults) {
+    for (const col of cols) {
+      dataRow.push(col[2](r));
+    }
+  }
+  tsvRows.push(dataRow.join('\t'));
+
+  const tsvString = tsvRows.join('\n');
+
+  // プレビューHTML Table
+  const colCount = cols.length * successResults.length;
+  let html = '';
+  if (parsed.warn) {
+    html += '<div class="tsv-warn">⚠ ' + parsed.warn + '</div>';
+  }
+  html += '<div class="tsv-preview-wrap"><table><thead>';
+  // 1行目（空）
+  html += '<tr>';
+  for (let i = 0; i < colCount; i++) html += '<th></th>';
+  html += '</tr>';
+  // 2行目（プロパティキー）
+  html += '<tr>';
+  for (const v of row2) html += '<th>' + escHtml(v) + '</th>';
+  html += '</tr>';
+  // 3行目（日本語ラベル）
+  html += '<tr>';
+  for (const v of row3) html += '<th>' + escHtml(v) + '</th>';
+  html += '</tr>';
+  html += '</thead><tbody><tr>';
+  for (const v of dataRow) html += '<td>' + escHtml(v) + '</td>';
+  html += '</tr></tbody></table></div>';
+  html += '<button class="btn-copy" onclick="copyTsvToClipboard(this)">クリップボードにコピー</button>';
+
+  document.getElementById('tsv-output').innerHTML = html;
+
+  // TSV文字列を保持
+  document.getElementById('tsv-output').dataset.tsv = tsvString;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ===== クリップボードにコピー =====
+async function copyTsvToClipboard(btn) {
+  const tsv = document.getElementById('tsv-output').dataset.tsv;
+  if (!tsv) return;
+  try {
+    await navigator.clipboard.writeText(tsv);
+    const orig = btn.textContent;
+    btn.textContent = 'コピーしました';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  } catch (e) {
+    alert('クリップボードへのコピーに失敗しました: ' + e.message);
+  }
 }
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-07';
+  const LOCAL_VERSION = '2026-03-11';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;

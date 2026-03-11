@@ -136,6 +136,92 @@
     color: #888;
     border-bottom-color: #ddd;
   }
+  /* TSV出力セクション */
+  .tsv-section {
+    margin-top: 32px;
+    border: 1px solid #c8e6c9;
+    border-radius: 6px;
+    background: #fff;
+    padding: 16px 20px;
+  }
+  .tsv-section h2 {
+    font-size: 1.1em;
+    color: #1b5e20;
+    margin: 0 0 12px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 6px;
+  }
+  .tsv-section label {
+    font-size: 0.9em;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .tsv-section .radio-group {
+    margin-bottom: 12px;
+    font-size: 0.9em;
+  }
+  .tsv-section .radio-group label {
+    display: inline;
+    font-weight: normal;
+  }
+  .tsv-section textarea {
+    min-height: 80px;
+    font-size: 0.82em;
+  }
+  .tsv-section .field-row {
+    margin-bottom: 10px;
+  }
+  .tsv-section input[type="number"] {
+    width: 80px;
+    padding: 4px 8px;
+    font-size: 0.95em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  .tsv-note {
+    color: #e65100;
+    font-size: 0.82em;
+    margin-top: 2px;
+  }
+  .tsv-preview-wrap {
+    margin-top: 16px;
+    overflow-x: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fafafa;
+  }
+  .tsv-preview-wrap table {
+    border-collapse: collapse;
+    font-size: 0.78em;
+    white-space: nowrap;
+  }
+  .tsv-preview-wrap th,
+  .tsv-preview-wrap td {
+    border: 1px solid #ddd;
+    padding: 3px 8px;
+    text-align: left;
+  }
+  .tsv-preview-wrap thead tr:nth-child(1) th { background: #f5f5f5; color: #999; }
+  .tsv-preview-wrap thead tr:nth-child(2) th { background: #e3f2fd; font-family: 'Consolas','Monaco',monospace; font-size: 0.9em; }
+  .tsv-preview-wrap thead tr:nth-child(3) th { background: #e8f5e9; }
+  .tsv-preview-wrap tbody td { background: #fff; }
+  .tsv-warn {
+    color: #e65100;
+    font-size: 0.85em;
+    margin-top: 6px;
+  }
+  .btn-copy {
+    background: #1565c0;
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    font-size: 0.9em;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  .btn-copy:hover { background: #0d47a1; }
 </style>
 </head>
 <body>
@@ -146,7 +232,7 @@
 </nav>
 <h1>助成情報検索ツール</h1>
 <p style="font-size:0.82em; color:#555; margin:4px 0 12px;">
-  最終更新: 2026-03-07 &nbsp;|&nbsp;
+  最終更新: 2026-03-11 &nbsp;|&nbsp;
   <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#555;">github.com/tzhaya/jc-import-file-maker</a>
   <span id="update-check"></span>
 </p>
@@ -176,6 +262,33 @@
 </div>
 <div id="status"></div>
 <div id="result"></div>
+
+<div class="tsv-section" id="tsv-section" style="display:none">
+  <h2>TSV出力</h2>
+
+  <div class="radio-group">
+    <span style="font-weight:bold;margin-right:8px;">JPCOARスキーマ:</span>
+    <label><input type="radio" name="jpcoar-version" value="2.0" checked> 2.0（プログラム情報あり）</label>
+    <label style="margin-left:12px"><input type="radio" name="jpcoar-version" value="1.0"> 1.0（プログラム情報なし）</label>
+    <div class="tsv-note" id="jpcoar-note" style="display:none">JPCOAR 1.0ではプログラム情報（5列）が出力されません。</div>
+  </div>
+
+  <div class="field-row">
+    <label for="tsv-template">テンプレート（任意）</label>
+    <textarea id="tsv-template" placeholder="インポート/エクスポートしたTSVファイルのヘッダー行（先頭5行）を貼り付けてください。&#10;空の場合はデフォルト（item_30002_funding_reference21）を使用します。"></textarea>
+    <div class="hint">2行目の <code>.metadata.item_XXXXX_funding_referenceNN</code> のようなプレフィックスと、3行目の日本語ラベルを自動検出します。行全体や複数行の貼り付けも可能です。</div>
+  </div>
+
+  <div class="field-row">
+    <label for="tsv-start-index">開始インデックス</label>
+    <input type="number" id="tsv-start-index" value="0" min="0">
+    <span class="hint" style="margin-left:8px">既存の助成情報がN件ある場合、Nを入力してください。</span>
+  </div>
+
+  <button class="btn" id="tsv-generate-btn">TSV生成</button>
+
+  <div id="tsv-output"></div>
+</div>
 
 <script src="funder_lookup.js"></script>
 <footer style="margin-top:32px;padding:12px 0;border-top:1px solid #ddd;color:#999;font-size:0.8em;text-align:center;">
