@@ -1,8 +1,9 @@
-const keys = ['OpenAlex_API_KEY', 'CiNii_API_KEY', 'OPF_API_KEY'];
+const keys = ['defaultRepositoryUrl', 'OpenAlex_API_KEY', 'CiNii_API_KEY', 'OPF_API_KEY'];
 const inputs = {
-  OpenAlex_API_KEY: document.getElementById('openalex-key'),
-  CiNii_API_KEY:    document.getElementById('cinii-key'),
-  OPF_API_KEY:      document.getElementById('opf-key'),
+  defaultRepositoryUrl: document.getElementById('default-repo-url'),
+  OpenAlex_API_KEY:     document.getElementById('openalex-key'),
+  CiNii_API_KEY:        document.getElementById('cinii-key'),
+  OPF_API_KEY:          document.getElementById('opf-key'),
 };
 
 // 保存済みの値を読み込む
