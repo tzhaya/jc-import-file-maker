@@ -331,21 +331,25 @@ function buildResultCards(results) {
 // ===== 検索結果の保持（TSV出力用） =====
 let lastResults = [];
 
-// ===== 入力モード切替 =====
-function updatePlaceholder() {
-  const mode = document.querySelector('input[name="input-mode"]:checked').value;
-  const ta = document.getElementById('award-input');
-  const label = document.getElementById('input-label');
-  const hint = document.getElementById('input-hint');
-  if (mode === 'ack') {
-    label.textContent = 'Acknowledgementsテキストを貼り付けてください。';
-    ta.placeholder = 'This work was supported by ... (Grant No. JPMJSA1907) ...';
-    hint.textContent = 'テキスト中の JP で始まる課題番号（JP[A-Za-z0-9]+）を自動抽出します。';
-  } else {
-    label.textContent = '課題番号を1行に1つ、改行して入力してください。';
-    ta.placeholder = 'JP21H01234\nJPMJSA1907\n21K12345';
-    hint.textContent = '科研費課題番号（JP付き / なし）や JGN 課題番号を入力できます。';
+// ===== 入力から課題番号を抽出（自動判定） =====
+function extractAwardNumbers(input) {
+  const numbers = [];
+  const seen = new Set();
+  for (const line of input.split(/\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (/\s/.test(trimmed)) {
+      // スペースを含む行: Acknowledgementsテキストとして JP... パターンを抽出
+      const matches = trimmed.match(/JP[A-Za-z0-9]+/g) || [];
+      for (const m of matches) {
+        if (!seen.has(m)) { seen.add(m); numbers.push(m); }
+      }
+    } else {
+      // スペースなし: 課題番号として扱う
+      if (!seen.has(trimmed)) { seen.add(trimmed); numbers.push(trimmed); }
+    }
   }
+  return numbers;
 }
 
 // ===== メイン検索処理 =====
@@ -354,14 +358,7 @@ async function doSearch() {
   const input = document.getElementById('award-input').value.trim();
   if (!input) return;
 
-  const mode = document.querySelector('input[name="input-mode"]:checked').value;
-  let numbers;
-  if (mode === 'ack') {
-    // Acknowledgementsテキストから JP で始まる課題番号を抽出（重複排除）
-    numbers = [...new Set(input.match(/JP[A-Za-z0-9]+/g) || [])];
-  } else {
-    numbers = input.split(/\n/).map(s => s.trim()).filter(Boolean);
-  }
+  const numbers = extractAwardNumbers(input);
 
   if (!numbers.length) return;
 
@@ -600,9 +597,6 @@ async function copyTsvToClipboard(btn) {
 
 // ===== イベントリスナー登録（Chrome拡張CSP対応） =====
 document.getElementById('search-btn').addEventListener('click', doSearch);
-document.querySelectorAll('input[name="input-mode"]').forEach(radio => {
-  radio.addEventListener('change', updatePlaceholder);
-});
 document.getElementById('tsv-generate-btn').addEventListener('click', generateTsv);
 document.querySelectorAll('input[name="jpcoar-version"]').forEach(radio => {
   radio.addEventListener('change', updateJpcoarNote);
