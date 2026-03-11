@@ -5,10 +5,11 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 Chrome拡張版と通常ブラウザ版の2つの利用方法があります。
 
 - Chrome拡張版では以下の機能が利用できます。APIキーが必要です。こちらが高機能版です。
-  - JAIRO Cloud インポート用TSV生成ツール、助成情報検索ツールをタブで切り替えできます。
+  - JAIRO Cloud インポート用TSV生成ツール、助成情報検索ツール、OpenSearch検索をタブで切り替えできます。
   - JaLC DOIからのメタデータ取り込みに対応しています。日本語の学協会誌等が取り込めます。
   - KAKEN APIによる科研費課題番号の検索と取り込み、に対応しています。
-  - Open Poclicy Finder上の情報の表示に対応しています。
+  - Open Policy Finder上の情報の表示に対応しています。
+  - JAIRO Cloud機関リポジトリのOpenSearch APIを用いた文献検索ができます（タイトル・内容記述・資源タイプ・ページングに対応）。
 
 - 通常ブラウザ版では、JaLC DOIおよびKAKEN APIからのメタデータ取り込み、Open Poclicy Finder上の情報の取得と表示ができません。Open Poclicy Finderへのリンクを生成します。
 
@@ -55,6 +56,13 @@ HTMLファイルを直接ブラウザで開いて使用します。
 - 通常ブラウザ版では [funder_lookup.html](https://github.com/tzhaya/jc-import-file-maker/blob/master/funder_lookup.html) を右クリック→「名前をつけてリンク(先)を保存」で保存してご利用ください。
 - 科研費課題番号やJGN課題番号を入力すると、JPCOAR 2.0 準拠の助成情報（助成機関識別子・助成機関名・プログラム情報・研究課題名）を検索できます。
 - 論文の謝辞（Acknowledgement）をコピー＆ペーストして科研費課題番号の抽出ができます。
+
+### OpenSearch検索ツール（Chrome拡張版のみ）
+
+- Chrome拡張版のサイドパネルのタブから「OpenSearch検索」に切り替えて利用できます。
+- JAIRO Cloud利用機関のリポジトリURL・タイトル・内容記述・資源タイプを条件に文献を検索できます。
+- 検索結果はタイトル・著者・書誌情報・ファイルリンクとともに一覧表示され、クリックで詳細フィールドを展開できます。
+- 設定ページでデフォルトのリポジトリURLを登録しておくと、タブを開いた際に自動入力されます。
 
 ### API Key の設定
 
@@ -227,6 +235,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-11 | JAIRO Cloud OpenSearchクライアントをChrome拡張に統合：「OpenSearch検索」タブを追加、リポジトリURL設定・資源タイプフィルタ・ページング対応、options.htmlにデフォルトリポジトリURL設定欄を追加（[#72](https://github.com/tzhaya/jc-import-file-maker/issues/72)） |
 | 2026-03-11 | JaLCデータ取り込み修正：`keyword_list`を主題（scheme: Other）として取り込み、収録物名のtypeなし時フォールバック追加、出版者をcontent_language優先に並べ替え、出版タイプをVoRデフォルト設定（[#77](https://github.com/tzhaya/jc-import-file-maker/issues/77)） |
 | 2026-03-11 | 「書誌情報」収録誌名の追加・削除UI修正：雑誌名（`bibliographic_titles`）に追加・削除ボタンを追加（[#75](https://github.com/tzhaya/jc-import-file-maker/issues/75)） |
 | 2026-03-10 | Chrome拡張化（[#70](https://github.com/tzhaya/jc-import-file-maker/issues/70)）：Manifest V3 Chrome拡張を追加。Service Worker経由でCORS非対応API（KAKEN XML・JaLC・OPF）を有効化。options.htmlでAPIキーをchrome.storage.localに安全に保存。KAKEN XML API・JaLC APIを本有効化。OPF APIポリシー取得・モーダル表示を実装（[#50](https://github.com/tzhaya/jc-import-file-maker/issues/50)・PR [#61](https://github.com/tzhaya/jc-import-file-maker/pull/61)同時対応） |

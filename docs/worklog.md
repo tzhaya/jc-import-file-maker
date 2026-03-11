@@ -1146,6 +1146,43 @@ const resourcetype = TITLE_MAPS.resourcetype.includes(crTypeLabel)
 
 ---
 
+### OpenSearch検索タブ統合 ✅（2026-03-11）
+
+**背景:** jc-opensearch-client リポジトリに Chrome拡張用の OpenSearch 検索クライアント（sidepanel.html / sidepanel.js）が独立して存在していた。本拡張のタブ機能と統合することで、インポート作業中に別拡張を切り替えずに文献検索が可能となる（[Issue #72](https://github.com/tzhaya/jc-import-file-maker/issues/72)）。
+
+**実装内容:**
+
+1. **`chrome-extension/opensearch_panel.html` 新規作成:**
+   - jc-opensearch-client の sidepanel.html をベースに移植
+   - `<nav class="ext-nav">` タブナビを追加（DOIインポート / 助成情報検索 / OpenSearch検索）
+   - 色調を緑系に統一（`#0070c0` → `#2c5f2e`）
+   - `body { margin: 20px; }` で既存パネルと揃える
+   - 検索フォーム（リポジトリURL・タイトル・内容記述・資源タイプ）・結果一覧・ページング
+
+2. **`chrome-extension/opensearch_panel.js` 新規作成:**
+   - jc-opensearch-client の sidepanel.js をベースに移植
+   - Chrome拡張 fetch ラッパー（Service Worker経由）・ALLOWED_HOST_PATTERN / ALLOWED_HOSTS_EXTRA そのまま移植
+   - `init()` にて `chrome.storage.local.get('defaultRepositoryUrl')` でデフォルトURL読み込み
+   - スタンドアロン HTML 用 CONFIG.proxyUrl 分岐を除去
+
+3. **`chrome-extension/panel.html` / `funder_panel.html` のタブナビ更新:**
+   - 「OpenSearch検索」リンク（`opensearch_panel.html`）を追加
+
+4. **`chrome-extension/options.html` / `options.js` の更新:**
+   - 「JAIRO Cloud OpenSearch」セクションに「デフォルトリポジトリ URL」入力欄を追加
+   - `defaultRepositoryUrl` キーを `chrome.storage.local` に保存・読み込み
+
+5. **`chrome-extension/manifest.json` の更新:**
+   - `host_permissions` に jc-opensearch-client の全対応ホスト19件を追記（`*.repo.nii.ac.jp` ワイルドカード + 個別ホスト18件）
+
+**検証ポイント:**
+- 3つのタブ間の切り替えが正常に動作すること
+- options.html でデフォルトリポジトリURLを設定すると opensearch_panel.html を開いた際に自動入力されること
+- 許可外ホスト入力時にエラーメッセージが表示されること
+- 資源タイプのセレクトメニューが全47件表示されること
+
+---
+
 ## 未完了タスク
 
 ### Phase 2: TSVエクスポート機能（未着手）
