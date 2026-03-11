@@ -1,37 +1,6 @@
-// ===== Chrome 拡張環境検出 & fetch ラッパー =====
-const IS_CHROME_EXTENSION = typeof chrome !== 'undefined'
-  && !!chrome.runtime
-  && !!chrome.runtime.sendMessage;
-
-if (IS_CHROME_EXTENSION) {
-  const _originalFetch = window.fetch.bind(window);
-  window.fetch = function(url, options) {
-    if (options && options.method && options.method !== 'GET') {
-      return _originalFetch(url, options);
-    }
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        { type: 'fetch', url: url.toString() },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-            return;
-          }
-          if (response.error) {
-            reject(new Error(response.error));
-            return;
-          }
-          resolve({
-            ok: true,
-            status: 200,
-            text: () => Promise.resolve(response.text),
-          });
-        }
-      );
-    });
-  };
-}
-// ================================================
+// サイドパネル（extension page）は host_permissions 登録済みホストへ直接 fetch 可能。
+// Service Worker プロキシは不要。
+const IS_CHROME_EXTENSION = typeof chrome !== 'undefined' && !!chrome.runtime;
 
 // ===== 通信先ホスト制限 =====
 const ALLOWED_HOST_PATTERN = /\.repo\.nii\.ac\.jp$/i;
@@ -501,11 +470,7 @@ async function doSearch(page = 1) {
     const text = await res.text();
     renderResults(parseXML(text));
   } catch (err) {
-    const isCors = !IS_CHROME_EXTENSION && err instanceof TypeError && err.message === 'Failed to fetch';
-    const msg = isCors
-      ? 'CORS エラー: ブラウザが API へのアクセスをブロックしました。\n\nChrome 拡張版をご利用ください。'
-      : `エラー: ${err.message}`;
-    showError(msg, isCors ? 'cors' : 'warn');
+    showError(`エラー: ${err.message}`, 'warn');
   } finally {
     setLoading(false);
   }
