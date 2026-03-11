@@ -1939,13 +1939,21 @@ async function mapToItemTypeJaLC(jalcJson) {
     subitem_rights_resource: r.uri || '',
   }));
 
-  // ===== 主題（キーワード）=====
-  const subjects = (jalcJson.subject_list || []).map(s => ({
-    subitem_subject:          s.subject || '',
-    subitem_subject_language: s.lang || '',
-    subitem_subject_scheme:   '',
-    subitem_subject_uri:      '',
-  }));
+  // ===== 主題（subject_list + keyword_list）=====
+  const subjects = [
+    ...(jalcJson.subject_list || []).map(s => ({
+      subitem_subject:          s.subject || '',
+      subitem_subject_language: s.lang || '',
+      subitem_subject_scheme:   '',
+      subitem_subject_uri:      '',
+    })),
+    ...(jalcJson.keyword_list || []).map(k => ({
+      subitem_subject:          k.keyword || '',
+      subitem_subject_language: k.lang || '',
+      subitem_subject_scheme:   'Other',
+      subitem_subject_uri:      '',
+    })),
+  ].filter(s => s.subitem_subject);
   if (!subjects.length) {
     subjects.push({ subitem_subject: '', subitem_subject_language: '', subitem_subject_scheme: '', subitem_subject_uri: '' });
   }
@@ -1974,12 +1982,24 @@ async function mapToItemTypeJaLC(jalcJson) {
   }
 
   // ===== 収録物名（多言語）=====
-  const sourceTitles = (jalcJson.journal_title_name_list || [])
-    .filter(jt => (jt.type || '').toLowerCase() === 'full')
-    .map(jt => ({
-      subitem_source_title: jt.journal_title_name || '',
-      subitem_source_title_language: jt.lang || '',
-    })).filter(st => st.subitem_source_title);
+  // type: full を優先。type がない場合は ja/en の先頭1件ずつをフォールバック取得。
+  // type: abbreviation / before / after は取得しない。
+  const _jtList = jalcJson.journal_title_name_list || [];
+  const _jtFull = _jtList.filter(jt => (jt.type || '').toLowerCase() === 'full');
+  let sourceTitles;
+  if (_jtFull.length) {
+    sourceTitles = _jtFull
+      .map(jt => ({ subitem_source_title: jt.journal_title_name || '', subitem_source_title_language: jt.lang || '' }))
+      .filter(st => st.subitem_source_title);
+  } else {
+    const _jtNoType = _jtList.filter(jt => !jt.type);
+    const _jtJa = _jtNoType.find(jt => jt.lang === 'ja');
+    const _jtEn = _jtNoType.find(jt => jt.lang === 'en');
+    sourceTitles = [_jtJa, _jtEn]
+      .filter(Boolean)
+      .map(jt => ({ subitem_source_title: jt.journal_title_name || '', subitem_source_title_language: jt.lang || '' }))
+      .filter(st => st.subitem_source_title);
+  }
 
   // ===== 内容記述（抄録等）=====
   const descriptions = (jalcJson.description_list || []).filter(d => {
@@ -1991,22 +2011,26 @@ async function mapToItemTypeJaLC(jalcJson) {
     subitem_description_type:     'Abstract',
   }));
 
-  // ===== 出版者（多言語）=====
-  const publishers = (jalcJson.publisher_list || []).map(p => ({
-    subitem_publisher: p.publisher_name || '',
-    subitem_publisher_language: p.lang || '',
-  })).filter(p => p.subitem_publisher);
+  // ===== 言語 (ISO 639-1 → ISO 639-2) =====
+  const LANG_MAP = { 'ja': 'jpn', 'en': 'eng', 'zh': 'zho', 'ko': 'kor', 'fr': 'fra', 'de': 'deu', 'es': 'spa', 'pt': 'por', 'ru': 'rus', 'it': 'ita' };
+  const contentLang = jalcJson.content_language || '';
+  const lang639_2 = LANG_MAP[contentLang] || contentLang;
+
+  // ===== 出版者（多言語、content_language と一致する言語を先頭に）=====
+  const _rawPublishers = (jalcJson.publisher_list || []).filter(p => p.publisher_name);
+  const publishers = (contentLang
+    ? [
+        ..._rawPublishers.filter(p => p.lang === contentLang),
+        ..._rawPublishers.filter(p => p.lang !== contentLang),
+      ]
+    : _rawPublishers
+  ).map(p => ({ subitem_publisher: p.publisher_name, subitem_publisher_language: p.lang || '' }));
 
   // ===== 書誌情報 =====
   const volume    = jalcJson.volume     || '';
   const issue     = jalcJson.issue      || '';
   const firstPage = jalcJson.first_page || '';
   const lastPage  = jalcJson.last_page  || '';
-
-  // ===== 言語 (ISO 639-1 → ISO 639-2) =====
-  const LANG_MAP = { 'ja': 'jpn', 'en': 'eng', 'zh': 'zho', 'ko': 'kor', 'fr': 'fra', 'de': 'deu', 'es': 'spa', 'pt': 'por', 'ru': 'rus', 'it': 'ita' };
-  const contentLang = jalcJson.content_language || '';
-  const lang639_2 = LANG_MAP[contentLang] || contentLang;
 
   // ===== 関連情報 =====
   const relations = [];
@@ -2050,6 +2074,14 @@ async function mapToItemTypeJaLC(jalcJson) {
     }
   });
 
+  // ===== 出版タイプ =====
+  // article_type: 'preprint' → AO、それ以外（'pub' 等）または未設定 → VoR をデフォルト
+  const articleType = (jalcJson.article_type || '').toLowerCase();
+  const versionType     = articleType === 'preprint' ? 'AO'  : 'VoR';
+  const versionResource = articleType === 'preprint'
+    ? VERSION_TYPE_MAP['AO']
+    : VERSION_TYPE_MAP['VoR'];
+
   // ===== メタデータオブジェクト =====
   const metadata = {
     system: {
@@ -2078,7 +2110,7 @@ async function mapToItemTypeJaLC(jalcJson) {
     item_30002_language12: lang639_2 ? [{ subitem_language: lang639_2 }] : [],
     item_30002_resource_type13: { resourcetype, resourceuri },
     item_30002_version14: { subitem_version: '' },
-    item_30002_version_type15: { subitem_version_resource: '', subitem_version_type: '' },
+    item_30002_version_type15: { subitem_version_resource: versionResource, subitem_version_type: versionType },
     item_30002_identifier16: [],
     item_30002_identifier_registration17: { subitem_identifier_reg_text: '', subitem_identifier_reg_type: '' },
     item_30002_relation18: relations,
