@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-11（助成情報TSV出力機能: issue #67）
+最終更新: 2026-03-11（助成情報検索入力モード自動判定・タブfont-size統一）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,28 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-11: 助成情報検索入力モード自動判定・Chrome拡張タブfont-size統一
+
+### 背景
+
+`funder_lookup.html` の入力欄に「課題番号」と「謝辞テキスト」の2モードをラジオボタンで切り替える方式だったが、入力内容から自動判定できるためUIを簡略化した。
+また Chrome拡張の3タブ（DOIインポート・助成情報検索・OpenSearch検索）でナビゲーションタブのフォントサイズが揃っていない問題を修正した。
+
+### 実装内容
+
+- `funder_lookup.html` / `chrome-extension/funder_panel.html`:
+  - ラジオボタン（課題番号 / Ackテキスト）を廃止
+  - `extractAwardNumbers()` を新規実装：各行をスペースの有無で判定し、スペースなし行は課題番号、スペースあり行は `JP[A-Za-z0-9]+` パターンを抽出
+  - 行をまたいで重複排除（`Set` 使用）
+  - プレースホルダー・ヒントテキストを両形式対応の説明に更新
+- `chrome-extension/funder_lookup.js`:
+  - `updatePlaceholder()` を `extractAwardNumbers()` に置き換え
+  - `input-mode` ラジオ用イベントリスナーを削除
+- `chrome-extension/funder_panel.html` / `chrome-extension/panel.html`:
+  - `body` に `font-size: 14px` を追加し、`opensearch_panel.html` と統一
 
 ---
 
