@@ -13,6 +13,14 @@ Chrome拡張版と通常ブラウザ版の2つの利用方法があります。
 
 - 通常ブラウザ版では、JaLC DOIおよびKAKEN APIからのメタデータ取り込み、Open Poclicy Finder上の情報の取得と表示ができません。Open Poclicy Finderへのリンクを生成します。
 
+## 最新の更新
+
+| ツール | 日付 | バージョン | 更新概要 |
+|--------|------|-----------|----------|
+| Chrome拡張版 | 2026-03-13 | ver. 1.2.1 | 科研費課題番号の識別方法修正：funder DOIに依存せず番号パターンで科研費を識別（[#82](https://github.com/tzhaya/jc-import-file-maker/issues/82)） |
+| インポート用TSV生成ツール | 2026-03-13 | — | 科研費課題番号の識別方法修正（[#82](https://github.com/tzhaya/jc-import-file-maker/issues/82)） |
+| 助成情報検索ツール | 2026-03-13 | — | isKakenhi()関数追加（科研費番号パターン判定） |
+
 ## 導入方法
 
 ### Chrome拡張版（推奨）
