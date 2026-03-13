@@ -1,8 +1,13 @@
 # Claude Code settings (local only)
-.claude/
+.claude/**
+!.claude/skills/
+!.claude/skills/**
 
 # Old versions
 old/
+
+# Dependencies
+node_modules/
 
 # OS
 .DS_Store
