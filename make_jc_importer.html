@@ -4825,7 +4825,10 @@ function groupTsvColumns(prefix) {
       cur = { fieldKey, isExpandable: false, cols: [] };
       groups.push(cur);
     }
-    if (baseKey.includes('[0]')) cur.isExpandable = true;
+    // トップレベル配列かどうかの判定: フィールドキー直後に [0] がある場合のみ展開対象。
+    // 例: item_30002_creator2[0].xxx → 展開対象
+    // 例: item_30002_bibliographic_information29.bibliographic_titles[0].xxx → 内部配列のみなので展開しない
+    if (baseKey.match(/^\.metadata\.item_[^.\[]+\[0\]/)) cur.isExpandable = true;
     cur.cols.push({ key: outKey, lookupKey, label, sys, con });
   }
   return groups;
