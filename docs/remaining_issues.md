@@ -88,9 +88,9 @@ TSV 出力を実装する前に、DOM 構造・語彙値に影響する JPCOAR 2
 - **既存基盤**: `collectFromDOM()` がプレビュー機能（#37）で実装済み（L4715）
 - **詳細仕様**: `docs/Implementation_phase2.md` に全ステップの詳細設計あり
 - **主要実装内容**:
-  1. `TSV_COL_GROUPS` 定数定義（30002.tsv 列順に従う列テンプレート）
-  2. `buildColumnDefs(metadata)` — 配列サイズに応じた動的列展開
-  3. `generateTsv(metadata)` — 5行ヘッダー + データ行生成
+  1. `TSV_HEADERS_TEMPLATE` 定数定義（`data/tsv_headers.json` のインライン版）
+  2. `buildTsvColumnDefs(prefix, metadata)` — 配列サイズに応じた動的列展開
+  3. `generateTsv(metadata, templateText)` — 5行ヘッダー + データ行生成
   4. `downloadTsv(tsvString, filename)` — BOM付きUTF-8 TSV ダウンロード
   5. `exportTsv()` + UI ボタン追加
 
@@ -101,7 +101,7 @@ TSV 出力を実装する前に、DOM 構造・語彙値に影響する JPCOAR 2
 ### #32: 出版者情報（新規フィールド）
 
 - **内容**: JPCOAR 2.0 で追加された出版者情報フィールド（出版者識別子等）
-- **対応方針**: Phase 2 実装後に `TSV_EXCLUDED_GROUPS` から除外して追加
+- **対応方針**: Phase 2 実装後に `TSV_EXCL_SUFFIXES` / `TSV_EXCL_TIMESTAMP` から除外して追加
 
 ### #33: 日付リテラル（新規フィールド）
 
