@@ -21,17 +21,30 @@ DOM の構造・フィールドキー・語彙が固まってから TSV 出力�
 | #34 | 助成情報にプログラム情報フィールドを追加 | funding の DOM にサブフィールドが増える |
 
 フェーズ1-b（#30 出版者必須度変更）は UI のみで DOM 構造に影響しないため、TSV 実装と並行可能。
-フェーズ2-b（#32 出版者情報・#33 日付リテラル）は新規フィールド追加であり、TSV 実装後に `TSV_EXCLUDED_GROUPS` から除外して対応する。
+フェーズ2-b（#32 出版者情報・#33 日付リテラル）は新規フィールド追加であり、TSV 実装後に `TSV_EXCL_SUFFIXES` / `TSV_EXCL_TIMESTAMP` から除外して対応する。
 
 ## 対象ファイル
 
 - **編集**: `make_jc_importer.html`（単一ファイルアプリ）
-- **参照**: `samples/デフォルトアイテムタイプ（フル）(30002).tsv`（出力フォーマットの基準）
+- **参照**: `data/tsv_headers.json`（TSV列定義の正典。構造変更時は必ずこのファイルを更新してから `TSV_HEADERS_TEMPLATE` 定数に反映する）
+- **参照**: `samples/デフォルトアイテムタイプ（フル）(30002).tsv`（出力フォーマット確認用）
 - **参照**: [weko3_property_key_naming.md](weko3_property_key_naming.md) — プロパティキーの命名規則（3パターン）と助成情報フィールド構造
 
-### プロパティキーの可変性に関する注意
+### プロパティキー柔軟化の設計方針
 
-TSV_COL_GROUPS のプロパティキー（`item_30002_funding_reference21` 等）は 30002 テンプレート基準だが、実際のリポジトリではプロパティキーが異なる場合がある（詳細は [weko3_property_key_naming.md](weko3_property_key_naming.md) 参照）:
+TSV の列定義・プロパティキーは `tsv_headers.json` 駆動とし、2種類の変更に対応できるよう設計する：
+
+| 変更種別 | 対応方法 |
+|----------|---------|
+| **列追加・削除・順序変更**（フォーマット変更） | `data/tsv_headers.json` を更新 → `TSV_HEADERS_TEMPLATE` 定数に反映するだけで対応完了 |
+| **プロパティキー名変更**（`item_30002_` → 別のプレフィックス） | ユーザがリポジトリのTSVヘッダーを `tsv-template` テキストエリアに貼り付ける → `detectTsvPrefix()` が自動検出してキーを置換 |
+
+フォーマット変更時の手順:
+1. `data/tsv_headers.json` を更新
+2. HTML 内の `TSV_HEADERS_TEMPLATE` 定数（STEP 8a セクション）を更新
+3. 新フィールドが除外対象であれば `TSV_EXCL_SUFFIXES` / `TSV_EXCL_TIMESTAMP` に追加
+
+プロパティキー名の種類については [weko3_property_key_naming.md](weko3_property_key_naming.md) を参照:
 
 | パターン | 例 | 発生条件 |
 |----------|-----|----------|
@@ -39,13 +52,11 @@ TSV_COL_GROUPS のプロパティキー（`item_30002_funding_reference21` 等�
 | `item_{timestamp}` | `item_1708699025255` | Web UI から後日追加されたプロパティ |
 | `item_{name}` | `item_creator` | WEKO2 からの移行 |
 
-Phase 2 の TSV 出力では 30002 基準のキーを使用するが、将来的にユーザのリポジトリに合わせたキー設定が必要になる可能性がある（Issue #67 の funder_lookup.html では TSV ヘッダー貼り付けによる自動検出方式を採用）。
-
 ## 出力ルール
 
 - **空フィールドの省略**: 値が存在しないフィールドの列はTSVに出力しない
   - フィールド全体が空の場合（例: contributor3 にデータなし → contributor3 の列群すべてを省略）
-  - 複合型の内部配列が空の場合（例: creator2 に nameIdentifiers がない → その識別子列を省略）
+  - ※ 内部配列（creatorAffiliations 等）は `tsv_headers.json` テンプレートで [0] のみ定義。1要素のみ出力（WEKO3 TSVフォーマット上の制約）
 - **除外フィールド**: heading36, file35, dissertation30〜degree33, apc5, item_1698624001〜item_1698624010 は常に出力しない
 - **System列の自動補完**: RESOURCE_TYPE_MAP, ACCESS_RIGHTS_MAP 等から自動計算
 
@@ -55,340 +66,170 @@ Phase 2 の TSV 出力では 30002 基準のキーを使用するが、将来的
 DOM (input/select/textarea)
   ↓ collectFromDOM()
 metadata JSON （mapToItemType()と同じ構造）
-  ↓ generateTsv(metadata)
-  ├─ buildColumnDefs(metadata)   ... 配列サイズに応じた列定義の動的生成（空フィールド省略）
-  ├─ buildHeaderRows(columnDefs) ... ヘッダ5行の組み立て
-  └─ buildDataRow(columnDefs, metadata) ... データ行の値取得
+  ↓ generateTsv(metadata, templateText)
+  ├─ detectTsvPrefix(templateText, metadata) ... プレフィックス検出
+  ├─ buildTsvColumnDefs(prefix, metadata)    ... TSV_HEADERS_TEMPLATE から列定義を展開
+  │   ├─ groupTsvColumns(prefix)             ... フィールドグループ化 + 除外フィールド除去
+  │   └─ 配列フィールドを size 分展開、空フィールドはスキップ
+  ├─ buildHeaderRows(cols)                   ... ヘッダ5行の組み立て
+  └─ getTsvValue(col, metadata)              ... lookupKey（item_30002_ ベース）で値取得
   ↓
 TSV文字列 → downloadTsv() → ブラウザダウンロード（UTF-8 BOM, LF）
 ```
 
+**lookupKey と key の分離**: `buildTsvColumnDefs` は列ごとに 2 つのキーを持つ:
+- `key`: TSV 出力に使うキー（検出した prefix に置換済み。例: `item_40039_creator2[0]...`）
+- `lookupKey`: `metadata` オブジェクトへのアクセスに使うキー（常に `item_30002_` ベース。FIELD_DEFS に対応）
+
 ## 実装ステップ
 
-### Step 1: TSV列テンプレート定義（`TSV_COL_GROUPS`）
+### Step 1: TSV列テンプレート（`TSV_HEADERS_TEMPLATE`）
 
-30002.tsv の列構造を「列グループ」として定義する。各グループは1つのメタデータフィールドに対応し、配列インデックスの展開ルールを持つ。
+`data/tsv_headers.json` の内容を JS 定数としてインライン定義する。
+5要素配列: `[row0, row1, row2, row3, row4]`
+
+| 要素 | 内容 | TSV上の行 |
+|------|------|----------|
+| row0 | `["#ItemType", "(未設定)", ""]` | 1行目 |
+| row1 | プロパティキー列（226列） | 2行目 |
+| row2 | 日本語ラベル列 | 3行目 |
+| row3 | System 印列 | 4行目 |
+| row4 | 制約列 | 5行目 |
 
 ```javascript
-// 列グループ定義：各フィールドの「[0]1個分」の列テンプレート
-const TSV_COL_GROUPS = [
-  // --- システムフィールド（固定11列、展開なし） ---
-  { id: 'system', expandable: false, columns: [
-    { key: '.id', label: 'ID', sys: '', con: '' },
-    { key: '.uri', label: 'URI', sys: '', con: '' },
-    { key: '.metadata.path[0]', label: '.IndexID[0]', sys: '', con: 'Allow Multiple' },
-    // ... 残り8列
-  ]},
-
-  // --- 単純配列型（FIELD_DEFSのarray型）---
-  // タイトル: トップレベル[i]で展開
-  { id: 'item_30002_title0', expandable: true, arrayPath: 'item_30002_title0',
-    columns: [
-      { key: '.metadata.item_30002_title0[{i}].subitem_title',
-        label: 'タイトル[{i}].タイトル', sys: '', con: 'Required, Allow Multiple' },
-      { key: '.metadata.item_30002_title0[{i}].subitem_title_language',
-        label: 'タイトル[{i}].言語', sys: '', con: 'Required, Allow Multiple' },
-    ]},
-
-  // --- 複合型（creator等）--- 多段配列展開
-  // 作成者: [i]=作成者, 内部に [j]=姓名/姓/名/識別子/所属, [k]=所属機関名/識別子
-  { id: 'item_30002_creator2', expandable: true, arrayPath: 'item_30002_creator2',
-    // 1人分の列テンプレート（内部配列も展開対象）
-    subGroups: [
-      { subArrayPath: 'creatorAffiliations', nestedGroups: [
-        { subArrayPath: 'affiliationNameIdentifiers', columns: [
-          { keyTpl: '...creator2[{i}].creatorAffiliations[{j}].affiliationNameIdentifiers[{k}].affiliationNameIdentifier',
-            labelTpl: '作成者[{i}].作成者所属[{j}].所属機関識別子[{k}].所属機関識別子' },
-          // ...
-        ]},
-        { subArrayPath: 'affiliationNames', columns: [/*...*/] },
-      ]},
-      { subArrayPath: 'creatorAlternatives', columns: [/*...*/] },
-      { subArrayPath: 'creatorMails', columns: [/*...*/] },
-      { subArrayPath: 'creatorNames', columns: [/*...*/] },
-      // creatorType（スカラー → 配列展開なし）
-      { scalar: true, columns: [/*...*/] },
-      { subArrayPath: 'familyNames', columns: [/*...*/] },
-      { subArrayPath: 'givenNames', columns: [/*...*/] },
-      { subArrayPath: 'nameIdentifiers', columns: [/*...*/] },
-    ]},
-
-  // --- 単純オブジェクト型（展開なし） ---
-  { id: 'item_30002_access_rights4', expandable: false, columns: [
-    { key: '.metadata.item_30002_access_rights4.subitem_access_right',
-      label: 'アクセス権.アクセス権', sys: 'System', con: '' },
-    { key: '.metadata.item_30002_access_rights4.subitem_access_right_uri',
-      label: 'アクセス権.アクセス権URI', sys: '', con: '' },
-  ]},
-
-  // ... 残りの全フィールド（30002.tsv の列順序に従う）
-];
+const TSV_HEADERS_TEMPLATE = [/* data/tsv_headers.json の内容 */];
 ```
 
-**ポイント**: 列の順序と日本語ラベルは 30002.tsv と完全一致させる。テンプレート中の `{i}`, `{j}`, `{k}` は展開時に実際のインデックスに置換する。
+**更新手順**: `data/tsv_headers.json` を編集後、その内容で `TSV_HEADERS_TEMPLATE` を置き換える。
 
-#### contributor3 サブグループのキー名注意事項
+### Step 2: 除外フィールド定義
 
-creator と contributor は同じ `renderOnePerson()` を共有するが、内部フィールドキー名が異なる（[renderPersonField L2508-2518](../make_jc_importer.html#L2508)）。TSV_COL_GROUPS の contributor3 サブグループでは以下の正しいキーを使うこと：
+フィールドキー名が変わっても suffix で照合できるよう分離して定義する:
 
-| サブフィールド | creator のキー | contributor のキー（TSV実キー） |
-|---|---|---|
-| 姓名言語 | `creatorNameLang` | `lang` |
-| 名前タイプ | `creatorNameType` | `nameType` |
-| 所属機関名配列キー | `affiliationNames` | `contributorAffiliationNames` |
-| 所属機関名フィールド | `affiliationName` | `contributorAffiliationName` |
-| 所属機関名言語 | `affiliationNameLang` | `contributorAffiliationNameLang` |
-| 所属識別子配列キー | `affiliationNameIdentifiers` | `contributorAffiliationNameIdentifiers` |
-| 所属識別子フィールド | `affiliationNameIdentifier` | `contributorAffiliationNameIdentifier` |
-| 所属識別子Scheme | `affiliationNameIdentifierScheme` | `contributorAffiliationScheme` |
-| 所属識別子URI | `affiliationNameIdentifierURI` | `contributorAffiliationURI` |
+```javascript
+// suffix（item_30002_ 以降の名前）で照合 → prefix が変わっても機能する
+const TSV_EXCL_SUFFIXES = new Set([
+  'apc5', 'heading36', 'file35',
+  'dissertation_number30', 'degree_name31', 'date_granted32', 'degree_grantor33',
+]);
+// timestamp ベースのフィールドは full key で照合
+const TSV_EXCL_TIMESTAMP = new Set([
+  'item_1698624001', /* ... */ 'item_1698624010',
+]);
 
-#### identifier16 の列順注意事項
+function isTsvExcluded(key) {
+  if (key.startsWith('.file_path')) return true;
+  const m = key.match(/\.metadata\.(item_\d+_?(\w*))/);
+  if (!m) return false;
+  return TSV_EXCL_SUFFIXES.has(m[2]) || TSV_EXCL_TIMESTAMP.has(m[1]);
+}
+```
 
-TSV の列順は `subitem_identifier_type` → `subitem_identifier_uri`（タイプが先）だが、FIELD_DEFS の定義順は逆（URI が先）。TSV_COL_GROUPS はTSV列順（タイプ→URI）に合わせること。
+フォーマット変更で新フィールドが追加される場合: 出力対象なら何もしない（自動的に列が追加される）。除外対象なら `TSV_EXCL_SUFFIXES` か `TSV_EXCL_TIMESTAMP` に追加する。
 
-### Step 2: DOM → JSON 収集関数（`collectFromDOM()`）
+### Step 3: プレフィックス検出（`detectTsvPrefix`）
 
-DOMの入力要素を走査して、`mapToItemType()` と同じ構造の JSON オブジェクトを返す。
+```javascript
+function detectTsvPrefix(templateText, metadata) {
+  // 1. ユーザが貼り付けたTSVヘッダーから検出（優先）
+  if (templateText && templateText.trim()) {
+    const m = templateText.match(/\.metadata\.(item_\d+_)/);
+    if (m) return m[1];
+  }
+  // 2. metadata のキーから自動検出
+  for (const key of Object.keys(metadata)) {
+    if (key === 'system') continue;
+    const m = key.match(/^(item_\d+_)/);
+    if (m) return m[1];
+  }
+  return 'item_30002_'; // デフォルト
+}
+```
+
+### Step 4: フィールドグループ化と列展開
+
+`groupTsvColumns(prefix)`: `TSV_HEADERS_TEMPLATE` row1 を走査し、同一トップレベルフィールドキー（`.metadata.item_XXXX`）の列をグループ化。除外フィールドはスキップ。
+
+`buildTsvColumnDefs(prefix, metadata)`: 各グループを metadata の配列サイズで展開。
+- system フィールド: 常に出力
+- object フィールド（`[0]` なし）: 全値空なら省略
+- array フィールド（`[0]` あり）: `metadata[metaKey].length` 分だけ `[0]` を `[0]`, `[1]`, ... に置換して展開
+
+### Step 5: DOM → JSON 収集関数（`collectFromDOM()`）
+
+DOMの入力要素を走査して、`mapToItemType()` と同じ構造の JSON オブジェクトを返す。**既に実装済み**。
 
 #### システムフィールドのキー名マッピング
 
-DOM の `dataset.key` には `sys_*` プレフィックスが付く（`sys_id`, `sys_uri` 等）が、`buildEmptyMetadata().system` や `getSystemValue()` で使う内部キーはプレフィックスなし（`id`, `uri` 等）。`collectFromDOM()` でマッピングが必要。
+DOM の `dataset.key` には `sys_*` プレフィックスが付く（`sys_id`, `sys_uri` 等）が、`buildEmptyMetadata().system` や `getTsvValue()` で使う内部キーはプレフィックスなし（`id`, `uri` 等）。
 
 ```javascript
-// DOM dataset.key → metadata.system キー 変換マップ
 const SYS_KEY_MAP = {
-  sys_id:      'id',
-  sys_uri:     'uri',
-  sys_path:    'path',
-  sys_pos:     'pos_index',
-  sys_status:  'publish_status',
-  sys_mail:    'feedback_mail',
-  sys_cnri:    'cnri',
-  sys_doi_ra:  'doi_ra',
-  sys_doi:     'doi',
-  sys_edit:    'edit_mode',
-  sys_pubdate: 'pubdate',
+  sys_id: 'id', sys_uri: 'uri', sys_path: 'path',
+  sys_pos: 'pos_index', sys_status: 'publish_status',
+  sys_mail: 'feedback_mail', sys_cnri: 'cnri',
+  sys_doi_ra: 'doi_ra', sys_doi: 'doi',
+  sys_edit: 'edit_mode', sys_pubdate: 'pubdate',
 };
+```
 
-function collectFromDOM() {
-  const metadata = {};
+### Step 6: 値の取得（`getTsvValue`）
 
-  // 1. システムフィールド（dataset.key → 内部キーに変換）
-  metadata.system = {};
-  document.querySelectorAll('#system-fields-body input, #system-fields-body select')
-    .forEach(el => {
-      const internalKey = SYS_KEY_MAP[el.dataset.key] ?? el.dataset.key;
-      metadata.system[internalKey] = el.value;
-    });
+`col.lookupKey`（常に `item_30002_` ベース）でパスをパースして metadata から値を取得。
 
-  // 2. メタデータフィールド（FIELD_DEFS に従い型別に収集）
-  for (const def of FIELD_DEFS) {
-    const section = document.querySelector(`.field-section[data-key="${def.key}"]`);
-    if (!section) { metadata[def.key] = def.type === 'object' || def.type === 'biblio' ? {} : []; continue; }
-
-    switch (def.type) {
-      case 'array':       metadata[def.key] = collectArrayField(section, def); break;
-      case 'object':      metadata[def.key] = collectObjectField(section, def); break;
-      case 'creator':     metadata[def.key] = collectPersonField(section, true); break;
-      case 'contributor': metadata[def.key] = collectPersonField(section, false); break;
-      case 'relation':    metadata[def.key] = collectRelationField(section); break;
-      case 'funding':     metadata[def.key] = collectFundingField(section); break;
-      case 'biblio':      metadata[def.key] = collectBiblioField(section); break;  // null返却あり（後述）
-      case 'rightsHolder':  metadata[def.key] = collectRightsHolderField(section); break;
-      case 'geolocation':   metadata[def.key] = collectGeolocationField(section); break;
-      case 'conference':    metadata[def.key] = collectConferenceField(section); break;
-    }
+```javascript
+function getTsvValue(col, metadata) {
+  if (!col.lookupKey.startsWith('.metadata.item_')) {
+    // システムフィールド: TSV_SYS_KEY_MAP で内部キーを引く
+    const sysKey = TSV_SYS_KEY_MAP[col.lookupKey];
+    return sysKey != null ? (metadata.system?.[sysKey] ?? '') : '';
   }
-  return metadata;
+  const segs = parseTsvPath(col.lookupKey.replace(/^\.metadata\./, ''));
+  let cur = metadata;
+  for (const seg of segs) { if (cur == null) return ''; cur = cur[seg]; }
+  return cur ?? '';
 }
 ```
 
-**各型の収集ロジック**:
+#### `parseTsvPath()` の仕様
 
-- **`collectArrayField(section, def)`**: `.nested-item.level-1` を列挙 → 各アイテム内の `.field-row[data-field-key]` から値を取得
-- **`collectObjectField(section, def)`**: `.accordion-content` 内の `.field-row` から直接取得
-- **`collectPersonField(section, isCreator)`**: `.nested-item.level-1` = 各人物 → 内部の `.nested-section-header` + `.entry-group` を走査して creatorNames/contributorNames, familyNames, givenNames, nameIdentifiers, creatorAffiliations/contributorAffiliations を再帰的に収集。`isCreator` フラグに応じて上記フィールドキー名テーブルを参照すること
-- **`collectRelationField(section)`**: 関連情報の構造（subitem_relation_type, subitem_relation_type_id{object}, subitem_relation_name[array]）を収集
-- **`collectFundingField(section)`**: 助成情報（subitem_funder_names[array], subitem_funder_identifiers{object}, subitem_award_titles[array], subitem_award_numbers{object}, subitem_funding_streams[array], subitem_funding_stream_identifiers{object}）を収集
-- **`collectBiblioField(section)`**: 書誌情報（単一オブジェクト、内部に bibliographic_titles[array]）を収集。**セクションが空ならば `null` を返す**（`isFieldEmpty()` が null → empty と判定するためTSV出力時に自動スキップされる）
-- **`collectRightsHolderField`**: rightHolderNames[array], nameIdentifiers[array]
-- **`collectGeolocationField`**: subitem_geolocation_point{object}, subitem_geolocation_box{object}, subitem_geolocation_place[array]
-- **`collectConferenceField`**: subitem_conference_names[array], subitem_conference_date{object}, subitem_conference_venues[array], subitem_conference_places[array], subitem_conference_sponsors[array], subitem_conference_country, subitem_conference_sequence
+`'item_30002_creator2[0].creatorNames[0].creatorName'`
+→ `['item_30002_creator2', 0, 'creatorNames', 0, 'creatorName']`
 
-### Step 3: TSV列展開（`buildColumnDefs(metadata)`）
-
-metadata JSON の配列サイズを調べ、TSV_COL_GROUPS のテンプレートを展開して最終的な列定義配列を生成する。
-**空フィールドはスキップし、除外対象フィールドも出力しない。**
+#### TSV_SYS_KEY_MAP
 
 ```javascript
-// 除外フィールド（TSVに出力しない）
-// ※ apc5 は EXCLUDED_KEYS（API取得対象外）かつ FIELD_DEFS 非定義（UI非表示）のため常に空 → 明示的に除外
-const TSV_EXCLUDED_GROUPS = new Set([
-  'item_30002_apc5',
-  'item_30002_heading36',
-  'item_30002_file35',
-  'item_30002_dissertation_number30',
-  'item_30002_degree_name31',
-  'item_30002_date_granted32',
-  'item_30002_degree_grantor33',
-  'item_1698624001', 'item_1698624002', 'item_1698624003',
-  'item_1698624004', 'item_1698624005', 'item_1698624006',
-  'item_1698624007', 'item_1698624008', 'item_1698624009',
-  'item_1698624010',
-]);
-
-// フィールドが空かどうか判定
-function isFieldEmpty(value) {
-  if (value == null) return true;
-  if (Array.isArray(value)) return value.length === 0;
-  if (typeof value === 'object') {
-    return Object.values(value).every(v => v === '' || v == null);
-  }
-  return value === '';
-}
-
-function buildColumnDefs(metadata) {
-  const columns = []; // { key, label, sys, con } の配列
-
-  for (const group of TSV_COL_GROUPS) {
-    // 除外フィールドはスキップ
-    if (TSV_EXCLUDED_GROUPS.has(group.id)) continue;
-
-    if (!group.expandable) {
-      // 固定列（system, object型）
-      // object型で全値が空ならスキップ
-      if (group.id !== 'system' && isFieldEmpty(metadata[group.id])) continue;
-      columns.push(...group.columns);
-    } else if (group.subGroups) {
-      // 複合型: 配列が空ならスキップ
-      const arr = metadata[group.arrayPath] || [];
-      if (arr.length === 0) continue;
-      for (let i = 0; i < arr.length; i++) {
-        const item = arr[i] || {};
-        // 内部配列も空ならその列群をスキップ
-        expandSubGroups(columns, group.subGroups, item, { i });
-      }
-    } else {
-      // 単純配列型: 配列が空ならスキップ
-      const arr = metadata[group.arrayPath] || [];
-      if (arr.length === 0) continue;
-      for (let i = 0; i < arr.length; i++) {
-        for (const col of group.columns) {
-          columns.push({
-            key: col.key.replace(/\{i\}/g, i),
-            label: col.label.replace(/\{i\}/g, i),
-            sys: col.sys, con: col.con,
-          });
-        }
-      }
-    }
-  }
-  return columns;
-}
-
-// expandSubGroups 内でも内部配列が空ならスキップ
-function expandSubGroups(columns, subGroups, item, indices) {
-  for (const sg of subGroups) {
-    if (sg.scalar) {
-      // スカラーフィールド: 親が存在すれば常に出力
-      columns.push(...expandTemplates(sg.columns, indices));
-    } else {
-      const subArr = item[sg.subArrayPath] || [];
-      if (subArr.length === 0) continue; // ★ 空の内部配列はスキップ
-      for (let j = 0; j < subArr.length; j++) {
-        const subItem = subArr[j] || {};
-        const newIndices = { ...indices, j };
-        if (sg.nestedGroups) {
-          expandSubGroups(columns, sg.nestedGroups, subItem, newIndices);
-        } else {
-          columns.push(...expandTemplates(sg.columns, newIndices));
-        }
-      }
-    }
-  }
-}
+const TSV_SYS_KEY_MAP = {
+  '.id': 'id', '.uri': 'uri', '.metadata.path[0]': 'path',
+  '.pos_index[0]': 'pos_index', '.publish_status': 'publish_status',
+  '.feedback_mail[0]': 'feedback_mail', '.cnri': 'cnri',
+  '.doi_ra': 'doi_ra', '.doi': 'doi', '.edit_mode': 'edit_mode',
+  '.metadata.pubdate': 'pubdate',
+};
 ```
 
-### Step 4: TSV文字列生成（`generateTsv(metadata)`）
+### Step 7: TSV文字列生成（`generateTsv`）
 
 ```javascript
-function generateTsv(metadata) {
-  const cols = buildColumnDefs(metadata);
+function generateTsv(metadata, templateText) {
+  const prefix = detectTsvPrefix(templateText, metadata);
+  const cols = buildTsvColumnDefs(prefix, metadata);
+  if (!cols.length) return null;
 
-  // Row 1: ItemType
-  const row1 = ['#ItemType', 'デフォルトアイテムタイプ（フル）(30002)',
-                'https://jircas.repo.nii.ac.jp/items/jsonschema/30002']
-               .concat(Array(Math.max(0, cols.length - 3)).fill(''));
-
-  // Row 2-5: ヘッダ
-  const row2 = ['#' + cols[0].key, ...cols.slice(1).map(c => c.key)];
-  const row3 = ['#' + cols[0].label, ...cols.slice(1).map(c => c.label)];
+  const tmpl = TSV_HEADERS_TEMPLATE[0];
+  const n = cols.length;
+  const row1 = [tmpl[0], tmpl[1], tmpl[2], ...Array(Math.max(0, n - 3)).fill('')];
+  const row2 = cols.map((c, i) => (i === 0 ? '#' : '') + c.key);
+  const row3 = cols.map((c, i) => (i === 0 ? '#' : '') + c.label);
   const row4 = ['#', ...cols.slice(1).map(c => c.sys)];
   const row5 = ['#', ...cols.slice(1).map(c => c.con)];
+  const row6 = cols.map(c => getTsvValue(c, metadata));
 
-  // Row 6: データ行
-  const row6 = cols.map(c => getValueByColumnKey(c.key, metadata));
-
-  return [row1, row2, row3, row4, row5, row6]
-    .map(row => row.join('\t'))
-    .join('\n') + '\n';
+  return [row1, row2, row3, row4, row5, row6].map(r => r.join('\t')).join('\n') + '\n';
 }
 ```
 
-### Step 5: 値の取得（`getValueByColumnKey` / `getSystemValue`）
-
-列キー（例: `.metadata.item_30002_creator2[0].creatorNames[0].creatorName`）をパースして、metadata オブジェクトから対応する値を取得する。
-
-```javascript
-function getValueByColumnKey(columnKey, metadata) {
-  // システムフィールドの場合
-  if (!columnKey.startsWith('.metadata.')) {
-    return getSystemValue(columnKey, metadata.system);
-  }
-
-  // .metadata. を除去してパスをパース
-  const path = columnKey.replace(/^\.metadata\./, '');
-  // 例: "item_30002_creator2[0].creatorNames[0].creatorName"
-  // → ["item_30002_creator2", 0, "creatorNames", 0, "creatorName"]
-  const segments = parsePath(path);
-
-  let current = metadata;
-  for (const seg of segments) {
-    if (current == null) return '';
-    current = typeof seg === 'number' ? current[seg] : current[seg];
-  }
-  return current ?? '';
-}
-```
-
-#### `getSystemValue()` の仕様
-
-TSV列キー（`.id`, `.pos_index[0]` 等）から `metadata.system` の値を返す。TSV列キーと内部キー（`SYS_KEY_MAP` で定義済み）のマッピングを逆引きする。
-
-```javascript
-// TSV列キー → metadata.system 内部キー 変換マップ
-const TSV_SYS_KEY_MAP = {
-  '.id':                 'id',
-  '.uri':                'uri',
-  '.metadata.path[0]':   'path',
-  '.pos_index[0]':       'pos_index',
-  '.publish_status':     'publish_status',
-  '.feedback_mail[0]':   'feedback_mail',
-  '.cnri':               'cnri',
-  '.doi_ra':             'doi_ra',
-  '.doi':                'doi',
-  '.edit_mode':          'edit_mode',
-  '.metadata.pubdate':   'pubdate',
-};
-
-function getSystemValue(columnKey, system) {
-  const internalKey = TSV_SYS_KEY_MAP[columnKey];
-  return internalKey != null ? (system[internalKey] ?? '') : '';
-}
-```
-
-### Step 6: ダウンロード関数
+### Step 8: ダウンロード関数
 
 ```javascript
 function downloadTsv(tsvString, filename) {
@@ -396,73 +237,81 @@ function downloadTsv(tsvString, filename) {
   const blob = new Blob([bom + tsvString], { type: 'text/tab-separated-values;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = filename || 'import.tsv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  a.href = url; a.download = filename || 'import.tsv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 ```
 
-### Step 7: UI追加
+### Step 9: UI追加
 
-1. ボタンエリアに「TSV出力」ボタンを追加
-2. ベータ版の注意文言を更新
+1. ボタンエリアに「TSV出力」ボタンを追加（緑色、データ取得後に表示）
+2. `<details>` 要素でTSVオプションパネルを追加（テンプレート貼り付けテキストエリア）
+3. `showPreview()` 内でボタンとオプションパネルを表示
 
 ```html
-<button id="export-btn" onclick="exportTsv()">TSV出力</button>
+<button id="export-btn" onclick="exportTsv()" style="display:none; background:#2e7d32; color:white;">TSV出力</button>
+
+<details id="tsv-options" style="display:none;">
+  <summary>TSV出力オプション（プロパティキーのカスタマイズ）</summary>
+  <textarea id="tsv-template" rows="3"
+    placeholder="リポジトリからエクスポートしたTSVの先頭2〜3行を貼り付けてください。&#10;空の場合はデフォルト（item_30002_）を使用します。"></textarea>
+  <div>2行目の .metadata.item_XXXXX_ パターンを自動検出してプロパティキーを置換します。</div>
+</details>
 ```
 
 ```javascript
 function exportTsv() {
   const metadata = collectFromDOM();
-  const tsv = generateTsv(metadata);
-  // metadata.system.doi は SYS_KEY_MAP 経由で収集済み（sys_doi ではない）
-  const doi = metadata.system.doi || 'import';
+  const templateText = document.getElementById('tsv-template')?.value || '';
+  const tsv = generateTsv(metadata, templateText);
+  if (!tsv) { alert('TSV出力できるデータがありません。'); return; }
+  const doi = metadata.system?.doi || 'import';
   downloadTsv(tsv, `${doi.replace(/\//g, '_')}.tsv`);
 }
 ```
 
-## TSV_COL_GROUPS で定義するフィールド一覧（30002.tsv列順）
+## 対象フィールド一覧（tsv_headers.json の列順）
 
-| # | フィールド | 型 | 展開 | 空時の扱い |
-|---|---|---|---|---|
-| 1 | system | 固定 | なし（11列） | 常に出力 |
-| 2 | title0 | array | [i] | 空なら省略 |
-| 3 | alternative_title1 | array | [i] | 空なら省略 |
-| 4 | creator2 | creator | [i][j][k] 多段 | 空なら省略、内部配列も空なら省略 |
-| 5 | contributor3 | contributor | [i][j][k] 多段 | 空なら省略、内部配列も空なら省略 |
-| 6 | access_rights4 | object | なし | 全値空なら省略 |
-| 7 | rights6 | array | [i] | 空なら省略 |
-| 8 | rights_holder7 | rightsHolder | [i][j] | 空なら省略 |
-| 9 | subject8 | array | [i] | 空なら省略 |
-| 10 | description9 | array | [i] | 空なら省略 |
-| 11 | publisher10 | array | [i] | 空なら省略 |
-| 12 | date11 | array | [i] | 空なら省略 |
-| 13 | language12 | array | [i] | 空なら省略 |
-| 14 | resource_type13 | object | なし | 全値空なら省略 |
-| 15 | version14 | object | なし | 全値空なら省略 |
-| 16 | version_type15 | object | なし | 全値空なら省略 |
-| 17 | identifier16 | array | [i] | 空なら省略 |
-| 18 | identifier_registration17 | object | なし | 全値空なら省略 |
-| 19 | relation18 | relation | [i][j] | 空なら省略 |
-| 20 | temporal19 | array | [i] | 空なら省略 |
-| 21 | geolocation20 | geolocation | [i][j] | 空なら省略 |
-| 22 | funding_reference21 | funding | [i][j] | 空なら省略 |
-| 23 | source_identifier22 | array | [i] | 空なら省略 |
-| 24 | source_title23 | array | [i] | 空なら省略 |
-| 25 | volume_number24 | object | なし | 全値空なら省略 |
-| 26 | issue_number25 | object | なし | 全値空なら省略 |
-| 27 | number_of_pages26 | object | なし | 全値空なら省略 |
-| 28 | page_start27 | object | なし | 全値空なら省略 |
-| 29 | page_end28 | object | なし | 全値空なら省略 |
-| 30 | bibliographic29 | biblio | [j]（bibliographic_titlesのみ） | 空（null含む）なら省略 |
-| 31 | conference34 | conference | [i][j] | 空なら省略 |
-| - | apc5 | - | - | **常に除外**（EXCLUDED_KEYS かつ FIELD_DEFS 非定義） |
-| - | dissertation30〜degree33 | - | - | **常に除外** |
-| - | file35 | - | - | **常に除外** |
-| - | heading36〜item_1698624010 | - | - | **常に除外** |
+| # | フィールド | 展開 | 除外 |
+|---|---|---|---|
+| 1 | system（固定11列） | なし | 常に出力 |
+| 2 | title0 | [i] | 空なら省略 |
+| 3 | alternative_title1 | [i] | 空なら省略 |
+| 4 | creator2 | [i] + 内部[0]固定 | 空なら省略 |
+| 5 | contributor3 | [i] + 内部[0]固定 | 空なら省略 |
+| 6 | access_rights4 | なし | 全値空なら省略 |
+| - | apc5 | - | **常に除外** |
+| 7 | rights6 | [i] | 空なら省略 |
+| 8 | rights_holder7 | [i] | 空なら省略 |
+| 9 | subject8 | [i] | 空なら省略 |
+| 10 | description9 | [i] | 空なら省略 |
+| 11 | publisher10 | [i] | 空なら省略 |
+| 12 | date11 | [i] | 空なら省略 |
+| 13 | language12 | [i] | 空なら省略 |
+| 14 | resource_type13 | なし | 全値空なら省略 |
+| 15 | version14 | なし | 全値空なら省略 |
+| 16 | version_type15 | なし | 全値空なら省略 |
+| 17 | identifier16 | [i] | 空なら省略 |
+| 18 | identifier_registration17 | なし | 全値空なら省略 |
+| 19 | relation18 | [i] + 内部[0]固定 | 空なら省略 |
+| 20 | temporal19 | [i] | 空なら省略 |
+| 21 | geolocation20 | [i] + 内部[0]固定 | 空なら省略 |
+| 22 | funding_reference21 | [i] + 内部[0]固定 | 空なら省略 |
+| 23 | source_identifier22 | [i] | 空なら省略 |
+| 24 | source_title23 | [i] | 空なら省略 |
+| 25 | volume_number24 | なし | 全値空なら省略 |
+| 26 | issue_number25 | なし | 全値空なら省略 |
+| 27 | number_of_pages26 | なし | 全値空なら省略 |
+| 28 | page_start27 | なし | 全値空なら省略 |
+| 29 | page_end28 | なし | 全値空なら省略 |
+| 30 | bibliographic_information29 | [0]固定（bibliographic_titles） | 全値空なら省略 |
+| - | dissertation_number30〜degree_grantor33 | - | **常に除外** |
+| 31 | conference34 | [i] + 内部[0]固定 | 空なら省略 |
+| - | file35, heading36 | - | **常に除外** |
+| - | item_1698624001〜1698624010 | - | **常に除外** |
+
+※「内部[0]固定」= tsv_headers.json テンプレートが [0] のみ定義しているため、外部配列のみ展開し内部は常に [0]。WEKO3 TSVフォーマット上の制約。
 
 ## 検証方法
 
@@ -474,7 +323,16 @@ function exportTsv() {
    - 作成者が複数の場合、[0],[1],...と列が動的に増加
    - System列（resourceuri, access_right_uri等）が自動補完
 3. 空値表示モード → TSV出力 → 全列が [0] のみの基本構造で出力
-4. 出力TSVをWEKOテスト環境にインポートして動作確認（可能な場合）
+4. TSV出力オプション: 別リポジトリのTSVヘッダーを貼り付け → 列キーのプレフィックスが変わることを確認
+5. 出力TSVをWEKOテスト環境にインポートして動作確認（可能な場合）
+
+## フォーマット変更時の対応チェックリスト
+
+- [ ] `data/tsv_headers.json` を更新
+- [ ] `make_jc_importer.html` の `TSV_HEADERS_TEMPLATE` 定数を更新（STEP 8a セクション）
+- [ ] 追加フィールドが除外対象なら `TSV_EXCL_SUFFIXES` または `TSV_EXCL_TIMESTAMP` に追加
+- [ ] 追加フィールドの値取得が必要なら `collectFromDOM()` の各 collect 関数を更新
+- [ ] 検証方法に従い動作確認
 
 ## 作業完了後のドキュメント更新
 
@@ -488,6 +346,6 @@ function exportTsv() {
 
 ### docs/worklog.md
 - 最終更新日を更新
-- Phase 2 の実装記録を追加（Step 1〜7 の各ステップ完了内容）
+- Phase 2 の実装記録を追加（Step 1〜9 の各ステップ完了内容）
 - 「未完了タスク」セクションの Phase 2 項目を完了済みに更新
-- 技術メモに Phase 2 固有の知見を追記（空フィールド省略ロジック、列展開アルゴリズム等）
+- 技術メモに Phase 2 固有の知見を追記（TSV_HEADERS_TEMPLATE 駆動方式、lookupKey/key の分離、プレフィックス自動検出等）

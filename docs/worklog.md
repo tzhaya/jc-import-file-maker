@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-11（助成情報検索入力モード自動判定・タブfont-size統一）
+最終更新: 2026-03-13（科研費課題番号の識別方法修正 #82）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,49 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-13: 科研費課題番号の識別方法修正（#82）
+
+### 背景
+
+`23KF0079` のような科研費課題番号がKAKEN/CiNiiで検索されない問題。原因は `buildFunders()` / `buildJaLCFunders()` がKAKEN XML / CiNii検索を実行する条件が `isJsps`（funder DOI が JSPS と一致）のみだったため、funder DOI が未設定/異なる場合にスキップされていた。
+
+### 実装内容
+
+- `isKakenhi()` 関数を新設: 科研費課題番号パターン（`/^\d{2}[A-Z]{1,2}\d{4,5}$/i`、JPプレフィックス対応）で識別
+  - 形式: 2桁年度 + 1〜2桁アルファベット種目コード + 4〜5桁連番
+  - 例: `23KF0079`（特別研究員奨励費）, `21H01234`（基盤研究）, `15K12345`
+- `buildFunders()` / `buildJaLCFunders()`: `isJsps` → `looksKakenhi = isJsps || isKakenhi(awardNum)` に変更
+- 修正ファイル: `make_jc_importer.html`, `funder_lookup.html`, `chrome-extension/make_jc_importer.js`, `chrome-extension/funder_lookup.js`
+
+---
+
+## 2026-03-13: TSVエクスポート機能追加・残存issues優先順位整理
+
+### 背景
+
+Phase 2 TSV出力の設計を `tsv_headers.json` テンプレート駆動方式に刷新し、実装コードを `make_jc_importer.html` に追加。残存JPCOAR 2.0対応issuesの実装優先順位を整理。
+
+### 実装内容
+
+- `make_jc_importer.html`:
+  - STEP 8a: TSVエクスポート機能追加（`TSV_HEADERS_TEMPLATE` テンプレート駆動方式）
+  - `isTsvExcluded()`: suffix照合による除外フィールド判定（prefix非依存）
+  - `detectTsvPrefix()`: ユーザ貼り付けテキストまたはmetadataキーからプレフィックス自動検出
+  - `groupTsvColumns()` / `buildTsvColumnDefs()`: テンプレートからフィールドグループ構築・配列展開
+  - `parseTsvPath()` / `getTsvValue()`: lookupKey（item_30002_ベース）によるmetadata値取得
+  - `generateTsv()`: 5行ヘッダー+データ行生成、`downloadTsv()` / `exportTsv()`: BOM付きUTF-8 TSVダウンロード
+  - UI: 「TSV出力」ボタン（緑色）+TSV出力オプションパネル（テンプレート貼り付けテキストエリア）
+- `chrome-extension/panel.html` / `chrome-extension/make_jc_importer.js`: TSVエクスポート機能を同期
+- `docs/Implementation_phase2.md`: 設計を `TSV_HEADERS_TEMPLATE` 駆動方式に全面刷新
+- `docs/remaining_issues.md`: 新規作成。JPCOAR 2.0対応issues（#26〜#34）とPhase 2の実装優先順位整理
+
+### 技術メモ
+
+- `replace('[0]', ...)` は意図的に最初の`[0]`のみ置換（トップレベル配列インデックスのみ展開、内部配列はWEKO3 TSV仕様上[0]固定）
+- key/lookupKey分離: 出力用keyはユーザのprefixに置換、lookupKeyは常にitem_30002_ベースでmetadataアクセス
 
 ---
 

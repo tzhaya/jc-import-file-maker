@@ -468,7 +468,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-03-11 (issue #72) &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-03-13 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -481,6 +481,14 @@
     </thead>
     <tbody>
       <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-13</td>
+        <td style="padding:2px 0;">科研費課題番号の識別方法修正：funder DOIに依存せず番号パターン（例: 23KF0079）で科研費を識別、KAKEN/CiNii検索が正しく実行されるよう修正</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-13</td>
+        <td style="padding:2px 0;">TSVエクスポート機能追加：TSV_HEADERS_TEMPLATEテンプレート駆動方式、プロパティキープレフィックス自動検出、空フィールド省略</td>
+      </tr>
+      <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-11</td>
         <td style="padding:2px 0;">OpenSearch検索タブ追加：JAIRO Cloud OpenSearchクライアントをChrome拡張に統合、リポジトリURL設定・資源タイプフィルタ・ページング対応</td>
       </tr>
@@ -491,14 +499,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-11</td>
         <td style="padding:2px 0;">書誌情報・収録誌名の追加・削除UI修正：雑誌名に「+ 追加」「×」削除ボタンを追加</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-10</td>
-        <td style="padding:2px 0;">Chrome拡張化：Manifest V3拡張追加、Service Worker経由でJaLC/KAKEN XML/OPF APIを有効化、OPFポリシーモーダル表示実装</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-05</td>
-        <td style="padding:2px 0;">OPF参照リンク：ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加（ISSN付き雑誌論文のOAポリシー確認）</td>
       </tr>
     </tbody>
   </table>
@@ -512,7 +512,16 @@
     <button id="fetch-btn">データ取得</button>
     <button id="empty-btn">空値で全フィールド表示</button>
     <button id="preview-btn" style="display:none; background:#1565c0; color:white;">プレビュー表示</button>
+    <button id="export-btn" onclick="exportTsv()" style="display:none; background:#2e7d32; color:white;">TSV出力</button>
   </div>
+  <details id="tsv-options" style="display:none; margin-top:6px; font-size:0.9em;">
+    <summary style="cursor:pointer; color:#555; user-select:none;">TSV出力オプション（プロパティキーのカスタマイズ）</summary>
+    <div style="margin-top:6px; padding:8px; background:#f5f5f5; border-radius:4px;">
+      <label for="tsv-template" style="display:block; margin-bottom:4px; color:#444;">テンプレート（任意）</label>
+      <textarea id="tsv-template" rows="3" style="width:100%; box-sizing:border-box; font-size:0.82em; font-family:monospace;" placeholder="リポジトリからエクスポートしたTSVの先頭2〜3行を貼り付けてください。&#10;空の場合はデフォルト（item_30002_）を使用します。"></textarea>
+      <div style="margin-top:4px; color:#666; font-size:0.82em;">2行目の <code>.metadata.item_XXXXX_</code> パターンを自動検出してプロパティキーを置換します。</div>
+    </div>
+  </details>
   <div id="loading" style="display:none">⏳ データを取得中です（ROR/ISNIも並行取得）...</div>
   <div id="apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ OpenAlex API Keyが設定されていません。設定しない場合、利用回数が制限されます。</div>
   <div id="cinii-apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ CiNii APIキーが設定されていません。</div>
