@@ -463,13 +463,15 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
   - `normalizedValue` で正規番号（例: `JP23K27850`）に自動解決
   - 補助金番号検出時は警告表示 + 番号を自動修正
 - CiNii APIキー未設定時: CiNii Research OpenSearch API（`cir.nii.ac.jp`）にフォールバック（APIキー不要、補助金番号検索は不可）
-- Crossref の funder 情報に JSPS（funder DOI: `10.13039/501100001691`）が含まれる場合に連携
+- 以下のいずれかの条件で KAKEN/CiNii 連携を実行:
+  - Crossref の funder DOI が JSPS（`10.13039/501100001691`）
+  - 課題番号が科研費パターンに合致（`isKakenhi()`: 2桁年度 + 1〜2桁アルファベット種目コード + 4〜5桁連番、例: `23KF0079`, `21H01234`）
 - award番号から `JP` プレフィックスを除去して検索
 - 日本語・英語の課題名を取得し、`subitem_award_titles[]` に設定
   - 日英タイトルが同一の場合は日本語のみ設定
 - KAKEN 課題ページ URL を `subitem_award_uri` に設定
 - KAKEN成功時、助成機関名・識別子が空の場合はJSPS定数で補完
-- JSPS以外の funder、award番号が空、またはJGN連携成功済みの場合はKAKEN連携をスキップ
+- JSPS以外の funder かつ科研費パターン非該当、award番号が空、またはJGN連携成功済みの場合はKAKEN連携をスキップ
 
 **研究課題番号からの助成機関検索（UI）**:
 - 助成情報の研究課題番号入力欄に「助成機関を検索」ボタンを表示

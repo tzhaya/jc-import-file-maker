@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-13（TSVエクスポート機能追加・残存issues優先順位整理）
+最終更新: 2026-03-13（科研費課題番号の識別方法修正 #82）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -9,6 +9,22 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
 現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+
+---
+
+## 2026-03-13: 科研費課題番号の識別方法修正（#82）
+
+### 背景
+
+`23KF0079` のような科研費課題番号がKAKEN/CiNiiで検索されない問題。原因は `buildFunders()` / `buildJaLCFunders()` がKAKEN XML / CiNii検索を実行する条件が `isJsps`（funder DOI が JSPS と一致）のみだったため、funder DOI が未設定/異なる場合にスキップされていた。
+
+### 実装内容
+
+- `isKakenhi()` 関数を新設: 科研費課題番号パターン（`/^\d{2}[A-Z]{1,2}\d{4,5}$/i`、JPプレフィックス対応）で識別
+  - 形式: 2桁年度 + 1〜2桁アルファベット種目コード + 4〜5桁連番
+  - 例: `23KF0079`（特別研究員奨励費）, `21H01234`（基盤研究）, `15K12345`
+- `buildFunders()` / `buildJaLCFunders()`: `isJsps` → `looksKakenhi = isJsps || isKakenhi(awardNum)` に変更
+- 修正ファイル: `make_jc_importer.html`, `funder_lookup.html`, `chrome-extension/make_jc_importer.js`, `chrome-extension/funder_lookup.js`
 
 ---
 

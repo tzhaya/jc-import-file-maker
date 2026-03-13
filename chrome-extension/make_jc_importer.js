@@ -253,6 +253,16 @@ const JSPS_FUNDER_NAMES = [
   { subitem_funder_name: 'Japan Society for the Promotion of Science', subitem_funder_name_language: 'en' },
 ];
 
+// 科研費課題番号パターン判定
+// 形式: 2桁年度 + 1〜2桁アルファベット種目コード + 4〜5桁連番
+// 例: 23KF0079（特別研究員奨励費）, 21H01234（基盤研究）, 15K12345
+// JPプレフィックス付き（JP23KF0079）にも対応
+function isKakenhi(awardNumber) {
+  if (!awardNumber) return false;
+  const num = awardNumber.replace(/^JP/i, '');
+  return /^\d{2}[A-Z]{1,2}\d{4,5}$/i.test(num);
+}
+
 // ===== アクセス権マッピング =====
 const ACCESS_RIGHTS_MAP = {
   'embargoed access':       'http://purl.org/coar/access_right/c_f1cf',
@@ -1390,10 +1400,11 @@ async function buildFunders(crFunders) {
       }
 
       const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
+      const looksKakenhi = isJsps || isKakenhi(awardNum);
       let kakenResult = null;
 
       // KAKEN XML API（Chrome拡張経由でCORS回避）
-      if (hasCiNiiKey && isJsps && awardNum) {
+      if (hasCiNiiKey && looksKakenhi && awardNum) {
         try {
           kakenResult = await fetchKakenXml(awardNum);
         } catch (e) {
@@ -1411,7 +1422,7 @@ async function buildFunders(crFunders) {
       }
 
       // CiNii Research OpenSearch フォールバック（KAKEN XML・JGN いずれも失敗時）
-      if (!kakenResult && isJsps && awardNum) {
+      if (!kakenResult && looksKakenhi && awardNum) {
         try {
           kakenResult = await fetchKakenCiNii(awardNum);
         } catch (e) {
@@ -1504,10 +1515,11 @@ async function buildJaLCFunders(jalcFundList) {
       const obj = { subitem_funder_names: funderNames, subitem_funder_identifiers: funderIdentifiers };
 
       const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
+      const looksKakenhi = isJsps || isKakenhi(awardNum);
       let kakenResult = null;
 
       // KAKEN XML API（Chrome拡張経由でCORS回避）
-      if (hasCiNiiKey && isJsps && awardNum) {
+      if (hasCiNiiKey && looksKakenhi && awardNum) {
         try { kakenResult = await fetchKakenXml(awardNum); } catch (e) {
           console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
         }
@@ -1521,7 +1533,7 @@ async function buildJaLCFunders(jalcFundList) {
       }
 
       // CiNii Research OpenSearch フォールバック（KAKEN XML・JGN いずれも失敗時）
-      if (!kakenResult && isJsps && awardNum) {
+      if (!kakenResult && looksKakenhi && awardNum) {
         try { kakenResult = await fetchKakenCiNii(awardNum); } catch (e) {
           console.warn(`KAKEN CiNii取得失敗 (${awardNum}):`, e.message);
         }

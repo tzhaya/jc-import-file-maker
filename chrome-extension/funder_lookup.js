@@ -36,6 +36,13 @@ const JSPS_FUNDER_NAMES = [
   { subitem_funder_name: '日本学術振興会',                                  subitem_funder_name_language: 'ja' },
   { subitem_funder_name: 'Japan Society for the Promotion of Science', subitem_funder_name_language: 'en' },
 ];
+// 科研費課題番号パターン判定
+function isKakenhi(awardNumber) {
+  if (!awardNumber) return false;
+  const num = awardNumber.replace(/^JP/i, '');
+  return /^\d{2}[A-Z]{1,2}\d{4,5}$/i.test(num);
+}
+
 const KAKENHI_FUNDING_STREAM = [
   { fundingStream: '科学研究費助成事業',                                    fundingStreamLang: 'ja' },
   { fundingStream: 'Grants-in-Aid for Scientific Research (KAKENHI)', fundingStreamLang: 'en' },

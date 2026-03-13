@@ -247,6 +247,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-13 | 科研費課題番号の識別方法修正：funder DOIに依存せず番号パターン（例: 23KF0079）で科研費を識別、KAKEN/CiNii検索が正しく実行されるよう修正（[#82](https://github.com/tzhaya/jc-import-file-maker/issues/82)） |
 | 2026-03-13 | TSVエクスポート機能追加：TSV_HEADERS_TEMPLATEテンプレート駆動方式によるPhase 2 TSV出力実装、プロパティキープレフィックス自動検出、空フィールド省略、残存issues優先順位整理ドキュメント追加 |
 | 2026-03-11 | 助成情報検索ツールの入力モード自動判定：ラジオボタンを廃止し、課題番号リストと謝辞テキストを自動判定して課題番号を抽出。Chrome拡張3ファイルのタブfont-size統一 |
 | 2026-03-11 | funder_lookup.html に助成情報TSV出力機能を追加：検索結果をWEKO3インポート用TSV形式で生成、TSVヘッダー貼り付けによるプレフィックス自動検出、JPCOAR 1.0/2.0切替、クリップボードコピー対応（[#67](https://github.com/tzhaya/jc-import-file-maker/issues/67)） |

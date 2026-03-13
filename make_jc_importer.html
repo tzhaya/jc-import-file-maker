@@ -472,6 +472,10 @@
     <tbody>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-13</td>
+        <td style="padding:2px 0;">科研費課題番号の識別方法修正：funder DOIに依存せず番号パターン（例: 23KF0079）で科研費を識別、KAKEN/CiNii検索が正しく実行されるよう修正</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-13</td>
         <td style="padding:2px 0;">TSVエクスポート機能追加：TSV_HEADERS_TEMPLATEテンプレート駆動方式、プロパティキープレフィックス自動検出、空フィールド省略</td>
       </tr>
       <tr>
@@ -485,10 +489,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-10</td>
         <td style="padding:2px 0;">Chrome拡張化：Manifest V3拡張追加、Service Worker経由でJaLC/KAKEN XML/OPF APIを有効化、OPFポリシーモーダル表示実装</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-05</td>
-        <td style="padding:2px 0;">OPF参照リンク：ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加（ISSN付き雑誌論文のOAポリシー確認）</td>
       </tr>
     </tbody>
   </table>
@@ -837,6 +837,16 @@ const JSPS_FUNDER_NAMES = [
   { subitem_funder_name: '日本学術振興会',                                  subitem_funder_name_language: 'ja' },
   { subitem_funder_name: 'Japan Society for the Promotion of Science', subitem_funder_name_language: 'en' },
 ];
+
+// 科研費課題番号パターン判定
+// 形式: 2桁年度 + 1〜2桁アルファベット種目コード + 4〜5桁連番
+// 例: 23KF0079（特別研究員奨励費）, 21H01234（基盤研究）, 15K12345
+// JPプレフィックス付き（JP23KF0079）にも対応
+function isKakenhi(awardNumber) {
+  if (!awardNumber) return false;
+  const num = awardNumber.replace(/^JP/i, '');
+  return /^\d{2}[A-Z]{1,2}\d{4,5}$/i.test(num);
+}
 
 // ===== アクセス権マッピング =====
 const ACCESS_RIGHTS_MAP = {
@@ -1953,7 +1963,7 @@ async function buildFunders(crFunders) {
     const funderDoi = f.DOI   || '';
     const awards    = f.award || [];
 
-    // JSPS判定: funder DOI が JSPS（APIキー不要）
+    // JSPS判定: funder DOI が JSPS、または課題番号パターンが科研費形式
     const isJsps = funderDoi === JSPS_FUNDER_DOI;
 
     const buildEntry = async (awardNum) => {
@@ -1972,10 +1982,11 @@ async function buildFunders(crFunders) {
       }
 
       const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
+      const looksKakenhi = isJsps || isKakenhi(awardNum);
       let kakenResult = null;
 
       // KAKEN XML API（Chrome拡張経由でCORS回避）
-      if (hasCiNiiKey && isJsps && awardNum) {
+      if (hasCiNiiKey && looksKakenhi && awardNum) {
         try {
           kakenResult = await fetchKakenXml(awardNum);
         } catch (e) {
@@ -1993,7 +2004,7 @@ async function buildFunders(crFunders) {
       }
 
       // CiNii Research OpenSearch フォールバック（KAKEN XML・JGN いずれも失敗時）
-      if (!kakenResult && isJsps && awardNum) {
+      if (!kakenResult && looksKakenhi && awardNum) {
         try {
           kakenResult = await fetchKakenCiNii(awardNum);
         } catch (e) {
@@ -2086,10 +2097,11 @@ async function buildJaLCFunders(jalcFundList) {
       const obj = { subitem_funder_names: funderNames, subitem_funder_identifiers: funderIdentifiers };
 
       const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
+      const looksKakenhi = isJsps || isKakenhi(awardNum);
       let kakenResult = null;
 
       // KAKEN XML API（Chrome拡張経由でCORS回避）
-      if (hasCiNiiKey && isJsps && awardNum) {
+      if (hasCiNiiKey && looksKakenhi && awardNum) {
         try { kakenResult = await fetchKakenXml(awardNum); } catch (e) {
           console.warn(`KAKEN XML取得失敗 (${awardNum}):`, e.message);
         }
@@ -2103,7 +2115,7 @@ async function buildJaLCFunders(jalcFundList) {
       }
 
       // CiNii Research OpenSearch フォールバック（KAKEN XML・JGN いずれも失敗時）
-      if (!kakenResult && isJsps && awardNum) {
+      if (!kakenResult && looksKakenhi && awardNum) {
         try { kakenResult = await fetchKakenCiNii(awardNum); } catch (e) {
           console.warn(`KAKEN CiNii取得失敗 (${awardNum}):`, e.message);
         }
