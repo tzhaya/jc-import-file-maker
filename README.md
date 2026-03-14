@@ -17,8 +17,8 @@ Chrome拡張版と通常ブラウザ版の2つの利用方法があります。
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張版 | 2026-03-15 | ver. 1.3.4 | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0）（[#34](https://github.com/tzhaya/jc-import-file-maker/issues/34)） |
-| インポート用TSV生成ツール | 2026-03-15 | — | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0）（[#34](https://github.com/tzhaya/jc-import-file-maker/issues/34)） |
+| Chrome拡張版 | 2026-03-15 | ver. 1.3.5 | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0）、表示順序修正（[#34](https://github.com/tzhaya/jc-import-file-maker/issues/34)） |
+| インポート用TSV生成ツール | 2026-03-15 | — | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0）、表示順序修正（[#34](https://github.com/tzhaya/jc-import-file-maker/issues/34)） |
 | 助成情報検索ツール | 2026-03-13 | — | isKakenhi()関数追加（科研費番号パターン判定） |
 
 ## 導入方法
@@ -256,6 +256,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-15 | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0 fundingStream / fundingStreamIdentifier）：JGN APIからプログラム情報を自動取得、KAKENHI課題には固定値を自動設定、表示順序を助成機関→プログラム情報→研究課題番号に修正（[#34](https://github.com/tzhaya/jc-import-file-maker/issues/34)） |
 | 2026-03-14 | 作成者タイプ（creatorType）の初期値を空値に変更（JPCOAR 2.0 では自由テキスト定義のため、API取得時も空値とする）（[#27](https://github.com/tzhaya/jc-import-file-maker/issues/27)） |
 | 2026-03-14 | 識別子スキーム語彙を JPCOAR 2.0 準拠に更新：nameIdentifierScheme に e-Rad_Researcher・NRID・kakenhi を追加、affiliationNameIdentifierScheme の非推奨スキーム（GRID・kakenhi）を末尾に移動（[#26](https://github.com/tzhaya/jc-import-file-maker/issues/26)） |
 | 2026-03-14 | 言語選択肢に ja-Latn（ローマ字ヨミ）追加：JPCOAR 2.0 スキーマおよび WEKO3 LANGUAGE_VAL2_1 に準拠（[#28](https://github.com/tzhaya/jc-import-file-maker/issues/28)） |

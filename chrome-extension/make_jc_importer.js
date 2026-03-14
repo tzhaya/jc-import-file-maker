@@ -3308,6 +3308,32 @@ function renderOneFunder(funder, idx, defLabel) {
   });
   updateFunderLookup = updateFV;
 
+  // プログラム情報識別子（JPCOAR 2.0 fundingStreamIdentifier）
+  const fsId = funder.subitem_funding_stream_identifiers || {};
+  fundContent.appendChild(createFieldRow('プログラム情報識別子', fsId.subitem_funding_stream_identifier || '', 'text', null,
+    { fieldKey: 'subitem_funding_stream_identifier' }));
+  fundContent.appendChild(createFieldRow('識別子タイプ', fsId.subitem_funding_stream_identifier_type || '', 'select',
+    'subitem_funding_stream_identifier_type', { fieldKey: 'subitem_funding_stream_identifier_type' }));
+  fundContent.appendChild(createFieldRow('識別子タイプURI', fsId.subitem_funding_stream_identifier_type_uri || '', 'text', null,
+    { fieldKey: 'subitem_funding_stream_identifier_type_uri' }));
+
+  // プログラム情報（JPCOAR 2.0 fundingStream、配列）
+  const { wrapper: fsWrap, content: fsCont } = createNestedSectionHeader('プログラム情報', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('プログラム情報', '', 'text', null, { fieldKey: 'subitem_funding_stream' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_funding_stream_language' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  });
+  (funder.subitem_funding_streams || []).forEach(fs => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('プログラム情報', fs.subitem_funding_stream || '', 'text', null, { fieldKey: 'subitem_funding_stream' }));
+    grp.appendChild(createFieldRow('言語', fs.subitem_funding_stream_language || '', 'select', 'language', { fieldKey: 'subitem_funding_stream_language' }));
+    grp.appendChild(delBtn);
+    fsCont.appendChild(grp);
+  });
+  fundContent.appendChild(fsWrap);
+
   // 研究課題番号（fieldset）+ 助成機関を検索ボタン
   const aw = funder.subitem_award_numbers || {};
   const awardRow = createFieldRow('研究課題番号', aw.subitem_award_number || '', 'text', null, { fieldKey: 'subitem_award_number' });
@@ -3341,32 +3367,6 @@ function renderOneFunder(funder, idx, defLabel) {
     atCont.appendChild(grp);
   });
   fundContent.appendChild(atWrap);
-
-  // プログラム情報識別子（JPCOAR 2.0 fundingStreamIdentifier）
-  const fsId = funder.subitem_funding_stream_identifiers || {};
-  fundContent.appendChild(createFieldRow('プログラム情報識別子', fsId.subitem_funding_stream_identifier || '', 'text', null,
-    { fieldKey: 'subitem_funding_stream_identifier' }));
-  fundContent.appendChild(createFieldRow('識別子タイプ', fsId.subitem_funding_stream_identifier_type || '', 'select',
-    'subitem_funding_stream_identifier_type', { fieldKey: 'subitem_funding_stream_identifier_type' }));
-  fundContent.appendChild(createFieldRow('識別子タイプURI', fsId.subitem_funding_stream_identifier_type_uri || '', 'text', null,
-    { fieldKey: 'subitem_funding_stream_identifier_type_uri' }));
-
-  // プログラム情報（JPCOAR 2.0 fundingStream、配列）
-  const { wrapper: fsWrap, content: fsCont } = createNestedSectionHeader('プログラム情報', 2, (cont) => {
-    const { grp, delBtn } = createEntryGroup();
-    grp.appendChild(createFieldRow('プログラム情報', '', 'text', null, { fieldKey: 'subitem_funding_stream' }));
-    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_funding_stream_language' }));
-    grp.appendChild(delBtn);
-    cont.appendChild(grp);
-  });
-  (funder.subitem_funding_streams || []).forEach(fs => {
-    const { grp, delBtn } = createEntryGroup();
-    grp.appendChild(createFieldRow('プログラム情報', fs.subitem_funding_stream || '', 'text', null, { fieldKey: 'subitem_funding_stream' }));
-    grp.appendChild(createFieldRow('言語', fs.subitem_funding_stream_language || '', 'select', 'language', { fieldKey: 'subitem_funding_stream_language' }));
-    grp.appendChild(delBtn);
-    fsCont.appendChild(grp);
-  });
-  fundContent.appendChild(fsWrap);
 
   // 助成機関を検索ボタンの結果表示エリアとイベントハンドラ
   const awardResultEl = document.createElement('div');
@@ -4881,7 +4881,7 @@ function buildFundingPreview(funders) {
   if (!nonEmpty.length) return '';
 
   let html = '<table class="pv-inner-table"><thead><tr>';
-  html += '<th>#</th><th>\u52A9\u6210\u6A5F\u95A2\u540D</th><th>\u8B58\u5225\u5B50</th><th>\u8AB2\u984C\u756A\u53F7</th><th>\u8AB2\u984C\u540D</th><th>\u30D7\u30ED\u30B0\u30E9\u30E0\u60C5\u5831</th>';
+  html += '<th>#</th><th>\u52A9\u6210\u6A5F\u95A2\u540D</th><th>\u8B58\u5225\u5B50</th><th>\u30D7\u30ED\u30B0\u30E9\u30E0\u60C5\u5831</th><th>\u8AB2\u984C\u756A\u53F7</th><th>\u8AB2\u984C\u540D</th>';
   html += '</tr></thead><tbody>';
 
   nonEmpty.forEach((f, i) => {
@@ -4891,12 +4891,6 @@ function buildFundingPreview(funders) {
     const idStr = fId.subitem_funder_identifier
       ? (fId.subitem_funder_identifier_type ? fId.subitem_funder_identifier_type + ': ' : '') + fmtVal(fId.subitem_funder_identifier)
       : '';
-    const aw = f.subitem_award_numbers || {};
-    const awardStr = aw.subitem_award_number
-      ? fmtVal(aw.subitem_award_number) + (aw.subitem_award_uri ? ' (' + fmtVal(aw.subitem_award_uri) + ')' : '')
-      : '';
-    const titles = (f.subitem_award_titles || []).filter(t => t.subitem_award_title)
-      .map(t => fmtVal(t.subitem_award_title, t.subitem_award_title_language)).join('<br>');
     // プログラム情報
     const streams = (f.subitem_funding_streams || []).filter(s => s.subitem_funding_stream)
       .map(s => fmtVal(s.subitem_funding_stream, s.subitem_funding_stream_language)).join('<br>');
@@ -4905,7 +4899,13 @@ function buildFundingPreview(funders) {
       ? (fsIdObj.subitem_funding_stream_identifier_type ? fsIdObj.subitem_funding_stream_identifier_type + ': ' : '') + fmtVal(fsIdObj.subitem_funding_stream_identifier)
       : '';
     const streamCol = [fsIdStr, streams].filter(Boolean).join('<br>');
-    html += '<tr><td>' + i + '</td><td>' + names + '</td><td>' + idStr + '</td><td>' + awardStr + '</td><td>' + titles + '</td><td>' + streamCol + '</td></tr>';
+    const aw = f.subitem_award_numbers || {};
+    const awardStr = aw.subitem_award_number
+      ? fmtVal(aw.subitem_award_number) + (aw.subitem_award_uri ? ' (' + fmtVal(aw.subitem_award_uri) + ')' : '')
+      : '';
+    const titles = (f.subitem_award_titles || []).filter(t => t.subitem_award_title)
+      .map(t => fmtVal(t.subitem_award_title, t.subitem_award_title_language)).join('<br>');
+    html += '<tr><td>' + i + '</td><td>' + names + '</td><td>' + idStr + '</td><td>' + streamCol + '</td><td>' + awardStr + '</td><td>' + titles + '</td></tr>';
   });
   html += '</tbody></table>';
   return html;
@@ -5122,7 +5122,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-14';
+  const LOCAL_VERSION = '2026-03-15';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
