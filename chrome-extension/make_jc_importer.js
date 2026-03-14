@@ -4942,10 +4942,10 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 // ===== APIキー未設定警告（Chrome拡張版: loadConfig後） =====
 (async function checkApiKeyWarnings() {
   await loadConfig();
-  if (\!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
+  if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
     document.getElementById('apikey-warning').style.display = 'block';
   }
-  if (\!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') {
+  if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') {
     document.getElementById('cinii-apikey-warning').style.display = 'block';
   }
 })();
