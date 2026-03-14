@@ -29,6 +29,7 @@ DOM の構造・フィールドキー・語彙が固まってから TSV 出力�
 - **参照**: `data/tsv_headers.json`（TSV列定義の正典。構造変更時は必ずこのファイルを更新してから `TSV_HEADERS_TEMPLATE` 定数に反映する）
 - **参照**: `samples/デフォルトアイテムタイプ（フル）(30002).tsv`（出力フォーマット確認用）
 - **参照**: [weko3_property_key_naming.md](weko3_property_key_naming.md) — プロパティキーの命名規則（3パターン）と助成情報フィールド構造
+- **参照**: [weko3_tsv_import_spec.md](weko3_tsv_import_spec.md) — WEKO3ソースコードから調査したTSVインポート処理の全仕様（ZIP構造、5行ヘッダー、システムカラム、バリデーション、ファイル処理等）
 
 ### プロパティキー柔軟化の設計方針
 

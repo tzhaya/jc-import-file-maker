@@ -57,11 +57,15 @@ make_jc_importer.html
 ### JAIRO Cloud関係データ
 
 **データマッピングサンプルデータ**
-    `sample.json` 
+    `sample.json`
 
 **TSVヘッダー定義**
     - `tsv_headers.json`
     - TSVヘッダーは特定のJAIRO Cloudアイテムタイプ（国際農研デフォルトアイテムタイプ）に対応するように構成されます。
+
+**WEKO3 TSVインポート仕様**
+    - `docs/weko3_tsv_import_spec.md`
+    - WEKO3ソースコードから調査したTSVインポート処理の全仕様（ZIP構造、5行ヘッダー、システムカラム、バリデーションルール、ファイル処理、DOI/CNRI登録等）
 
 ### 外部API サンプルデータ
 

@@ -300,5 +300,7 @@ file_path: ['recid_12345/document.pdf']
 
 - **ファイル本体はアップロードしない** — `<input type="file">` はメタデータ（名前・サイズ・MIME）取得のみに使用。実際のファイルアップロードはWEKO側で行う
 - **file_path 形式**: `recid_{id}/{filename}` — `{id}` はWEKOのレコードIDだが、TSV作成時点では不明な場合がある。ユーザーが手動入力できるようにする
+  - WEKO3仕様上、`file_path` はZIP内 `data/` からの相対パスであり、`recid_{id}/` プレフィックスは必須ではない（任意のパスが使用可能）。詳細は [weko3_tsv_import_spec.md](weko3_tsv_import_spec.md) §6 参照
+  - #90 で設定方法の改善を検討中
 - **既存フィールドへの影響なし** — file35 は新規追加のため、既存のCrossref/JaLCデータ取得フローには影響しない
 - **CC URIの前方一致**: `/deed.ja`, `/deed.en`, `/deed`, 末尾スラッシュの有無に対応するため、`startsWith()` で判定

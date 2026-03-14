@@ -388,7 +388,7 @@ const DOI_REQUIREMENTS = {
 const TITLE_MAPS = {
   // 言語（テキスト系フィールドの言語選択）
   language: [
-    'ja','ja-Kana','en','fr','it','de','es','zh-cn','zh-tw','ru','la','ms','eo','ar','el','ko'
+    'ja','ja-Kana','ja-Latn','en','fr','it','de','es','zh-cn','zh-tw','ru','la','ms','eo','ar','el','ko'
   ],
   // 本文言語（ISO 639-2/T コード）
   subitem_language: [

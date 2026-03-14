@@ -33,14 +33,11 @@ TSV 出力を実装する前に、DOM 構造・語彙値に影響する JPCOAR 2
   - L3559: `typeSelectOpts: isCreator ? 'creatorType' : 'contributorType'`
 - **参照**: JPCOAR 2.0 スキーマ仕様（creatorType 許容値一覧）
 
-### #28: 言語コード `ja-Kana` → `ja-Latn` 変更（JPCOAR 2.0）
+### #28: 言語コード `ja-Latn` 追加（JPCOAR 2.0）— **対応済み**
 
-- **内容**: JPCOAR 2.0 で採用された BCP 47 準拠の言語コードに更新
-- **現状**: `'ja-Kana'` が `TITLE_MAPS.language` に残存（L921）
-- **変更対象**:
-  - `TITLE_MAPS.language` の `'ja-Kana'` → `'ja-Latn'` に置換
-  - `mapToItemType()` 内で `ja-Kana` をハードコードしている箇所があれば修正
-- **注意**: 既存データで `ja-Kana` が保存されている場合の表示は変わらない（DOM の select 値が一致しなくなる）
+- **内容**: JPCOAR 2.0 スキーマ確認の結果、`ja-Kana`（片仮名ヨミ）と `ja-Latn`（ローマ字ヨミ）は別用途のコードであり、置換ではなく `ja-Latn` の追加が正しい対応
+- **対応**: `TITLE_MAPS.language` に `ja-Latn` を追加（`ja-Kana` の直後）
+- **参照**: https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.2
 
 ### #29: relationType 語彙への追加（JPCOAR 2.0）
 
@@ -98,6 +95,11 @@ TSV 出力を実装する前に、DOM 構造・語彙値に影響する JPCOAR 2
 - **内容**: ファイル情報（file35）の `file_path` をディレクトリ構造ベースの相対パスで設定する方法を検討
 - **DOM 構造への影響**: なし（既存file_path入力フィールドの動作変更のみ）
 - **関連**: #84（実装完了・クローズ済み）、#85
+- **WEKO3仕様**（[weko3_tsv_import_spec.md](weko3_tsv_import_spec.md) §6）:
+  - `file_path` はZIP内 `data/` からの相対パス（`recid_{id}/` プレフィックスは必須ではない）
+  - 新規アイテム: ZIP内にファイルが存在しない場合はエラー
+  - 更新アイテム: 存在しない場合は警告（メタデータのみ更新）
+  - メタデータ内の `filename` と `file_path` の整合性が必要
 
 ---
 
