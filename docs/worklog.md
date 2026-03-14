@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.3.5 | 2026-03-15 | 助成情報プログラム情報の表示順序修正（#34） |
 | 1.3.4 | 2026-03-15 | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0）（#34） |
 | 1.3.3 | 2026-03-14 | 作成者タイプ creatorType 初期値を空値に変更（#27） |
 | 1.3.2 | 2026-03-14 | 識別子スキーム語彙 JPCOAR 2.0 対応（#26） |
@@ -49,7 +50,8 @@ JPCOAR スキーマ 2.0 で `jpcoar:fundingReference` に新しいサブフィ�
    - その他 → 空値
 
 4. **renderOneFunder() UI 追加**
-   - 研究課題名の後に「プログラム情報識別子」（3フィールド）と「プログラム情報」（配列型）の入力セクションを追加
+   - 助成機関名の後、研究課題番号の前に「プログラム情報識別子」（3フィールド）と「プログラム情報」（配列型）の入力セクションを追加
+   - 表示順序: 助成機関識別子 → 助成機関名 → プログラム情報識別子 → プログラム情報 → 研究課題番号 → 研究課題名
    - 「助成機関を検索」ボタンのハンドラにプログラム情報の自動設定ロジックを追加
 
 5. **collectFundingField() 拡張**
@@ -57,6 +59,7 @@ JPCOAR スキーマ 2.0 で `jpcoar:fundingReference` に新しいサブフィ�
 
 6. **buildFundingPreview() 拡張**
    - プレビューテーブルに「プログラム情報」列を追加（識別子とプログラム名を表示）
+   - 列順序: #/助成機関名/識別子/プログラム情報/課題番号/課題名
 
 ### テスト結果
 E2E テスト（DOI: `10.1038/s41467-023-40773-1`）で以下を確認：
@@ -66,7 +69,8 @@ E2E テスト（DOI: `10.1038/s41467-023-40773-1`）で以下を確認：
 ### 変更箇所
 - `make_jc_importer.html`: 定数追加、fetchJgn()、buildFunders()、buildJaLCFunders()、renderOneFunder()、collectFundingField()、buildFundingPreview() 拡張
 - `chrome-extension/make_jc_importer.js`: 同上を同期
-- `chrome-extension/manifest.json`: 1.3.3 → 1.3.4
+- `chrome-extension/manifest.json`: 1.3.3 → 1.3.4 → 1.3.5（表示順序修正）
+- `chrome-extension/panel.html`: 更新概要テーブル同期
 
 ---
 

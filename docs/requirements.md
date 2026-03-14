@@ -454,18 +454,36 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 - **Level 2**:
   - `subitem_funder_names[]` - 複数言語による助成機関名
   - `subitem_funder_identifiers` - 助成機関識別子 (単一)
-  - `subitem_funding_streams[]` - 複数プログラム名
+  - `subitem_funding_stream_identifiers` - プログラム情報識別子（JPCOAR 2.0、単一）
+  - `subitem_funding_streams[]` - 複数言語によるプログラム情報（JPCOAR 2.0）
+  - `subitem_award_numbers` - 研究課題番号（単一）
   - `subitem_award_titles[]` - 複数言語による研究課題名
 
+**表示順序**: 助成機関識別子 → 助成機関名 → プログラム情報識別子 → プログラム情報 → 研究課題番号 → 研究課題名
+
 **要件**:
-- 複数言語バージョンの助成機関名・課題名をサポート
+- 複数言語バージョンの助成機関名・課題名・プログラム情報をサポート
 - アコーディオンUIで複数プログラム情報を管理
+
+**プログラム情報（JPCOAR 2.0 fundingStream / fundingStreamIdentifier）**（[issue #34](https://github.com/tzhaya/jc-import-file-maker/issues/34)）:
+- `subitem_funding_stream_identifiers`: プログラム情報識別子（単一オブジェクト）
+  - `subitem_funding_stream_identifier`: 識別子値
+  - `subitem_funding_stream_identifier_type`: 識別子タイプ（`Crossref Funder` / `JGN_fundingStream`）
+  - `subitem_funding_stream_identifier_type_uri`: 識別子タイプURI
+- `subitem_funding_streams[]`: プログラム情報（配列、複数言語対応）
+  - `subitem_funding_stream`: プログラム情報テキスト
+  - `subitem_funding_stream_language`: 言語
+- JGN連携成功時: `funding.scheme` からプログラム情報を取得し、課題番号から `JGN_fundingStream` コードを自動抽出して識別子に設定
+- KAKENHI課題（`isKakenhi()` 合致）の場合: `KAKENHI_FUNDING_STREAM` 定数（「科学研究費助成事業」(ja) / 「Grants-in-Aid for Scientific Research (KAKENHI)」(en)）を自動設定、識別子は空
+- 上記以外: 空配列・空オブジェクトを設定（ユーザーが手動入力可能）
 
 **JGN連携（Crossref JGN API）**:
 - award番号が `JP` で始まる場合、Crossref の JGN（Japan Grant Number）API（`https://api.crossref.org/works/10.52926/{award}`）を照会する
 - レスポンスが `type: "grant"` の場合のみ処理実行
 - `project[0].project-title[].title` を課題名、`.language` を言語として `subitem_award_titles[]` に設定
-- `funder[0].name` を助成機関名、`funder[0].DOI` を助成機関識別子として返す（助成機関名・識別子が空の場合に補完）
+- `project[0].funding[0].funder` から助成機関名（`.name`）・助成機関識別子（`.id[]` の DOI タイプ）を取得（助成機関名・識別子が空の場合に補完）
+- `project[0].funding[0].scheme` からプログラム情報を取得し `subitem_funding_streams[]` に設定
+- 課題番号から JGN_fundingStream コードを自動抽出し `subitem_funding_stream_identifiers` に設定
 - `https://doi.org/10.52926/{award}` を `subitem_award_uri` に設定
 - 404（JGN未登録）の場合は null を返し、KAKEN連携にフォールバック
 - JGN連携が成功した場合、KAKEN連携はスキップ
