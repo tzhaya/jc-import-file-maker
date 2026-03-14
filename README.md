@@ -17,8 +17,8 @@ Chrome拡張版と通常ブラウザ版の2つの利用方法があります。
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張版 | 2026-03-14 | ver. 1.3.3 | 作成者タイプ（creatorType）初期値を空値に変更（JPCOAR 2.0 準拠）（[#27](https://github.com/tzhaya/jc-import-file-maker/issues/27)） |
-| インポート用TSV生成ツール | 2026-03-14 | — | 作成者タイプ（creatorType）初期値を空値に変更（JPCOAR 2.0 準拠）（[#27](https://github.com/tzhaya/jc-import-file-maker/issues/27)） |
+| Chrome拡張版 | 2026-03-15 | ver. 1.3.4 | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0）（[#34](https://github.com/tzhaya/jc-import-file-maker/issues/34)） |
+| インポート用TSV生成ツール | 2026-03-15 | — | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0）（[#34](https://github.com/tzhaya/jc-import-file-maker/issues/34)） |
 | 助成情報検索ツール | 2026-03-13 | — | isKakenhi()関数追加（科研費番号パターン判定） |
 
 ## 導入方法

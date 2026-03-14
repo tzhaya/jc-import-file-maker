@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-14（作成者タイプ creatorType 初期値を空値に変更 #27）
+最終更新: 2026-03-15（助成情報にプログラム情報識別子・プログラム情報を追加 #34）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.3.4 | 2026-03-15 | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0）（#34） |
 | 1.3.3 | 2026-03-14 | 作成者タイプ creatorType 初期値を空値に変更（#27） |
 | 1.3.2 | 2026-03-14 | 識別子スキーム語彙 JPCOAR 2.0 対応（#26） |
 | 1.3.1 | 2026-03-14 | 言語選択肢に ja-Latn（ローマ字ヨミ）追加（#28） |
@@ -24,6 +25,48 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-15: 助成情報にプログラム情報識別子・プログラム情報を追加（#34）
+
+### 背景
+JPCOAR スキーマ 2.0 で `jpcoar:fundingReference` に新しいサブフィールド「プログラム情報識別子（fundingStreamIdentifier）」「プログラム情報（fundingStream）」が追加された。JGN API（Crossref Grants API）の `project[].funding[].scheme` をこれらのフィールドにマッピングする。
+
+### 変更内容
+
+1. **定数追加**
+   - `KAKENHI_FUNDING_STREAM`: 科研費のプログラム情報固定値（日本語・英語）
+   - `TITLE_MAPS.subitem_funding_stream_identifier_type`: `['Crossref Funder','JGN_fundingStream']`
+
+2. **fetchJgn() 拡張**
+   - funder 取得パスを `item.funder[0]`（トップレベル、JGN grant では存在しない）から `project.funding[].funder` に修正
+   - 戻り値に `fundingStreams`（scheme から）と `fundingStreamId`（課題番号から JGN コード抽出）を追加
+
+3. **buildFunders() / buildJaLCFunders() 拡張**
+   - JGN 結果 → `subitem_funding_streams` + `subitem_funding_stream_identifiers`（`JGN_fundingStream` タイプ）を自動設定
+   - KAKENHI 結果 → `KAKENHI_FUNDING_STREAM` 固定値を自動設定
+   - その他 → 空値
+
+4. **renderOneFunder() UI 追加**
+   - 研究課題名の後に「プログラム情報識別子」（3フィールド）と「プログラム情報」（配列型）の入力セクションを追加
+   - 「助成機関を検索」ボタンのハンドラにプログラム情報の自動設定ロジックを追加
+
+5. **collectFundingField() 拡張**
+   - `subitem_funding_stream_identifiers` と `subitem_funding_streams` の DOM 収集を追加
+
+6. **buildFundingPreview() 拡張**
+   - プレビューテーブルに「プログラム情報」列を追加（識別子とプログラム名を表示）
+
+### テスト結果
+E2E テスト（DOI: `10.1038/s41467-023-40773-1`）で以下を確認：
+- KAKENHI 課題 5件: 「科学研究費助成事業」「Grants-in-Aid for Scientific Research (KAKENHI)」が自動設定
+- JGN 課題 1件（`JPMJSA1907`）: プログラム情報「国際的な科学技術共同研究などの推進/SATREPS 生物資源」、識別子 `MJSA`（JGN_fundingStream）が自動設定
+
+### 変更箇所
+- `make_jc_importer.html`: 定数追加、fetchJgn()、buildFunders()、buildJaLCFunders()、renderOneFunder()、collectFundingField()、buildFundingPreview() 拡張
+- `chrome-extension/make_jc_importer.js`: 同上を同期
+- `chrome-extension/manifest.json`: 1.3.3 → 1.3.4
 
 ---
 
