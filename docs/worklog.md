@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-14（ファイル情報 file35 入力UI実装 #84）
+最終更新: 2026-03-14（言語選択肢に ja-Latn 追加 #28）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,11 +16,27 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.3.1 | 2026-03-14 | 言語選択肢に ja-Latn（ローマ字ヨミ）追加（#28） |
 | 1.3.0 | 2026-03-14 | ファイル情報（file35）入力UI追加（#84）、主題セクション空データ表示修正 |
 | 1.2.1 | 2026-03-13 | 科研費課題番号の識別方法修正（#82）、LOCAL_VERSION同期修正 |
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-14: 言語選択肢に ja-Latn 追加（#28）
+
+### 背景
+JPCOAR 2.0 スキーマでは `ja-Kana`（片仮名ヨミ）と `ja-Latn`（ローマ字ヨミ）が別用途の言語コードとして定義されている。本ツールには `ja-Kana` のみ存在し `ja-Latn` が欠けていた。
+
+### 実装内容
+- `TITLE_MAPS.language` 配列に `ja-Latn` を追加（`ja-Kana` の直後、WEKO3 の `LANGUAGE_VAL2_1` と同じ順序）
+- 変更対象: `make_jc_importer.html`、`chrome-extension/make_jc_importer.js`、`make_jc_importer_test.html`
+
+### 補足
+- WEKO3 には185項目の拡張言語リスト（`LANGUAGE_VAL2_2`）も存在する。将来対応の記録を `docs/future_language_expansion.md` に作成
+- `docs/remaining_issues.md` の #28 記述を「置換」から「追加・対応済み」に更新
 
 ---
 
