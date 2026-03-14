@@ -246,6 +246,42 @@ const VERSION_TYPE_MAP = {
   'NA':   'http://purl.org/coar/version/c_be7fb7dd8ff6fe43',
 };
 
+// ===== CC URI → licensetype マッピング =====
+const CC_URI_TO_LICENSE_TYPE = {
+  'https://creativecommons.org/licenses/by/4.0': 'license_0',
+  'https://creativecommons.org/licenses/by-sa/4.0': 'license_1',
+  'https://creativecommons.org/licenses/by-nd/4.0': 'license_2',
+  'https://creativecommons.org/licenses/by-nc/4.0': 'license_3',
+  'https://creativecommons.org/licenses/by-nc-sa/4.0': 'license_4',
+  'https://creativecommons.org/licenses/by-nc-nd/4.0': 'license_5',
+  'https://creativecommons.org/licenses/by/3.0': 'license_6',
+  'https://creativecommons.org/licenses/by-sa/3.0': 'license_7',
+  'https://creativecommons.org/licenses/by-nd/3.0': 'license_8',
+  'https://creativecommons.org/licenses/by-nc/3.0': 'license_9',
+  'https://creativecommons.org/licenses/by-nc-sa/3.0': 'license_10',
+  'https://creativecommons.org/licenses/by-nc-nd/3.0': 'license_11',
+  'https://creativecommons.org/publicdomain/zero/1.0': 'license_12',
+};
+
+// licensetype → 表示ラベル
+const LICENSE_TYPE_LABELS = {
+  'license_no': 'ライセンスなし', 'license_free': '自由入力',
+  'license_0': 'CC BY 4.0', 'license_1': 'CC BY-SA 4.0', 'license_2': 'CC BY-ND 4.0',
+  'license_3': 'CC BY-NC 4.0', 'license_4': 'CC BY-NC-SA 4.0', 'license_5': 'CC BY-NC-ND 4.0',
+  'license_6': 'CC BY 3.0', 'license_7': 'CC BY-SA 3.0', 'license_8': 'CC BY-ND 3.0',
+  'license_9': 'CC BY-NC 3.0', 'license_10': 'CC BY-NC-SA 3.0', 'license_11': 'CC BY-NC-ND 3.0',
+  'license_12': 'CC0',
+};
+
+// 権利情報リソースURIからlicensetypeを前方一致で判定
+function detectLicenseType(uri) {
+  if (!uri) return '';
+  for (const [prefix, type] of Object.entries(CC_URI_TO_LICENSE_TYPE)) {
+    if (uri.startsWith(prefix)) return type;
+  }
+  return '';
+}
+
 // ===== JSPS 助成機関定数 =====
 const JSPS_FUNDER_DOI = '10.13039/501100001691';
 const JSPS_FUNDER_NAMES = [
@@ -430,6 +466,25 @@ const TITLE_MAPS = {
   subitem_identifier_type: ['DOI','HDL','URI','CRID'],
   // 助成機関識別子タイプ
   subitem_funder_identifier_type: ['Crossref Funder','ISNI','ROR','Other'],
+  // ファイル情報: アクセス
+  file_accessrole: ['open_access','open_date','open_login','open_no'],
+  // ファイル情報: 表示形式
+  file_displaytype: ['detail','simple','preview'],
+  // ファイル情報: オブジェクトタイプ
+  file_objectType: ['abstract','fulltext','summary','thumbnail','other'],
+  // ファイル情報: ライセンスタイプ
+  file_licensetype: [
+    {name:'ライセンスなし', value:'license_no'}, {name:'自由入力', value:'license_free'},
+    {name:'CC BY 4.0', value:'license_0'}, {name:'CC BY-SA 4.0', value:'license_1'},
+    {name:'CC BY-ND 4.0', value:'license_2'}, {name:'CC BY-NC 4.0', value:'license_3'},
+    {name:'CC BY-NC-SA 4.0', value:'license_4'}, {name:'CC BY-NC-ND 4.0', value:'license_5'},
+    {name:'CC BY 3.0', value:'license_6'}, {name:'CC BY-SA 3.0', value:'license_7'},
+    {name:'CC BY-ND 3.0', value:'license_8'}, {name:'CC BY-NC 3.0', value:'license_9'},
+    {name:'CC BY-NC-SA 3.0', value:'license_10'}, {name:'CC BY-NC-ND 3.0', value:'license_11'},
+    {name:'CC0', value:'license_12'},
+  ],
+  // ファイル情報: 公開日タイプ / 日付タイプ
+  file_dateType: ['Accepted','Available','Collected','Copyrighted','Created','Issued','Submitted','Updated','Valid'],
   // 開催国（ISO 3166-1 alpha-3）
   subitem_conference_country: [
     'JPN','ABW','AFG','AGO','AIA','ALA','ALB','AND','ARE','ARG','ARM','ASM','ATA','ATF','ATG',
@@ -893,7 +948,6 @@ async function fetchNcid(issns) {
 // 拡張なし環境では OPF 連携チェックボックスが無効化されるため、この関数は呼ばれません。
 async function fetchOpenPolicyFinder(issns) {
   if (!CONFIG.OPF_API_KEY || CONFIG.OPF_API_KEY === 'YOUR_OPF_API_KEY') return null;
-  console.log('[OPF] ISSNs:', issns);
   for (const issn of issns) {
     try {
       const params = new URLSearchParams({
@@ -901,16 +955,14 @@ async function fetchOpenPolicyFinder(issns) {
         'format': 'Json',
         'identifier': issn,
       });
-      const url = `https://api.openpolicyfinder.jisc.ac.uk/retrieve_by_id?${params}`;
-      console.log('[OPF] Fetching:', url);
-      const resp = await extensionFetch(url, { headers: { 'x-api-key': CONFIG.OPF_API_KEY } });
-      console.log('[OPF] Response:', resp.status, resp.ok);
-      if (!resp.ok) { const errBody = await resp.text(); console.log('[OPF] Not OK:', resp.status, errBody); continue; }
+      const resp = await extensionFetch(
+        `https://api.openpolicyfinder.jisc.ac.uk/retrieve_by_id?${params}`,
+        { headers: { 'x-api-key': CONFIG.OPF_API_KEY } }
+      );
+      if (!resp.ok) continue;
       const data = await resp.json();
-      console.log('[OPF] Data:', JSON.stringify(data).slice(0, 500));
       if (data?.items?.length) return data;
-      console.log('[OPF] No items in response');
-    } catch (e) { console.log('[OPF] Error:', e.message); continue; }
+    } catch { continue; }
   }
   return null;
 }
@@ -1381,7 +1433,7 @@ async function buildFunders(crFunders) {
     const funderDoi = f.DOI   || '';
     const awards    = f.award || [];
 
-    // JSPS判定: funder DOI が JSPS（APIキー不要）
+    // JSPS判定: funder DOI が JSPS、または課題番号パターンが科研費形式
     const isJsps = funderDoi === JSPS_FUNDER_DOI;
 
     const buildEntry = async (awardNum) => {
@@ -1617,13 +1669,8 @@ async function mapToItemType(crJson, oaJson, rorMap) {
     });
   });
 
-  // ===== 主題（API取り込み対象外: 空の編集可能フィールドを準備するのみ）=====
-  const subjects = [{
-    subitem_subject:          '',
-    subitem_subject_language: '',
-    subitem_subject_scheme:   '',
-    subitem_subject_uri:      '',
-  }];
+  // ===== 主題（API取り込み対象外）=====
+  const subjects = [];
 
   // ===== 資源タイプ =====
   const crTypeRaw     = crJson.type || '';
@@ -1905,6 +1952,9 @@ async function mapToItemType(crJson, oaJson, rorMap) {
 
     // ----- 会議記述（空）-----
     item_30002_conference34: [],
+
+    // ----- ファイル情報（空）-----
+    item_30002_file35: [],
   };
 
   return metadata;
@@ -1966,9 +2016,7 @@ async function mapToItemTypeJaLC(jalcJson) {
       subitem_subject_uri:      '',
     })),
   ].filter(s => s.subitem_subject);
-  if (!subjects.length) {
-    subjects.push({ subitem_subject: '', subitem_subject_language: '', subitem_subject_scheme: '', subitem_subject_uri: '' });
-  }
+  // 主題データがない場合は空配列のまま（「追加」ボタンのみ表示）
 
   // ===== 資源タイプ =====
   const contentType  = jalcJson.content_type || '';
@@ -2153,6 +2201,8 @@ async function mapToItemTypeJaLC(jalcJson) {
     } : null,
 
     item_30002_conference34: [],
+
+    item_30002_file35: [],
   };
 
   return metadata;
@@ -2297,6 +2347,8 @@ const FIELD_DEFS = [
     sum: o => o?.bibliographic_titles?.[0]?.bibliographic_title || '' },
   { key: 'item_30002_conference34', label: '会議記述', type: 'conference',
     sum: a => { if (!a?.length) return ''; const n = a[0]?.subitem_conference_names?.[0]?.subitem_conference_name || ''; return a.length > 1 ? `${n} 他${a.length-1}件` : n; } },
+  { key: 'item_30002_file35', label: 'ファイル情報', type: 'file',
+    sum: a => { if (!Array.isArray(a) || !a.length) return ''; const names = a.map(f => f.filename || '').filter(Boolean); return names.length ? names.join(', ') : `${a.length}件`; } },
 ];
 
 // ===== STEP 6: 動的削除ヘルパー =====
@@ -3634,6 +3686,128 @@ function renderConferenceField(def, confs) {
   return section;
 }
 
+// ----- ファイルサイズフォーマット -----
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+}
+
+// ----- 1件のファイル情報DOMを生成するヘルパー -----
+function renderOneFile(file, idx, defLabel) {
+  const fName = file.filename || '';
+  const itemLabel = `${defLabel}[${idx}]${fName ? ': '+fName : ''}`;
+  const { item: fileItem, content: fileCont } = createNestedItem(itemLabel, 1);
+
+  // ファイル選択ボタン
+  const filePickRow = document.createElement('div');
+  filePickRow.className = 'field-row';
+  const pickLabel = document.createElement('span');
+  pickLabel.className = 'field-label';
+  pickLabel.textContent = 'ファイル選択';
+  filePickRow.appendChild(pickLabel);
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.style.flex = '1';
+  fileInput.addEventListener('change', () => {
+    const f = fileInput.files[0];
+    if (!f) return;
+    const setVal = (key, val) => {
+      const row = fileCont.querySelector(`[data-field-key="${key}"]`);
+      if (row) { const inp = row.querySelector('input'); if (inp) inp.value = val; }
+    };
+    setVal('filename', f.name);
+    setVal('filesize_value', formatFileSize(f.size));
+    setVal('format', f.type || 'application/octet-stream');
+    // ヘッダーラベル更新
+    const lbl = fileItem.querySelector('.item-label');
+    if (lbl) lbl.textContent = `${defLabel}[${idx}]: ${f.name}`;
+  });
+  filePickRow.appendChild(fileInput);
+  fileCont.appendChild(filePickRow);
+
+  // 基本フィールド
+  fileCont.appendChild(createFieldRow('ファイル名', file.filename || '', 'text', null, { fieldKey: 'filename' }));
+  fileCont.appendChild(createFieldRow('フォーマット', file.format || '', 'text', null, { fieldKey: 'format' }));
+  fileCont.appendChild(createFieldRow('サイズ', file.filesize?.[0]?.value || '', 'text', null, { fieldKey: 'filesize_value' }));
+
+  // アクセス・表示
+  fileCont.appendChild(createFieldRow('アクセス', file.accessrole || 'open_access', 'select', 'file_accessrole', { fieldKey: 'accessrole' }));
+  fileCont.appendChild(createFieldRow('表示形式', file.displaytype || 'detail', 'select', 'file_displaytype', { fieldKey: 'displaytype' }));
+
+  // 公開日
+  fileCont.appendChild(createFieldRow('公開日タイプ', file.date?.[0]?.dateType || 'Available', 'select', 'file_dateType', { fieldKey: 'file_dateType' }));
+  fileCont.appendChild(createFieldRow('公開日', file.date?.[0]?.dateValue || todayStr(), 'text', null, { fieldKey: 'file_dateValue' }));
+
+  // ファイル日付
+  fileCont.appendChild(createFieldRow('日付タイプ', file.fileDate?.[0]?.fileDateType || '', 'select', 'file_dateType', { fieldKey: 'fileDateType' }));
+  fileCont.appendChild(createFieldRow('日付', file.fileDate?.[0]?.fileDateValue || '', 'text', null, { fieldKey: 'fileDateValue' }));
+
+  // ライセンス — 権利情報URIから自動判定
+  let autoLicense = file.licensetype || '';
+  if (!autoLicense) {
+    const rightsSection = document.querySelector('.field-section[data-key="item_30002_rights6"]');
+    if (rightsSection) {
+      const uriRow = rightsSection.querySelector('[data-field-key="subitem_rights_resource"]');
+      if (uriRow) {
+        const inp = uriRow.querySelector('input');
+        if (inp) autoLicense = detectLicenseType(inp.value);
+      }
+    }
+  }
+  const licenseRow = createFieldRow('ライセンス', autoLicense, 'select', 'file_licensetype', {
+    fieldKey: 'licensetype',
+    onChange: (val) => {
+      const freeRow = fileCont.querySelector('[data-field-key="licensefree"]');
+      if (freeRow) freeRow.style.display = val === 'license_free' ? '' : 'none';
+    },
+  });
+  fileCont.appendChild(licenseRow);
+
+  // 自由ライセンス
+  const licensefreeRow = createFieldRow('自由ライセンス', file.licensefree || '', 'textarea', null, { fieldKey: 'licensefree' });
+  licensefreeRow.style.display = autoLicense === 'license_free' ? '' : 'none';
+  fileCont.appendChild(licensefreeRow);
+
+  // URL
+  fileCont.appendChild(createFieldRow('本文URL', file.url?.url || '', 'text', null, { fieldKey: 'url_url' }));
+  fileCont.appendChild(createFieldRow('ラベル', file.url?.label || '', 'text', null, { fieldKey: 'url_label' }));
+  fileCont.appendChild(createFieldRow('オブジェクトタイプ', file.url?.objectType || 'fulltext', 'select', 'file_objectType', { fieldKey: 'url_objectType' }));
+
+  // その他
+  fileCont.appendChild(createFieldRow('グループ', file.groups || '', 'text', null, { fieldKey: 'groups' }));
+  fileCont.appendChild(createFieldRow('バージョン情報', file.version || '', 'text', null, { fieldKey: 'file_version' }));
+
+  return fileItem;
+}
+
+// ----- ファイル情報 -----
+function renderFileField(def, files) {
+  const arr = Array.isArray(files) ? files : [];
+  const summaryText = def.sum(arr);
+  const { section, content } = createSection(def.key, def.label, summaryText);
+
+  arr.forEach((file, idx) => {
+    content.appendChild(renderOneFile(file, idx, def.label));
+  });
+
+  content.appendChild(createAddButton(def.label, () => {
+    const idx = content.querySelectorAll(':scope > .nested-item').length;
+    const emptyFile = {
+      filename: '', format: '', filesize: [{ value: '' }],
+      accessrole: 'open_access', displaytype: 'detail',
+      date: [{ dateType: 'Available', dateValue: todayStr() }],
+      fileDate: [{ fileDateType: '', fileDateValue: '' }],
+      licensetype: '', licensefree: '',
+      url: { url: '', label: '', objectType: 'fulltext' },
+      groups: '', version: '',
+    };
+    content.insertBefore(renderOneFile(emptyFile, idx, def.label), content.lastChild);
+  }));
+  return section;
+}
+
 // ===== 5.5 メインレンダリング =====
 function renderAll(metadata) {
   const container = document.getElementById('metadata-fields');
@@ -3677,6 +3851,9 @@ function renderAll(metadata) {
         break;
       case 'conference':
         sectionEl = renderConferenceField(def, value);
+        break;
+      case 'file':
+        sectionEl = renderFileField(def, value);
         break;
       default:
         continue;
@@ -3754,6 +3931,7 @@ function buildEmptyMetadata() {
       subitem_conference_places: [],
       subitem_conference_country: '',
     }],
+    item_30002_file35: [],
   };
 }
 
@@ -4153,6 +4331,36 @@ function collectConferenceField(section) {
   return items;
 }
 
+function collectFileField(section) {
+  const items = [];
+  const content = section.querySelector(':scope > .accordion-content');
+  if (!content) return items;
+  content.querySelectorAll(':scope > .nested-item.level-1').forEach(fileEl => {
+    const fc = fileEl.querySelector(':scope > .item-content');
+    if (!fc) return;
+    const file = {
+      filename: getFieldVal(fc, 'filename'),
+      format: getFieldVal(fc, 'format'),
+      filesize: [{ value: getFieldVal(fc, 'filesize_value') }],
+      accessrole: getFieldVal(fc, 'accessrole'),
+      displaytype: getFieldVal(fc, 'displaytype'),
+      date: [{ dateType: getFieldVal(fc, 'file_dateType'), dateValue: getFieldVal(fc, 'file_dateValue') }],
+      fileDate: [{ fileDateType: getFieldVal(fc, 'fileDateType'), fileDateValue: getFieldVal(fc, 'fileDateValue') }],
+      licensetype: getFieldVal(fc, 'licensetype'),
+      licensefree: getFieldVal(fc, 'licensefree'),
+      url: {
+        url: getFieldVal(fc, 'url_url'),
+        label: getFieldVal(fc, 'url_label'),
+        objectType: getFieldVal(fc, 'url_objectType'),
+      },
+      groups: getFieldVal(fc, 'groups'),
+      version: getFieldVal(fc, 'file_version'),
+    };
+    items.push(file);
+  });
+  return items;
+}
+
 function collectFromDOM() {
   const metadata = { system: collectSystemFromDOM() };
   for (const def of FIELD_DEFS) {
@@ -4169,6 +4377,7 @@ function collectFromDOM() {
       case 'rightsHolder': metadata[def.key] = collectRightsHolderField(section); break;
       case 'geolocation':  metadata[def.key] = collectGeolocationField(section); break;
       case 'conference':   metadata[def.key] = collectConferenceField(section); break;
+      case 'file':         metadata[def.key] = collectFileField(section); break;
     }
   }
   return metadata;
@@ -4186,7 +4395,7 @@ const TSV_HEADERS_TEMPLATE = [["#ItemType","(未設定)",""],["#.id",".uri",".me
 // TSV 出力から除外するフィールドの判定。
 // キー名が変わっても suffix（アンダースコア後の名前+番号）で照合するため prefix に依存しない。
 const TSV_EXCL_SUFFIXES = new Set([
-  'apc5', 'heading36', 'file35',
+  'apc5', 'heading36',
   'dissertation_number30', 'degree_name31', 'date_granted32', 'degree_grantor33',
 ]);
 // timestamp ベースのフィールドは full key で照合
@@ -4196,7 +4405,6 @@ const TSV_EXCL_TIMESTAMP = new Set([
 ]);
 
 function isTsvExcluded(key) {
-  if (key.startsWith('.file_path')) return true;
   const m = key.match(/\.metadata\.(item_\d+_?(\w*))/);
   if (!m) return false;
   return TSV_EXCL_SUFFIXES.has(m[2]) || TSV_EXCL_TIMESTAMP.has(m[1]);
@@ -4244,7 +4452,10 @@ function groupTsvColumns(prefix) {
 
     // フィールドグループキー: '.metadata.item_XXXX' 部分
     let fieldKey;
-    if (baseKey.startsWith('.metadata.')) {
+    if (baseKey.startsWith('.file_path')) {
+      // file_path は file35 と同じグループに含め同期展開する
+      fieldKey = '.metadata.item_30002_file35';
+    } else if (baseKey.startsWith('.metadata.')) {
       const m = baseKey.match(/^(\.metadata\.item_[^.\[]+)/);
       fieldKey = m ? m[1] : '__other__';
     } else {
@@ -4258,7 +4469,7 @@ function groupTsvColumns(prefix) {
     // トップレベル配列かどうかの判定: フィールドキー直後に [0] がある場合のみ展開対象。
     // 例: item_30002_creator2[0].xxx → 展開対象
     // 例: item_30002_bibliographic_information29.bibliographic_titles[0].xxx → 内部配列のみなので展開しない
-    if (baseKey.match(/^\.metadata\.item_[^.\[]+\[0\]/)) cur.isExpandable = true;
+    if (baseKey.match(/^\.metadata\.item_[^.\[]+\[0\]/) || baseKey.match(/^\.file_path\[0\]/)) cur.isExpandable = true;
     cur.cols.push({ key: outKey, lookupKey, label, sys, con });
   }
   return groups;
@@ -4327,6 +4538,15 @@ const TSV_SYS_KEY_MAP = {
 };
 
 function getTsvValue(col, metadata) {
+  // file_path フィールド
+  const fpMatch = col.lookupKey.match(/^\.file_path\[(\d+)\]$/);
+  if (fpMatch) {
+    const idx = parseInt(fpMatch[1], 10);
+    const files = metadata.item_30002_file35;
+    if (!Array.isArray(files) || idx >= files.length) return '';
+    const fn = files[idx]?.filename || '';
+    return fn ? `recid_/${fn}` : '';
+  }
   // システムフィールド
   if (!col.lookupKey.startsWith('.metadata.item_')) {
     const sysKey = TSV_SYS_KEY_MAP[col.lookupKey];
@@ -4623,6 +4843,24 @@ function buildConferencePreview(confs) {
   return html;
 }
 
+function buildFilePreview(files) {
+  if (!Array.isArray(files) || !files.length) return '';
+  const nonEmpty = files.filter(f => f.filename || f.format);
+  if (!nonEmpty.length) return '';
+
+  let html = '<table class="pv-inner-table"><thead><tr>';
+  html += '<th>#</th><th>\u30D5\u30A1\u30A4\u30EB\u540D</th><th>\u30B5\u30A4\u30BA</th><th>\u5F62\u5F0F</th><th>\u30A2\u30AF\u30BB\u30B9</th><th>\u30E9\u30A4\u30BB\u30F3\u30B9</th>';
+  html += '</tr></thead><tbody>';
+
+  nonEmpty.forEach((f, i) => {
+    const size = f.filesize?.[0]?.value || '';
+    const license = LICENSE_TYPE_LABELS[f.licensetype] || f.licensetype || '';
+    html += '<tr><td>' + i + '</td><td>' + fmtVal(f.filename) + '</td><td>' + (size || '') + '</td><td>' + (f.format || '') + '</td><td>' + (f.accessrole || '') + '</td><td>' + license + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
 function buildSectionPreview(def, val) {
   switch (def.type) {
     case 'object':      return buildObjectPreview(def, val);
@@ -4635,6 +4873,7 @@ function buildSectionPreview(def, val) {
     case 'rightsHolder': return buildRightsHolderPreview(val);
     case 'geolocation':  return buildGeolocationPreview(val);
     case 'conference':   return buildConferencePreview(val);
+    case 'file':         return buildFilePreview(val);
     default: return '';
   }
 }
@@ -4690,26 +4929,30 @@ document.addEventListener('keydown', e => {
 document.getElementById('preview-modal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closePreview();
 });
+document.getElementById('opf-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeOpfModal();
+});
 
 // ===== Enter キー =====
 document.getElementById('doi-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') fetchData();
 });
 
-// ===== APIキー未設定警告（Chrome拡張ではstorage読み込み後に判定） =====
+
+// ===== APIキー未設定警告（Chrome拡張版: loadConfig後） =====
 (async function checkApiKeyWarnings() {
   await loadConfig();
-  if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
+  if (\!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
     document.getElementById('apikey-warning').style.display = 'block';
   }
-  if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') {
+  if (\!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') {
     document.getElementById('cinii-apikey-warning').style.display = 'block';
   }
 })();
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-13';
+  const LOCAL_VERSION = '2026-03-14';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
