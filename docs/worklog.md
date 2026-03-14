@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-14（言語選択肢に ja-Latn 追加 #28）
+最終更新: 2026-03-14（nameIdentifier スキーム語彙 JPCOAR 2.0 対応 #26）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,12 +16,32 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.3.2 | 2026-03-14 | 識別子スキーム語彙 JPCOAR 2.0 対応（#26） |
 | 1.3.1 | 2026-03-14 | 言語選択肢に ja-Latn（ローマ字ヨミ）追加（#28） |
 | 1.3.0 | 2026-03-14 | ファイル情報（file35）入力UI追加（#84）、主題セクション空データ表示修正 |
 | 1.2.1 | 2026-03-13 | 科研費課題番号の識別方法修正（#82）、LOCAL_VERSION同期修正 |
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-14: nameIdentifier スキーム語彙 JPCOAR 2.0 対応（#26）
+
+### 背景
+
+JPCOAR スキーマ 2.0 では nameIdentifier（人物識別子）と affiliationNameIdentifier（所属機関識別子）の許容スキームが改訂された。旧来の `TITLE_MAPS` には `e-Rad_Researcher` が欠落しており、また `buildJaLCAuthors()` が `'e-Rad'`（旧称）をハードコードしていた。
+
+### 変更内容
+
+- `TITLE_MAPS.nameIdentifierScheme`: `['ORCID','CiNii','ISNI','J-GLOBAL']` → `['ORCID','CiNii','ISNI','J-GLOBAL','e-Rad_Researcher','NRID','kakenhi']`
+  - JPCOAR 2.0 で新たに有効な `e-Rad_Researcher` を追加
+  - 非推奨の `NRID`・`kakenhi` は既存データ互換性のため末尾に残す
+- `TITLE_MAPS.affiliationNameIdentifierScheme`: `['ISNI','ROR','GRID','kakenhi','Ringgold']` → `['ISNI','ROR','Ringgold','GRID','kakenhi']`
+  - 非推奨の `GRID`・`kakenhi` を末尾に移動
+- `buildJaLCAuthors()`: `nameIdentifierScheme: 'e-Rad'` → `'e-Rad_Researcher'`
+- `chrome-extension/make_jc_importer.js` に同じ変更を反映
+- `manifest.json` version: 1.3.1 → 1.3.2（patch up）
 
 ---
 

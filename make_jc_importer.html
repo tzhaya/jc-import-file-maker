@@ -472,6 +472,10 @@
     <tbody>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-14</td>
+        <td style="padding:2px 0;">識別子スキーム語彙を JPCOAR 2.0 準拠に更新：nameIdentifierScheme に e-Rad_Researcher を追加、非推奨スキーム（NRID・GRID・kakenhi）を末尾に移動</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-14</td>
         <td style="padding:2px 0;">言語選択肢に ja-Latn（ローマ字ヨミ）を追加（JPCOAR 2.0 / WEKO3 LANGUAGE_VAL2_1 準拠）</td>
       </tr>
       <tr>
@@ -485,10 +489,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-13</td>
         <td style="padding:2px 0;">TSVエクスポート機能追加：TSV_HEADERS_TEMPLATEテンプレート駆動方式、プロパティキープレフィックス自動検出、空フィールド省略</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-11</td>
-        <td style="padding:2px 0;">JaLCデータ取り込み修正：keyword_list→主題取り込み、収録物名type無しフォールバック、出版者言語優先、出版タイプVoRデフォルト設定</td>
       </tr>
     </tbody>
   </table>
@@ -1041,10 +1041,10 @@ const TITLE_MAPS = {
     'HostingInstitution','Producer','ProjectLeader','ProjectManager','ProjectMember',
     'RelatedPerson','Researcher','ResearchGroup','Sponsor','Supervisor','WorkPackageLeader','Other'
   ],
-  // 所属機関識別子スキーム
-  affiliationNameIdentifierScheme: ['ISNI','ROR','GRID','kakenhi','Ringgold'],
-  // 識別子タイプ（作成者/寄与者）
-  nameIdentifierScheme: ['ORCID','CiNii','ISNI','J-GLOBAL'],
+  // 所属機関識別子スキーム（JPCOAR 2.0: GRID・kakenhi は非推奨のため末尾）
+  affiliationNameIdentifierScheme: ['ISNI','ROR','Ringgold','GRID','kakenhi'],
+  // 識別子タイプ（作成者/寄与者）（JPCOAR 2.0: e-Rad_Researcher 追加、NRID・kakenhi は非推奨のため末尾）
+  nameIdentifierScheme: ['ORCID','CiNii','ISNI','J-GLOBAL','e-Rad_Researcher','NRID','kakenhi'],
   // 識別子タイプ（作成者姓名タイプ）
   creatorNameType: ['Personal','Organizational'],
   // 識別子タイプ（識別子フィールド）
@@ -1957,7 +1957,7 @@ function buildJaLCAuthors(jalcCreators) {
         });
       } else if (idType === 'ERAD' || idType === 'E-RAD') {
         if (rid.id_code) nameIdentifiers.push({
-          nameIdentifier: rid.id_code, nameIdentifierScheme: 'e-Rad',
+          nameIdentifier: rid.id_code, nameIdentifierScheme: 'e-Rad_Researcher',
           nameIdentifierURI: `https://kaken.nii.ac.jp/search/?qe=${rid.id_code}`,
         });
       }

@@ -456,10 +456,10 @@ const TITLE_MAPS = {
     'HostingInstitution','Producer','ProjectLeader','ProjectManager','ProjectMember',
     'RelatedPerson','Researcher','ResearchGroup','Sponsor','Supervisor','WorkPackageLeader','Other'
   ],
-  // 所属機関識別子スキーム
-  affiliationNameIdentifierScheme: ['ISNI','ROR','GRID','kakenhi','Ringgold'],
-  // 識別子タイプ（作成者/寄与者）
-  nameIdentifierScheme: ['ORCID','CiNii','ISNI','J-GLOBAL'],
+  // 所属機関識別子スキーム（JPCOAR 2.0: GRID・kakenhi は非推奨のため末尾）
+  affiliationNameIdentifierScheme: ['ISNI','ROR','Ringgold','GRID','kakenhi'],
+  // 識別子タイプ（作成者/寄与者）（JPCOAR 2.0: e-Rad_Researcher 追加、NRID・kakenhi は非推奨のため末尾）
+  nameIdentifierScheme: ['ORCID','CiNii','ISNI','J-GLOBAL','e-Rad_Researcher','NRID','kakenhi'],
   // 識別子タイプ（作成者姓名タイプ）
   creatorNameType: ['Personal','Organizational'],
   // 識別子タイプ（識別子フィールド）
@@ -1372,7 +1372,7 @@ function buildJaLCAuthors(jalcCreators) {
         });
       } else if (idType === 'ERAD' || idType === 'E-RAD') {
         if (rid.id_code) nameIdentifiers.push({
-          nameIdentifier: rid.id_code, nameIdentifierScheme: 'e-Rad',
+          nameIdentifier: rid.id_code, nameIdentifierScheme: 'e-Rad_Researcher',
           nameIdentifierURI: `https://kaken.nii.ac.jp/search/?qe=${rid.id_code}`,
         });
       }
