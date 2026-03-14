@@ -1,6 +1,6 @@
 # 残存 Issues 一覧と実装優先順位
 
-最終更新: 2026-03-11
+最終更新: 2026-03-14
 
 ## 概要
 
@@ -51,6 +51,14 @@ TSV 出力を実装する前に、DOM 構造・語彙値に影響する JPCOAR 2
   - JPCOAR 2.0 スキーマで追加されたタイプを確認すること
 - **参照**: JPCOAR 2.0 スキーマ仕様（relationType 統制語彙）
 
+### #31: resourceType 語彙を JPCOAR 2.0 / COAR Vocabulary 対応版に更新
+
+- **内容**: JPCOAR 2.0 で `resourceType` の語彙別表が改訂。データセット系サブタイプの追加や会議系タイプの変更を反映
+- **変更対象**:
+  - `TITLE_MAPS` の資源タイプ選択肢を更新
+  - `CROSSREF_TYPE_MAP` / `JALC_CONTENT_TYPE_MAP` のマッピング先を確認
+- **参照**: JPCOAR 2.0 スキーマ仕様（resourceType 語彙別表）
+
 ### #34: 助成情報にプログラム情報フィールドを追加（JPCOAR 2.0）
 
 - **内容**: 助成情報（`funding_reference21`）に JPCOAR 2.0 の「プログラム情報」フィールドを追加
@@ -77,11 +85,25 @@ TSV 出力を実装する前に、DOM 構造・語彙値に影響する JPCOAR 2
 - **DOM 構造への影響**: なし（バッジ表示ロジックのみ）
 - **変更対象**: `make_jc_importer.html` の `createDoiBadges()` 周辺
 
+### #87: JPCOARスキーマ 項目別説明リンクの変更
+
+- **内容**: 各項目名からのJPCOARスキーマ説明リンクを2.0に更新し、下位項目にもリンクを追加
+- **DOM 構造への影響**: なし（リンクURL変更のみ）
+- **変更対象**:
+  - `make_jc_importer.html` の JPCOAR_LINKS 定数（~L570–610）
+  - `docs/JPCOARschema_guide.md` の更新（1.0/2.0 リンク併記）
+
+### #90: file_path の設定方法の改善
+
+- **内容**: ファイル情報（file35）の `file_path` をディレクトリ構造ベースの相対パスで設定する方法を検討
+- **DOM 構造への影響**: なし（既存file_path入力フィールドの動作変更のみ）
+- **関連**: #84（実装完了・クローズ済み）、#85
+
 ---
 
-## グループ C: Phase 2 TSV 実装本体
+## グループ C: Phase 2 TSV 実装本体（#85）
 
-### Phase 2: TSV エクスポート機能
+### #85: TSV エクスポート機能
 
 - **内容**: DOM → JSON → TSV のパイプラインを実装しダウンロードボタンを追加
 - **現状**: **未着手**（`worklog.md` 未完了タスクセクションに記載）
@@ -113,12 +135,12 @@ TSV 出力を実装する前に、DOM 構造・語彙値に影響する JPCOAR 2
 ## 推奨実装順序
 
 ```
-Step 1: グループ A（#26 → #27 → #28 → #29確認 → #34）
+Step 1: グループ A（#26 → #27 → #28 → #29確認 → #31 → #34）
          ※ DOM 構造・語彙値が固まってから TSV を実装する
 
-Step 2: Phase 2 TSV出力実装（Implementation_phase2.md に詳細設計済み）
+Step 2: Phase 2 TSV出力実装（#85、Implementation_phase2.md に詳細設計済み）
 
-Step 3: グループ B（#30）は任意のタイミングで
+Step 3: グループ B（#30, #87, #90）は任意のタイミングで
 
 Step 4: グループ D（#32, #33）を TSV 完了後に追加
 ```
@@ -129,9 +151,10 @@ Step 4: グループ D（#32, #33）を TSV 完了後に追加
 
 | ファイル | 変更 issues |
 |---------|------------|
-| `make_jc_importer.html` | #26, #27, #28, #29, #30, #34, Phase2 |
-| `chrome-extension/make_jc_importer.js` | #26, #27, #28, #29, #30, #34 と同期 |
+| `make_jc_importer.html` | #26, #27, #28, #29, #30, #31, #34, #85, #87, #90 |
+| `chrome-extension/make_jc_importer.js` | #26, #27, #28, #29, #30, #31, #34, #87 と同期 |
 | `chrome-extension/panel.html` | UI 変更があれば同期 |
+| `docs/JPCOARschema_guide.md` | #87 |
 
 ---
 
@@ -141,6 +164,7 @@ Step 4: グループ D（#32, #33）を TSV 完了後に追加
 |------|--------|
 | #27 creatorType select 化 | L3265–3268（contributor の select 実装パターン） |
 | #34 プログラム情報フィールド | `funder_lookup.html` L320–373（fundingStreams ロジック） |
-| Phase 2 TSV列定義 | `docs/Implementation_phase2.md`（TSV_COL_GROUPS 全定義） |
-| Phase 2 collectFromDOM 拡張 | `make_jc_importer.html` L4715（既存 collectFromDOM） |
-| Phase 2 フィールド構造 | `samples/export/デフォルトアイテムタイプ（フル）(30002).tsv` |
+| #85 TSV列定義 | `docs/Implementation_phase2.md`（TSV_COL_GROUPS 全定義） |
+| #85 collectFromDOM 拡張 | `make_jc_importer.html` L4715（既存 collectFromDOM） |
+| #85 フィールド構造 | `samples/export/デフォルトアイテムタイプ（フル）(30002).tsv` |
+| #87 JPCOARリンク | `docs/JPCOARschema_guide.md`、JPCOAR_LINKS 定数（~L570–610） |
