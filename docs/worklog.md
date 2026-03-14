@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-14（nameIdentifier スキーム語彙 JPCOAR 2.0 対応 #26）
+最終更新: 2026-03-14（作成者タイプ creatorType 初期値を空値に変更 #27）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.3.3 | 2026-03-14 | 作成者タイプ creatorType 初期値を空値に変更（#27） |
 | 1.3.2 | 2026-03-14 | 識別子スキーム語彙 JPCOAR 2.0 対応（#26） |
 | 1.3.1 | 2026-03-14 | 言語選択肢に ja-Latn（ローマ字ヨミ）追加（#28） |
 | 1.3.0 | 2026-03-14 | ファイル情報（file35）入力UI追加（#84）、主題セクション空データ表示修正 |
@@ -23,6 +24,20 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-14: 作成者タイプ creatorType 初期値を空値に変更（#27）
+
+### 変更内容
+JPCOAR 2.0 スキーマで `jpcoar:creator` の `creatorType` 属性は自由テキスト（統制語彙なし）と定義されているため、API取得時の初期値を `'Author'` から `''`（空値）に変更。ユーザーが必要に応じて任意の値を入力できるようにした。UIはテキスト入力のまま維持。
+
+### 変更箇所
+- `make_jc_importer.html` `buildAuthors()`: `creatorType: 'Author'` → `creatorType: ''`
+- `make_jc_importer.html` `buildJaLCAuthors()`: `creatorType: 'Author'` → `creatorType: ''`
+- `chrome-extension/make_jc_importer.js`: 同上2箇所を同期
+- `chrome-extension/panel.html`: 更新概要テーブルに追記
+- `chrome-extension/manifest.json`: 1.3.2 → 1.3.3
 
 ---
 

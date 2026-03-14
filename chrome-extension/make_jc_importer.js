@@ -1331,7 +1331,7 @@ function buildAuthors(crAuthors, oaAuthorships, rorMap) {
       : [];
 
     return {
-      creatorType: 'Author',
+      creatorType: '',
       creatorNames: [{ creatorName: fullName, creatorNameLang: 'en', creatorNameType: 'Personal', _warnLang: true }],
       familyNames:  family ? [{ familyName: family, familyNameLang: 'en', _warnLang: true }] : [],
       givenNames:   given  ? [{ givenName:  given,  givenNameLang:  'en', _warnLang: true }] : [],
@@ -1416,7 +1416,7 @@ function buildJaLCAuthors(jalcCreators) {
     });
 
     return {
-      creatorType: 'Author',
+      creatorType: '',
       creatorNames,
       familyNames,
       givenNames,
