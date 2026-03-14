@@ -234,6 +234,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 - [関連識別子 統制語彙](docs/relatedIdentifier.md)
 - [attribute_value_mlt と配列記法のルール](docs/attribute_value_mlt.md)
 - [TSVエクスポート パイプライン比較](docs/pipeline_comparison.md)
+- [WEKO3 TSVインポート仕様](docs/weko3_tsv_import_spec.md)
 
 ## ライセンス
 
