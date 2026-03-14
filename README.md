@@ -17,8 +17,8 @@ Chrome拡張版と通常ブラウザ版の2つの利用方法があります。
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張版 | 2026-03-13 | ver. 1.2.1 | 科研費課題番号の識別方法修正：funder DOIに依存せず番号パターンで科研費を識別（[#82](https://github.com/tzhaya/jc-import-file-maker/issues/82)） |
-| インポート用TSV生成ツール | 2026-03-13 | — | 科研費課題番号の識別方法修正（[#82](https://github.com/tzhaya/jc-import-file-maker/issues/82)） |
+| Chrome拡張版 | 2026-03-14 | ver. 1.3.0 | ファイル情報（file35）入力UI追加、主題セクション空データ時の表示修正（[#84](https://github.com/tzhaya/jc-import-file-maker/issues/84)） |
+| インポート用TSV生成ツール | 2026-03-14 | — | ファイル情報（file35）入力UI追加、主題セクション空データ時の表示修正（[#84](https://github.com/tzhaya/jc-import-file-maker/issues/84)） |
 | 助成情報検索ツール | 2026-03-13 | — | isKakenhi()関数追加（科研費番号パターン判定） |
 
 ## 導入方法
@@ -255,6 +255,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-14 | ファイル情報（file35）入力UI追加：ファイル選択によるメタデータ自動取得、CCライセンス自動設定、TSV出力・プレビュー対応。主題セクション空データ時の表示修正（[#84](https://github.com/tzhaya/jc-import-file-maker/issues/84)） |
 | 2026-03-13 | 科研費課題番号の識別方法修正：funder DOIに依存せず番号パターン（例: 23KF0079）で科研費を識別、KAKEN/CiNii検索が正しく実行されるよう修正（[#82](https://github.com/tzhaya/jc-import-file-maker/issues/82)） |
 | 2026-03-13 | TSVエクスポート機能追加：TSV_HEADERS_TEMPLATEテンプレート駆動方式によるPhase 2 TSV出力実装、プロパティキープレフィックス自動検出、空フィールド省略、残存issues優先順位整理ドキュメント追加 |
 | 2026-03-11 | 助成情報検索ツールの入力モード自動判定：ラジオボタンを廃止し、課題番号リストと謝辞テキストを自動判定して課題番号を抽出。Chrome拡張3ファイルのタブfont-size統一 |

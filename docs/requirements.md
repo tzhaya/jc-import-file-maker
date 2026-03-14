@@ -158,12 +158,22 @@ make_jc_importer.html
     -   モーダルは Esc キー、閉じるボタン、オーバーレイクリックで閉じる
     -   データ収集は `collectFromDOM()` で DOM の現在値を構造化 JSON に変換する（TSVエクスポートの共通基盤）
 
+-   **ファイル情報入力UI**（[issue #84](https://github.com/tzhaya/jc-import-file-maker/issues/84)）:
+    -   `item_30002_file35` フィールドの入力UIを提供する
+    -   `<input type="file">` でファイルを選択すると、ファイル名・サイズ・MIMEタイプを自動取得する（ファイル本体はアップロードしない）
+    -   アクセス権・公開日・表示タイプ・ライセンス等のサブフィールドを手動入力可能
+    -   権利情報（rights12）のCC URIから`licensetype`を自動設定（`startsWith()`前方一致）
+    -   `licensetype`が`license_free`の場合のみ`licensefree`テキストエリアを表示
+    -   複数ファイルの追加・削除に対応
+    -   `file_path`（トップレベル）を`recid_{id}/{filename}`形式で自動生成
+    -   TSVエクスポート・プレビュー表示に対応
+
 -   **TSVエクスポート機能**（Phase 2）:
     -   `collectFromDOM()` で収集した構造化JSONから WEKO3 インポート用TSVを生成してダウンロードする
     -   `TSV_HEADERS_TEMPLATE` テンプレート駆動方式: `data/tsv_headers.json` の内容をインライン定数として保持し、フィールドグループ化・配列展開を行う
     -   プロパティキープレフィックス自動検出: ユーザがリポジトリのTSVヘッダーを貼り付けると `item_XXXXX_` パターンを自動検出し、出力キーを置換する（デフォルト: `item_30002_`）
     -   空フィールド省略: 値が存在しないフィールドの列群はTSVに出力しない
-    -   除外フィールド: apc5, heading36, file35, dissertation30〜degree33, item_1698624001〜010 は常に除外
+    -   除外フィールド: apc5, heading36, dissertation30〜degree33, item_1698624001〜010 は常に除外
     -   TSV形式: 5行ヘッダー（ItemType行・プロパティキー行・日本語ラベル行・System印行・制約行）+ データ行、UTF-8 BOM付き・LF改行
 
 -   **OpenSearch検索機能**（Chrome拡張版のみ、[issue #72](https://github.com/tzhaya/jc-import-file-maker/issues/72)）:

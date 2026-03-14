@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-13（科研費課題番号の識別方法修正 #82）
+最終更新: 2026-03-14（ファイル情報 file35 入力UI実装 #84）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約4525行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善）
+現在のファイル規模: **約5560行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + TSVエクスポート + ファイル情報UI）
 
 ---
 
@@ -16,10 +16,36 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.3.0 | 2026-03-14 | ファイル情報（file35）入力UI追加（#84）、主題セクション空データ表示修正 |
 | 1.2.1 | 2026-03-13 | 科研費課題番号の識別方法修正（#82）、LOCAL_VERSION同期修正 |
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-14: ファイル情報（file35）入力UI実装（#84）
+
+### 背景
+
+JAIRO Cloud への一括登録TSVに `item_30002_file35` と `file_path` が必要だが、入力UIが未実装でTSVに出力されなかった。
+
+### 実装内容
+
+- TITLE_MAPS に5つのselect選択肢配列追加（file_accessrole, file_displaytype, file_objectType, file_licensetype, file_dateType）
+- CC_URI_TO_LICENSE_TYPE / detectLicenseType(): CC URIから licensetype を自動設定（startsWith前方一致）
+- formatFileSize(): バイト数を人間可読形式に変換
+- renderOneFile() / renderFileField(): ファイル情報入力UI（ファイル選択で名前・サイズ・MIME自動取得、licensetype連動licensefree表示切替）
+- collectFileField(): DOM→JSON変換
+- buildFilePreview(): プレビュー表示
+- TSV出力対応: TSV_EXCL_SUFFIXESからfile35除去、file_pathのグループ化・展開・値生成
+- FIELD_DEFSにfile35エントリ追加、renderAll/collectFromDOM/buildSectionPreviewにcase追加
+- mapToItemType/mapToItemTypeJaLC: item_30002_file35初期値追加
+- 主題セクション修正: DOIデータに主題がない場合、空エントリを作らず「主題を追加」ボタンのみ表示
+
+### 修正ファイル
+
+- `make_jc_importer.html`, `chrome-extension/make_jc_importer.js`, `chrome-extension/panel.html`, `chrome-extension/manifest.json`
 
 ---
 
