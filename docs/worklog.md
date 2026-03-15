@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-15（助成情報にプログラム情報識別子・プログラム情報を追加 #34）
+最終更新: 2026-03-15（資源タイプ語彙を JPCOAR 2.0 準拠に更新 #31）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.3.6 | 2026-03-15 | 資源タイプ語彙を JPCOAR 2.0 準拠に更新（#31） |
 | 1.3.5 | 2026-03-15 | 助成情報プログラム情報の表示順序修正（#34） |
 | 1.3.4 | 2026-03-15 | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0）（#34） |
 | 1.3.3 | 2026-03-14 | 作成者タイプ creatorType 初期値を空値に変更（#27） |
@@ -26,6 +27,34 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-15: 資源タイプ語彙を JPCOAR 2.0 準拠に更新（#31）
+
+### 背景
+JPCOAR スキーマ 2.0 で `resourceType` の語彙別表が改訂された。v1.0 限定の廃止語彙がUI選択肢に残存し、CROSSREF_TYPE_MAP が廃止語彙を参照し、v2.0 で追加されたタイプが DOI 必須項目カテゴリに未登録であった。
+
+### 変更内容
+
+1. **`RESOURCE_TYPE_MAP` コメント整理**
+   - v1.0 限定エントリ（`periodical`・`interview`・`internal report`・`report part`・`conference object`）のコメントに `JPCOAR 2.0で廃止、UI非表示` を明記
+   - 後方互換のため MAP エントリ自体は削除しない
+
+2. **`TITLE_MAPS.resourcetype` から v1.0 廃止語彙を削除**
+   - `internal report`・`report part` をUI選択肢から除外（JPCOAR 2.0 語彙別表 全74タイプに準拠）
+
+3. **`CROSSREF_TYPE_MAP` の修正**
+   - `report-component` のマッピング先を `report part`（廃止）から `report` に変更
+
+4. **`getDoiCategory()` の拡張**
+   - articleTypes に追加: `journal`・`other periodical`・`commentary`・`peer review`
+   - bookTypes に追加: `policy report`・`working paper`
+
+5. **`chrome-extension/make_jc_importer.js` に全変更を同期**
+
+### 検証
+- JPCOAR 2.0 公式語彙別表（ https://schema.irdb.nii.ac.jp/ja/2.0/resource_type_vocabulary ）と COAR Vocabulary 3.2 の両方でURI・ラベルを照合し、全74タイプが正確であることを確認
 
 ---
 

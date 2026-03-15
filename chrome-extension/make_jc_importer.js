@@ -83,7 +83,7 @@ const RESOURCE_TYPE_MAP = {
   'journal article':          'http://purl.org/coar/resource_type/c_6501',
   'newspaper':                'http://purl.org/coar/resource_type/c_2fe3',
   'other periodical':         'http://purl.org/coar/resource_type/QX5C-AR31', // v2.0追加
-  'periodical':               'http://purl.org/coar/resource_type/c_2659',    // v1.0のみ
+  'periodical':               'http://purl.org/coar/resource_type/c_2659',    // v1.0のみ（JPCOAR 2.0で廃止、UI非表示）
   'review article':           'http://purl.org/coar/resource_type/c_dcae04bc',
   'software paper':           'http://purl.org/coar/resource_type/c_7bab',
   'article':                  'http://purl.org/coar/resource_type/c_6501',
@@ -95,7 +95,7 @@ const RESOURCE_TYPE_MAP = {
   'map':                      'http://purl.org/coar/resource_type/c_12cd',
   // ----- Conference Output -----
   'conference output':        'http://purl.org/coar/resource_type/c_c94f',    // v2.0改称（旧: conference object）
-  'conference object':        'http://purl.org/coar/resource_type/c_c94f',    // 後方互換
+  'conference object':        'http://purl.org/coar/resource_type/c_c94f',    // v1.0のみ（→ conference output に改称、後方互換）
   'conference presentation':  'http://purl.org/coar/resource_type/R60J-J5BD', // v2.0追加
   'conference proceedings':   'http://purl.org/coar/resource_type/c_f744',
   'conference poster':        'http://purl.org/coar/resource_type/c_6670',
@@ -115,7 +115,7 @@ const RESOURCE_TYPE_MAP = {
   'simulation data':          'http://purl.org/coar/resource_type/W2XT-7017', // v2.0追加
   'survey data':              'http://purl.org/coar/resource_type/NHD0-W6SY', // v2.0追加
   // ----- Image -----
-  'interview':                'http://purl.org/coar/resource_type/c_26e4',    // v1.0のみ
+  'interview':                'http://purl.org/coar/resource_type/c_26e4',    // v1.0のみ（JPCOAR 2.0で廃止、UI非表示）
   'image':                    'http://purl.org/coar/resource_type/c_c513',
   'still image':              'http://purl.org/coar/resource_type/c_ecc8',
   'moving image':             'http://purl.org/coar/resource_type/c_8a7e',
@@ -132,12 +132,12 @@ const RESOURCE_TYPE_MAP = {
   'trademark':                'http://purl.org/coar/resource_type/H6QP-SC1X', // v2.0追加
   'utility model':            'http://purl.org/coar/resource_type/9DKX-KSAF', // v2.0追加
   // ----- Report -----
-  'internal report':          'http://purl.org/coar/resource_type/c_18ww',    // v1.0のみ
+  'internal report':          'http://purl.org/coar/resource_type/c_18ww',    // v1.0のみ（JPCOAR 2.0で廃止、UI非表示）
   'report':                   'http://purl.org/coar/resource_type/c_93fc',
   'research report':          'http://purl.org/coar/resource_type/c_18ws',
   'technical report':         'http://purl.org/coar/resource_type/c_18gh',
   'policy report':            'http://purl.org/coar/resource_type/c_186u',
-  'report part':              'http://purl.org/coar/resource_type/c_ba1f',    // v1.0のみ
+  'report part':              'http://purl.org/coar/resource_type/c_ba1f',    // v1.0のみ（JPCOAR 2.0で廃止、UI非表示）
   'working paper':            'http://purl.org/coar/resource_type/c_8042',
   'data management plan':     'http://purl.org/coar/resource_type/c_ab20',
   // ----- Sound -----
@@ -185,7 +185,7 @@ const CROSSREF_TYPE_MAP = {
   'posted-content':      'article',
   'peer-review':         'article',
   'report-series':       'report',
-  'report-component':    'report part',
+  'report-component':    'report',           // report part はJPCOAR 2.0で廃止
   'journal-volume':      'journal',
   'journal-issue':       'journal',
   'database':            'dataset',
@@ -424,8 +424,8 @@ const TITLE_MAPS = {
     'lecture',
     'design patent','patent','PCT application','plant patent','plant variety protection',
     'software patent','trademark','utility model',
-    'internal report','report','research report','technical report',
-    'policy report','report part','working paper','data management plan',
+    'report','research report','technical report',
+    'policy report','working paper','data management plan',
     'sound','thesis','bachelor thesis','master thesis','doctoral thesis',
     'commentary','design','industrial design','interactive resource','layout design',
     'learning object','manuscript','musical notation','peer review',
@@ -2462,10 +2462,12 @@ function renumberItems(container) {
 // 資源タイプ → 別表カテゴリ（'article' | 'book' | null）
 function getDoiCategory(resourceType) {
   const bookTypes = ['book','book part','technical report','research report','report',
+                     'policy report','working paper',
                      'thesis','bachelor thesis','master thesis','doctoral thesis'];
   const articleTypes = ['conference paper','departmental bulletin paper','journal article',
                         'review article','data paper','editorial','article','newspaper',
-                        'software paper','other'];
+                        'software paper','journal','other periodical',
+                        'commentary','peer review','other'];
   if (articleTypes.includes(resourceType)) return 'article';
   if (bookTypes.includes(resourceType)) return 'book';
   return null;

@@ -42,7 +42,8 @@ make_jc_importer.html
 
 **資源タイプ語彙別表**
     -　`resource_type_vocabulary.md`
-    - JPCOAR スキーマ 2.0 の語彙に対応（v2.0追加型・v1.0のみ型を区分表示）
+    - JPCOAR スキーマ 2.0 の語彙に対応（全74タイプ）
+    - v1.0のみの廃止語彙（`internal report`・`report part`・`periodical`・`interview`・`conference object`）は `RESOURCE_TYPE_MAP` に後方互換として残すが、UI選択肢（`TITLE_MAPS.resourcetype`）からは除外
     - 出典: v1.0 https://schema.irdb.nii.ac.jp/ja/resource_type_vocabulary / v2.0 https://schema.irdb.nii.ac.jp/ja/2.0/resource_type_vocabulary
 
 **JPCOARスキーマ 項目別説明リンク一覧**
@@ -131,8 +132,8 @@ make_jc_importer.html
     -   JaLC: 青系（`#e3f2fd` 背景）、Crossref: 赤系（`#fce4ec` 背景）
     -   バッジにマウスホバーするとツールチップで備考（例: `Crossref: xml:lang必須`）を確認可能
     -   資源タイプ（`item_30002_resource_type13.resourcetype`）の選択値に応じて動的に切り替える
-        -   ジャーナルアーティクル系（`journal article`, `conference paper`, `departmental bulletin paper` 等）: 別表2-1/3-1 に基づくバッジを表示
-        -   書籍系（`book`, `book part`, `technical report`, `thesis` 等）: 別表2-3/3-2 に基づくバッジを表示
+        -   ジャーナルアーティクル系（`journal article`, `conference paper`, `departmental bulletin paper`, `journal`, `other periodical`, `commentary`, `peer review` 等）: 別表2-1/3-1 に基づくバッジを表示
+        -   書籍系（`book`, `book part`, `technical report`, `policy report`, `working paper`, `thesis` 等）: 別表2-3/3-2 に基づくバッジを表示
         -   対象外の資源タイプ（`image`, `dataset` 等）: バッジ非表示
     -   資源タイプ変更時および初期表示時（`renderAll()` 完了後）にバッジを自動更新する
     -   根拠: `docs/JPCOAR_JaLC_Crossref_requirements.md`（JPCOAR/JaLC対照表 付録 ver.1.5）
