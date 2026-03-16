@@ -47,7 +47,9 @@ make_jc_importer.html
     - 出典: v1.0 https://schema.irdb.nii.ac.jp/ja/resource_type_vocabulary / v2.0 https://schema.irdb.nii.ac.jp/ja/2.0/resource_type_vocabulary
 
 **JPCOARスキーマ 項目別説明リンク一覧**
-    - `JPCOARschme_guide.md`
+    - `JPCOARschema_guide.md`（1.0.2/2.0併記、下位項目含む）
+    - セクションヘッダー: `JPCOAR_LINKS` 定数でフィールドキー→スキーマ2.0 URLをマッピング、`createSection()` でリンク化
+    - サブフィールドヘッダー: `JPCOAR_SUBFIELD_LINKS` 定数でサブフィールドキー→スキーマ2.0 URLをマッピング、`createNestedSectionHeader()` の第4引数でリンク化
 
 **アクセス権 統制語彙**
     - `accessrights.md`

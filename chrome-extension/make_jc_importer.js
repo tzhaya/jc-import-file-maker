@@ -313,38 +313,71 @@ const ACCESS_RIGHTS_MAP = {
   'restricted access':      'http://purl.org/coar/access_right/c_16ec',
 };
 
-// ===== JPCOAR リンクマッピング（フィールドキー→スキーマURL）=====
+// ===== JPCOAR リンクマッピング（フィールドキー→スキーマ2.0 URL）=====
 const JPCOAR_LINKS = {
-  'item_30002_title0':                    'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/1',
-  'item_30002_alternative_title1':        'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/2',
-  'item_30002_creator2':                  'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/3',
-  'item_30002_contributor3':              'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/4',
-  'item_30002_access_rights4':            'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/5',
-  'item_30002_rights6':                   'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/7',
-  'item_30002_rights_holder7':            'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/8',
-  'item_30002_subject8':                  'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/9',
-  'item_30002_description9':              'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/10',
-  'item_30002_publisher10':               'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/11',
-  'item_30002_date11':                    'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/12',
-  'item_30002_language12':                'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/13',
-  'item_30002_resource_type13':           'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/14',
-  'item_30002_version14':                 'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/15',
-  'item_30002_version_type15':            'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/16',
-  'item_30002_identifier16':              'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/17',
-  'item_30002_identifier_registration17': 'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/18',
-  'item_30002_relation18':                'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/19',
-  'item_30002_temporal19':                'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/20',
-  'item_30002_geolocation20':             'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/21',
-  'item_30002_funding_reference21':       'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/22',
-  'item_30002_source_identifier22':       'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/23',
-  'item_30002_source_title23':            'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/24',
-  'item_30002_volume_number24':           'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/25',
-  'item_30002_issue_number25':            'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/26',
-  'item_30002_number_of_pages26':         'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/27',
-  'item_30002_page_start27':              'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/28',
-  'item_30002_page_end28':                'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/29',
-  'item_30002_bibliographic_information29': 'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/24',
-  'item_30002_conference34':              'https://schema.irdb.nii.ac.jp/ja/schema/1.0.2/34',
+  'item_30002_title0':                    'https://schema.irdb.nii.ac.jp/ja/schema/2.0/1',
+  'item_30002_alternative_title1':        'https://schema.irdb.nii.ac.jp/ja/schema/2.0/2',
+  'item_30002_creator2':                  'https://schema.irdb.nii.ac.jp/ja/schema/2.0/3',
+  'item_30002_contributor3':              'https://schema.irdb.nii.ac.jp/ja/schema/2.0/4',
+  'item_30002_access_rights4':            'https://schema.irdb.nii.ac.jp/ja/schema/2.0/5',
+  'item_30002_rights6':                   'https://schema.irdb.nii.ac.jp/ja/schema/2.0/6',
+  'item_30002_rights_holder7':            'https://schema.irdb.nii.ac.jp/ja/schema/2.0/7',
+  'item_30002_subject8':                  'https://schema.irdb.nii.ac.jp/ja/schema/2.0/8',
+  'item_30002_description9':              'https://schema.irdb.nii.ac.jp/ja/schema/2.0/9',
+  'item_30002_publisher10':               'https://schema.irdb.nii.ac.jp/ja/schema/2.0/10',
+  'item_30002_date11':                    'https://schema.irdb.nii.ac.jp/ja/schema/2.0/12',
+  'item_30002_language12':                'https://schema.irdb.nii.ac.jp/ja/schema/2.0/14',
+  'item_30002_resource_type13':           'https://schema.irdb.nii.ac.jp/ja/schema/2.0/15',
+  'item_30002_version14':                 'https://schema.irdb.nii.ac.jp/ja/schema/2.0/16',
+  'item_30002_version_type15':            'https://schema.irdb.nii.ac.jp/ja/schema/2.0/17',
+  'item_30002_identifier16':              'https://schema.irdb.nii.ac.jp/ja/schema/2.0/18',
+  'item_30002_identifier_registration17': 'https://schema.irdb.nii.ac.jp/ja/schema/2.0/19',
+  'item_30002_relation18':                'https://schema.irdb.nii.ac.jp/ja/schema/2.0/20',
+  'item_30002_temporal19':                'https://schema.irdb.nii.ac.jp/ja/schema/2.0/21',
+  'item_30002_geolocation20':             'https://schema.irdb.nii.ac.jp/ja/schema/2.0/22',
+  'item_30002_funding_reference21':       'https://schema.irdb.nii.ac.jp/ja/schema/2.0/23',
+  'item_30002_source_identifier22':       'https://schema.irdb.nii.ac.jp/ja/schema/2.0/24',
+  'item_30002_source_title23':            'https://schema.irdb.nii.ac.jp/ja/schema/2.0/25',
+  'item_30002_volume_number24':           'https://schema.irdb.nii.ac.jp/ja/schema/2.0/26',
+  'item_30002_issue_number25':            'https://schema.irdb.nii.ac.jp/ja/schema/2.0/27',
+  'item_30002_number_of_pages26':         'https://schema.irdb.nii.ac.jp/ja/schema/2.0/28',
+  'item_30002_page_start27':              'https://schema.irdb.nii.ac.jp/ja/schema/2.0/29',
+  'item_30002_page_end28':                'https://schema.irdb.nii.ac.jp/ja/schema/2.0/30',
+  'item_30002_bibliographic_information29': 'https://schema.irdb.nii.ac.jp/ja/schema/2.0/25',
+  'item_30002_conference34':              'https://schema.irdb.nii.ac.jp/ja/schema/2.0/35',
+  'item_30002_file35':                    'https://schema.irdb.nii.ac.jp/ja/schema/2.0/43',
+};
+
+// ===== JPCOAR サブフィールドリンクマッピング（サブフィールドキー→スキーマ2.0 URL）=====
+const JPCOAR_SUBFIELD_LINKS = {
+  // 作成者 (#3)
+  creator_name:         'https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.2',
+  creator_family:       'https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.3',
+  creator_given:        'https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.4',
+  creator_identifier:   'https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.1',
+  creator_affiliation:  'https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.6',
+  // 寄与者 (#4)
+  contributor_name:         'https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.2',
+  contributor_family:       'https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.3',
+  contributor_given:        'https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.4',
+  contributor_identifier:   'https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.1',
+  contributor_affiliation:  'https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.6',
+  // 関連情報 (#20)
+  relation_identifier:  'https://schema.irdb.nii.ac.jp/ja/schema/2.0/20-.1',
+  relation_title:       'https://schema.irdb.nii.ac.jp/ja/schema/2.0/20-.2',
+  // 助成情報 (#23)
+  funder_identifier:    'https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.1',
+  funder_name:          'https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.2',
+  funding_stream_id:    'https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.3',
+  funding_stream:       'https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.4',
+  award_number:         'https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.5',
+  award_title:          'https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.6',
+  // ファイル情報 (#43)
+  file_uri:             'https://schema.irdb.nii.ac.jp/ja/schema/2.0/43-.1',
+  file_format:          'https://schema.irdb.nii.ac.jp/ja/schema/2.0/43-.2',
+  file_size:            'https://schema.irdb.nii.ac.jp/ja/schema/2.0/43-.3',
+  file_date:            'https://schema.irdb.nii.ac.jp/ja/schema/2.0/43-.4',
+  file_version:         'https://schema.irdb.nii.ac.jp/ja/schema/2.0/43-.5',
 };
 
 // ===== DOI必須要件マッピング（別表2-1/3-1: ジャーナルアーティクル系、別表2-3/3-2: 書籍系）=====
@@ -2611,14 +2644,17 @@ function createNestedItem(label, level) {
 // onAdd: 関数を渡すと追加ボタンのクリック時に onAdd(content) を呼び出す
 //        false を渡すと追加ボタンを非表示
 //        省略/null の場合はボタンを表示するが noop
-function createNestedSectionHeader(label, level, onAdd) {
+function createNestedSectionHeader(label, level, onAdd, url) {
   const wrapper = document.createElement('div');
   wrapper.className = `nested-item level-${level}`;
   const icons = ['', '📦', '📍', '📎', '·'];
   const icon = icons[Math.min(level, 4)] || '';
   const header = document.createElement('div');
   header.className = 'nested-section-header';
-  header.innerHTML = `<span class="toggle-icon">▼</span>${icon ? '<span class="level-icon">'+icon+'</span>' : ''}<span>${label}</span>`;
+  const labelHtml = url
+    ? '<a href="' + url + '" target="_blank">' + label + '</a>'
+    : label;
+  header.innerHTML = `<span class="toggle-icon">▼</span>${icon ? '<span class="level-icon">'+icon+'</span>' : ''}<span>${labelHtml}</span>`;
   const content = document.createElement('div');
   content.className = 'nested-section-content';
   if (onAdd !== false) {
@@ -2850,6 +2886,7 @@ function renderOnePerson(person, idx, keys) {
   }
 
   // 姓名
+  const sfx = isCreator ? 'creator' : 'contributor';
   const { wrapper: namesWrap, content: namesCont } = createNestedSectionHeader(namesLabel, 2, (cont) => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('姓名', '', 'text', null, { fieldKey: nameKey }));
@@ -2857,7 +2894,7 @@ function renderOnePerson(person, idx, keys) {
     grp.appendChild(createFieldRow('名前タイプ', '', 'select', 'creatorNameType', { fieldKey: nameTypeKey }));
     grp.appendChild(delBtn);
     cont.appendChild(grp);
-  });
+  }, JPCOAR_SUBFIELD_LINKS[sfx + '_name']);
   (person[namesKey] || []).forEach(n => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('姓名', n[nameKey] || '', 'text', null, { fieldKey: nameKey }));
@@ -2878,7 +2915,7 @@ function renderOnePerson(person, idx, keys) {
     grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'familyNameLang' }));
     grp.appendChild(delBtn);
     cont.appendChild(grp);
-  });
+  }, JPCOAR_SUBFIELD_LINKS[sfx + '_family']);
   (person.familyNames || []).forEach(fn => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('姓', fn.familyName || '', 'text', null, { fieldKey: 'familyName' }));
@@ -2898,7 +2935,7 @@ function renderOnePerson(person, idx, keys) {
     grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'givenNameLang' }));
     grp.appendChild(delBtn);
     cont.appendChild(grp);
-  });
+  }, JPCOAR_SUBFIELD_LINKS[sfx + '_given']);
   (person.givenNames || []).forEach(gn => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('名', gn.givenName || '', 'text', null, { fieldKey: 'givenName' }));
@@ -2949,7 +2986,7 @@ function renderOnePerson(person, idx, keys) {
     grp.appendChild(addSearchBtn);
     grp.appendChild(delBtn);
     cont.appendChild(grp);
-  });
+  }, JPCOAR_SUBFIELD_LINKS[sfx + '_identifier']);
   (person.nameIdentifiers || []).forEach(ni => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('識別子', ni.nameIdentifier || '', 'text', null, { fieldKey: 'nameIdentifier' }));
@@ -3002,7 +3039,7 @@ function renderOnePerson(person, idx, keys) {
       [affIdKey]: [],
     };
     cont.appendChild(renderOneAffiliation(emptyAff, ai, keys));
-  });
+  }, JPCOAR_SUBFIELD_LINKS[sfx + '_affiliation']);
   (person[affKey] || []).forEach((aff, ai) => {
     affCont.appendChild(renderOneAffiliation(aff, ai, keys));
   });
@@ -3200,7 +3237,7 @@ function renderRelationField(def, relations) {
       grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_relation_name_language' }));
       grp.appendChild(delBtn);
       cont.appendChild(grp);
-    });
+    }, JPCOAR_SUBFIELD_LINKS.relation_title);
     (rel.subitem_relation_name || []).forEach(rn => {
       const { grp, delBtn } = createEntryGroup();
       grp.appendChild(createFieldRow('関連名称', rn.subitem_relation_name_text || '', 'text', null, { fieldKey: 'subitem_relation_name_text' }));
@@ -3233,7 +3270,7 @@ function renderRelationField(def, relations) {
           grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_relation_name_language' }));
           grp.appendChild(delBtn);
           cont.appendChild(grp);
-        });
+        }, JPCOAR_SUBFIELD_LINKS.relation_title);
         relContent.appendChild(rnWrap);
         return relItem;
       })(),
@@ -3256,7 +3293,7 @@ function renderOneFunder(funder, idx, defLabel) {
     grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_funder_name_language' }));
     grp.appendChild(delBtn);
     cont.appendChild(grp);
-  });
+  }, JPCOAR_SUBFIELD_LINKS.funder_name);
   (funder.subitem_funder_names || []).forEach(fn => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('助成機関名', fn.subitem_funder_name || '', 'text', null, { fieldKey: 'subitem_funder_name' }));
@@ -3326,7 +3363,7 @@ function renderOneFunder(funder, idx, defLabel) {
     grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_funding_stream_language' }));
     grp.appendChild(delBtn);
     cont.appendChild(grp);
-  });
+  }, JPCOAR_SUBFIELD_LINKS.funding_stream);
   (funder.subitem_funding_streams || []).forEach(fs => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('プログラム情報', fs.subitem_funding_stream || '', 'text', null, { fieldKey: 'subitem_funding_stream' }));
@@ -3360,7 +3397,7 @@ function renderOneFunder(funder, idx, defLabel) {
     grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'subitem_award_title_language' }));
     grp.appendChild(delBtn);
     cont.appendChild(grp);
-  });
+  }, JPCOAR_SUBFIELD_LINKS.award_title);
   (funder.subitem_award_titles || []).forEach(at => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('研究課題名', at.subitem_award_title || '', 'text', null, { fieldKey: 'subitem_award_title' }));
