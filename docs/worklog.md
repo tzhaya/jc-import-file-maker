@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-17（助成情報検索ツールの課題番号抽出改善 #104）
+最終更新: 2026-03-17（Chrome拡張TSV出力CSPエラー修正 #103）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.3.9 | 2026-03-17 | Chrome拡張TSV出力ボタンのCSPエラー修正（#103） |
 | 1.3.8 | 2026-03-17 | 助成情報検索ツールの課題番号抽出改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号抽出（#104） |
 | 1.3.7 | 2026-03-15 | JPCOARスキーマ説明リンクを2.0に更新、下位項目にもスキーマリンクを追加（#87） |
 | 1.3.6 | 2026-03-15 | 資源タイプ語彙を JPCOAR 2.0 準拠に更新（#31） |
@@ -29,6 +30,18 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-17: Chrome拡張TSV出力ボタンのCSPエラー修正（#103）
+
+### 背景
+Chrome拡張 Manifest V3 のデフォルト CSP (`script-src 'self'`) により、`panel.html` の TSV出力ボタンに設定されたインラインイベントハンドラ (`onclick="exportTsv()"`) がブロックされ、TSV出力が機能しなかった。他の3ボタン（fetch/empty/preview）は既に `addEventListener` に移行済みだったが、export-btn のみ対応漏れしていた。
+
+### 変更内容
+
+1. **`chrome-extension/panel.html`**: `<button id="export-btn">` から `onclick="exportTsv()"` を削除
+2. **`chrome-extension/make_jc_importer.js`**: イベントリスナー登録ブロックに `document.getElementById('export-btn').addEventListener('click', exportTsv)` を追加
 
 ---
 

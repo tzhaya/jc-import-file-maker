@@ -5192,6 +5192,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 document.getElementById('fetch-btn').addEventListener('click', fetchData);
 document.getElementById('empty-btn').addEventListener('click', showEmptyFields);
 document.getElementById('preview-btn').addEventListener('click', showPreview);
+document.getElementById('export-btn').addEventListener('click', exportTsv);
 document.getElementById('opf-badge').addEventListener('click', openOpfModal);
 document.getElementById('opf-modal').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeOpfModal();

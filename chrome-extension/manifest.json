@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "JAIRO Cloud インポート支援ツール",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "DOIからJAIRO Cloud インポート用TSVを生成するツール。CORS非対応APIへのアクセスとAPIキー管理を提供します。",
   "permissions": ["storage", "sidePanel"],
   "host_permissions": [
