@@ -223,7 +223,7 @@
 <body>
 <h1>助成情報検索ツール</h1>
 <p style="font-size:0.82em; color:#555; margin:4px 0 12px;">
-  最終更新: 2026-03-13 &nbsp;|&nbsp;
+  最終更新: 2026-03-17 &nbsp;|&nbsp;
   <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#555;">github.com/tzhaya/jc-import-file-maker</a>
   <span id="update-check"></span>
 </p>
@@ -231,7 +231,7 @@
 <div class="input-section">
   <label for="award-input">課題番号またはAcknowledgementsテキストを入力してください。</label>
   <textarea id="award-input" placeholder="JP21H01234&#10;JPMJSA1907&#10;21K12345&#10;&#10;または謝辞テキストをそのまま貼り付け:&#10;This work was supported by JST CREST (Grant No. JPMJCR2125)."></textarea>
-  <div class="hint">課題番号（1行に1つ）またはAcknowledgementsテキストを貼り付けると、課題番号を自動で抽出します。科研費課題番号（JP付き / なし）や JGN 課題番号に対応しています。</div>
+  <div class="hint">課題番号（1行に1つ、またはセミコロン・カンマ区切り）やAcknowledgementsテキストを貼り付けると、課題番号を自動で抽出します。科研費課題番号（JP付き / なし）や JGN 課題番号に対応しています。</div>
   <button class="btn" id="search-btn" onclick="doSearch()">検索</button>
 </div>
 <div class="hint">
@@ -621,22 +621,42 @@ function buildResultCards(results) {
 // ===== 検索結果の保持（TSV出力用） =====
 let lastResults = [];
 
+// 科研費課題番号パターン（Ackテキスト抽出用、isKakenhi() と同一ルール）
+const KAKENHI_RE = /\b\d{2}[A-Z]{1,2}\d{4,5}\b/gi;
+
 // ===== 入力から課題番号を抽出（自動判定） =====
 function extractAwardNumbers(input) {
   const numbers = [];
   const seen = new Set();
+  const addUnique = (v) => { if (v && !seen.has(v)) { seen.add(v); numbers.push(v); } };
+
   for (const line of input.split(/\n/)) {
     const trimmed = line.trim();
     if (!trimmed) continue;
-    if (/\s/.test(trimmed)) {
-      // スペースを含む行: Acknowledgementsテキストとして JP... パターンを抽出
-      const matches = trimmed.match(/JP[A-Za-z0-9]+/g) || [];
-      for (const m of matches) {
-        if (!seen.has(m)) { seen.add(m); numbers.push(m); }
-      }
+
+    if (!/\s/.test(trimmed)) {
+      // (A) スペースなし: そのまま1つの課題番号
+      addUnique(trimmed);
+      continue;
+    }
+
+    // スペースを含む行 → 区切りリストか Ack テキストか判定
+    const tokens = trimmed.split(/[;,]/).map(t => t.trim()).filter(Boolean);
+    const allLookLikeIds = tokens.length > 1
+      && tokens.every(t => /^[A-Za-z0-9._-]+$/.test(t));
+
+    if (allLookLikeIds) {
+      // (B) セミコロン/カンマ区切りの課題番号リスト
+      for (const t of tokens) addUnique(t);
     } else {
-      // スペースなし: 課題番号として扱う
-      if (!seen.has(trimmed)) { seen.add(trimmed); numbers.push(trimmed); }
+      // (C) Acknowledgementsテキスト: JP... パターン + 科研費パターンを抽出
+      const jpMatches = trimmed.match(/JP[A-Za-z0-9]+/g) || [];
+      const kakenMatches = trimmed.match(KAKENHI_RE) || [];
+      for (const m of jpMatches) addUnique(m);
+      for (const m of kakenMatches) {
+        // JP付きで既に抽出済みなら重複スキップ（JP21H04856 と 21H04856）
+        if (!seen.has(m) && !seen.has('JP' + m)) addUnique(m);
+      }
     }
   }
   return numbers;
@@ -865,7 +885,7 @@ async function copyTsvToClipboard(btn) {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-13';
+  const LOCAL_VERSION = '2026-03-17';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;

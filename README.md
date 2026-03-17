@@ -17,9 +17,9 @@ Chrome拡張版と通常ブラウザ版の2つの利用方法があります。
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張版 | 2026-03-15 | ver. 1.3.7 | JPCOARスキーマ説明リンクを2.0に更新、下位項目にもスキーマリンクを追加（[#87](https://github.com/tzhaya/jc-import-file-maker/issues/87)） |
+| Chrome拡張版 | 2026-03-17 | ver. 1.3.8 | 助成情報検索ツールの課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
 | インポート用TSV生成ツール | 2026-03-15 | — | JPCOARスキーマ説明リンクを2.0に更新、下位項目にもスキーマリンクを追加（[#87](https://github.com/tzhaya/jc-import-file-maker/issues/87)） |
-| 助成情報検索ツール | 2026-03-13 | — | isKakenhi()関数追加（科研費番号パターン判定） |
+| 助成情報検索ツール | 2026-03-17 | — | 課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
 
 ## 導入方法
 
@@ -256,6 +256,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-17 | 助成情報検索ツールの課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Acknowledgementsテキストから科研費番号（JPプレフィックスなし）を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
 | 2026-03-15 | JPCOARスキーマ説明リンクを2.0に更新、下位項目（著者・助成情報・関連情報等）にもスキーマリンクを追加、JPCOARschema_guide.md を1.0.2/2.0併記に更新（[#87](https://github.com/tzhaya/jc-import-file-maker/issues/87)） |
 | 2026-03-15 | 資源タイプ語彙を JPCOAR 2.0 準拠に更新：TITLE_MAPS.resourcetype から v1.0 廃止語彙（internal report・report part）を削除、CROSSREF_TYPE_MAP の report-component マッピング修正、getDoiCategory() に v2.0 新タイプ追加（[#31](https://github.com/tzhaya/jc-import-file-maker/issues/31)） |
 | 2026-03-15 | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0 fundingStream / fundingStreamIdentifier）：JGN APIからプログラム情報を自動取得、KAKENHI課題には固定値を自動設定、表示順序を助成機関→プログラム情報→研究課題番号に修正（[#34](https://github.com/tzhaya/jc-import-file-maker/issues/34)） |
