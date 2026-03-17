@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-15（資源タイプ語彙を JPCOAR 2.0 準拠に更新 #31）
+最終更新: 2026-03-15（JPCOARスキーマ説明リンクを2.0に更新 #87）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.3.7 | 2026-03-15 | JPCOARスキーマ説明リンクを2.0に更新、下位項目にもスキーマリンクを追加（#87） |
 | 1.3.6 | 2026-03-15 | 資源タイプ語彙を JPCOAR 2.0 準拠に更新（#31） |
 | 1.3.5 | 2026-03-15 | 助成情報プログラム情報の表示順序修正（#34） |
 | 1.3.4 | 2026-03-15 | 助成情報にプログラム情報識別子・プログラム情報を追加（JPCOAR 2.0）（#34） |
@@ -27,6 +28,46 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-15: JPCOARスキーマ説明リンクを2.0に更新（#87）
+
+### 背景
+`JPCOAR_LINKS` 定数がスキーマ1.0.2のURLを参照しており、セクションヘッダー（上位項目）にしかリンクがなかった。JPCOAR 2.0では項目番号が変更されている（APC廃止、新項目追加で全44項目）。
+
+### 変更内容
+
+1. **`JPCOAR_LINKS` 定数を2.0に更新**
+   - 全エントリのURLを `1.0.2` → `2.0` に変更（番号の対応関係に基づく）
+   - `item_30002_file35` エントリを追加（`2.0/43`）
+
+2. **`JPCOAR_SUBFIELD_LINKS` 定数を新規追加**
+   - 作成者(#3)、寄与者(#4)、関連情報(#20)、助成情報(#23)、ファイル情報(#43)のサブフィールドURLをマッピング
+
+3. **`createNestedSectionHeader()` を拡張**
+   - 第4引数（オプション）に `url` を追加し、ラベルをリンク化するロジックを追加
+
+4. **`renderOnePerson()` にサブフィールドリンクを追加**
+   - 姓名・姓・名・識別子・所属の各サブセクションヘッダーにスキーマ2.0リンクを付与
+   - creator/contributor で適切なURL（3-.x / 4-.x）を分岐
+
+5. **`renderOneFunder()` にサブフィールドリンクを追加**
+   - 助成機関名(23-.2)、プログラム情報(23-.4)、研究課題名(23-.6)にリンクを付与
+
+6. **`renderRelationField()` にサブフィールドリンクを追加**
+   - 関連名称(20-.2)にリンクを付与（追加ボタンコールバック内も含む）
+
+7. **`JPCOARschema_guide.md` を更新**
+   - 1.0.2と2.0のURLを併記するテーブルに更新
+   - 下位項目セクションを追加（作成者、寄与者、関連情報、助成情報、ファイル情報）
+
+### 変更ファイル
+- `make_jc_importer.html`: JPCOAR_LINKS/JPCOAR_SUBFIELD_LINKS定数、createNestedSectionHeader()、renderOnePerson()、renderOneFunder()、renderRelationField()
+- `chrome-extension/make_jc_importer.js`: 同上の変更を同期
+- `chrome-extension/panel.html`: 更新概要テーブル更新
+- `chrome-extension/manifest.json`: 1.3.6 → 1.3.7
+- `docs/JPCOARschema_guide.md`: 1.0.2/2.0併記、下位項目追加
 
 ---
 

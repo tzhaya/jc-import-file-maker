@@ -1,86 +1,65 @@
 # 残存 Issues 一覧と実装優先順位
 
-最終更新: 2026-03-14
+最終更新: 2026-03-15
 
 ## 概要
 
-Phase 1（データ取得・編集UI）は大部分完了済み。Phase 2（TSV出力）が未着手のまま。
-TSV 出力を実装する前に、DOM 構造・語彙値に影響する JPCOAR 2.0 対応 issues を先に完了させる必要がある。
+Phase 1（データ取得・編集UI）は完了済み。Phase 2-A（単一DOI TSV出力）も実装完了（#85 クローズ済み）。
+残りは Phase 2-B〜D（TSV拡張）、JPCOAR 2.0 新規フィールド、UI改善。
 
 ---
 
-## グループ A: Phase 2 TSV出力の**前提**（先に完了すること）
+## 完了済みグループ
 
-これらが未完了のまま TSV を実装すると、列定義（`TSV_COL_GROUPS`）や `collectFromDOM()` を後から再修正することになる。
+### グループ A: JPCOAR 2.0 既存フィールド対応 — **全完了**
 
-### #26: nameIdentifier スキーム語彙の更新（JPCOAR 2.0）
+| Issue | 内容 | 状態 |
+|-------|------|------|
+| #26 | nameIdentifier スキーム語彙の更新 | 完了 |
+| #27 | creatorType 属性を select 化 | 完了 |
+| #28 | 言語コード ja-Latn 追加 | 完了 |
+| #29 | relationType 語彙への追加 | 完了 |
+| #30 | 出版者必須度変更（DOIバッジ） | 完了 |
+| #31 | resourceType 語彙更新 | 完了 |
+| #34 | 助成情報にプログラム情報追加 | 完了 |
 
-- **内容**: 作成者・寄与者の識別子スキーム選択肢に `e-Rad` 等を追加
-- **現状**: `nameIdentifierScheme: ['ORCID','CiNii','ISNI','J-GLOBAL']` のみ（`make_jc_importer.html` L992）
-- **変更対象**:
-  - `TITLE_MAPS.nameIdentifierScheme` に `e-Rad` 等を追加
-  - `affiliationNameIdentifierScheme` も確認（現状: `['ISNI','ROR','GRID','kakenhi','Ringgold']`、L990）
-- **参照**: JPCOAR 2.0 スキーマ仕様（nameIdentifier スキーム一覧）
+### Phase 2-A: 単一DOI TSV出力 — **完了**（#85 クローズ済み）
 
-### #27: creatorType 属性を select 化（JPCOAR 2.0）
-
-- **内容**: 作成者の「タイプ」フィールドをテキスト入力からドロップダウンに変更
-- **現状**: `typeSelectOpts: isCreator ? null : 'contributorType'`（L3559–3560）
-  - creator は `null` → テキスト入力のまま
-  - contributor は select 済み（`'contributorType'` 使用）
-- **変更対象**: `make_jc_importer.html` L3559 の `null` を専用 TITLE_MAPS キーに変更
-  - `TITLE_MAPS` に `creatorType: ['Author','Editor','Illustrator','Translator','Other',...]` を追加
-  - L3559: `typeSelectOpts: isCreator ? 'creatorType' : 'contributorType'`
-- **参照**: JPCOAR 2.0 スキーマ仕様（creatorType 許容値一覧）
-
-### #28: 言語コード `ja-Latn` 追加（JPCOAR 2.0）— **対応済み**
-
-- **内容**: JPCOAR 2.0 スキーマ確認の結果、`ja-Kana`（片仮名ヨミ）と `ja-Latn`（ローマ字ヨミ）は別用途のコードであり、置換ではなく `ja-Latn` の追加が正しい対応
-- **対応**: `TITLE_MAPS.language` に `ja-Latn` を追加（`ja-Kana` の直後）
-- **参照**: https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.2
-
-### #29: relationType 語彙への追加（JPCOAR 2.0）
-
-- **内容**: JPCOAR 2.0 で追加された relationType 語彙値を選択肢に追加
-- **現状**: `subitem_relation_type: [..., 'isCitedBy','Cites','inSeries']`（L970–974）
-- **変更対象**:
-  - `TITLE_MAPS.subitem_relation_type` に追加値があれば追記
-  - JPCOAR 2.0 スキーマで追加されたタイプを確認すること
-- **参照**: JPCOAR 2.0 スキーマ仕様（relationType 統制語彙）
-
-### #31: resourceType 語彙を JPCOAR 2.0 / COAR Vocabulary 対応版に更新
-
-- **内容**: JPCOAR 2.0 で `resourceType` の語彙別表が改訂。データセット系サブタイプの追加や会議系タイプの変更を反映
-- **変更対象**:
-  - `TITLE_MAPS` の資源タイプ選択肢を更新
-  - `CROSSREF_TYPE_MAP` / `JALC_CONTENT_TYPE_MAP` のマッピング先を確認
-- **参照**: JPCOAR 2.0 スキーマ仕様（resourceType 語彙別表）
-
-### #34: 助成情報にプログラム情報フィールドを追加（JPCOAR 2.0）
-
-- **内容**: 助成情報（`funding_reference21`）に JPCOAR 2.0 の「プログラム情報」フィールドを追加
-  - プログラム情報名（`subitem_funding_streams`: 配列）
-  - プログラム情報識別子（`subitem_funding_stream_identifiers`: オブジェクト）
-- **現状**: `renderOneFunder()` に上記フィールドが存在しない（L3666–3764）
-- **変更対象**:
-  - `make_jc_importer.html` の `renderOneFunder()` を拡張
-  - `collectFundingField()` でプログラム情報を収集するよう拡張（L4523）
-  - `mapToItemType()` 内の助成情報マッピング部分にも追加
-  - `buildEmptyMetadata()` の助成情報フィールドにも追加
-- **参照元（実装済み）**:
-  - `funder_lookup.html` の `fundingStreams` / `fundingStreamId` ロジック
-  - `docs/fieldmapping.md` の助成情報フィールドマッピング表
-  - `docs/Implementation_funder_lookup.md` の JPCOAR 2.0 プログラム情報説明
+`TSV_HEADERS_TEMPLATE` / `generateTsv()` / `downloadTsv()` / `exportTsv()` / `collectFromDOM()` 等、単一DOIのTSV出力に必要な機能は全て実装済み。
 
 ---
 
-## グループ B: Phase 2 と並行可能（UI のみ）
+## グループ E: Phase 2 TSV 拡張（#85 から分割）
 
-### #30: 出版者必須度変更（JPCOAR 2.0）
+#85（Phase 2-A）完了に伴い、残りのフェーズを個別issueに分割。
 
-- **内容**: JPCOAR 2.0 での出版者フィールドの必須度変更を DOI 必須項目バッジに反映
-- **DOM 構造への影響**: なし（バッジ表示ロジックのみ）
-- **変更対象**: `make_jc_importer.html` の `createDoiBadges()` 周辺
+### #99: カスタムテンプレート完全パース（Phase 2-B）
+
+- **内容**: ユーザが自機関のTSVテンプレート（5行ヘッダー）を貼り付けた場合に `TSV_HEADERS_TEMPLATE` を丸ごと上書き
+- **現状**: プレフィックス自動検出・置換のみ対応。ラベル行・System行・制約行はデフォルト固定
+- **実装内容**:
+  - `parseCustomTemplate(templateText)` 関数の新規実装
+  - ItemType行からアイテムタイプ名・スキーマURLを自動取得
+- **変更対象**: `make_jc_importer.html` の `generateTsv()` / `groupTsvColumns()`
+
+### #100: 複数DOI一括TSV出力（Phase 2-C）
+
+- **内容**: 複数DOIのメタデータを蓄積し、1つのTSVファイルとして一括出力
+- **実装内容**:
+  - `allMetadata = []` 蓄積機構の導入
+  - `generateTsv()` の複数 metadata 対応（全件の配列最大サイズで列展開）
+  - 複数DOI時のファイル名をタイムスタンプベースに
+- **変更対象**: `make_jc_importer.html` の `exportTsv()` / `generateTsv()` / `buildTsvColumnDefs()`
+
+### #101: ItemType行の自動設定（Phase 2-D）
+
+- **内容**: TSV 1行目のアイテムタイプ名・スキーマURLを自動設定（現在は `(未設定)` 固定）
+- **変更対象**: `make_jc_importer.html` の `generateTsv()` / `TSV_HEADERS_TEMPLATE[0]`
+- **備考**: #99（カスタムテンプレート）実装時に合わせて対応可能
+
+---
+
+## グループ B: UI改善（任意のタイミングで実施可能）
 
 ### #87: JPCOARスキーマ 項目別説明リンクの変更
 
@@ -94,7 +73,7 @@ TSV 出力を実装する前に、DOM 構造・語彙値に影響する JPCOAR 2
 
 - **内容**: ファイル情報（file35）の `file_path` をディレクトリ構造ベースの相対パスで設定する方法を検討
 - **DOM 構造への影響**: なし（既存file_path入力フィールドの動作変更のみ）
-- **関連**: #84（実装完了・クローズ済み）、#85
+- **関連**: #84（実装完了・クローズ済み）
 - **WEKO3仕様**（[weko3_tsv_import_spec.md](weko3_tsv_import_spec.md) §6）:
   - `file_path` はZIP内 `data/` からの相対パス（`recid_{id}/` プレフィックスは必須ではない）
   - 新規アイテム: ZIP内にファイルが存在しない場合はエラー
@@ -103,58 +82,48 @@ TSV 出力を実装する前に、DOM 構造・語彙値に影響する JPCOAR 2
 
 ---
 
-## グループ C: Phase 2 TSV 実装本体（#85）
-
-### #85: TSV エクスポート機能
-
-- **内容**: DOM → JSON → TSV のパイプラインを実装しダウンロードボタンを追加
-- **現状**: **未着手**（`worklog.md` 未完了タスクセクションに記載）
-- **既存基盤**: `collectFromDOM()` がプレビュー機能（#37）で実装済み（L4715）
-- **詳細仕様**: `docs/Implementation_phase2.md` に全ステップの詳細設計あり
-- **主要実装内容**:
-  1. `TSV_HEADERS_TEMPLATE` 定数定義（`data/tsv_headers.json` のインライン版）
-  2. `buildTsvColumnDefs(prefix, metadata)` — 配列サイズに応じた動的列展開
-  3. `generateTsv(metadata, templateText)` — 5行ヘッダー + データ行生成
-  4. `downloadTsv(tsvString, filename)` — BOM付きUTF-8 TSV ダウンロード
-  5. `exportTsv()` + UI ボタン追加
-
-#### TSV実装の参照方針（確認済み、2026-03-15）
-
-- **実際の WEKO3 エクスポート出力をベースにすること**（仕様書だけでなく実出力で検証）
-- `samples/デフォルトアイテムタイプ（フル）(30002).tsv` は**実際の WEKO3 エクスポートファイル**であり、以下を含む:
-  - JPCOAR 2.0 の新フィールド `fundingStream` / `fundingStreamIdentifier`（#34）の列 ✅
-  - `item_1698624005`（出版者情報 #32）、`item_1698624008`（日付リテラル #33）等の新規フィールド ✅
-- `data/tsv_headers.json` も同列を含んでおり、**追加エクスポートの取得は不要**
-- **注意**: 各リポジトリでアイテムタイプの列構成が異なる場合があるため、実装後は自機関の TSV エクスポートとの差分確認（プレフィックス自動検出・カスタムテンプレート貼り付け機能）が重要
-
----
-
-## グループ D: Phase 2 完了後に追加
+## グループ D: JPCOAR 2.0 新規フィールド追加
 
 ### #32: 出版者情報（新規フィールド）
 
-- **内容**: JPCOAR 2.0 で追加された出版者情報フィールド（出版者識別子等）
-- **対応方針**: Phase 2 実装後に `TSV_EXCL_SUFFIXES` / `TSV_EXCL_TIMESTAMP` から除外して追加
+- **内容**: JPCOAR 2.0 で追加された出版者情報フィールド（`item_1698624005` / `jpcoar:publisherDetail`）
+- **対応方針**: TSV出力の `TSV_EXCL_TIMESTAMP` から `item_1698624005` を除外し、UI・collectFromDOMを追加
+- **親issue**: #25
 
 ### #33: 日付リテラル（新規フィールド）
 
-- **内容**: JPCOAR 2.0 で追加された日付リテラルフィールド
-- **対応方針**: Phase 2 実装後に追加
+- **内容**: JPCOAR 2.0 で追加された日付リテラルフィールド（`item_1698624008` / `dcterms:date`）
+- **対応方針**: TSV出力の `TSV_EXCL_TIMESTAMP` から `item_1698624008` を除外し、UI・collectFromDOMを追加
+- **親issue**: #25
 
 ---
 
 ## 推奨実装順序
 
 ```
-Step 1: グループ A（#26 → #27 → #28 → #29確認 → #31 → #34）
-         ※ DOM 構造・語彙値が固まってから TSV を実装する
+Step 1: グループ E — Phase 2 TSV拡張（#99 → #101 → #100）
+         ※ #101 は #99 と同時実装可能
+         ※ #100（複数DOI）は最も複雑なため最後
 
-Step 2: Phase 2 TSV出力実装（#85、Implementation_phase2.md に詳細設計済み）
+Step 2: グループ D — JPCOAR 2.0 新規フィールド（#32, #33）
+         ※ TSV_EXCL_TIMESTAMP からの除外 + UI追加
 
-Step 3: グループ B（#30, #87, #90）は任意のタイミングで
-
-Step 4: グループ D（#32, #33）を TSV 完了後に追加
+Step 3: グループ B — UI改善（#87, #90）は任意のタイミングで
 ```
+
+---
+
+## 親issue との関係
+
+### #25: JPCOAR スキーマ 2.0 対応（親issue）
+
+| フェーズ | Issue | 状態 |
+|---------|-------|------|
+| 1（既存フィールド変更） | #26, #27, #28, #29, #30, #31, #34 | **全完了** |
+| 2（新規フィールド追加） | #32, #33 | OPEN |
+| ドキュメント | #87 | OPEN |
+
+#25 の完了条件: #32, #33, #87 の全完了。
 
 ---
 
@@ -162,8 +131,8 @@ Step 4: グループ D（#32, #33）を TSV 完了後に追加
 
 | ファイル | 変更 issues |
 |---------|------------|
-| `make_jc_importer.html` | #26, #27, #28, #29, #30, #31, #34, #85, #87, #90 |
-| `chrome-extension/make_jc_importer.js` | #26, #27, #28, #29, #30, #31, #34, #87 と同期 |
+| `make_jc_importer.html` | #32, #33, #87, #90, #99, #100, #101 |
+| `chrome-extension/make_jc_importer.js` | #32, #33, #87 と同期 |
 | `chrome-extension/panel.html` | UI 変更があれば同期 |
 | `docs/JPCOARschema_guide.md` | #87 |
 
@@ -173,9 +142,8 @@ Step 4: グループ D（#32, #33）を TSV 完了後に追加
 
 | 機能 | 参照先 |
 |------|--------|
-| #27 creatorType select 化 | L3265–3268（contributor の select 実装パターン） |
-| #34 プログラム情報フィールド | `funder_lookup.html` L320–373（fundingStreams ロジック） |
-| #85 TSV列定義 | `docs/Implementation_phase2.md`（TSV_COL_GROUPS 全定義） |
-| #85 collectFromDOM 拡張 | `make_jc_importer.html` L4715（既存 collectFromDOM） |
-| #85 フィールド構造 | `samples/export/デフォルトアイテムタイプ（フル）(30002).tsv` |
+| #32, #33 新規フィールド追加パターン | #84（file35 実装）の FIELD_DEFS / render / collect / TSV対応 |
 | #87 JPCOARリンク | `docs/JPCOARschema_guide.md`、JPCOAR_LINKS 定数（~L570–610） |
+| #99 カスタムテンプレート | `docs/Implementation_phase2.md` Phase 2-B セクション |
+| #100 複数DOI | `docs/Implementation_phase2.md` Phase 2-C セクション |
+| #101 ItemType行 | `TSV_HEADERS_TEMPLATE[0]`（~L5142） |
