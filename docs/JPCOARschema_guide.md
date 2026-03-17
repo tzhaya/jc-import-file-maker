@@ -64,6 +64,8 @@
 | 3-.4 | 作成者名 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.4 |
 | 3-.5 | 作成者別名 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.5 |
 | 3-.6 | 作成者所属 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.6 |
+| 3-.6-.1 | 所属機関識別子 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.6-.1 |
+| 3-.6-.2 | 所属機関名 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.6-.2 |
 
 ### 寄与者 (#4)
 
@@ -75,6 +77,15 @@
 | 4-.4 | 寄与者名 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.4 |
 | 4-.5 | 寄与者別名 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.5 |
 | 4-.6 | 寄与者所属 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.6 |
+| 4-.6-.1 | 所属機関識別子 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.6-.1 |
+| 4-.6-.2 | 所属機関名 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.6-.2 |
+
+### 権利者情報 (#7)
+
+| # | 名称 | URL (2.0) |
+|---|------|-----------|
+| 7-.1 | 権利者識別子 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/7-.1 |
+| 7-.2 | 権利者名 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/7-.2 |
 
 ### 関連情報 (#20)
 

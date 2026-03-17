@@ -947,6 +947,15 @@ const JPCOAR_SUBFIELD_LINKS = {
   contributor_given:        'https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.4',
   contributor_identifier:   'https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.1',
   contributor_affiliation:  'https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.6',
+  // 作成者所属 下位項目 (#3-.6-.x)
+  creator_aff_id:           'https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.6-.1',
+  creator_aff_name:         'https://schema.irdb.nii.ac.jp/ja/schema/2.0/3-.6-.2',
+  // 寄与者所属 下位項目 (#4-.6-.x)
+  contributor_aff_id:       'https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.6-.1',
+  contributor_aff_name:     'https://schema.irdb.nii.ac.jp/ja/schema/2.0/4-.6-.2',
+  // 権利者情報 (#7)
+  rightsholder_id:          'https://schema.irdb.nii.ac.jp/ja/schema/2.0/7-.1',
+  rightsholder_name:        'https://schema.irdb.nii.ac.jp/ja/schema/2.0/7-.2',
   // 関連情報 (#20)
   relation_identifier:  'https://schema.irdb.nii.ac.jp/ja/schema/2.0/20-.1',
   relation_title:       'https://schema.irdb.nii.ac.jp/ja/schema/2.0/20-.2',
@@ -3625,10 +3634,10 @@ function renderOnePerson(person, idx, keys) {
       [affNameKey]: [{ [affNameField]: '', [affNameLangField]: '' }],
       [affIdKey]: [],
     };
-    cont.appendChild(renderOneAffiliation(emptyAff, ai, keys));
+    cont.appendChild(renderOneAffiliation(emptyAff, ai, keys, sfx));
   }, JPCOAR_SUBFIELD_LINKS[sfx + '_affiliation']);
   (person[affKey] || []).forEach((aff, ai) => {
-    affCont.appendChild(renderOneAffiliation(aff, ai, keys));
+    affCont.appendChild(renderOneAffiliation(aff, ai, keys, sfx));
   });
   personContent.appendChild(affWrap);
 
@@ -3636,7 +3645,7 @@ function renderOnePerson(person, idx, keys) {
 }
 
 // ----- 所属機関: 1件分のDOM生成 -----
-function renderOneAffiliation(aff, ai, keys) {
+function renderOneAffiliation(aff, ai, keys, sfx) {
   const {
     affLabel, affNameKey, affNameField, affNameLangField,
     affIdKey, affIdField, affIdSchemeField, affIdUriField,
@@ -3652,7 +3661,7 @@ function renderOneAffiliation(aff, ai, keys) {
     grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: affNameLangField }));
     grp.appendChild(delBtn);
     cont.appendChild(grp);
-  });
+  }, sfx ? JPCOAR_SUBFIELD_LINKS[sfx + '_aff_name'] : undefined);
   (aff[affNameKey] || []).forEach(an => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('所属機関名', an[affNameField] || '', 'text', null, { fieldKey: affNameField }));
@@ -3705,7 +3714,7 @@ function renderOneAffiliation(aff, ai, keys) {
     updateAffLookup = updateVisibility;
 
     cont.appendChild(aidItem);
-  });
+  }, sfx ? JPCOAR_SUBFIELD_LINKS[sfx + '_aff_id'] : undefined);
   (aff[affIdKey] || []).forEach((aid, aidx) => {
     const { item: aidItem, content: aidContent } = createNestedItem(`所属機関識別子[${aidx}]`, 4);
 
@@ -4225,7 +4234,7 @@ function renderOneRightsHolder(rh, idx, defLabel) {
     grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'rightHolderLanguage' }));
     grp.appendChild(delBtn);
     cont.appendChild(grp);
-  });
+  }, JPCOAR_SUBFIELD_LINKS.rightsholder_name);
   (rh.rightHolderNames || []).forEach(rn => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('権利者名', rn.rightHolderName || '', 'text', null, { fieldKey: 'rightHolderName' }));
@@ -4243,7 +4252,7 @@ function renderOneRightsHolder(rh, idx, defLabel) {
     grp.appendChild(createFieldRow('URI', '', 'text', null, { fieldKey: 'nameIdentifierURI' }));
     grp.appendChild(delBtn);
     cont.appendChild(grp);
-  });
+  }, JPCOAR_SUBFIELD_LINKS.rightsholder_id);
   (rh.nameIdentifiers || []).forEach(ni => {
     const { grp, delBtn } = createEntryGroup();
     grp.appendChild(createFieldRow('識別子', ni.nameIdentifier || '', 'text', null, { fieldKey: 'nameIdentifier' }));
