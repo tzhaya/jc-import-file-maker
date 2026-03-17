@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-15（JPCOARスキーマ説明リンクを2.0に更新 #87）
+最終更新: 2026-03-17（助成情報検索ツールの課題番号抽出改善 #104）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.3.8 | 2026-03-17 | 助成情報検索ツールの課題番号抽出改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号抽出（#104） |
 | 1.3.7 | 2026-03-15 | JPCOARスキーマ説明リンクを2.0に更新、下位項目にもスキーマリンクを追加（#87） |
 | 1.3.6 | 2026-03-15 | 資源タイプ語彙を JPCOAR 2.0 準拠に更新（#31） |
 | 1.3.5 | 2026-03-15 | 助成情報プログラム情報の表示順序修正（#34） |
@@ -28,6 +29,30 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-17: 助成情報検索ツールの課題番号抽出改善（#104）
+
+### 背景
+`extractAwardNumbers()` が入力を改行のみで分割し、スペースを含む行をAcknowledgementsテキストとみなして `/JP[A-Za-z0-9]+/g` だけで抽出していた。このため、セミコロン区切りの科研費課題番号リスト（例: `21H04856; 20K10467`）やAckテキスト中のJPプレフィックスなし科研費番号が抽出できなかった。
+
+### 変更内容
+
+1. **`extractAwardNumbers()` を3段階判定に改修**（`funder_lookup.html`, `chrome-extension/funder_lookup.js`）
+   - (A) スペースなし: そのまま1つの課題番号として扱う（従来通り）
+   - (B) セミコロン/カンマ区切りリスト判定: 全トークンが英数字のみなら個別の課題番号として分割
+   - (C) Acknowledgementsテキスト: JP付きパターンに加え、科研費パターン（`\d{2}[A-Z]{1,2}\d{4,5}`）も抽出
+
+2. **`KAKENHI_RE` 定数を追加**: `isKakenhi()` と同一パターンのAckテキスト抽出用正規表現
+
+3. **ヒントテキストを更新**: セミコロン・カンマ区切り対応の旨を追記（`funder_lookup.html`, `chrome-extension/funder_panel.html`）
+
+### 対象ファイル
+- `funder_lookup.html` — `extractAwardNumbers()` 改修、ヒントテキスト更新、LOCAL_VERSION更新
+- `chrome-extension/funder_lookup.js` — 同上のミラー
+- `chrome-extension/funder_panel.html` — ヒントテキスト・最終更新日更新
+- `chrome-extension/manifest.json` — version 1.3.7 → 1.3.8
 
 ---
 
