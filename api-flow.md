@@ -12,7 +12,7 @@ DOI を入力として複数の API を呼び出し JPCOAR メタデータを生
 flowchart TD
     A([DOI 入力]) --> B["① DOI RA 判定\n doi.org/doiRA/{doi}"]
     B -->|Crossref| C
-    B -->|JaLC| Z1["⚠️ 未対応\n（エラー表示）"]
+    B -->|JaLC| J["② JaLC REST API（Chrome拡張版のみ）\n api.japanlinkcenter.org/dois/{doi}"]
     B -->|その他| Z2["⚠️ 未対応\n（エラー表示）"]
 
     subgraph C["② 並列フェッチ（Promise.all）"]
@@ -22,6 +22,7 @@ flowchart TD
 
     C --> D["③ ROR v2 API\n（著者所属機関ごとに並列）\n api.ror.org/v2/organizations/{id}"]
     D --> E["④ mapToItemType()\n データ統合・マッピング"]
+    J --> EJ["③ mapToItemTypeJaLC()\n データ統合・マッピング（OpenAlex 不使用）\n④ buildJaLCFunders() / NCID取得 / 関連DOIタイトル取得"]
 
     E --> F["⑤ NCID 取得\n cir.nii.ac.jp/opensearch/v2/books?issn=..."]
     E --> G["⑥ 助成金情報取得\n（アワード番号ごとに並列）"]
@@ -31,7 +32,7 @@ flowchart TD
         G1["アワード番号が JP で始まる？"]
         G1 -->|YES| G2["JGN API\n api.crossref.org/works/10.52926/{award}"]
         G2 -->|成功| G5[["結果を使用"]]
-        G2 -->|失敗| G3{"JSPS 助成かつ\nアワード番号あり？"}
+        G2 -->|失敗| G3{"科研費番号パターン\nにマッチ？"}
         G3 -->|YES| G4["CiNii Research KAKEN API\n cir.nii.ac.jp/opensearch/v2/projects\n（日本語・英語を並列取得）"]
         G4 -->|成功| G5
         G4 -->|失敗| G6[["Crossref funder 名のみ使用"]]
@@ -42,9 +43,10 @@ flowchart TD
     F --> I[["JPCOAR メタデータ完成\n→ プレビュー表示・TSV 出力"]]
     G --> I
     H --> I
+    EJ --> I
 ```
 
-> **注意：** KAKEN XML API（`kaken.nii.ac.jp/opensearch/`）は CORS 非対応のためコード上で暫定スキップされており、現在は呼び出されません。
+> **注意：** KAKEN XML API（`kaken.nii.ac.jp/opensearch/`）は CORS 非対応のため通常ブラウザ版ではスキップされています。Chrome拡張版では Service Worker 経由での CORS 回避が可能です。
 
 ---
 
@@ -56,11 +58,12 @@ flowchart TD
 | 2 | Crossref | `https://api.crossref.org/works/{doi}` | RA 判定後（OpenAlex と並列） | 不要 |
 | 3 | OpenAlex | `https://api.openalex.org/works/doi:{doi}` | RA 判定後（Crossref と並列） | 任意（API Key） |
 | 4 | ROR v2 | `https://api.ror.org/v2/organizations/{ror_id}` | OpenAlex 取得後（機関ごとに並列） | 不要 |
-| 5 | CiNii Research (NCID) | `https://cir.nii.ac.jp/opensearch/v2/books?issn={issn}&format=json` | mapToItemType 内・ISSN ごと | 任意（API Key） |
-| 6 | JGN (Crossref) | `https://api.crossref.org/works/10.52926/{award}` | 助成金処理（アワード番号が JP で始まる場合） | 不要 |
-| 7 | CiNii Research (KAKEN) | `https://cir.nii.ac.jp/opensearch/v2/projects?format=json&projectId={id}` | JGN 失敗かつ JSPS 助成の場合（フォールバック） | 任意（API Key） |
-| 8 | Crossref (関連 DOI) | `https://api.crossref.org/works/{doi}` | 関連エントリの DOI タイトル取得（並列） | 不要 |
-| ~~-~~ | ~~KAKEN XML API~~ | ~~`https://kaken.nii.ac.jp/opensearch/`~~ | ~~CORS 非対応のため現在スキップ~~ | ~~必要~~ |
+| 5 | JaLC REST API | `https://api.japanlinkcenter.org/dois/{doi}` | JaLC DOI の場合（Chrome拡張版のみ） | 不要 |
+| 6 | CiNii Research (NCID) | `https://cir.nii.ac.jp/opensearch/v2/books?issn={issn}&format=json` | mapToItemType / mapToItemTypeJaLC 内・ISSN ごと | 任意（API Key） |
+| 7 | JGN (Crossref) | `https://api.crossref.org/works/10.52926/{award}` | 助成金処理（アワード番号が JP で始まる場合） | 不要 |
+| 8 | CiNii Research (KAKEN) | `https://cir.nii.ac.jp/opensearch/v2/projects?format=json&projectId={id}` | JGN 失敗かつ科研費番号パターンにマッチの場合（フォールバック） | 任意（API Key） |
+| 9 | Crossref (関連 DOI) | `https://api.crossref.org/works/{doi}` | 関連エントリの DOI タイトル取得（並列） | 不要 |
+| ~~-~~ | ~~KAKEN XML API~~ | ~~`https://kaken.nii.ac.jp/opensearch/`~~ | ~~通常ブラウザ版では CORS 非対応のためスキップ（Chrome拡張版では Service Worker 経由で利用可）~~ | ~~必要~~ |
 
 ---
 
@@ -133,6 +136,9 @@ flowchart TD
 | JGN (Crossref) | `project[0]['project-title'][].title` | `funding_reference21[].subitem_award_titles[].subitem_award_title` | 研究課題名 |  |
 | JGN (Crossref) | `funder[0].name` | `funding_reference21[].subitem_funder_names[].subitem_funder_name` | 助成機関名 |  |
 | JGN (Crossref) | `funder[0].DOI` | `funding_reference21[].subitem_funder_identifiers.subitem_funder_identifier` | 助成機関識別子 | `https://doi.org/{DOI}` |
+| JGN (Crossref) | `funding[].scheme`（識別子） | `funding_reference21[].subitem_funding_stream_identifiers[].subitem_funding_stream_identifier` | プログラム情報識別子 | JGN スキーム識別子をそのまま設定 |
+| JGN (Crossref) | `funding[].scheme`（名称変換） | `funding_reference21[].subitem_funding_streams[].subitem_funding_stream` | プログラム情報 | スキーム識別子から日英名称に変換 |
+| KAKENHI（固定値） | — | 上記 2 フィールド | プログラム情報・プログラム情報識別子 | 科研費課題には `KAKENHI_FUNDING_STREAM` 定数の固定値を自動設定（日英） |
 | JGN (Crossref) | `normalizedValue`（補正後番号） | `funding_reference21[].subitem_award_numbers.subitem_award_number` | 研究課題番号 | 補助金番号→研究課題番号へ自動補正。補正した場合は `_supplementaryWarning` フラグで警告表示 |
 | JGN (Crossref) | `kakenUrl` | `funding_reference21[].subitem_award_numbers.subitem_award_uri` | 研究課題番号URI | KAKEN ページ URL |
 | CiNii KAKEN | `items[0].title`（ja） | `funding_reference21[].subitem_award_titles[]`（lang=ja） | 研究課題名 | 日本語課題名 |
@@ -153,7 +159,7 @@ buildFunders(crJson.funder) を各アワード番号について実行：
        ├─ 成功 → JGN 結果（課題名・助成機関名・識別子）を使用
        └─ 失敗 → ② へ
 
-    ② JSPS 助成 (funderDOI === JSPS_FUNDER_DOI) かつ アワード番号あり？
+    ② 科研費番号パターンにマッチ（isKakenAward() による判定） かつ アワード番号あり？
        YES: CiNii Research KAKEN API を試行（日本語・英語を並列取得）
             https://cir.nii.ac.jp/opensearch/v2/projects?projectId={id}&format=json
             https://cir.nii.ac.jp/opensearch/v2/projects?projectId={id}&lang=en&format=json
@@ -164,8 +170,8 @@ buildFunders(crJson.funder) を各アワード番号について実行：
   NO:
     Crossref の funder 名のみ使用（API 呼び出しなし）
 
-※ KAKEN XML API（暫定スキップ）は CORS 非対応のため現在は常にスキップされる。
-   CORS 解消時はフォールバックチェーンの先頭（JGN より前）に挿入される予定。
+※ KAKEN XML API は通常ブラウザ版では CORS 非対応のためスキップ。Chrome拡張版では Service Worker 経由で利用可能。
+   有効時はフォールバックチェーンの先頭（JGN より前）に挿入される予定。
 ```
 
 ---

@@ -1,29 +1,87 @@
 # JAIRO Cloud インポート用TSV生成ツール(β)
 
+## 概要
+
 DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO Cloud](https://jpcoar.org/support/jairo-cloud/)へのインポート用TSVファイルを生成するツールです。
 
-Chrome拡張版と通常ブラウザ版の2つの利用方法があります。
+特に、以下の課題の解決を目指しています。
 
-- Chrome拡張版では以下の機能が利用できます。APIキーが必要です。こちらが高機能版です。
-  - JAIRO Cloud インポート用TSV生成ツール、助成情報検索ツール、OpenSearch検索をタブで切り替えできます。
-  - JaLC DOIからのメタデータ取り込みに対応しています。日本語の学協会誌等が取り込めます。
-  - KAKEN APIによる科研費課題番号の検索と取り込みに対応しています。
-  - （Chrome拡張のみ）Open Policy Finder上の情報の表示に対応しています。
-  - JAIRO Cloud機関リポジトリのOpenSearch APIを用いた文献検索ができます（タイトル・内容記述・資源タイプ・ページングに対応）。
+1. 識別子（ORCID、ROR、KAKENなど）の検索時間の短縮
+2. メタデータ入力のサンプルの提示
+3. オープンアクセスポリシーの容易な参照
+4. [JAIRO Cloud](https://jpcoar.org/support/jairo-cloud/)用インポートファイル（import.zip）作成の支援
 
-- 通常ブラウザ版では、JaLC DOIおよびKAKEN APIからのメタデータ取り込み、Open Poclicy Finder上の情報の取得と表示ができません。Open Poclicy Finderへのリンクを生成します。
+通常ブラウザ版とChrome拡張機能版の2つの利用方法があります。
+
+- 通常ブラウザ版では、以下の機能が利用できます。
+  - Crossref DOIからのメタデータ取り込みと以下のAPIによるデータ補完
+    - [Research Organization Registry (ROR)](https://ror.org/)(ISNI)
+    - [OpenAlex](https://openalex.org/)(ORCID)
+    - [CiNii Research](https://cir.nii.ac.jp/)(NCID、科研費課題名)
+  - [OpenAlex](https://openalex.org/) によるOA状況の表示
+  - [JPCOARスキーマ](https://schema.irdb.nii.ac.jp/ja/schema)2.0対応のメタデータ入力
+  - 入力メタデータのプレビュー表示
+  - [Open Policy Finder](https://openpolicyfinder.jisc.ac.uk/)へのリンク表示
+  - インポート用TSVファイル生成
+
+- Chrome拡張機能版では、通常ブラウザ版に加えて以下の機能が利用できます。APIキーが必要ですが、こちらが高機能です。
+  - 以下の3ツールのタブ切替
+    - JAIRO Cloud インポート用TSV生成ツール
+    - 助成情報検索ツール
+    - 機関リポジトリのメタデータ検索（OpenSearch）
+  - JaLC DOIからのメタデータ取り込み
+  - KAKEN APIによる科研費課題番号の検索と取り込み
+  - Open Policy Finderから取得したOAポリシー情報表示
+
+### 機能比較
+
+| 機能 | Chrome拡張機能版 | 通常ブラウザ版 | 備考 |
+|------|:---:|:---:|------|
+| **導入** | | | |
+| インストール不要（HTMLファイルを開くだけ） | ❌ | ✅ | |
+| ブラウザの拡張機能から導入 | ✅ | ❌ | サイドパネルAPI対応のためChrome 114以降が必要 |
+| **OAポリシー参照** | | | |
+| OpenAlex によるOA状況の表示 | ✅ | ✅ | Crossref DOIがある論文で表示 |
+| Open Policy Finder への参照リンク生成 | ✅ | ✅ | ISSN付き雑誌論文で表示 |
+| Open Policy Finder API によるOAポリシー表示 | ✅ | ❌ | CORS制約のためChrome拡張機能版のみ |
+| **メタデータ取得** | | | |
+| Crossref DOI からのメタデータ取得 | ✅ | ✅ | |
+| JaLC DOI からのメタデータ取得 | ✅ | ❌ | CORS制約のためChrome拡張機能のService Worker経由が必要 |
+| DataCite DOI からのメタデータ取得 | ❌ | ❌ | 未対応です |
+| **メタデータ編集・出力** | | | |
+| メタデータ確認・編集UI | ✅ | ✅ | JPCOARスキーマ2.0準拠 |
+| ファイル名、サイズの自動入力 | ✅ | ✅ | |
+| プレビュー表示 | ✅ | ✅ | |
+| TSV エクスポート | ✅ | ✅ | |
+| **著者・所属情報補完** | | | |
+| OpenAlex によるORCID補完 | ✅ | ✅ | |
+| **収録物識別子補完** | | | |
+| NCID 自動取得 | ✅ | ✅ | ISSNからCiNii Researchを検索 |
+| **助成情報補完** | | | |
+| JGN（科学技術振興機構）課題番号検索 | ✅ | ✅ |  |
+| CiNii Research API による科研費課題名取得 | ✅ | ✅ |  |
+| KAKEN XML API による科研費課題検索 | ✅ | ❌ | CORS制約のためChrome拡張機能版のみ |
+| **設定・運用** | | | |
+| 更新チェック | ✅ | ✅ | 更新がある場合はその旨表示されます |
+| APIキー設定（GUI） | ✅ | ❌ | Chrome拡張機能版は設定ページで管理 |
+| APIキー設定（ソースコード編集） | ❌ | ✅ | CONFIG定数を直接編集 |
+| APIキーの永続保存 | ✅ | ❌ | Chrome拡張機能版は `chrome.storage.local` に保存 |
+| **関連ツール** | | | |
+| 助成情報検索ツール | ✅ | ✅ | Chrome拡張機能版はタブ切替、ブラウザ版は別HTMLファイル |
+| JAIRO Cloud リポジトリ検索ツール | ✅ | ❌ | Chrome拡張機能版のみ（OpenSearchで検索） |
+
 
 ## 最新の更新
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張版 | 2026-03-17 | ver. 1.3.9 | Chrome拡張でTSV出力ボタンのCSPエラーを修正（[#103](https://github.com/tzhaya/jc-import-file-maker/issues/103)） |
+| Chrome拡張機能版 | 2026-03-17 | ver. 1.3.9 | Chrome拡張機能でTSV出力ボタンのCSPエラーを修正（[#103](https://github.com/tzhaya/jc-import-file-maker/issues/103)） |
 | インポート用TSV生成ツール | 2026-03-15 | — | JPCOARスキーマ説明リンクを2.0に更新、下位項目にもスキーマリンクを追加（[#87](https://github.com/tzhaya/jc-import-file-maker/issues/87)） |
 | 助成情報検索ツール | 2026-03-17 | — | 課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
 
 ## 導入方法
 
-### Chrome拡張版（推奨）
+### Chrome拡張機能版（推奨）
 
 1. このリポジトリをダウンロードします
    - `git clone https://github.com/tzhaya/jc-import-file-maker.git`、または
@@ -53,7 +111,7 @@ HTMLファイルを直接ブラウザで開いて使用します。
 2. 「データ取得」ボタンを押します
 3. Crossrefなどから必要なメタデータを取得して、「メタデータ確認・編集」として表示します。編集も可能です。
 4. 「プレビュー表示」ボタンでプレビューができます。
-5. （Chrome拡張のみ）外国雑誌等でOpen Policy Finderに登録されている雑誌にはDOIの隣に「OAポリシー」のボタンが表示されます。クリックすると、Open Policy Finderから取得したオープンアクセスにできる版や掲載場所の情報を表示します。
+5. （Chrome拡張機能版のみ）外国雑誌等でOpen Policy Finderに登録されている雑誌にはDOIの隣に「OAポリシー」のボタンが表示されます。クリックすると、Open Policy Finderから取得したオープンアクセスにできる版や掲載場所の情報を表示します。
 6. TSVファイルとしてダウンロードができます（準備中）
 
 詳しい使い方と取得したデータの取り扱いは[使い方ガイド](docs/user_guide.md)を参照ください。
@@ -62,7 +120,7 @@ HTMLファイルを直接ブラウザで開いて使用します。
 
 - 付属ツールとして、助成情報検索ツールを同梱しています。
 - 科研費課題番号やJGN課題番号から、助成機関識別子・助成機関名・プログラム情報・研究課題名を検索します。
-- Chrome拡張版ではサイドパネルのタブから「助成情報検索」に切り替えて利用できます。
+- Chrome拡張機能版ではサイドパネルのタブから「助成情報検索」に切り替えて利用できます。
 - 通常ブラウザ版では [funder_lookup.html](https://github.com/tzhaya/jc-import-file-maker/blob/master/funder_lookup.html) を右クリック→「名前をつけてリンク(先)を保存」で保存してご利用ください。
 
 #### 利用方法
@@ -77,18 +135,18 @@ HTMLファイルを直接ブラウザで開いて使用します。
 6. 「TSV生成」ボタンを押すとTSV形式で表示されます。
 7. 「クリップボードにコピー」を押すとクリップボードに結果がコピーされます。Excel、TSVファイルなどに貼り付けてご利用ください。
 
-### OpenSearch検索ツール（Chrome拡張版のみ）
+### OpenSearch検索ツール（Chrome拡張機能版のみ）
 
-- Chrome拡張版のサイドパネルのタブから「OpenSearch検索」に切り替えて利用できます。
+- Chrome拡張機能版のサイドパネルのタブから「OpenSearch検索」に切り替えて利用できます。
 - JAIRO Cloud利用機関のリポジトリURL・タイトル・内容記述・資源タイプを条件に文献を検索できます。
 - 検索結果はタイトル・著者・書誌情報・ファイルリンクとともに一覧表示され、クリックで詳細フィールドを展開できます。
 - 設定ページでデフォルトのリポジトリURLを登録しておくと、タブを開いた際に自動入力されます。
 
 ### API Key の設定
 
-#### Chrome拡張版（推奨）
+#### Chrome拡張機能版（推奨）
 
-Chrome拡張版では設定ページでAPIキーをまとめて設定できます。設定値はブラウザのローカルストレージに保存され、ソースコードに書き込む必要がありません。
+Chrome拡張機能版では設定ページでAPIキーをまとめて設定できます。設定値はブラウザのローカルストレージに保存され、ソースコードに書き込む必要がありません。
 
 1. 拡張機能の「JAIRO Cloud インポート支援ツール」の ︙ → オプション を開きます。
 
@@ -96,7 +154,7 @@ Chrome拡張版では設定ページでAPIキーをまとめて設定できま�
 
 2. APIキーを入力して「保存」を押してください。
 
-CORS非対応のAPI（KAKEN XML API・JaLC API・Open Policy Finder API）が Chrome拡張のService Worker経由で利用可能になります。
+CORS非対応のAPI（KAKEN XML API・JaLC API・Open Policy Finder API）が Chrome拡張機能のService Worker経由で利用可能になります。
 
 #### 通常ブラウザ版
 
@@ -114,7 +172,7 @@ const CONFIG = {
     // CiNiiウェブAPI 利用登録 https://support.nii.ac.jp/ja/cinii/api/developer で取得したキーを貼り付けてください
     CiNii_API_KEY: "YOUR_CiNii_API_KEY",
 
-    // Open Policy Finder APIキー（任意・Chrome拡張版のみ有効）
+    // Open Policy Finder APIキー（任意・Chrome拡張機能版のみ有効）
     OPF_API_KEY: "YOUR_OPF_API_KEY",
 };
 ```
@@ -136,51 +194,12 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 - JSPS（日本学術振興会）が助成機関に含まれる場合に、CiNii Research Projects API を通じて科研費の課題名（日英）とKAKEN課題ページURLを自動取得
 - ISSNをもとにCiNii Research OpenSearch APIからNCID（NACSIS-CAT書誌ID）を自動取得
 
-## 機能
-
-### Phase 1
-
-- DOIの入力により Crossref / OpenAlex API から書誌情報を自動取得
-- JaLC DOI対応：JaLC REST APIからのメタデータ取得・マッピング（Chrome拡張版のみ有効・CORS非対応のため）
-- ROR API（v2）による機関情報の補完（ISNI・ROR ID取得）
-- 取得データをJPCOARスキーマにマッピングし、アコーディオン形式で表示・編集
-  - JPCOARスキーマの28のフィールドに対応（タイトル・著者・抄録・出版社・関連情報・助成情報 等）
-  - ネスト構造のカラーコーディング（4階層）
-  - 項目の追加・削除（確認ダイアログ付き）
-  - リソースタイプ・アクセス権のセレクトメニューと URI 自動補完
-  - JPCOAR スキーマへの参照リンク
-  - 要確認項目へのワーニング表示（⚠ 要確認）
-  - 参考用の元データ値の表示とURLのリンク
-- OA バッジ表示（Gold / Green / Hybrid / Closed）
-- Open Policy Finder 連携：ISSN付き雑誌論文のDOI取得時に、Open Policy Finderでの雑誌OAポリシー確認リンクを表示。Chrome拡張版ではOPF APIへの直接アクセスでモーダル内にポリシー情報を表示
-- JATS XML 形式のDescription(内容記述)からタグの除去
-- Crossref と OpenAlex の著者情報マッチング（姓名一致 → インデックスフォールバック）
-- 空フィールドのみの表示
-- KAKEN連携：JSPS助成の科研費課題名（日英）・課題ページURL自動取得（CiNii Research Projects API）
-- NCID自動取得：ISSNからCiNii Research OpenSearch APIでNCIDを取得し収録物識別子に追加（CiNii書誌ページへの参照リンク付き）
-- Crossref ISBN・relation フィールドの関連情報への取り込み：book系でISBNをisIdenticalTo/ISBNとして追加、全資源タイプでCrossref relationフィールドのエントリを関連情報に追加
-- JGN（Japan Grant Number）連携：award が `JP` で始まる場合に Crossref JGN API（prefix `10.52926`）を照会し、JST助成金の課題名（日英）と課題DOI URIを自動取得。JGN未登録の場合は既存のKAKEN連携（JSPS科研費）にフォールバック
-- KAKEN/JGN番号からの助成機関自動設定：課題番号からJGN/KAKEN APIで助成機関名・Crossref Funder IDを自動補完。UIの「助成機関を検索」ボタンで手動入力時も逆引き可能
-- 識別子からの機関名逆引き
-  - 所属機関識別子（ROR）・助成機関識別子（ROR / Crossref Funder）を入力すると「名称を確認」ボタンが表示されます。
-  - ボタンを押すと、APIから名称を取得します。「上書き」ボタンを押して現在の内容を置き換えることができます。
-
-### Phase 2
-
-- メタデータ収集（`collectMetadata()`）
-- TSV出力（`generateTsv()`、ダウンロードボタン）
-
-## 技術スタック
-
-- HTML5 / CSS3 / JavaScript（依存ライブラリなし、単一HTMLファイル）
-- 外部API: [Crossref](https://api.crossref.org/), [JaLC](https://api.japanlinkcenter.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/), [CiNii Research](https://cir.nii.ac.jp/), [KAKEN API](https://support.nii.ac.jp/ja/kaken/api/api_outline)
-
 ## ディレクトリ構成
 
 ```
 ├── make_jc_importer.html      # メインツール（通常ブラウザ版・単一HTMLファイル）
 ├── funder_lookup.html         # 助成情報検索ツール（通常ブラウザ版）
-├── chrome-extension/          # Chrome拡張版（このフォルダを読み込んで使用）
+├── chrome-extension/          # Chrome拡張機能版（このフォルダを読み込んで使用）
 │   ├── manifest.json          #   Manifest V3 定義
 │   ├── background.js          #   Service Worker（CORS プロキシ）
 │   ├── panel.html             #   サイドパネル（メインツール）
@@ -208,33 +227,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 - [使い方ガイド](docs/user_guide.md)
 - [作業ログ](docs/worklog.md) 実装作業時のログです。
 - [APIフロー整理](api-flow.md) Crossref/OpenAlex等の取得順・JPCOARマッピングの概要です。
-
-### 実装計画・実装記録
-
-- [Phase 1](docs/Implementation_phase1.md) 現在の実装計画書です。
-- [Phase 2](docs/Implementation_phase2.md) TSVファイル出力対応の実装計画書です。
-- [Chrome拡張化（Issue #70 + PR #61）](docs/Implementation_issue70.md) Chrome拡張（CORS回避・APIキー管理・OPF API連携）の実装記録です。
-- [KAKEN対応](docs/Implementation_KAKEN.md) KAKEN APIからのデータ取得に関する実装計画書です。
-- [JaLC API対応](docs/Implementation_JaLC.md) JaLC REST APIからのデータ取得に関する実装計画書です。
-- [Open Policy Finder連携](docs/Implementation_OPF.md) OPF API/参照リンク対応の実装計画書です。
-- [DOI必須項目バッジ表示](docs/Implementation_doi_badges.md) DOI必須項目バッジ表示機能の実装計画書です。
-- [Issue #17 識別子からの機関名逆引き](docs/Implementation_issue17.md)
-- [Issue #42 関連情報取得改善](docs/Implementation_issue42.md)
-- [助成情報検索ツール](docs/Implementation_funder_lookup.md) 助成情報検索ツールの実装記録です。
-
-### フィールド・語彙リファレンス
-
-- [フィールドマッピング一覧](docs/fieldmapping.md) Crossref/OpenAlexとのマッピング表です。
-- [JPCOARスキーマ フィールド一覧](docs/fields.md) 「デフォルトアイテムタイプ（フル）」に含まれるフィールド一覧です。
-- [JPCOARスキーマ 項目別説明リンク一覧](docs/JPCOARschema_guide.md)
-- [資源タイプ語彙別表](docs/resource_type_vocabulary.md) JPCOAR 2.0対応の資源タイプ語彙一覧です。
-- [Crossref type → JPCOAR 資源タイプ マッピング](docs/crossref_type_mapping.md)
-- [JPCOAR/JaLC/Crossref 必須項目マッピング](docs/JPCOAR_JaLC_Crossref_requirements.md)
-- [アクセス権 統制語彙](docs/accessrights.md)
-- [関連識別子 統制語彙](docs/relatedIdentifier.md)
-- [attribute_value_mlt と配列記法のルール](docs/attribute_value_mlt.md)
-- [TSVエクスポート パイプライン比較](docs/pipeline_comparison.md)
-- [WEKO3 TSVインポート仕様](docs/weko3_tsv_import_spec.md)
+- [機能と技術](function.md) 機能と技術、実装に関するドキュメントです。
 
 ## ライセンス
 
@@ -256,7 +249,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
-| 2026-03-17 | Chrome拡張でTSV出力ボタンがCSPエラーで動作しない不具合を修正：インラインイベントハンドラをaddEventListenerに置換（[#103](https://github.com/tzhaya/jc-import-file-maker/issues/103)） |
+| 2026-03-17 | Chrome拡張機能でTSV出力ボタンがCSPエラーで動作しない不具合を修正：インラインイベントハンドラをaddEventListenerに置換（[#103](https://github.com/tzhaya/jc-import-file-maker/issues/103)） |
 | 2026-03-17 | 助成情報検索ツールの課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Acknowledgementsテキストから科研費番号（JPプレフィックスなし）を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
 | 2026-03-15 | JPCOARスキーマ説明リンクを2.0に更新、下位項目（著者・助成情報・関連情報等）にもスキーマリンクを追加、JPCOARschema_guide.md を1.0.2/2.0併記に更新（[#87](https://github.com/tzhaya/jc-import-file-maker/issues/87)） |
 | 2026-03-15 | 資源タイプ語彙を JPCOAR 2.0 準拠に更新：TITLE_MAPS.resourcetype から v1.0 廃止語彙（internal report・report part）を削除、CROSSREF_TYPE_MAP の report-component マッピング修正、getDoiCategory() に v2.0 新タイプ追加（[#31](https://github.com/tzhaya/jc-import-file-maker/issues/31)） |
@@ -267,12 +260,12 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 | 2026-03-14 | ファイル情報（file35）入力UI追加：ファイル選択によるメタデータ自動取得、CCライセンス自動設定、TSV出力・プレビュー対応。主題セクション空データ時の表示修正（[#84](https://github.com/tzhaya/jc-import-file-maker/issues/84)） |
 | 2026-03-13 | 科研費課題番号の識別方法修正：funder DOIに依存せず番号パターン（例: 23KF0079）で科研費を識別、KAKEN/CiNii検索が正しく実行されるよう修正（[#82](https://github.com/tzhaya/jc-import-file-maker/issues/82)） |
 | 2026-03-13 | TSVエクスポート機能追加：TSV_HEADERS_TEMPLATEテンプレート駆動方式によるPhase 2 TSV出力実装、プロパティキープレフィックス自動検出、空フィールド省略、残存issues優先順位整理ドキュメント追加 |
-| 2026-03-11 | 助成情報検索ツールの入力モード自動判定：ラジオボタンを廃止し、課題番号リストと謝辞テキストを自動判定して課題番号を抽出。Chrome拡張3ファイルのタブfont-size統一 |
+| 2026-03-11 | 助成情報検索ツールの入力モード自動判定：ラジオボタンを廃止し、課題番号リストと謝辞テキストを自動判定して課題番号を抽出。Chrome拡張機能3ファイルのタブfont-size統一 |
 | 2026-03-11 | funder_lookup.html に助成情報TSV出力機能を追加：検索結果をWEKO3インポート用TSV形式で生成、TSVヘッダー貼り付けによるプレフィックス自動検出、JPCOAR 1.0/2.0切替、クリップボードコピー対応（[#67](https://github.com/tzhaya/jc-import-file-maker/issues/67)） |
-| 2026-03-11 | JAIRO Cloud OpenSearchクライアントをChrome拡張に統合：「OpenSearch検索」タブを追加、リポジトリURL設定・資源タイプフィルタ・ページング対応、options.htmlにデフォルトリポジトリURL設定欄を追加（[#72](https://github.com/tzhaya/jc-import-file-maker/issues/72)） |
+| 2026-03-11 | JAIRO Cloud OpenSearchクライアントをChrome拡張機能に統合：「OpenSearch検索」タブを追加、リポジトリURL設定・資源タイプフィルタ・ページング対応、options.htmlにデフォルトリポジトリURL設定欄を追加（[#72](https://github.com/tzhaya/jc-import-file-maker/issues/72)） |
 | 2026-03-11 | JaLCデータ取り込み修正：`keyword_list`を主題（scheme: Other）として取り込み、収録物名のtypeなし時フォールバック追加、出版者をcontent_language優先に並べ替え、出版タイプをVoRデフォルト設定（[#77](https://github.com/tzhaya/jc-import-file-maker/issues/77)） |
 | 2026-03-11 | 「書誌情報」収録誌名の追加・削除UI修正：雑誌名（`bibliographic_titles`）に追加・削除ボタンを追加（[#75](https://github.com/tzhaya/jc-import-file-maker/issues/75)） |
-| 2026-03-10 | Chrome拡張化（[#70](https://github.com/tzhaya/jc-import-file-maker/issues/70)）：Manifest V3 Chrome拡張を追加。Service Worker経由でCORS非対応API（KAKEN XML・JaLC・OPF）を有効化。options.htmlでAPIキーをchrome.storage.localに安全に保存。KAKEN XML API・JaLC APIを本有効化。OPF APIポリシー取得・モーダル表示を実装（[#50](https://github.com/tzhaya/jc-import-file-maker/issues/50)・PR [#61](https://github.com/tzhaya/jc-import-file-maker/pull/61)同時対応） |
+| 2026-03-10 | Chrome拡張機能化（[#70](https://github.com/tzhaya/jc-import-file-maker/issues/70)）：Manifest V3 Chrome拡張機能を追加。Service Worker経由でCORS非対応API（KAKEN XML・JaLC・OPF）を有効化。options.htmlでAPIキーをchrome.storage.localに安全に保存。KAKEN XML API・JaLC APIを本有効化。OPF APIポリシー取得・モーダル表示を実装（[#50](https://github.com/tzhaya/jc-import-file-maker/issues/50)・PR [#61](https://github.com/tzhaya/jc-import-file-maker/pull/61)同時対応） |
 | 2026-03-07 | funder_lookup.html に更新チェック機能を追加：GitHubリポジトリとの最終更新日比較で新バージョンを通知（[#65](https://github.com/tzhaya/jc-import-file-maker/issues/65)） |
 | 2026-03-05 | OPF参照リンク：ISSNベースのOpen Policy Finder検索リンクをinfo-barに追加。ISSN付き雑誌論文でOAポリシーを別タブで確認可能に（[#62](https://github.com/tzhaya/jc-import-file-maker/issues/62)） |
 | 2026-03-05 | KAKEN XML API 暫定スキップ：CORS非対応による処理時間短縮のためfetchKakenXml()呼び出しをコメントアウト（[#59](https://github.com/tzhaya/jc-import-file-maker/issues/59)） |
