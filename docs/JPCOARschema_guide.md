@@ -94,6 +94,15 @@
 | 20-.1 | 関連識別子 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/20-.1 |
 | 20-.2 | 関連名称 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/20-.2 |
 
+### 出版者情報 (#11)
+
+| # | 名称 | URL (2.0) |
+|---|------|-----------|
+| 11-.1 | 出版者名 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/11-.1 |
+| 11-.2 | 出版地 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/11-.2 |
+| 11-.3 | 出版地（国名コード） | https://schema.irdb.nii.ac.jp/ja/schema/2.0/11-.3 |
+| 11-.4 | 出版者注記 | https://schema.irdb.nii.ac.jp/ja/schema/2.0/11-.4 |
+
 ### 助成情報 (#23)
 
 | # | 名称 | URL (2.0) |

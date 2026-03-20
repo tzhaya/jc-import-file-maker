@@ -65,12 +65,12 @@ const EXCLUDED_KEYS = new Set([
   'item_1698624001',  // データセットシリーズ
   'item_1698624002',  // 原文の言語
   'item_1698624003',  // 大きさ
-  'item_1698624008',  // 日付（リテラル）
+  // item_1698624008 — 日付（リテラル）: #33 で有効化
   'item_1698624009',  // 所蔵機関
   'item_1698624010',  // 物理的形態
   'item_1698624006',  // 版
   'item_1698624007',  // 部編名
-  'item_1698624005',  // 出版者情報
+  // item_1698624005 — 出版者情報: #32 で有効化
 ]);
 
 // ===== 資源タイプ語彙マッピング =====
@@ -334,7 +334,9 @@ const JPCOAR_LINKS = {
   'item_30002_subject8':                  'https://schema.irdb.nii.ac.jp/ja/schema/2.0/8',
   'item_30002_description9':              'https://schema.irdb.nii.ac.jp/ja/schema/2.0/9',
   'item_30002_publisher10':               'https://schema.irdb.nii.ac.jp/ja/schema/2.0/10',
+  'item_1698624005':                      'https://schema.irdb.nii.ac.jp/ja/schema/2.0/11',
   'item_30002_date11':                    'https://schema.irdb.nii.ac.jp/ja/schema/2.0/12',
+  'item_1698624008':                      'https://schema.irdb.nii.ac.jp/ja/schema/2.0/13',
   'item_30002_language12':                'https://schema.irdb.nii.ac.jp/ja/schema/2.0/14',
   'item_30002_resource_type13':           'https://schema.irdb.nii.ac.jp/ja/schema/2.0/15',
   'item_30002_version14':                 'https://schema.irdb.nii.ac.jp/ja/schema/2.0/16',
@@ -390,6 +392,11 @@ const JPCOAR_SUBFIELD_LINKS = {
   funding_stream:       'https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.4',
   award_number:         'https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.5',
   award_title:          'https://schema.irdb.nii.ac.jp/ja/schema/2.0/23-.6',
+  // 出版者情報 (#11)
+  publisher_detail_name:        'https://schema.irdb.nii.ac.jp/ja/schema/2.0/11-.1',
+  publisher_detail_location:    'https://schema.irdb.nii.ac.jp/ja/schema/2.0/11-.2',
+  publisher_detail_place:       'https://schema.irdb.nii.ac.jp/ja/schema/2.0/11-.3',
+  publisher_detail_description: 'https://schema.irdb.nii.ac.jp/ja/schema/2.0/11-.4',
   // ファイル情報 (#43)
   file_uri:             'https://schema.irdb.nii.ac.jp/ja/schema/2.0/43-.1',
   file_format:          'https://schema.irdb.nii.ac.jp/ja/schema/2.0/43-.2',
@@ -1916,12 +1923,24 @@ async function mapToItemType(crJson, oaJson, rorMap) {
       ? [{ subitem_publisher: crJson.publisher, subitem_publisher_language: 'en' }]
       : [],
 
+    // ----- 出版者情報 -----
+    item_1698624005: crJson.publisher ? [{
+      publisher_names: [{ publisher_name: crJson.publisher, publisher_name_language: 'en' }],
+      publisher_locations: crJson['publisher-location']
+        ? [{ publisher_location: crJson['publisher-location'], publisher_location_language: 'en' }] : [],
+      publication_places: [],
+      publisher_descriptions: [],
+    }] : [],
+
     // ----- 日付 -----
     item_30002_date11: [
       pubDate       && { subitem_date_issued_datetime: pubDate,       subitem_date_issued_type: 'Issued' },
       acceptedDate  && { subitem_date_issued_datetime: acceptedDate,  subitem_date_issued_type: 'Accepted' },
       submittedDate && { subitem_date_issued_datetime: submittedDate, subitem_date_issued_type: 'Submitted' },
     ].filter(Boolean),
+
+    // ----- 日付（リテラル）-----
+    item_1698624008: [],
 
     // ----- 言語 -----
     item_30002_language12: [{ subitem_language: 'eng' }],
@@ -2313,7 +2332,14 @@ async function mapToItemTypeJaLC(jalcJson) {
     item_30002_subject8: subjects,
     item_30002_description9: descriptions,
     item_30002_publisher10: publishers,
+    item_1698624005: publishers.length ? [{
+      publisher_names: publishers.map(p => ({ publisher_name: p.subitem_publisher, publisher_name_language: p.subitem_publisher_language })),
+      publisher_locations: [],
+      publication_places: [],
+      publisher_descriptions: [],
+    }] : [],
     item_30002_date11: dateEntries.filter(Boolean),
+    item_1698624008: [],
     item_30002_language12: lang639_2 ? [{ subitem_language: lang639_2 }] : [],
     item_30002_resource_type13: { resourcetype, resourceuri },
     item_30002_version14: { subitem_version: '' },
@@ -2415,12 +2441,20 @@ const FIELD_DEFS = [
       { k: 'subitem_publisher_language', l: '言語', t: 'select', o: 'language' },
     ],
     sum: a => a?.[0]?.subitem_publisher || '' },
+  { key: 'item_1698624005', label: '出版者情報', type: 'publisherDetail',
+    sum: a => { if (!a?.length) return ''; const n = a[0]?.publisher_names?.[0]?.publisher_name || ''; return n; } },
   { key: 'item_30002_date11', label: '日付', type: 'array',
     fields: [
       { k: 'subitem_date_issued_datetime', l: '日付', t: 'text' },
       { k: 'subitem_date_issued_type', l: '日付タイプ', t: 'select', o: 'subitem_date_issued_type' },
     ],
     sum: a => a?.[0] ? `${a[0].subitem_date_issued_datetime||''} (${a[0].subitem_date_issued_type||''})` : '' },
+  { key: 'item_1698624008', label: '日付（リテラル）', type: 'array',
+    fields: [
+      { k: 'subitem_dcterms_date', l: '日付（リテラル）', t: 'text' },
+      { k: 'subitem_dcterms_date_language', l: '言語', t: 'select', o: 'language' },
+    ],
+    sum: a => a?.[0]?.subitem_dcterms_date || '' },
   { key: 'item_30002_language12', label: '言語', type: 'array',
     fields: [{ k: 'subitem_language', l: '言語', t: 'select', o: 'subitem_language' }],
     sum: a => a?.[0]?.subitem_language || '' },
@@ -3593,6 +3627,106 @@ function renderOneFunder(funder, idx, defLabel) {
   return fundItem;
 }
 
+// ----- 1件の出版者情報DOMを生成するヘルパー -----
+function renderOnePublisherDetail(entry, idx, defLabel) {
+  const pName = entry.publisher_names?.[0]?.publisher_name || '';
+  const itemLabel = `${defLabel}[${idx}]${pName ? ': '+pName.substring(0,40) : ''}`;
+  const { item: pdItem, content: pdContent } = createNestedItem(itemLabel, 1);
+
+  // 出版者名（配列）
+  const { wrapper: pnWrap, content: pnCont } = createNestedSectionHeader('出版者名', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('出版者名', '', 'text', null, { fieldKey: 'publisher_name' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'publisher_name_language' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  }, JPCOAR_SUBFIELD_LINKS.publisher_detail_name);
+  (entry.publisher_names || []).forEach(pn => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('出版者名', pn.publisher_name || '', 'text', null, { fieldKey: 'publisher_name' }));
+    grp.appendChild(createFieldRow('言語', pn.publisher_name_language || '', 'select', 'language', { fieldKey: 'publisher_name_language' }));
+    grp.appendChild(delBtn);
+    pnCont.appendChild(grp);
+  });
+  pdContent.appendChild(pnWrap);
+
+  // 出版地（配列）
+  const { wrapper: plWrap, content: plCont } = createNestedSectionHeader('出版地', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('出版地', '', 'text', null, { fieldKey: 'publisher_location' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'publisher_location_language' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  }, JPCOAR_SUBFIELD_LINKS.publisher_detail_location);
+  (entry.publisher_locations || []).forEach(pl => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('出版地', pl.publisher_location || '', 'text', null, { fieldKey: 'publisher_location' }));
+    grp.appendChild(createFieldRow('言語', pl.publisher_location_language || '', 'select', 'language', { fieldKey: 'publisher_location_language' }));
+    grp.appendChild(delBtn);
+    plCont.appendChild(grp);
+  });
+  pdContent.appendChild(plWrap);
+
+  // 出版地（国名コード）（配列）
+  const { wrapper: ppWrap, content: ppCont } = createNestedSectionHeader('出版地（国名コード）', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('国名コード', '', 'text', null, { fieldKey: 'publication_place' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'publication_place_language' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  }, JPCOAR_SUBFIELD_LINKS.publisher_detail_place);
+  (entry.publication_places || []).forEach(pp => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('国名コード', pp.publication_place || '', 'text', null, { fieldKey: 'publication_place' }));
+    grp.appendChild(createFieldRow('言語', pp.publication_place_language || '', 'select', 'language', { fieldKey: 'publication_place_language' }));
+    grp.appendChild(delBtn);
+    ppCont.appendChild(grp);
+  });
+  pdContent.appendChild(ppWrap);
+
+  // 出版者注記（配列）
+  const { wrapper: pdescWrap, content: pdescCont } = createNestedSectionHeader('出版者注記', 2, (cont) => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('出版者注記', '', 'text', null, { fieldKey: 'publisher_description' }));
+    grp.appendChild(createFieldRow('言語', '', 'select', 'language', { fieldKey: 'publisher_description_language' }));
+    grp.appendChild(delBtn);
+    cont.appendChild(grp);
+  }, JPCOAR_SUBFIELD_LINKS.publisher_detail_description);
+  (entry.publisher_descriptions || []).forEach(pd => {
+    const { grp, delBtn } = createEntryGroup();
+    grp.appendChild(createFieldRow('出版者注記', pd.publisher_description || '', 'text', null, { fieldKey: 'publisher_description' }));
+    grp.appendChild(createFieldRow('言語', pd.publisher_description_language || '', 'select', 'language', { fieldKey: 'publisher_description_language' }));
+    grp.appendChild(delBtn);
+    pdescCont.appendChild(grp);
+  });
+  pdContent.appendChild(pdescWrap);
+
+  return pdItem;
+}
+
+// ----- 出版者情報 -----
+function renderPublisherDetailField(data) {
+  const arr = Array.isArray(data) ? data : [];
+  const summaryText = arr[0]?.publisher_names?.[0]?.publisher_name || '';
+  const { section, content } = createSection('item_1698624005', '出版者情報', summaryText);
+
+  arr.forEach((entry, idx) => {
+    content.appendChild(renderOnePublisherDetail(entry, idx, '出版者情報'));
+  });
+
+  content.appendChild(createAddButton('出版者情報', () => {
+    const idx = content.querySelectorAll(':scope > .nested-item').length;
+    const emptyEntry = {
+      publisher_names: [{ publisher_name: '', publisher_name_language: '' }],
+      publisher_locations: [],
+      publication_places: [],
+      publisher_descriptions: [],
+    };
+    content.insertBefore(renderOnePublisherDetail(emptyEntry, idx, '出版者情報'), content.lastChild);
+  }));
+  return section;
+}
+
 // ----- 助成情報 -----
 function renderFundingField(def, funders) {
   const arr = Array.isArray(funders) ? funders : [];
@@ -4065,6 +4199,9 @@ function renderAll(metadata) {
       case 'relation':
         sectionEl = renderRelationField(def, value);
         break;
+      case 'publisherDetail':
+        sectionEl = renderPublisherDetailField(value);
+        break;
       case 'funding':
         sectionEl = renderFundingField(def, value);
         break;
@@ -4127,7 +4264,14 @@ function buildEmptyMetadata() {
     item_30002_subject8: [],
     item_30002_description9: [],
     item_30002_publisher10: [],
+    item_1698624005: [{
+      publisher_names: [{ publisher_name: '', publisher_name_language: '' }],
+      publisher_locations: [{ publisher_location: '', publisher_location_language: '' }],
+      publication_places: [{ publication_place: '', publication_place_language: '' }],
+      publisher_descriptions: [{ publisher_description: '', publisher_description_language: '' }],
+    }],
     item_30002_date11: [],
+    item_1698624008: [],
     item_30002_language12: [{ subitem_language: '' }],
     item_30002_resource_type13: { resourcetype: '', resourceuri: '' },
     item_30002_version14: { subitem_version: '' },
@@ -4363,6 +4507,50 @@ function collectRelationField(section) {
       }
     });
     items.push(rel);
+  });
+  return items;
+}
+
+function collectPublisherDetailField(section) {
+  const items = [];
+  const content = section.querySelector(':scope > .accordion-content');
+  if (!content) return items;
+  content.querySelectorAll(':scope > .nested-item.level-1').forEach(pdEl => {
+    const pc = pdEl.querySelector(':scope > .item-content');
+    if (!pc) return;
+    const entry = {
+      publisher_names: [],
+      publisher_locations: [],
+      publication_places: [],
+      publisher_descriptions: [],
+    };
+    pc.querySelectorAll('.entry-group').forEach(grp => {
+      if (grp.querySelector('[data-field-key="publisher_name"]')) {
+        entry.publisher_names.push({
+          publisher_name: getFieldVal(grp, 'publisher_name'),
+          publisher_name_language: getFieldVal(grp, 'publisher_name_language'),
+        });
+      }
+      if (grp.querySelector('[data-field-key="publisher_location"]')) {
+        entry.publisher_locations.push({
+          publisher_location: getFieldVal(grp, 'publisher_location'),
+          publisher_location_language: getFieldVal(grp, 'publisher_location_language'),
+        });
+      }
+      if (grp.querySelector('[data-field-key="publication_place"]')) {
+        entry.publication_places.push({
+          publication_place: getFieldVal(grp, 'publication_place'),
+          publication_place_language: getFieldVal(grp, 'publication_place_language'),
+        });
+      }
+      if (grp.querySelector('[data-field-key="publisher_description"]')) {
+        entry.publisher_descriptions.push({
+          publisher_description: getFieldVal(grp, 'publisher_description'),
+          publisher_description_language: getFieldVal(grp, 'publisher_description_language'),
+        });
+      }
+    });
+    items.push(entry);
   });
   return items;
 }
@@ -4613,6 +4801,7 @@ function collectFromDOM() {
       case 'creator':     metadata[def.key] = collectPersonField(section, true); break;
       case 'contributor':  metadata[def.key] = collectPersonField(section, false); break;
       case 'relation':    metadata[def.key] = collectRelationField(section); break;
+      case 'publisherDetail': metadata[def.key] = collectPublisherDetailField(section); break;
       case 'funding':     metadata[def.key] = collectFundingField(section); break;
       case 'biblio':      metadata[def.key] = collectBiblioField(section); break;
       case 'rightsHolder': metadata[def.key] = collectRightsHolderField(section); break;
@@ -4631,7 +4820,7 @@ function collectFromDOM() {
 // tsv_headers.json のインライン定義。
 // 構造変更・キー名変更時はこの定数を data/tsv_headers.json に合わせて更新する。
 // 5要素: [row0:#ItemType行, row1:プロパティキー行, row2:日本語ラベル行, row3:System印行, row4:制約行]
-const TSV_HEADERS_TEMPLATE = [["#ItemType","(未設定)",""],["#.id",".uri",".metadata.path[0]",".pos_index[0]",".publish_status",".feedback_mail[0]",".researchmap_linkage",".cnri",".doi_ra",".doi",".edit_mode",".metadata.pubdate",".metadata.item_30002_title0[0].subitem_title",".metadata.item_30002_title0[0].subitem_title_language",".metadata.item_30002_alternative_title1[0].subitem_alternative_title",".metadata.item_30002_alternative_title1[0].subitem_alternative_title_language",".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNameIdentifiers[0].affiliationNameIdentifier",".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNameIdentifiers[0].affiliationNameIdentifierScheme",".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNameIdentifiers[0].affiliationNameIdentifierURI",".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNames[0].affiliationName",".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNames[0].affiliationNameLang",".metadata.item_30002_creator2[0].creatorAlternatives[0].creatorAlternative",".metadata.item_30002_creator2[0].creatorAlternatives[0].creatorAlternativeLang",".metadata.item_30002_creator2[0].creatorMails[0].creatorMail",".metadata.item_30002_creator2[0].creatorNames[0].creatorName",".metadata.item_30002_creator2[0].creatorNames[0].creatorNameLang",".metadata.item_30002_creator2[0].creatorNames[0].creatorNameType",".metadata.item_30002_creator2[0].creatorType",".metadata.item_30002_creator2[0].familyNames[0].familyName",".metadata.item_30002_creator2[0].familyNames[0].familyNameLang",".metadata.item_30002_creator2[0].givenNames[0].givenName",".metadata.item_30002_creator2[0].givenNames[0].givenNameLang",".metadata.item_30002_creator2[0].nameIdentifiers[0].nameIdentifier",".metadata.item_30002_creator2[0].nameIdentifiers[0].nameIdentifierScheme",".metadata.item_30002_creator2[0].nameIdentifiers[0].nameIdentifierURI",".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNameIdentifiers[0].contributorAffiliationNameIdentifier",".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNameIdentifiers[0].contributorAffiliationScheme",".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNameIdentifiers[0].contributorAffiliationURI",".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNames[0].contributorAffiliationName",".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNames[0].contributorAffiliationNameLang",".metadata.item_30002_contributor3[0].contributorAlternatives[0].contributorAlternative",".metadata.item_30002_contributor3[0].contributorAlternatives[0].contributorAlternativeLang",".metadata.item_30002_contributor3[0].contributorMails[0].contributorMail",".metadata.item_30002_contributor3[0].contributorNames[0].contributorName",".metadata.item_30002_contributor3[0].contributorNames[0].lang",".metadata.item_30002_contributor3[0].contributorNames[0].nameType",".metadata.item_30002_contributor3[0].contributorType",".metadata.item_30002_contributor3[0].familyNames[0].familyName",".metadata.item_30002_contributor3[0].familyNames[0].familyNameLang",".metadata.item_30002_contributor3[0].givenNames[0].givenName",".metadata.item_30002_contributor3[0].givenNames[0].givenNameLang",".metadata.item_30002_contributor3[0].nameIdentifiers[0].nameIdentifier",".metadata.item_30002_contributor3[0].nameIdentifiers[0].nameIdentifierScheme",".metadata.item_30002_contributor3[0].nameIdentifiers[0].nameIdentifierURI",".metadata.item_30002_access_rights4.subitem_access_right",".metadata.item_30002_access_rights4.subitem_access_right_uri",".metadata.item_30002_apc5.subitem_apc",".metadata.item_30002_rights6[0].subitem_rights",".metadata.item_30002_rights6[0].subitem_rights_language",".metadata.item_30002_rights6[0].subitem_rights_resource",".metadata.item_30002_rights_holder7[0].nameIdentifiers[0].nameIdentifier",".metadata.item_30002_rights_holder7[0].nameIdentifiers[0].nameIdentifierScheme",".metadata.item_30002_rights_holder7[0].nameIdentifiers[0].nameIdentifierURI",".metadata.item_30002_rights_holder7[0].rightHolderNames[0].rightHolderLanguage",".metadata.item_30002_rights_holder7[0].rightHolderNames[0].rightHolderName",".metadata.item_30002_subject8[0].subitem_subject",".metadata.item_30002_subject8[0].subitem_subject_language",".metadata.item_30002_subject8[0].subitem_subject_scheme",".metadata.item_30002_subject8[0].subitem_subject_uri",".metadata.item_30002_description9[0].subitem_description",".metadata.item_30002_description9[0].subitem_description_language",".metadata.item_30002_description9[0].subitem_description_type",".metadata.item_30002_publisher10[0].subitem_publisher",".metadata.item_30002_publisher10[0].subitem_publisher_language",".metadata.item_30002_date11[0].subitem_date_issued_datetime",".metadata.item_30002_date11[0].subitem_date_issued_type",".metadata.item_30002_language12[0].subitem_language",".metadata.item_30002_resource_type13.resourcetype",".metadata.item_30002_resource_type13.resourceuri",".metadata.item_30002_version14.subitem_version",".metadata.item_30002_version_type15.subitem_peer_reviewed",".metadata.item_30002_version_type15.subitem_version_resource",".metadata.item_30002_version_type15.subitem_version_type",".metadata.item_30002_identifier16[0].subitem_identifier_type",".metadata.item_30002_identifier16[0].subitem_identifier_uri",".metadata.item_30002_identifier_registration17.subitem_identifier_reg_text",".metadata.item_30002_identifier_registration17.subitem_identifier_reg_type",".metadata.item_30002_relation18[0].subitem_relation_name[0].subitem_relation_name_language",".metadata.item_30002_relation18[0].subitem_relation_name[0].subitem_relation_name_text",".metadata.item_30002_relation18[0].subitem_relation_type",".metadata.item_30002_relation18[0].subitem_relation_type_id.subitem_relation_type_id_text",".metadata.item_30002_relation18[0].subitem_relation_type_id.subitem_relation_type_select",".metadata.item_30002_temporal19[0].subitem_temporal_language",".metadata.item_30002_temporal19[0].subitem_temporal_text",".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_east_longitude",".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_north_latitude",".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_south_latitude",".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_west_longitude",".metadata.item_30002_geolocation20[0].subitem_geolocation_place[0].subitem_geolocation_place_text",".metadata.item_30002_geolocation20[0].subitem_geolocation_point.subitem_point_latitude",".metadata.item_30002_geolocation20[0].subitem_geolocation_point.subitem_point_longitude",".metadata.item_30002_funding_reference21[0].subitem_award_numbers.subitem_award_number",".metadata.item_30002_funding_reference21[0].subitem_award_numbers.subitem_award_number_type",".metadata.item_30002_funding_reference21[0].subitem_award_numbers.subitem_award_uri",".metadata.item_30002_funding_reference21[0].subitem_award_titles[0].subitem_award_title",".metadata.item_30002_funding_reference21[0].subitem_award_titles[0].subitem_award_title_language",".metadata.item_30002_funding_reference21[0].subitem_funder_identifiers.subitem_funder_identifier",".metadata.item_30002_funding_reference21[0].subitem_funder_identifiers.subitem_funder_identifier_type",".metadata.item_30002_funding_reference21[0].subitem_funder_identifiers.subitem_funder_identifier_type_uri",".metadata.item_30002_funding_reference21[0].subitem_funder_names[0].subitem_funder_name",".metadata.item_30002_funding_reference21[0].subitem_funder_names[0].subitem_funder_name_language",".metadata.item_30002_funding_reference21[0].subitem_funding_stream_identifiers.subitem_funding_stream_identifier",".metadata.item_30002_funding_reference21[0].subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type",".metadata.item_30002_funding_reference21[0].subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri",".metadata.item_30002_funding_reference21[0].subitem_funding_streams[0].subitem_funding_stream",".metadata.item_30002_funding_reference21[0].subitem_funding_streams[0].subitem_funding_stream_language",".metadata.item_30002_source_identifier22[0].subitem_source_identifier",".metadata.item_30002_source_identifier22[0].subitem_source_identifier_type",".metadata.item_30002_source_title23[0].subitem_source_title",".metadata.item_30002_source_title23[0].subitem_source_title_language",".metadata.item_30002_volume_number24.subitem_volume",".metadata.item_30002_issue_number25.subitem_issue",".metadata.item_30002_number_of_pages26.subitem_number_of_pages",".metadata.item_30002_page_start27.subitem_start_page",".metadata.item_30002_page_end28.subitem_end_page",".metadata.item_30002_bibliographic_information29.bibliographic_titles[0].bibliographic_title",".metadata.item_30002_bibliographic_information29.bibliographic_titles[0].bibliographic_titleLang",".metadata.item_30002_bibliographic_information29.bibliographicIssueDates.bibliographicIssueDate",".metadata.item_30002_bibliographic_information29.bibliographicIssueDates.bibliographicIssueDateType",".metadata.item_30002_bibliographic_information29.bibliographicIssueNumber",".metadata.item_30002_bibliographic_information29.bibliographicNumberOfPages",".metadata.item_30002_bibliographic_information29.bibliographicPageEnd",".metadata.item_30002_bibliographic_information29.bibliographicPageStart",".metadata.item_30002_bibliographic_information29.bibliographicVolumeNumber",".metadata.item_30002_dissertation_number30.subitem_dissertationnumber",".metadata.item_30002_degree_name31[0].subitem_degreename",".metadata.item_30002_degree_name31[0].subitem_degreename_language",".metadata.item_30002_date_granted32.subitem_dategranted",".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor_identifier[0].subitem_degreegrantor_identifier_name",".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor_identifier[0].subitem_degreegrantor_identifier_scheme",".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor[0].subitem_degreegrantor_language",".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor[0].subitem_degreegrantor_name",".metadata.item_30002_conference34[0].subitem_conference_country",".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_date_language",".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_end_day",".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_end_month",".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_end_year",".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_period",".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_start_day",".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_start_month",".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_start_year",".metadata.item_30002_conference34[0].subitem_conference_names[0].subitem_conference_name",".metadata.item_30002_conference34[0].subitem_conference_names[0].subitem_conference_name_language",".metadata.item_30002_conference34[0].subitem_conference_places[0].subitem_conference_place",".metadata.item_30002_conference34[0].subitem_conference_places[0].subitem_conference_place_language",".metadata.item_30002_conference34[0].subitem_conference_sequence",".metadata.item_30002_conference34[0].subitem_conference_sponsors[0].subitem_conference_sponsor",".metadata.item_30002_conference34[0].subitem_conference_sponsors[0].subitem_conference_sponsor_language",".metadata.item_30002_conference34[0].subitem_conference_venues[0].subitem_conference_venue",".metadata.item_30002_conference34[0].subitem_conference_venues[0].subitem_conference_venue_language",".file_path[0]",".metadata.item_30002_file35[0].accessrole",".metadata.item_30002_file35[0].date[0].dateType",".metadata.item_30002_file35[0].date[0].dateValue",".metadata.item_30002_file35[0].displaytype",".metadata.item_30002_file35[0].fileDate[0].fileDateType",".metadata.item_30002_file35[0].fileDate[0].fileDateValue",".metadata.item_30002_file35[0].filename",".metadata.item_30002_file35[0].filesize[0].value",".metadata.item_30002_file35[0].format",".metadata.item_30002_file35[0].groups",".metadata.item_30002_file35[0].licensefree",".metadata.item_30002_file35[0].licensetype",".metadata.item_30002_file35[0].url.label",".metadata.item_30002_file35[0].url.objectType",".metadata.item_30002_file35[0].url.url",".metadata.item_30002_file35[0].version",".metadata.item_30002_heading36[0].subitem_heading_banner_headline",".metadata.item_30002_heading36[0].subitem_heading_headline",".metadata.item_30002_heading36[0].subitem_heading_language",".metadata.item_1698624001[0].jpcoar_dataset_series",".metadata.item_1698624002[0].original_language",".metadata.item_1698624002[0].original_language_language",".metadata.item_1698624003[0].dcterms_extent",".metadata.item_1698624003[0].dcterms_extent_language",".metadata.item_1698624004[0].catalog_access_rights[0].catalog_access_right",".metadata.item_1698624004[0].catalog_access_rights[0].catalog_access_right_rdf_resource",".metadata.item_1698624004[0].catalog_contributors[0].contributor_names[0].contributor_name",".metadata.item_1698624004[0].catalog_contributors[0].contributor_names[0].contributor_name_language",".metadata.item_1698624004[0].catalog_contributors[0].contributor_type",".metadata.item_1698624004[0].catalog_descriptions.catalog_description",".metadata.item_1698624004[0].catalog_descriptions.catalog_description_language",".metadata.item_1698624004[0].catalog_descriptions.catalog_description_type",".metadata.item_1698624004[0].catalog_file.catalog_file_object_type",".metadata.item_1698624004[0].catalog_file.catalog_file_uri",".metadata.item_1698624004[0].catalog_identifiers[0].catalog_identifier",".metadata.item_1698624004[0].catalog_identifiers[0].catalog_identifier_type",".metadata.item_1698624004[0].catalog_licenses[0].catalog_license",".metadata.item_1698624004[0].catalog_licenses[0].catalog_license_language",".metadata.item_1698624004[0].catalog_licenses[0].catalog_license_rdf_resource",".metadata.item_1698624004[0].catalog_licenses[0].catalog_license_type",".metadata.item_1698624004[0].catalog_rights[0].catalog_right_language",".metadata.item_1698624004[0].catalog_rights[0].catalog_right_rdf_resource",".metadata.item_1698624004[0].catalog_rights[0].catalog_rights_right",".metadata.item_1698624004[0].catalog_subjects[0].catalog_subject",".metadata.item_1698624004[0].catalog_subjects[0].catalog_subject_language",".metadata.item_1698624004[0].catalog_subjects[0].catalog_subject_scheme",".metadata.item_1698624004[0].catalog_subjects[0].catalog_subject_uri",".metadata.item_1698624004[0].catalog_titles[0].catalog_title",".metadata.item_1698624004[0].catalog_titles[0].catalog_title_language",".metadata.item_1698624005[0].publication_places[0].publication_place",".metadata.item_1698624005[0].publisher_descriptions[0].publisher_description",".metadata.item_1698624005[0].publisher_descriptions[0].publisher_description_language",".metadata.item_1698624005[0].publisher_locations[0].publisher_location",".metadata.item_1698624005[0].publisher_names[0].publisher_name",".metadata.item_1698624005[0].publisher_names[0].publisher_name_language",".metadata.item_1698624006[0].edition",".metadata.item_1698624006[0].edition_language",".metadata.item_1698624007[0].volume_title",".metadata.item_1698624007[0].volume_title_language",".metadata.item_1698624008[0].subitem_dcterms_date",".metadata.item_1698624008[0].subitem_dcterms_date_language",".metadata.item_1698624009[0].holding_agent_name_identifier.holding_agent_name_identifier_scheme",".metadata.item_1698624009[0].holding_agent_name_identifier.holding_agent_name_identifier_uri",".metadata.item_1698624009[0].holding_agent_name_identifier.holding_agent_name_identifier_value",".metadata.item_1698624009[0].holding_agent_names[0].holding_agent_name",".metadata.item_1698624009[0].holding_agent_names[0].holding_agent_name_language",".metadata.item_1698624010[0].jpcoar_format",".metadata.item_1698624010[0].jpcoar_format_language"],["#ID","URI",".IndexID[0]",".POS_INDEX[0]",".PUBLISH_STATUS",".FEEDBACK_MAIL[0]",".RESEAECHMAP_LINKAGE",".CNRI",".DOI_RA",".DOI","Keep/Upgrade Version","公開日","タイトル[0].タイトル","タイトル[0].言語","その他のタイトル[0].その他のタイトル","その他のタイトル[0].言語","作成者[0].作成者所属[0].所属機関識別子[0].所属機関識別子","作成者[0].作成者所属[0].所属機関識別子[0].所属機関識別子Scheme","作成者[0].作成者所属[0].所属機関識別子[0].所属機関識別子URI","作成者[0].作成者所属[0].所属機関名[0].所属機関名","作成者[0].作成者所属[0].所属機関名[0].言語","作成者[0].作成者別名[0].別名","作成者[0].作成者別名[0].言語","作成者[0].作成者メールアドレス[0].メールアドレス","作成者[0].作成者姓名[0].姓名","作成者[0].作成者姓名[0].言語","作成者[0].作成者姓名[0].名前タイプ","作成者[0].作成者タイプ","作成者[0].作成者姓[0].姓","作成者[0].作成者姓[0].言語","作成者[0].作成者名[0].名","作成者[0].作成者名[0].言語","作成者[0].作成者識別子[0].作成者識別子","作成者[0].作成者識別子[0].作成者識別子Scheme","作成者[0].作成者識別子[0].作成者識別子URI","寄与者[0].寄与者所属[0].所属機関識別子[0].所属機関識別子","寄与者[0].寄与者所属[0].所属機関識別子[0].所属機関識別子Scheme","寄与者[0].寄与者所属[0].所属機関識別子[0].所属機関識別子URI","寄与者[0].寄与者所属[0].所属機関名[0].所属機関名","寄与者[0].寄与者所属[0].所属機関名[0].言語","寄与者[0].寄与者別名[0].別名","寄与者[0].寄与者別名[0].言語","寄与者[0].寄与者メールアドレス[0].メールアドレス","寄与者[0].寄与者姓名[0].姓名","寄与者[0].寄与者姓名[0].言語","寄与者[0].寄与者姓名[0].名前タイプ","寄与者[0].寄与者タイプ","寄与者[0].寄与者姓[0].姓","寄与者[0].寄与者姓[0].言語","寄与者[0].寄与者名[0].名","寄与者[0].寄与者名[0].言語","寄与者[0].寄与者識別子[0].寄与者識別子","寄与者[0].寄与者識別子[0].寄与者識別子Scheme","寄与者[0].寄与者識別子[0].寄与者識別子URI","アクセス権.アクセス権","アクセス権.アクセス権URI","APC.APC","権利情報[0].権利情報","権利情報[0].言語","権利情報[0].権利情報Resource","権利者情報[0].権利者識別子[0].権利者識別子","権利者情報[0].権利者識別子[0].権利者識別子Scheme","権利者情報[0].権利者識別子[0].権利者識別子URI","権利者情報[0].権利者名[0].言語","権利者情報[0].権利者名[0].権利者名","主題[0].主題","主題[0].言語","主題[0].主題Scheme","主題[0].主題URI","内容記述[0].内容記述","内容記述[0].言語","内容記述[0].内容記述タイプ","出版者[0].出版者","出版者[0].言語","日付[0].日付","日付[0].日付タイプ","言語[0].言語","資源タイプ.資源タイプ ","資源タイプ.資源タイプ識別子","バージョン情報.バージョン情報","出版タイプ.査読の有無","出版タイプ.出版タイプResource","出版タイプ.出版タイプ","識別子[0].識別子タイプ","識別子[0].識別子","ID登録.ID登録","ID登録.ID登録タイプ","関連情報[0].関連名称[0].言語","関連情報[0].関連名称[0].関連名称","関連情報[0].関連タイプ","関連情報[0].関連識別子.関連識別子","関連情報[0].関連識別子.識別子タイプ","時間的範囲[0].言語","時間的範囲[0].時間的範囲","位置情報[0].位置情報（空間）.東部経度","位置情報[0].位置情報（空間）.北部緯度","位置情報[0].位置情報（空間）.南部緯度","位置情報[0].位置情報（空間）.西部経度","位置情報[0].位置情報（自由記述）[0].位置情報（自由記述）","位置情報[0].位置情報（点）.緯度","位置情報[0].位置情報（点）.経度","助成情報[0].研究課題番号.研究課題番号","助成情報[0].研究課題番号.研究課題番号タイプ","助成情報[0].研究課題番号.研究課題番号URI","助成情報[0].研究課題名[0].研究課題名","助成情報[0].研究課題名[0].言語","助成情報[0].助成機関識別子.助成機関識別子","助成情報[0].助成機関識別子.識別子タイプ","助成情報[0].助成機関識別子.助成機関識別子タイプURI","助成情報[0].助成機関名[0].助成機関名","助成情報[0].助成機関名[0].言語","助成情報[0].プログラム情報識別子.プログラム情報識別子","助成情報[0].プログラム情報識別子.プログラム情報識別子タイプ","助成情報[0].プログラム情報識別子.プログラム情報識別子タイプURI","助成情報[0].プログラム情報[0].プログラム情報","助成情報[0].プログラム情報[0].言語","収録物識別子[0].収録物識別子","収録物識別子[0].収録物識別子タイプ","収録物名[0].収録物名","収録物名[0].言語","巻.巻","号.号","ページ数.ページ数","開始ページ.開始ページ","終了ページ.終了ページ","書誌情報.雑誌名[0].タイトル","書誌情報.雑誌名[0].言語","書誌情報.発行日.日付","書誌情報.発行日.日付タイプ","書誌情報.号","書誌情報.ページ数","書誌情報.終了ページ","書誌情報.開始ページ","書誌情報.巻","学位授与番号.学位授与番号","学位名[0].学位名","学位名[0].言語","学位授与年月日.学位授与年月日","学位授与機関[0].学位授与機関識別子[0].学位授与機関識別子","学位授与機関[0].学位授与機関識別子[0].学位授与機関識別子Scheme","学位授与機関[0].学位授与機関名[0].言語","学位授与機関[0].学位授与機関名[0].学位授与機関名","会議記述[0].開催国","会議記述[0].開催期間.言語","会議記述[0].開催期間.終了日","会議記述[0].開催期間.終了月","会議記述[0].開催期間.終了年","会議記述[0].開催期間.開催期間","会議記述[0].開催期間.開始日","会議記述[0].開催期間.開始月","会議記述[0].開催期間.開始年","会議記述[0].会議名[0].会議名","会議記述[0].会議名[0].言語","会議記述[0].開催地[0].開催地","会議記述[0].開催地[0].言語","会議記述[0].回次","会議記述[0].主催機関[0].主催機関","会議記述[0].主催機関[0].言語","会議記述[0].開催会場[0].開催会場","会議記述[0].開催会場[0].言語",".ファイルパス[0]","ファイル情報[0].アクセス","ファイル情報[0].公開日[0].タイプ","ファイル情報[0].公開日[0].公開日","ファイル情報[0].表示形式","ファイル情報[0].日付[0].日付タイプ","ファイル情報[0].日付[0].日付","ファイル情報[0].ファイル名","ファイル情報[0].サイズ[0].サイズ","ファイル情報[0].フォーマット","ファイル情報[0].グループ","ファイル情報[0].自由ライセンス","ファイル情報[0].ライセンス","ファイル情報[0].本文URL.ラベル","ファイル情報[0].本文URL.オブジェクトタイプ","ファイル情報[0].本文URL.本文URL","ファイル情報[0].バージョン情報","見出し[0].大見出し","見出し[0].小見出し","見出し[0].言語","データセットシリーズ[0].データセットシリーズ","原文の言語[0].原文の言語","原文の言語[0].言語","大きさ[0].大きさ","大きさ[0].言語","カタログ[0].Access Rights[0].アクセス権","カタログ[0].Access Rights[0].RDFリソース","カタログ[0].Contributor[0].Contributor Name[0].提供機関名","カタログ[0].Contributor[0].Contributor Name[0].言語","カタログ[0].Contributor[0].提供機関タイプ","カタログ[0].Description.内容記述","カタログ[0].Description.言語","カタログ[0].Description.内容記述タイプ","カタログ[0].File.オブジェクトタイプ","カタログ[0].File.ファイルURI","カタログ[0].Identifier[0].識別子","カタログ[0].Identifier[0].識別子タイプ","カタログ[0].License[0].ライセンス","カタログ[0].License[0].言語","カタログ[0].License[0].RDFリソース","カタログ[0].License[0].ライセンスタイプ","カタログ[0].Rights[0].言語","カタログ[0].Rights[0].RDFリソース","カタログ[0].Rights[0].権利情報","カタログ[0].Subject[0].主題","カタログ[0].Subject[0].言語","カタログ[0].Subject[0].主題スキーマ","カタログ[0].Subject[0].主題URI","カタログ[0].Title[0].タイトル","カタログ[0].Title[0].言語","出版者情報[0].出版地（国名コード）[0].出版地（国名コード）","出版者情報[0].出版者注記[0].出版者注記","出版者情報[0].出版者注記[0].言語","出版者情報[0].出版地[0].出版地","出版者情報[0].出版者名[0].出版者名","出版者情報[0].出版者名[0].言語","版[0].版","版[0].言語","部編名[0].部編名","部編名[0].言語","日付（リテラル）[0].日付（リテラル）","日付（リテラル）[0].言語","所蔵機関[0].所蔵機関識別子.所蔵機関識別子スキーマ","所蔵機関[0].所蔵機関識別子.所蔵機関識別子URI","所蔵機関[0].所蔵機関識別子.所蔵機関識別子","所蔵機関[0].所蔵機関名[0].所蔵機関名","所蔵機関[0].所蔵機関名[0].言語","物理的形態[0].物理的形態","物理的形態[0].言語"],["#","","","","","","","","","","","","","","","","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","","","","","System","System","System","System","System","","","","","","","","","","","","","System","System","","","System","System","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","System","System","System","System","System","System","System","System","System","","","","","","","","","","","","","","","","","","","","","","","","","","","","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","System","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""],["#","","Allow Multiple","Allow Multiple","Required","Allow Multiple","","","","","Required","Required","Required, Allow Multiple","Required, Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","","","","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Required","Required","","","","","Allow Multiple","Allow Multiple","","","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","","","","","","","","","","","","","","","","Allow Multiple","Allow Multiple","","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple","Allow Multiple"]];
+const TSV_HEADERS_TEMPLATE = [["#ItemType", "(未設定)", ""], ["#.id", ".uri", ".metadata.path[0]", ".pos_index[0]", ".publish_status", ".feedback_mail[0]", ".researchmap_linkage", ".cnri", ".doi_ra", ".doi", ".edit_mode", ".metadata.pubdate", ".metadata.item_30002_title0[0].subitem_title", ".metadata.item_30002_title0[0].subitem_title_language", ".metadata.item_30002_alternative_title1[0].subitem_alternative_title", ".metadata.item_30002_alternative_title1[0].subitem_alternative_title_language", ".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNameIdentifiers[0].affiliationNameIdentifier", ".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNameIdentifiers[0].affiliationNameIdentifierScheme", ".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNameIdentifiers[0].affiliationNameIdentifierURI", ".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNames[0].affiliationName", ".metadata.item_30002_creator2[0].creatorAffiliations[0].affiliationNames[0].affiliationNameLang", ".metadata.item_30002_creator2[0].creatorAlternatives[0].creatorAlternative", ".metadata.item_30002_creator2[0].creatorAlternatives[0].creatorAlternativeLang", ".metadata.item_30002_creator2[0].creatorMails[0].creatorMail", ".metadata.item_30002_creator2[0].creatorNames[0].creatorName", ".metadata.item_30002_creator2[0].creatorNames[0].creatorNameLang", ".metadata.item_30002_creator2[0].creatorNames[0].creatorNameType", ".metadata.item_30002_creator2[0].creatorType", ".metadata.item_30002_creator2[0].familyNames[0].familyName", ".metadata.item_30002_creator2[0].familyNames[0].familyNameLang", ".metadata.item_30002_creator2[0].givenNames[0].givenName", ".metadata.item_30002_creator2[0].givenNames[0].givenNameLang", ".metadata.item_30002_creator2[0].nameIdentifiers[0].nameIdentifier", ".metadata.item_30002_creator2[0].nameIdentifiers[0].nameIdentifierScheme", ".metadata.item_30002_creator2[0].nameIdentifiers[0].nameIdentifierURI", ".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNameIdentifiers[0].contributorAffiliationNameIdentifier", ".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNameIdentifiers[0].contributorAffiliationScheme", ".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNameIdentifiers[0].contributorAffiliationURI", ".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNames[0].contributorAffiliationName", ".metadata.item_30002_contributor3[0].contributorAffiliations[0].contributorAffiliationNames[0].contributorAffiliationNameLang", ".metadata.item_30002_contributor3[0].contributorAlternatives[0].contributorAlternative", ".metadata.item_30002_contributor3[0].contributorAlternatives[0].contributorAlternativeLang", ".metadata.item_30002_contributor3[0].contributorMails[0].contributorMail", ".metadata.item_30002_contributor3[0].contributorNames[0].contributorName", ".metadata.item_30002_contributor3[0].contributorNames[0].lang", ".metadata.item_30002_contributor3[0].contributorNames[0].nameType", ".metadata.item_30002_contributor3[0].contributorType", ".metadata.item_30002_contributor3[0].familyNames[0].familyName", ".metadata.item_30002_contributor3[0].familyNames[0].familyNameLang", ".metadata.item_30002_contributor3[0].givenNames[0].givenName", ".metadata.item_30002_contributor3[0].givenNames[0].givenNameLang", ".metadata.item_30002_contributor3[0].nameIdentifiers[0].nameIdentifier", ".metadata.item_30002_contributor3[0].nameIdentifiers[0].nameIdentifierScheme", ".metadata.item_30002_contributor3[0].nameIdentifiers[0].nameIdentifierURI", ".metadata.item_30002_access_rights4.subitem_access_right", ".metadata.item_30002_access_rights4.subitem_access_right_uri", ".metadata.item_30002_apc5.subitem_apc", ".metadata.item_30002_rights6[0].subitem_rights", ".metadata.item_30002_rights6[0].subitem_rights_language", ".metadata.item_30002_rights6[0].subitem_rights_resource", ".metadata.item_30002_rights_holder7[0].nameIdentifiers[0].nameIdentifier", ".metadata.item_30002_rights_holder7[0].nameIdentifiers[0].nameIdentifierScheme", ".metadata.item_30002_rights_holder7[0].nameIdentifiers[0].nameIdentifierURI", ".metadata.item_30002_rights_holder7[0].rightHolderNames[0].rightHolderLanguage", ".metadata.item_30002_rights_holder7[0].rightHolderNames[0].rightHolderName", ".metadata.item_30002_subject8[0].subitem_subject", ".metadata.item_30002_subject8[0].subitem_subject_language", ".metadata.item_30002_subject8[0].subitem_subject_scheme", ".metadata.item_30002_subject8[0].subitem_subject_uri", ".metadata.item_30002_description9[0].subitem_description", ".metadata.item_30002_description9[0].subitem_description_language", ".metadata.item_30002_description9[0].subitem_description_type", ".metadata.item_30002_publisher10[0].subitem_publisher", ".metadata.item_30002_publisher10[0].subitem_publisher_language", ".metadata.item_30002_date11[0].subitem_date_issued_datetime", ".metadata.item_30002_date11[0].subitem_date_issued_type", ".metadata.item_30002_language12[0].subitem_language", ".metadata.item_30002_resource_type13.resourcetype", ".metadata.item_30002_resource_type13.resourceuri", ".metadata.item_30002_version14.subitem_version", ".metadata.item_30002_version_type15.subitem_peer_reviewed", ".metadata.item_30002_version_type15.subitem_version_resource", ".metadata.item_30002_version_type15.subitem_version_type", ".metadata.item_30002_identifier16[0].subitem_identifier_type", ".metadata.item_30002_identifier16[0].subitem_identifier_uri", ".metadata.item_30002_identifier_registration17.subitem_identifier_reg_text", ".metadata.item_30002_identifier_registration17.subitem_identifier_reg_type", ".metadata.item_30002_relation18[0].subitem_relation_name[0].subitem_relation_name_language", ".metadata.item_30002_relation18[0].subitem_relation_name[0].subitem_relation_name_text", ".metadata.item_30002_relation18[0].subitem_relation_type", ".metadata.item_30002_relation18[0].subitem_relation_type_id.subitem_relation_type_id_text", ".metadata.item_30002_relation18[0].subitem_relation_type_id.subitem_relation_type_select", ".metadata.item_30002_temporal19[0].subitem_temporal_language", ".metadata.item_30002_temporal19[0].subitem_temporal_text", ".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_east_longitude", ".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_north_latitude", ".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_south_latitude", ".metadata.item_30002_geolocation20[0].subitem_geolocation_box.subitem_west_longitude", ".metadata.item_30002_geolocation20[0].subitem_geolocation_place[0].subitem_geolocation_place_text", ".metadata.item_30002_geolocation20[0].subitem_geolocation_point.subitem_point_latitude", ".metadata.item_30002_geolocation20[0].subitem_geolocation_point.subitem_point_longitude", ".metadata.item_30002_funding_reference21[0].subitem_award_numbers.subitem_award_number", ".metadata.item_30002_funding_reference21[0].subitem_award_numbers.subitem_award_number_type", ".metadata.item_30002_funding_reference21[0].subitem_award_numbers.subitem_award_uri", ".metadata.item_30002_funding_reference21[0].subitem_award_titles[0].subitem_award_title", ".metadata.item_30002_funding_reference21[0].subitem_award_titles[0].subitem_award_title_language", ".metadata.item_30002_funding_reference21[0].subitem_funder_identifiers.subitem_funder_identifier", ".metadata.item_30002_funding_reference21[0].subitem_funder_identifiers.subitem_funder_identifier_type", ".metadata.item_30002_funding_reference21[0].subitem_funder_identifiers.subitem_funder_identifier_type_uri", ".metadata.item_30002_funding_reference21[0].subitem_funder_names[0].subitem_funder_name", ".metadata.item_30002_funding_reference21[0].subitem_funder_names[0].subitem_funder_name_language", ".metadata.item_30002_funding_reference21[0].subitem_funding_stream_identifiers.subitem_funding_stream_identifier", ".metadata.item_30002_funding_reference21[0].subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type", ".metadata.item_30002_funding_reference21[0].subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri", ".metadata.item_30002_funding_reference21[0].subitem_funding_streams[0].subitem_funding_stream", ".metadata.item_30002_funding_reference21[0].subitem_funding_streams[0].subitem_funding_stream_language", ".metadata.item_30002_source_identifier22[0].subitem_source_identifier", ".metadata.item_30002_source_identifier22[0].subitem_source_identifier_type", ".metadata.item_30002_source_title23[0].subitem_source_title", ".metadata.item_30002_source_title23[0].subitem_source_title_language", ".metadata.item_30002_volume_number24.subitem_volume", ".metadata.item_30002_issue_number25.subitem_issue", ".metadata.item_30002_number_of_pages26.subitem_number_of_pages", ".metadata.item_30002_page_start27.subitem_start_page", ".metadata.item_30002_page_end28.subitem_end_page", ".metadata.item_30002_bibliographic_information29.bibliographic_titles[0].bibliographic_title", ".metadata.item_30002_bibliographic_information29.bibliographic_titles[0].bibliographic_titleLang", ".metadata.item_30002_bibliographic_information29.bibliographicIssueDates.bibliographicIssueDate", ".metadata.item_30002_bibliographic_information29.bibliographicIssueDates.bibliographicIssueDateType", ".metadata.item_30002_bibliographic_information29.bibliographicIssueNumber", ".metadata.item_30002_bibliographic_information29.bibliographicNumberOfPages", ".metadata.item_30002_bibliographic_information29.bibliographicPageEnd", ".metadata.item_30002_bibliographic_information29.bibliographicPageStart", ".metadata.item_30002_bibliographic_information29.bibliographicVolumeNumber", ".metadata.item_30002_dissertation_number30.subitem_dissertationnumber", ".metadata.item_30002_degree_name31[0].subitem_degreename", ".metadata.item_30002_degree_name31[0].subitem_degreename_language", ".metadata.item_30002_date_granted32.subitem_dategranted", ".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor_identifier[0].subitem_degreegrantor_identifier_name", ".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor_identifier[0].subitem_degreegrantor_identifier_scheme", ".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor[0].subitem_degreegrantor_language", ".metadata.item_30002_degree_grantor33[0].subitem_degreegrantor[0].subitem_degreegrantor_name", ".metadata.item_30002_conference34[0].subitem_conference_country", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_date_language", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_end_day", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_end_month", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_end_year", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_period", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_start_day", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_start_month", ".metadata.item_30002_conference34[0].subitem_conference_date.subitem_conference_start_year", ".metadata.item_30002_conference34[0].subitem_conference_names[0].subitem_conference_name", ".metadata.item_30002_conference34[0].subitem_conference_names[0].subitem_conference_name_language", ".metadata.item_30002_conference34[0].subitem_conference_places[0].subitem_conference_place", ".metadata.item_30002_conference34[0].subitem_conference_places[0].subitem_conference_place_language", ".metadata.item_30002_conference34[0].subitem_conference_sequence", ".metadata.item_30002_conference34[0].subitem_conference_sponsors[0].subitem_conference_sponsor", ".metadata.item_30002_conference34[0].subitem_conference_sponsors[0].subitem_conference_sponsor_language", ".metadata.item_30002_conference34[0].subitem_conference_venues[0].subitem_conference_venue", ".metadata.item_30002_conference34[0].subitem_conference_venues[0].subitem_conference_venue_language", ".file_path[0]", ".metadata.item_30002_file35[0].accessrole", ".metadata.item_30002_file35[0].date[0].dateType", ".metadata.item_30002_file35[0].date[0].dateValue", ".metadata.item_30002_file35[0].displaytype", ".metadata.item_30002_file35[0].fileDate[0].fileDateType", ".metadata.item_30002_file35[0].fileDate[0].fileDateValue", ".metadata.item_30002_file35[0].filename", ".metadata.item_30002_file35[0].filesize[0].value", ".metadata.item_30002_file35[0].format", ".metadata.item_30002_file35[0].groups", ".metadata.item_30002_file35[0].licensefree", ".metadata.item_30002_file35[0].licensetype", ".metadata.item_30002_file35[0].url.label", ".metadata.item_30002_file35[0].url.objectType", ".metadata.item_30002_file35[0].url.url", ".metadata.item_30002_file35[0].version", ".metadata.item_30002_heading36[0].subitem_heading_banner_headline", ".metadata.item_30002_heading36[0].subitem_heading_headline", ".metadata.item_30002_heading36[0].subitem_heading_language", ".metadata.item_1698624001[0].jpcoar_dataset_series", ".metadata.item_1698624002[0].original_language", ".metadata.item_1698624002[0].original_language_language", ".metadata.item_1698624003[0].dcterms_extent", ".metadata.item_1698624003[0].dcterms_extent_language", ".metadata.item_1698624004[0].catalog_access_rights[0].catalog_access_right", ".metadata.item_1698624004[0].catalog_access_rights[0].catalog_access_right_rdf_resource", ".metadata.item_1698624004[0].catalog_contributors[0].contributor_names[0].contributor_name", ".metadata.item_1698624004[0].catalog_contributors[0].contributor_names[0].contributor_name_language", ".metadata.item_1698624004[0].catalog_contributors[0].contributor_type", ".metadata.item_1698624004[0].catalog_descriptions.catalog_description", ".metadata.item_1698624004[0].catalog_descriptions.catalog_description_language", ".metadata.item_1698624004[0].catalog_descriptions.catalog_description_type", ".metadata.item_1698624004[0].catalog_file.catalog_file_object_type", ".metadata.item_1698624004[0].catalog_file.catalog_file_uri", ".metadata.item_1698624004[0].catalog_identifiers[0].catalog_identifier", ".metadata.item_1698624004[0].catalog_identifiers[0].catalog_identifier_type", ".metadata.item_1698624004[0].catalog_licenses[0].catalog_license", ".metadata.item_1698624004[0].catalog_licenses[0].catalog_license_language", ".metadata.item_1698624004[0].catalog_licenses[0].catalog_license_rdf_resource", ".metadata.item_1698624004[0].catalog_licenses[0].catalog_license_type", ".metadata.item_1698624004[0].catalog_rights[0].catalog_right_language", ".metadata.item_1698624004[0].catalog_rights[0].catalog_right_rdf_resource", ".metadata.item_1698624004[0].catalog_rights[0].catalog_rights_right", ".metadata.item_1698624004[0].catalog_subjects[0].catalog_subject", ".metadata.item_1698624004[0].catalog_subjects[0].catalog_subject_language", ".metadata.item_1698624004[0].catalog_subjects[0].catalog_subject_scheme", ".metadata.item_1698624004[0].catalog_subjects[0].catalog_subject_uri", ".metadata.item_1698624004[0].catalog_titles[0].catalog_title", ".metadata.item_1698624004[0].catalog_titles[0].catalog_title_language", ".metadata.item_1698624005[0].publication_places[0].publication_place", ".metadata.item_1698624005[0].publication_places[0].publication_place_language", ".metadata.item_1698624005[0].publisher_descriptions[0].publisher_description", ".metadata.item_1698624005[0].publisher_descriptions[0].publisher_description_language", ".metadata.item_1698624005[0].publisher_locations[0].publisher_location", ".metadata.item_1698624005[0].publisher_locations[0].publisher_location_language", ".metadata.item_1698624005[0].publisher_names[0].publisher_name", ".metadata.item_1698624005[0].publisher_names[0].publisher_name_language", ".metadata.item_1698624006[0].edition", ".metadata.item_1698624006[0].edition_language", ".metadata.item_1698624007[0].volume_title", ".metadata.item_1698624007[0].volume_title_language", ".metadata.item_1698624008[0].subitem_dcterms_date", ".metadata.item_1698624008[0].subitem_dcterms_date_language", ".metadata.item_1698624009[0].holding_agent_name_identifier.holding_agent_name_identifier_scheme", ".metadata.item_1698624009[0].holding_agent_name_identifier.holding_agent_name_identifier_uri", ".metadata.item_1698624009[0].holding_agent_name_identifier.holding_agent_name_identifier_value", ".metadata.item_1698624009[0].holding_agent_names[0].holding_agent_name", ".metadata.item_1698624009[0].holding_agent_names[0].holding_agent_name_language", ".metadata.item_1698624010[0].jpcoar_format", ".metadata.item_1698624010[0].jpcoar_format_language"], ["#ID", "URI", ".IndexID[0]", ".POS_INDEX[0]", ".PUBLISH_STATUS", ".FEEDBACK_MAIL[0]", ".RESEAECHMAP_LINKAGE", ".CNRI", ".DOI_RA", ".DOI", "Keep/Upgrade Version", "公開日", "タイトル[0].タイトル", "タイトル[0].言語", "その他のタイトル[0].その他のタイトル", "その他のタイトル[0].言語", "作成者[0].作成者所属[0].所属機関識別子[0].所属機関識別子", "作成者[0].作成者所属[0].所属機関識別子[0].所属機関識別子Scheme", "作成者[0].作成者所属[0].所属機関識別子[0].所属機関識別子URI", "作成者[0].作成者所属[0].所属機関名[0].所属機関名", "作成者[0].作成者所属[0].所属機関名[0].言語", "作成者[0].作成者別名[0].別名", "作成者[0].作成者別名[0].言語", "作成者[0].作成者メールアドレス[0].メールアドレス", "作成者[0].作成者姓名[0].姓名", "作成者[0].作成者姓名[0].言語", "作成者[0].作成者姓名[0].名前タイプ", "作成者[0].作成者タイプ", "作成者[0].作成者姓[0].姓", "作成者[0].作成者姓[0].言語", "作成者[0].作成者名[0].名", "作成者[0].作成者名[0].言語", "作成者[0].作成者識別子[0].作成者識別子", "作成者[0].作成者識別子[0].作成者識別子Scheme", "作成者[0].作成者識別子[0].作成者識別子URI", "寄与者[0].寄与者所属[0].所属機関識別子[0].所属機関識別子", "寄与者[0].寄与者所属[0].所属機関識別子[0].所属機関識別子Scheme", "寄与者[0].寄与者所属[0].所属機関識別子[0].所属機関識別子URI", "寄与者[0].寄与者所属[0].所属機関名[0].所属機関名", "寄与者[0].寄与者所属[0].所属機関名[0].言語", "寄与者[0].寄与者別名[0].別名", "寄与者[0].寄与者別名[0].言語", "寄与者[0].寄与者メールアドレス[0].メールアドレス", "寄与者[0].寄与者姓名[0].姓名", "寄与者[0].寄与者姓名[0].言語", "寄与者[0].寄与者姓名[0].名前タイプ", "寄与者[0].寄与者タイプ", "寄与者[0].寄与者姓[0].姓", "寄与者[0].寄与者姓[0].言語", "寄与者[0].寄与者名[0].名", "寄与者[0].寄与者名[0].言語", "寄与者[0].寄与者識別子[0].寄与者識別子", "寄与者[0].寄与者識別子[0].寄与者識別子Scheme", "寄与者[0].寄与者識別子[0].寄与者識別子URI", "アクセス権.アクセス権", "アクセス権.アクセス権URI", "APC.APC", "権利情報[0].権利情報", "権利情報[0].言語", "権利情報[0].権利情報Resource", "権利者情報[0].権利者識別子[0].権利者識別子", "権利者情報[0].権利者識別子[0].権利者識別子Scheme", "権利者情報[0].権利者識別子[0].権利者識別子URI", "権利者情報[0].権利者名[0].言語", "権利者情報[0].権利者名[0].権利者名", "主題[0].主題", "主題[0].言語", "主題[0].主題Scheme", "主題[0].主題URI", "内容記述[0].内容記述", "内容記述[0].言語", "内容記述[0].内容記述タイプ", "出版者[0].出版者", "出版者[0].言語", "日付[0].日付", "日付[0].日付タイプ", "言語[0].言語", "資源タイプ.資源タイプ ", "資源タイプ.資源タイプ識別子", "バージョン情報.バージョン情報", "出版タイプ.査読の有無", "出版タイプ.出版タイプResource", "出版タイプ.出版タイプ", "識別子[0].識別子タイプ", "識別子[0].識別子", "ID登録.ID登録", "ID登録.ID登録タイプ", "関連情報[0].関連名称[0].言語", "関連情報[0].関連名称[0].関連名称", "関連情報[0].関連タイプ", "関連情報[0].関連識別子.関連識別子", "関連情報[0].関連識別子.識別子タイプ", "時間的範囲[0].言語", "時間的範囲[0].時間的範囲", "位置情報[0].位置情報（空間）.東部経度", "位置情報[0].位置情報（空間）.北部緯度", "位置情報[0].位置情報（空間）.南部緯度", "位置情報[0].位置情報（空間）.西部経度", "位置情報[0].位置情報（自由記述）[0].位置情報（自由記述）", "位置情報[0].位置情報（点）.緯度", "位置情報[0].位置情報（点）.経度", "助成情報[0].研究課題番号.研究課題番号", "助成情報[0].研究課題番号.研究課題番号タイプ", "助成情報[0].研究課題番号.研究課題番号URI", "助成情報[0].研究課題名[0].研究課題名", "助成情報[0].研究課題名[0].言語", "助成情報[0].助成機関識別子.助成機関識別子", "助成情報[0].助成機関識別子.識別子タイプ", "助成情報[0].助成機関識別子.助成機関識別子タイプURI", "助成情報[0].助成機関名[0].助成機関名", "助成情報[0].助成機関名[0].言語", "助成情報[0].プログラム情報識別子.プログラム情報識別子", "助成情報[0].プログラム情報識別子.プログラム情報識別子タイプ", "助成情報[0].プログラム情報識別子.プログラム情報識別子タイプURI", "助成情報[0].プログラム情報[0].プログラム情報", "助成情報[0].プログラム情報[0].言語", "収録物識別子[0].収録物識別子", "収録物識別子[0].収録物識別子タイプ", "収録物名[0].収録物名", "収録物名[0].言語", "巻.巻", "号.号", "ページ数.ページ数", "開始ページ.開始ページ", "終了ページ.終了ページ", "書誌情報.雑誌名[0].タイトル", "書誌情報.雑誌名[0].言語", "書誌情報.発行日.日付", "書誌情報.発行日.日付タイプ", "書誌情報.号", "書誌情報.ページ数", "書誌情報.終了ページ", "書誌情報.開始ページ", "書誌情報.巻", "学位授与番号.学位授与番号", "学位名[0].学位名", "学位名[0].言語", "学位授与年月日.学位授与年月日", "学位授与機関[0].学位授与機関識別子[0].学位授与機関識別子", "学位授与機関[0].学位授与機関識別子[0].学位授与機関識別子Scheme", "学位授与機関[0].学位授与機関名[0].言語", "学位授与機関[0].学位授与機関名[0].学位授与機関名", "会議記述[0].開催国", "会議記述[0].開催期間.言語", "会議記述[0].開催期間.終了日", "会議記述[0].開催期間.終了月", "会議記述[0].開催期間.終了年", "会議記述[0].開催期間.開催期間", "会議記述[0].開催期間.開始日", "会議記述[0].開催期間.開始月", "会議記述[0].開催期間.開始年", "会議記述[0].会議名[0].会議名", "会議記述[0].会議名[0].言語", "会議記述[0].開催地[0].開催地", "会議記述[0].開催地[0].言語", "会議記述[0].回次", "会議記述[0].主催機関[0].主催機関", "会議記述[0].主催機関[0].言語", "会議記述[0].開催会場[0].開催会場", "会議記述[0].開催会場[0].言語", ".ファイルパス[0]", "ファイル情報[0].アクセス", "ファイル情報[0].公開日[0].タイプ", "ファイル情報[0].公開日[0].公開日", "ファイル情報[0].表示形式", "ファイル情報[0].日付[0].日付タイプ", "ファイル情報[0].日付[0].日付", "ファイル情報[0].ファイル名", "ファイル情報[0].サイズ[0].サイズ", "ファイル情報[0].フォーマット", "ファイル情報[0].グループ", "ファイル情報[0].自由ライセンス", "ファイル情報[0].ライセンス", "ファイル情報[0].本文URL.ラベル", "ファイル情報[0].本文URL.オブジェクトタイプ", "ファイル情報[0].本文URL.本文URL", "ファイル情報[0].バージョン情報", "見出し[0].大見出し", "見出し[0].小見出し", "見出し[0].言語", "データセットシリーズ[0].データセットシリーズ", "原文の言語[0].原文の言語", "原文の言語[0].言語", "大きさ[0].大きさ", "大きさ[0].言語", "カタログ[0].Access Rights[0].アクセス権", "カタログ[0].Access Rights[0].RDFリソース", "カタログ[0].Contributor[0].Contributor Name[0].提供機関名", "カタログ[0].Contributor[0].Contributor Name[0].言語", "カタログ[0].Contributor[0].提供機関タイプ", "カタログ[0].Description.内容記述", "カタログ[0].Description.言語", "カタログ[0].Description.内容記述タイプ", "カタログ[0].File.オブジェクトタイプ", "カタログ[0].File.ファイルURI", "カタログ[0].Identifier[0].識別子", "カタログ[0].Identifier[0].識別子タイプ", "カタログ[0].License[0].ライセンス", "カタログ[0].License[0].言語", "カタログ[0].License[0].RDFリソース", "カタログ[0].License[0].ライセンスタイプ", "カタログ[0].Rights[0].言語", "カタログ[0].Rights[0].RDFリソース", "カタログ[0].Rights[0].権利情報", "カタログ[0].Subject[0].主題", "カタログ[0].Subject[0].言語", "カタログ[0].Subject[0].主題スキーマ", "カタログ[0].Subject[0].主題URI", "カタログ[0].Title[0].タイトル", "カタログ[0].Title[0].言語", "出版者情報[0].出版地（国名コード）[0].出版地（国名コード）", "出版者情報[0].出版地（国名コード）[0].言語", "出版者情報[0].出版者注記[0].出版者注記", "出版者情報[0].出版者注記[0].言語", "出版者情報[0].出版地[0].出版地", "出版者情報[0].出版地[0].言語", "出版者情報[0].出版者名[0].出版者名", "出版者情報[0].出版者名[0].言語", "版[0].版", "版[0].言語", "部編名[0].部編名", "部編名[0].言語", "日付（リテラル）[0].日付（リテラル）", "日付（リテラル）[0].言語", "所蔵機関[0].所蔵機関識別子.所蔵機関識別子スキーマ", "所蔵機関[0].所蔵機関識別子.所蔵機関識別子URI", "所蔵機関[0].所蔵機関識別子.所蔵機関識別子", "所蔵機関[0].所蔵機関名[0].所蔵機関名", "所蔵機関[0].所蔵機関名[0].言語", "物理的形態[0].物理的形態", "物理的形態[0].言語"], ["#", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "", "", "", "", "System", "System", "System", "System", "System", "", "", "", "", "", "", "", "", "", "", "", "", "System", "System", "", "", "System", "System", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "System", "System", "System", "System", "System", "System", "System", "System", "System", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "System", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""], ["#", "", "Allow Multiple", "Allow Multiple", "Required", "Allow Multiple", "", "", "", "", "Required", "Required", "Required, Allow Multiple", "Required, Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "", "", "", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Required", "Required", "", "", "", "", "Allow Multiple", "Allow Multiple", "", "", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Allow Multiple", "Allow Multiple", "", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple", "Allow Multiple"]];
 
 // TSV 出力から除外するフィールドの判定。
 // キー名が変わっても suffix（アンダースコア後の名前+番号）で照合するため prefix に依存しない。
@@ -4641,8 +4830,8 @@ const TSV_EXCL_SUFFIXES = new Set([
 ]);
 // timestamp ベースのフィールドは full key で照合
 const TSV_EXCL_TIMESTAMP = new Set([
-  'item_1698624001','item_1698624002','item_1698624003','item_1698624004','item_1698624005',
-  'item_1698624006','item_1698624007','item_1698624008','item_1698624009','item_1698624010',
+  'item_1698624001','item_1698624002','item_1698624003','item_1698624004',
+  'item_1698624006','item_1698624007','item_1698624009','item_1698624010',
 ]);
 
 function isTsvExcluded(key) {
@@ -4951,6 +5140,34 @@ function buildRelationPreview(relations) {
   return html;
 }
 
+function buildPublisherDetailPreview(data) {
+  if (!Array.isArray(data) || !data.length) return '';
+  const nonEmpty = data.filter(e =>
+    e.publisher_names?.some(n => n.publisher_name) ||
+    e.publisher_locations?.some(l => l.publisher_location) ||
+    e.publication_places?.some(p => p.publication_place)
+  );
+  if (!nonEmpty.length) return '';
+
+  let html = '<table class="pv-inner-table"><thead><tr>';
+  html += '<th>#</th><th>出版者名</th><th>出版地</th><th>国名コード</th><th>注記</th>';
+  html += '</tr></thead><tbody>';
+
+  nonEmpty.forEach((e, i) => {
+    const names = (e.publisher_names || []).filter(n => n.publisher_name)
+      .map(n => fmtVal(n.publisher_name, n.publisher_name_language)).join('<br>');
+    const locations = (e.publisher_locations || []).filter(l => l.publisher_location)
+      .map(l => fmtVal(l.publisher_location, l.publisher_location_language)).join('<br>');
+    const places = (e.publication_places || []).filter(p => p.publication_place)
+      .map(p => fmtVal(p.publication_place, p.publication_place_language)).join('<br>');
+    const descs = (e.publisher_descriptions || []).filter(d => d.publisher_description)
+      .map(d => fmtVal(d.publisher_description, d.publisher_description_language)).join('<br>');
+    html += '<tr><td>' + i + '</td><td>' + names + '</td><td>' + locations + '</td><td>' + places + '</td><td>' + descs + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
 function buildFundingPreview(funders) {
   if (!Array.isArray(funders) || !funders.length) return '';
   const nonEmpty = funders.filter(f =>
@@ -5117,6 +5334,7 @@ function buildSectionPreview(def, val) {
     case 'creator':     return buildPersonPreview(val, true);
     case 'contributor':  return buildPersonPreview(val, false);
     case 'relation':    return buildRelationPreview(val);
+    case 'publisherDetail': return buildPublisherDetailPreview(val);
     case 'funding':     return buildFundingPreview(val);
     case 'biblio':      return buildBiblioPreview(val);
     case 'rightsHolder': return buildRightsHolderPreview(val);
