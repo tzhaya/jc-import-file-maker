@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-20（助成機関識別子タイプURI追加 #107）
+最終更新: 2026-03-20（出版者情報・日付リテラル追加 #32/#33）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.5.0 | 2026-03-20 | 新規フィールド「出版者情報」「日付（リテラル）」追加（#32, #33） |
 | 1.4.1 | 2026-03-20 | 助成機関識別子タイプURI（funderIdentifierTypeURI）を追加（#107） |
 | 1.4.0 | 2026-03-20 | WEKO3 v2テンプレート対応：researchmap_linkageシステムフィールド追加、査読の有無（peer_reviewed）フィールド追加（#108） |
 | 1.3.9 | 2026-03-17 | Chrome拡張TSV出力ボタンのCSPエラー修正（#103） |
@@ -32,6 +33,53 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-20: 出版者情報・日付（リテラル）追加（#32, #33）
+
+### 背景
+JPCOAR 2.0 で新設された `jpcoar:publisherDetail`（出版者情報 / `item_1698624005`）と `dcterms:date`（日付リテラル / `item_1698624008`）フィールドに対応。WEKO3 v2テンプレートには列が既に存在していたが、`EXCLUDED_KEYS` と `TSV_EXCL_TIMESTAMP` で除外されていた。
+
+### Issue記載とWEKO3実機の差異
+- **#32**: Issue記載はフラット構造だが、WEKO3実機は4つのネスト配列（publisher_names[], publisher_locations[], publication_places[], publisher_descriptions[]）各言語ペア付き
+- **#33**: Issue記載に `subitem_date_literal_type`（日付タイプ）があるが、WEKO3テンプレートに存在しないため実装しない。実際は `subitem_dcterms_date` + `subitem_dcterms_date_language` の2フィールドのみ
+- **TSV_HEADERS_TEMPLATE**: WEKO3実機サンプルと比較して `publication_place_language` と `publisher_location_language` の2列が欠落していたため追加
+
+### 変更内容
+
+**#32 出版者情報（item_1698624005）**
+- `EXCLUDED_KEYS` から除去
+- `TSV_EXCL_TIMESTAMP` から除去
+- `TSV_HEADERS_TEMPLATE` に欠落2列追加（publication_place_language, publisher_location_language）
+- `JPCOAR_LINKS` に `item_1698624005: '.../2.0/11'` 追加
+- `JPCOAR_SUBFIELD_LINKS` に出版者情報サブフィールド4件追加（11-.1〜11-.4）
+- `FIELD_DEFS` に `type: 'publisherDetail'` エントリ追加
+- `buildEmptyMetadata()` にネスト配列の空データ構造追加
+- `mapToItemType()`: Crossref `publisher` → publisher_names、`publisher-location` → publisher_locations にマッピング
+- `mapToItemTypeJaLC()`: JaLC `publisher_list` → publisher_names にマッピング（多言語対応）
+- `renderOnePublisherDetail()` / `renderPublisherDetailField()`: カスタムレンダリング（renderOneFunderパターン）
+- `renderAll()` switch に `publisherDetail` ケース追加
+- `collectPublisherDetailField()`: カスタムDOM収集
+- `collectFromDOM()` switch に `publisherDetail` ケース追加
+- `buildPublisherDetailPreview()`: テーブル形式プレビュー（#/出版者名/出版地/国名コード/注記）
+- プレビュー switch に `publisherDetail` ケース追加
+- `item_30002_publisher10` との併用（両方出力）
+
+**#33 日付リテラル（item_1698624008）**
+- `EXCLUDED_KEYS` から除去
+- `TSV_EXCL_TIMESTAMP` から除去
+- `JPCOAR_LINKS` に `item_1698624008: '.../2.0/13'` 追加
+- `FIELD_DEFS` に `type: 'array'` エントリ追加（subitem_dcterms_date + subitem_dcterms_date_language）
+- `buildEmptyMetadata()` / `mapToItemType()` / `mapToItemTypeJaLC()` に空配列追加
+- 自動マッピングなし（手動入力専用 — ISO 8601不可の自由記述日付用途）
+
+### ドキュメント更新
+- `docs/JPCOARschema_guide.md`: #11（出版者情報）サブフィールド追加
+- `chrome-extension/manifest.json`: ver. 1.4.1 → 1.5.0
+- `chrome-extension/panel.html`: 更新概要テーブル更新
+- `chrome-extension/make_jc_importer.js`: HTML→JS同期
+- `docs/requirements.md`: item_1698624005, item_1698624008 を除外リストから削除
 
 ---
 
