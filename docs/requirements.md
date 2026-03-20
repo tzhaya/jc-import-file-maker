@@ -364,6 +364,7 @@ make_jc_importer.html
 | .POS_INDEX[0]（.pos_index[0]）| 1718256617194 | 1718256617194 |
 | .PUBLISH_STATUS | private（非公開）または public（公開） | private |
 | .FEEDBACK_MAIL[0] | | |
+| .RESEAECHMAP_LINKAGE | | |
 | .CNRI | | |
 | .DOI_RA | JaLC または Crossref | |
 | .DOI| | |

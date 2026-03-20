@@ -75,8 +75,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-03-17 | ver. 1.3.9 | Chrome拡張機能でTSV出力ボタンのCSPエラーを修正（[#103](https://github.com/tzhaya/jc-import-file-maker/issues/103)） |
-| インポート用TSV生成ツール | 2026-03-15 | — | JPCOARスキーマ説明リンクを2.0に更新、下位項目にもスキーマリンクを追加（[#87](https://github.com/tzhaya/jc-import-file-maker/issues/87)） |
+| Chrome拡張機能版 | 2026-03-20 | ver. 1.4.0 | WEKO3 v2テンプレート対応：researchmap_linkageシステムフィールド追加、査読の有無（peer_reviewed）フィールド追加（[#108](https://github.com/tzhaya/jc-import-file-maker/issues/108)） |
+| インポート用TSV生成ツール | 2026-03-20 | — | WEKO3 v2テンプレート対応：researchmap_linkageシステムフィールド追加、査読の有無（peer_reviewed）フィールド追加（[#108](https://github.com/tzhaya/jc-import-file-maker/issues/108)） |
 | 助成情報検索ツール | 2026-03-17 | — | 課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
 
 ## 導入方法
@@ -249,6 +249,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-20 | WEKO3 v2テンプレート対応：researchmap_linkageシステムフィールド追加、査読の有無（peer_reviewed）フィールド追加、v1テンプレートを samples/v1/ に移動（[#108](https://github.com/tzhaya/jc-import-file-maker/issues/108)） |
 | 2026-03-17 | Chrome拡張機能でTSV出力ボタンがCSPエラーで動作しない不具合を修正：インラインイベントハンドラをaddEventListenerに置換（[#103](https://github.com/tzhaya/jc-import-file-maker/issues/103)） |
 | 2026-03-17 | 助成情報検索ツールの課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Acknowledgementsテキストから科研費番号（JPプレフィックスなし）を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
 | 2026-03-15 | JPCOARスキーマ説明リンクを2.0に更新、下位項目（著者・助成情報・関連情報等）にもスキーマリンクを追加、JPCOARschema_guide.md を1.0.2/2.0併記に更新（[#87](https://github.com/tzhaya/jc-import-file-maker/issues/87)） |

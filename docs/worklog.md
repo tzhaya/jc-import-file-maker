@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-17（Chrome拡張TSV出力CSPエラー修正 #103）
+最終更新: 2026-03-20（WEKO3 v2テンプレート対応 #108）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.4.0 | 2026-03-20 | WEKO3 v2テンプレート対応：researchmap_linkageシステムフィールド追加、査読の有無（peer_reviewed）フィールド追加（#108） |
 | 1.3.9 | 2026-03-17 | Chrome拡張TSV出力ボタンのCSPエラー修正（#103） |
 | 1.3.8 | 2026-03-17 | 助成情報検索ツールの課題番号抽出改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号抽出（#104） |
 | 1.3.7 | 2026-03-15 | JPCOARスキーマ説明リンクを2.0に更新、下位項目にもスキーマリンクを追加（#87） |
@@ -30,6 +31,36 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-20: WEKO3 v2テンプレート対応（#108）
+
+### 背景
+WEKO3実機（jircas.repo.nii.ac.jp）がJPCOARスキーマ2.0対応のアップデートを行い、TSVテンプレート（30002/40039）の構造が変更された。v1テンプレートとの差分分析により、3件のツール修正が必要と判明。このうちJPCOAR仕様外のWEKO3プラットフォーム変更2件と、サンプル更新を対応。
+
+### 変更内容
+
+#### Issue A: `.researchmap_linkage` システムフィールド追加
+- `TSV_HEADERS_TEMPLATE`: 5行すべてに `.researchmap_linkage` 列を追加（`.feedback_mail[0]` と `.cnri` の間）
+  - ラベル行: `.RESEAECHMAP_LINKAGE`（WEKO3のtypoに合わせる）
+- `TSV_SYS_KEY_MAP`: `.researchmap_linkage` → `researchmap_linkage` マッピング追加
+- `SYS_KEY_MAP`: `sys_researchmap` → `researchmap_linkage` マッピング追加
+- `buildEmptyMetadata()`: system に `researchmap_linkage: ''` 追加
+- `mapToItemType()` / `mapToItemTypeJaLC()`: system に `researchmap_linkage: ''` 追加
+- `renderSystemFields()`: `.RESEAECHMAP_LINKAGE` 行追加（`sys_researchmap` データキー）
+
+#### Issue B: `subitem_peer_reviewed`（査読の有無）追加
+- `TSV_HEADERS_TEMPLATE`: version_type15 セクションに列追加（`subitem_version_resource` の前）
+- `TITLE_MAPS`: `subitem_peer_reviewed` 選択肢追加（`Peer reviewed` / `Not peer reviewed`）
+- `FIELD_DEFS`: version_type15 の fields に `{ k: 'subitem_peer_reviewed', l: '査読の有無', t: 'select', o: 'subitem_peer_reviewed' }` 追加
+- `buildEmptyMetadata()`: version_type15 に `subitem_peer_reviewed: ''` 追加
+- `mapToItemType()` / `mapToItemTypeJaLC()`: version_type15 に `subitem_peer_reviewed: ''` 追加
+- 備考: OA Assist が SWORD API 経由で設定する値。WEKO3 UI には入力欄なし。Crossref/JaLC APIからは取得不可のため初期値は空
+
+#### Issue D: サンプルファイル整理
+- v1テンプレートを `samples/v1/` に移動（前回対応済み）
+- `samples/import.tsv` はE2Eテスト後に再生成
 
 ---
 
