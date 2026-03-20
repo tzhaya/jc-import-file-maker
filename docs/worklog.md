@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-20（WEKO3 v2テンプレート対応 #108）
+最終更新: 2026-03-20（助成機関識別子タイプURI追加 #107）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.4.1 | 2026-03-20 | 助成機関識別子タイプURI（funderIdentifierTypeURI）を追加（#107） |
 | 1.4.0 | 2026-03-20 | WEKO3 v2テンプレート対応：researchmap_linkageシステムフィールド追加、査読の有無（peer_reviewed）フィールド追加（#108） |
 | 1.3.9 | 2026-03-17 | Chrome拡張TSV出力ボタンのCSPエラー修正（#103） |
 | 1.3.8 | 2026-03-17 | 助成情報検索ツールの課題番号抽出改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号抽出（#104） |
@@ -31,6 +32,21 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-20: 助成機関識別子タイプURI追加（#107）
+
+### 背景
+JPCOAR 2.0 スキーマの `funderIdentifierTypeURI` フィールドに対応。WEKO3 v2テンプレート（30002/40039）にも `subitem_funder_identifier_type_uri` 列が追加されており、TSV出力の互換性を確保する。
+
+### 変更内容
+- `FUNDER_ID_TYPE_URI_MAP` 定数を追加（Crossref Funder / e-Rad_funder / ISNI / ROR の4タイプ）
+- `TITLE_MAPS.subitem_funder_identifier_type` に `e-Rad_funder` 選択肢を追加
+- `buildFunders()` / `buildJaLCFunders()`: `subitem_funder_identifier_type` 設定時に URI を自動設定（全6箇所）
+- `renderOneFunder()`: 識別子タイプの後に「識別子タイプURI」テキストフィールドを追加、タイプ変更時に自動更新、JGN連携でも自動設定
+- `collectFundingField()`: DOM から `subitem_funder_identifier_type_uri` を収集
+- `TSV_HEADERS_TEMPLATE`: `subitem_funder_identifier_type_uri` 列を追加（v2テンプレートと一致確認済み）
 
 ---
 

@@ -75,8 +75,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-03-20 | ver. 1.4.0 | WEKO3 v2テンプレート対応：researchmap_linkageシステムフィールド追加、査読の有無（peer_reviewed）フィールド追加（[#108](https://github.com/tzhaya/jc-import-file-maker/issues/108)） |
-| インポート用TSV生成ツール | 2026-03-20 | — | WEKO3 v2テンプレート対応：researchmap_linkageシステムフィールド追加、査読の有無（peer_reviewed）フィールド追加（[#108](https://github.com/tzhaya/jc-import-file-maker/issues/108)） |
+| Chrome拡張機能版 | 2026-03-20 | ver. 1.4.1 | 助成機関識別子タイプURI（funderIdentifierTypeURI）を追加（[#107](https://github.com/tzhaya/jc-import-file-maker/issues/107)） |
+| インポート用TSV生成ツール | 2026-03-20 | — | 助成機関識別子タイプURI（funderIdentifierTypeURI）を追加（[#107](https://github.com/tzhaya/jc-import-file-maker/issues/107)） |
 | 助成情報検索ツール | 2026-03-17 | — | 課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
 
 ## 導入方法
@@ -249,6 +249,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-20 | 助成機関識別子タイプURI（funderIdentifierTypeURI）を追加：識別子タイプ選択時にURIを自動設定、e-Rad_funder選択肢追加（[#107](https://github.com/tzhaya/jc-import-file-maker/issues/107)） |
 | 2026-03-20 | WEKO3 v2テンプレート対応：researchmap_linkageシステムフィールド追加、査読の有無（peer_reviewed）フィールド追加、v1テンプレートを samples/v1/ に移動（[#108](https://github.com/tzhaya/jc-import-file-maker/issues/108)） |
 | 2026-03-17 | Chrome拡張機能でTSV出力ボタンがCSPエラーで動作しない不具合を修正：インラインイベントハンドラをaddEventListenerに置換（[#103](https://github.com/tzhaya/jc-import-file-maker/issues/103)） |
 | 2026-03-17 | 助成情報検索ツールの課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Acknowledgementsテキストから科研費番号（JPプレフィックスなし）を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
