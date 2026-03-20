@@ -457,7 +457,7 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 - **Level 1**: 複数助成情報 (配列)
 - **Level 2**:
   - `subitem_funder_names[]` - 複数言語による助成機関名
-  - `subitem_funder_identifiers` - 助成機関識別子 (単一)
+  - `subitem_funder_identifiers` - 助成機関識別子 (単一、`subitem_funder_identifier` / `subitem_funder_identifier_type` / `subitem_funder_identifier_type_uri`)
   - `subitem_funding_stream_identifiers` - プログラム情報識別子（JPCOAR 2.0、単一）
   - `subitem_funding_streams[]` - 複数言語によるプログラム情報（JPCOAR 2.0）
   - `subitem_award_numbers` - 研究課題番号（単一）
@@ -468,6 +468,16 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 **要件**:
 - 複数言語バージョンの助成機関名・課題名・プログラム情報をサポート
 - アコーディオンUIで複数プログラム情報を管理
+
+**助成機関識別子タイプURI（JPCOAR 2.0 funderIdentifierTypeURI）**（[issue #107](https://github.com/tzhaya/jc-import-file-maker/issues/107)）:
+- `subitem_funder_identifier_type_uri`: 識別子タイプに対応するURIを自動設定（読み取り専用テキストフィールド）
+- `FUNDER_ID_TYPE_URI_MAP` 定数によるマッピング:
+  - `Crossref Funder` → `https://www.crossref.org/services/funder-registry/`
+  - `e-Rad_funder` → `https://www.e-rad.go.jp/datasets/files/haibunkikan.csv`
+  - `ISNI` → `https://isni.org/`
+  - `ROR` → `https://ror.org/`
+- 識別子タイプ選択変更時、KAKEN/JGN連携成功時にURIを自動更新
+- JPCOAR 2.0 スキーマ: 記入レベルMA（funderIdentifierType設定時は必須）
 
 **プログラム情報（JPCOAR 2.0 fundingStream / fundingStreamIdentifier）**（[issue #34](https://github.com/tzhaya/jc-import-file-maker/issues/34)）:
 - `subitem_funding_stream_identifiers`: プログラム情報識別子（単一オブジェクト）
