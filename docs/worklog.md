@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-20（出版者情報・日付リテラル追加 #32/#33）
+最終更新: 2026-03-21（Chrome拡張初期化処理修正 #115）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.5.1 | 2026-03-21 | Chrome拡張初期化処理修正：APIキー警告誤表示解消、ボタンaddEventListener統一（#115） |
 | 1.5.0 | 2026-03-20 | 新規フィールド「出版者情報」「日付（リテラル）」追加（#32, #33） |
 | 1.4.1 | 2026-03-20 | 助成機関識別子タイプURI（funderIdentifierTypeURI）を追加（#107） |
 | 1.4.0 | 2026-03-20 | WEKO3 v2テンプレート対応：researchmap_linkageシステムフィールド追加、査読の有無（peer_reviewed）フィールド追加（#108） |
@@ -33,6 +34,30 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-21: Chrome拡張初期化処理修正（#115）
+
+### 問題
+- PR #113 マージ後、Chrome拡張のpanel.htmlでAPIキー未設定警告が誤表示される
+- ボタン（データ取得・空値表示・プレビュー・TSV出力）がクリックに反応しない
+
+### 原因
+1. APIキー警告チェックがスクリプト読み込み時に即座に実行されるが、`loadConfig()`（chrome.storage.localからキーを読み込む関数）は`fetchData()`内でしか呼ばれず、CONFIG値がデフォルトのまま
+2. panel.htmlのボタンに`onclick`属性がなく、make_jc_importer.jsにも`addEventListener`が登録されていない（MV3 CSPによりinline onclick不可）
+
+### 修正内容
+- `make_jc_importer.js` / `make_jc_importer.html` のスクリプト末尾に `init()` 関数を追加:
+  - `loadConfig()` を最初に呼び出してからAPIキー警告を判定
+  - 4つの主要ボタンに `addEventListener` でイベント登録
+- `funder_lookup.js` は既にaddEventListenerパターンを使用済みのため変更不要
+
+### 変更ファイル
+- `make_jc_importer.html`: init関数追加、LOCAL_VERSION更新、更新概要テーブル更新
+- `chrome-extension/make_jc_importer.js`: init関数追加、LOCAL_VERSION更新
+- `chrome-extension/panel.html`: 更新概要テーブル更新
+- `chrome-extension/manifest.json`: 1.5.0 → 1.5.1
 
 ---
 

@@ -458,7 +458,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-03-20 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-03-21 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -470,6 +470,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-21</td>
+        <td style="padding:2px 0;">Chrome拡張機能の初期化処理を修正：APIキー警告の誤表示解消、ボタンイベント登録をaddEventListenerに統一（#115）</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-20</td>
         <td style="padding:2px 0;">新規フィールド「出版者情報」（#32）と「日付（リテラル）」（#33）を追加（JPCOAR 2.0）、Crossref/JaLC出版者の自動マッピング対応</td>
@@ -485,10 +489,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-15</td>
         <td style="padding:2px 0;">JPCOARスキーマ説明リンクを2.0に更新、下位項目（著者・助成情報・関連情報等）にもスキーマリンクを追加</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-15</td>
-        <td style="padding:2px 0;">資源タイプ語彙を JPCOAR 2.0 準拠に更新：v1.0廃止語彙をUI非表示、DOIカテゴリにv2.0新タイプ追加</td>
       </tr>
     </tbody>
   </table>
@@ -5989,17 +5989,31 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') fetchData();
 });
 
-// ===== APIキー未設定警告 =====
-if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
-  document.getElementById('apikey-warning').style.display = 'block';
-}
-if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') {
-  document.getElementById('cinii-apikey-warning').style.display = 'block';
-}
+// ===== 初期化（Chrome拡張: APIキー読み込み + ボタンイベント登録） =====
+(async function init() {
+  await loadConfig();
+
+  // APIキー未設定警告（loadConfig後に判定）
+  if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
+    document.getElementById('apikey-warning').style.display = 'block';
+  }
+  if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') {
+    document.getElementById('cinii-apikey-warning').style.display = 'block';
+  }
+
+  // ボタンイベント登録（MV3 CSP対応: inline onclick は使用不可）
+  document.getElementById('fetch-btn').addEventListener('click', fetchData);
+  document.getElementById('empty-btn').addEventListener('click', showEmptyFields);
+  document.getElementById('preview-btn').addEventListener('click', showPreview);
+  document.getElementById('export-btn').addEventListener('click', exportTsv);
+  document.getElementById('opf-badge').addEventListener('click', openOpfModal);
+  document.querySelector('#opf-modal button').addEventListener('click', closeOpfModal);
+  document.querySelector('#preview-modal .modal-close').addEventListener('click', closePreview);
+})();
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-20';
+  const LOCAL_VERSION = '2026-03-21';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
