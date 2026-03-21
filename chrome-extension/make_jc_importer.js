@@ -5405,17 +5405,31 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') fetchData();
 });
 
-// ===== APIキー未設定警告 =====
-if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
-  document.getElementById('apikey-warning').style.display = 'block';
-}
-if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') {
-  document.getElementById('cinii-apikey-warning').style.display = 'block';
-}
+// ===== 初期化（Chrome拡張: APIキー読み込み + ボタンイベント登録） =====
+(async function init() {
+  await loadConfig();
+
+  // APIキー未設定警告（loadConfig後に判定）
+  if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
+    document.getElementById('apikey-warning').style.display = 'block';
+  }
+  if (!CONFIG.CiNii_API_KEY || CONFIG.CiNii_API_KEY === 'YOUR_CiNii_API_KEY') {
+    document.getElementById('cinii-apikey-warning').style.display = 'block';
+  }
+
+  // ボタンイベント登録（MV3 CSP対応: inline onclick は使用不可）
+  document.getElementById('fetch-btn').addEventListener('click', fetchData);
+  document.getElementById('empty-btn').addEventListener('click', showEmptyFields);
+  document.getElementById('preview-btn').addEventListener('click', showPreview);
+  document.getElementById('export-btn').addEventListener('click', exportTsv);
+  document.getElementById('opf-badge').addEventListener('click', openOpfModal);
+  document.querySelector('#opf-modal button').addEventListener('click', closeOpfModal);
+  document.querySelector('#preview-modal .modal-close').addEventListener('click', closePreview);
+})();
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-20';
+  const LOCAL_VERSION = '2026-03-21';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
