@@ -75,8 +75,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-03-21 | ver. 1.5.1 | Chrome拡張の初期化処理修正：APIキー警告の誤表示解消、ボタンイベント登録をaddEventListenerに統一（[#115](https://github.com/tzhaya/jc-import-file-maker/issues/115)） |
-| インポート用TSV生成ツール | 2026-03-21 | — | Chrome拡張の初期化処理修正（[#115](https://github.com/tzhaya/jc-import-file-maker/issues/115)） |
+| Chrome拡張機能版 | 2026-03-21 | ver. 1.5.2 | TSVヘッダーテンプレートを更新：tsv_headers.jsonとTSV_HEADERS_TEMPLATEを同期、.thumbnail_pathシステムフィールド追加（[#114](https://github.com/tzhaya/jc-import-file-maker/issues/114)） |
+| インポート用TSV生成ツール | 2026-03-21 | — | TSVヘッダーテンプレートを更新（226→232列）（[#114](https://github.com/tzhaya/jc-import-file-maker/issues/114)） |
 | 助成情報検索ツール | 2026-03-17 | — | 課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
 
 ## 導入方法
@@ -249,6 +249,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-21 | TSVヘッダーテンプレートを更新：data/tsv_headers.jsonとTSV_HEADERS_TEMPLATEを同期（226→232列）、.thumbnail_pathシステムフィールド追加（[#114](https://github.com/tzhaya/jc-import-file-maker/issues/114)） |
 | 2026-03-21 | Chrome拡張機能の初期化処理を修正：APIキー警告の誤表示解消（loadConfig後に判定するよう変更）、全ボタンのイベント登録をaddEventListenerに統一（MV3 CSP対応）（[#115](https://github.com/tzhaya/jc-import-file-maker/issues/115)） |
 | 2026-03-20 | 新規フィールド「出版者情報」（item_1698624005）と「日付（リテラル）」（item_1698624008）を追加（JPCOAR 2.0）：Crossref/JaLC出版者の自動マッピング対応、TSV出力対応、TSV_HEADERS_TEMPLATE の欠落列を修正（[#32](https://github.com/tzhaya/jc-import-file-maker/issues/32), [#33](https://github.com/tzhaya/jc-import-file-maker/issues/33)） |
 | 2026-03-20 | 助成機関識別子タイプURI（funderIdentifierTypeURI）を追加：識別子タイプ選択時にURIを自動設定、e-Rad_funder選択肢追加（[#107](https://github.com/tzhaya/jc-import-file-maker/issues/107)） |

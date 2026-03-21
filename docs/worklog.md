@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-21（Chrome拡張初期化処理修正 #115）
+最終更新: 2026-03-21（tsv_headers.json更新 #114）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.5.2 | 2026-03-21 | TSVヘッダーテンプレート更新：tsv_headers.json同期、.thumbnail_path追加（#114） |
 | 1.5.1 | 2026-03-21 | Chrome拡張初期化処理修正：APIキー警告誤表示解消、ボタンaddEventListener統一（#115） |
 | 1.5.0 | 2026-03-20 | 新規フィールド「出版者情報」「日付（リテラル）」追加（#32, #33） |
 | 1.4.1 | 2026-03-20 | 助成機関識別子タイプURI（funderIdentifierTypeURI）を追加（#107） |
@@ -34,6 +35,39 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-21: data/tsv_headers.json 更新（#114）
+
+### 概要
+`data/tsv_headers.json` を最新のインポート用フォーマットに合わせて更新。`TSV_HEADERS_TEMPLATE`（HTML/JS内インライン定義）との乖離を解消し、WEKO3 v2テンプレートの `.thumbnail_path` システムフィールドを追加。
+
+### 変更内容
+- `data/tsv_headers.json`: 226列 → 232列に更新
+  - 追加フィールド（Issue #107, #108, #32 で HTML には反映済みだが JSON 未同期だった5件）:
+    1. `.researchmap_linkage` — WEKO3 v2 researchmap CRIS連携フラグ
+    2. `.metadata.item_30002_version_type15.subitem_peer_reviewed` — 査読の有無
+    3. `.metadata.item_30002_funding_reference21[0]...subitem_funder_identifier_type_uri` — 助成機関識別子タイプURI
+    4. `.metadata.item_1698624005[0].publication_places[0].publication_place_language` — 出版地（国名コード）言語
+    5. `.metadata.item_1698624005[0].publisher_locations[0].publisher_location_language` — 出版地言語
+  - 新規追加フィールド:
+    6. `.thumbnail_path` — サムネイルパス（WEKO3 v2 システムフィールド）
+- `make_jc_importer.html`: `TSV_HEADERS_TEMPLATE` に `.thumbnail_path` 追加（231→232列）
+- `chrome-extension/make_jc_importer.js`: 同上の同期
+- `chrome-extension/manifest.json`: 1.5.1 → 1.5.2
+
+### 変更ファイル
+- `data/tsv_headers.json` — 6フィールド追加
+- `make_jc_importer.html` — TSV_HEADERS_TEMPLATE更新 + 更新概要テーブル更新
+- `chrome-extension/make_jc_importer.js` — TSV_HEADERS_TEMPLATE同期
+- `chrome-extension/panel.html` — 更新概要テーブル同期
+- `chrome-extension/manifest.json` — バージョン 1.5.2
+
+### 参考
+- エクスポートサンプル: `samples/export/data/国際農研デフォルトアイテムタイプ（フル）(40039).tsv`
+- ItemType定義: `samples/ItemType_export/`
+- WEKO3 TSVインポート仕様: `docs/weko3_tsv_import_spec.md`
 
 ---
 
