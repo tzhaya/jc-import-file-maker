@@ -63,8 +63,9 @@ make_jc_importer.html
     `sample.json`
 
 **TSVヘッダー定義**
-    - `tsv_headers.json`
-    - TSVヘッダーは特定のJAIRO Cloudアイテムタイプ（国際農研デフォルトアイテムタイプ）に対応するように構成されます。
+    - `data/tsv_headers.json`（232列、5行: ItemType行・プロパティキー行・日本語ラベル行・System印行・制約行）
+    - デフォルトアイテムタイプ（フル）(30002) の WEKO3 v2 テンプレートに準拠
+    - `make_jc_importer.html` 内の `TSV_HEADERS_TEMPLATE` インライン定数と同期すること
 
 **WEKO3 TSVインポート仕様**
     - `docs/weko3_tsv_import_spec.md`
