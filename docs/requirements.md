@@ -151,8 +151,30 @@ make_jc_importer.html
 -   **TSVダウンロード**: 
     -   編集されたメタデータをUTF-8 BOM付きのTSVファイルとしてダウンロードします。TSVヘッダーは特定のJAIRO Cloudアイテムタイプ（国際農研デフォルトアイテムタイプ）に対応するように構成されます。
 
--   **Open Accessステータスの表示**:
+-   **OA情報統合**（[issue #51](https://github.com/tzhaya/jc-import-file-maker/issues/51)）:
     -   OpenAlexから取得した論文のOpen Accessステータスをバッジ形式で表示します。
+    -   **OAステータスバッジ**: 全6値（diamond/gold/green/hybrid/bronze/closed）に対応し、各ステータスに固有の色・アイコンでinfo-barに表示する
+    -   **OAサマリー表示**: info-barにOPFバッジ横でOAステータスの概要（OA Fee有無、エンバーゴ情報など）を日本語で表示する
+    -   **出版タイプ・relationTypeの自動設定**（`determineVersionInfo()`関数）:
+        -   OAステータスに基づいて出版タイプ（Version of Record / Author's Accepted Manuscript）とrelationType（isIdenticalTo / isVersionOf）を自動判定する
+        -   gold/diamond/hybrid: VoR + isIdenticalTo（出版者版）
+        -   green: AAM + isVersionOf（著者最終稿）
+        -   bronze/closed: VoR + isIdenticalTo（出版者版、アクセス制限あり）
+    -   **アクセス権の動的設定**（`determineAccessRights()`関数）:
+        -   OAステータスに基づいてアクセス権を自動設定する
+        -   open access: diamond/gold/hybrid/green（即時OA）
+        -   restricted access: bronze（制限付きOA）
+        -   metadata only access: closed（本文非公開）
+        -   embargoed access: closed かつ OpenAlex の best_oa_location にエンバーゴ日付がある場合
+    -   **OpenAlexリポジトリ情報の関連情報追加**:
+        -   OpenAlex の `any_repository_has_fulltext` が true の場合、`locations[]` からリポジトリ（source.type = "repository"）の landing_page_url を抽出し、関連情報（relationType: isIdenticalTo, identifierType: URI）として追加する
+    -   **OPFモーダルのOAステータス連動**:
+        -   OPFモーダル表示時に、論文のOAステータスに該当するポリシーをハイライトし「★ この論文に該当」ラベルを付与する
+        -   IR（機関リポジトリ）向けポリシーを優先的に上部に配置する
+    -   **エンバーゴヒント表示**:
+        -   OPF APIからエンバーゴ期間を取得した場合、日付セクションとファイル情報セクションに公開可能日の候補を表示する
+        -   エンバーゴ単位（months/years）に対応した日本語表示を行う
+    -   **UIラベル日本語化**: OA Fee表示の日本語化、エンバーゴ期間の単位表示対応
 
 -   **プレビュー表示機能**:
     -   データ入力後、「プレビュー表示」ボタンにより入力内容をモーダルで確認表示する
@@ -328,9 +350,14 @@ make_jc_importer.html
 - **アクセス権の設定**
     - アクセス権（"key": "item_30002_access_rights4"）は以下のように設定します。
         - アクセス権（"key": "item_30002_access_rights4.subitem_access_right"）
-            - 常に "open access"
+            - OpenAlexのOAステータスに基づき `determineAccessRights()` で動的に設定（[#51](https://github.com/tzhaya/jc-import-file-maker/issues/51)）
+            - diamond/gold/hybrid/green: "open access"
+            - bronze: "restricted access"
+            - closed（エンバーゴあり）: "embargoed access"
+            - closed（エンバーゴなし）: "metadata only access"
+            - OpenAlex未取得時のデフォルト: "open access"
         - アクセス権URI（"key": "item_30002_access_rights4.subitem_access_right_uri"）
-            - 常に "http://purl.org/coar/access_right/c_abf2"
+            - アクセス権の値に応じて `ACCESS_RIGHTS_MAP` から自動設定
 
 - **主題の設定**
     - 主題（"key": "item_30002_subject8"）はCrossref API, OpenAlex APIからの取り込みを行いません。
