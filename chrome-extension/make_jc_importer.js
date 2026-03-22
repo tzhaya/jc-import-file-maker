@@ -5176,7 +5176,9 @@ function downloadTsv(tsvString, filename) {
 
 function exportTsv() {
   const metadata = collectFromDOM();
-  const templateText = document.getElementById('tsv-template')?.value || '';
+  // カスタムテンプレート: #122 対応方針決定まで無効化（デフォルトアイテムタイプ（フル）のみ使用）
+  // const templateText = document.getElementById('tsv-template')?.value || '';
+  const templateText = '';
   const tsv = generateTsv(metadata, templateText);
   if (!tsv) { alert('TSV出力できるデータがありません。'); return; }
   const doi = metadata.system?.doi || 'import';
