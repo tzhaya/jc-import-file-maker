@@ -70,6 +70,38 @@
     font-weight: bold;
     color: white;
   }
+  /* バッチパネル */
+  .batch-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 3px 6px; border-bottom: 1px solid #c8e6c9;
+  }
+  .batch-item:hover { background: #f1f8e9; }
+  .batch-item.batch-current { background: #c8e6c9; }
+  .batch-item .batch-idx { color: #666; min-width: 24px; text-align: right; }
+  .batch-item .batch-doi { color: #1565c0; font-size: 0.88em; min-width: 180px; }
+  .batch-item .batch-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #333; }
+  .batch-item .batch-rm { font-size: 0.78em; padding: 1px 6px; border: 1px solid #999; background: white; border-radius: 3px; cursor: pointer; flex-shrink: 0; }
+  .batch-item .batch-rm:hover { background: #ffebee; border-color: #c62828; }
+
+  /* バッチナビゲーションバナー */
+  #batch-nav {
+    display: none; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 6px;
+    padding: 8px 14px; margin-bottom: 10px;
+    align-items: center; gap: 10px; font-size: 0.92em;
+  }
+  #batch-nav .batch-nav-label {
+    font-weight: bold; color: #2e7d32; white-space: nowrap;
+  }
+  #batch-nav .batch-nav-doi {
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #333;
+  }
+  #batch-nav .batch-nav-btns { display: flex; gap: 4px; flex-shrink: 0; }
+  #batch-nav .batch-nav-btns button {
+    padding: 2px 10px; border: 1px solid #81c784; background: white; border-radius: 4px;
+    cursor: pointer; font-size: 0.95em; color: #2e7d32;
+  }
+  #batch-nav .batch-nav-btns button:hover { background: #c8e6c9; }
+  #batch-nav .batch-nav-btns button:disabled { opacity: 0.4; cursor: default; background: white; }
 
   /* ===== プレビューエリア ===== */
   #preview-area {
@@ -462,7 +494,7 @@
 </nav>
 <h1>🌾 JAIRO Cloud インポート用TSV生成ツール(β)</h1>
 
-<p>このツールはベータ版です。インポート用TSVファイルの生成機能は未実装です。</p>
+<p>このツールはベータ版です。「デフォルトアイテムタイプ（フル）」の形式でTSVファイルを出力できます。</p>
 <p>現在のバージョンでは、Crossref APIおよびOpenAlex APIからのデータ取得が実装されています。Chrome拡張では、JaLC DOIにも対応しています。</p>
 <p>「DOI」にDOIを入力して「データ取得」ボタンを押すと、データを取得して表示します。</p>
 
@@ -482,6 +514,10 @@
     <tbody>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-22</td>
+        <td style="padding:2px 0;">複数DOI一括TSV出力：DOIを連続取得して蓄積し、ヘッダー5行+データN行の一括TSVを出力。リポジトリURL入力でスキーマURL置換対応（#100）</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-22</td>
         <td style="padding:2px 0;">カスタムテンプレート完全パース対応：5行ヘッダー貼り付けでTSVテンプレートを丸ごと上書き、ItemType行の自動設定（#99, #101）</td>
       </tr>
       <tr>
@@ -491,10 +527,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-21</td>
         <td style="padding:2px 0;">TSVヘッダーテンプレートを更新：tsv_headers.jsonとTSV_HEADERS_TEMPLATEを同期、.thumbnail_pathシステムフィールド追加（226→232列）（#114）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-21</td>
-        <td style="padding:2px 0;">Chrome拡張機能の初期化処理を修正：APIキー警告の誤表示解消、ボタンイベント登録をaddEventListenerに統一（#115）</td>
       </tr>
     </tbody>
   </table>
@@ -520,6 +552,20 @@
     </div>
   </details>
   -->
+  <div class="input-row" style="margin-top:4px;">
+    <label for="repo-host">リポジトリURL:</label>
+    <input type="text" id="repo-host" placeholder="例: https://repo.example.ac.jp/" value="" style="width:380px;"
+      title="TSV 1行目のスキーマURLに使用します（空欄の場合は https://localhost/ のまま出力）">
+    <div style="font-size:0.82em; color:#666; margin-top:2px;">あなたの機関リポジトリのURLを入れてください。TSVファイルに使用します。入力がない場合は https://localhost/ が設定されます。</div>
+  </div>
+  <!-- ===== バッチ管理パネル ===== -->
+  <div id="batch-panel" style="display:none; margin:8px 0; padding:10px 14px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:6px; font-size:0.9em;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <strong>蓄積アイテム: <span id="batch-count">0</span>件</strong>
+      <button id="batch-clear-btn" style="font-size:0.82em; padding:2px 10px; border:1px solid #c62828; color:#c62828; background:white; border-radius:4px; cursor:pointer;">全件クリア</button>
+    </div>
+    <div id="batch-list" style="max-height:180px; overflow-y:auto;"></div>
+  </div>
   <div id="loading" style="display:none">⏳ データを取得中です（ROR/ISNIも並行取得）...</div>
   <div id="apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ OpenAlex API Keyが設定されていません。設定しない場合、利用回数が制限されます。</div>
   <div id="cinii-apikey-warning" style="display:none; background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:8px; font-size:0.9em;">⚠ CiNii APIキーが設定されていません。</div>
@@ -537,6 +583,14 @@
 
 <!-- ===== メタデータプレビュー ===== -->
 <div id="preview-area">
+  <div id="batch-nav">
+    <span class="batch-nav-label" id="batch-nav-label">編集中: 1/1件</span>
+    <span class="batch-nav-doi" id="batch-nav-doi"></span>
+    <span class="batch-nav-btns">
+      <button id="batch-nav-prev" title="前のアイテム">← 前</button>
+      <button id="batch-nav-next" title="次のアイテム">次 →</button>
+    </span>
+  </div>
   <h2>📋 メタデータ確認・編集</h2>
 
   <!-- システム管理フィールド -->
@@ -567,7 +621,7 @@
   <div style="background:#fff; margin:40px auto; max-width:700px; border-radius:8px; box-shadow:0 4px 24px rgba(0,0,0,0.25); overflow:hidden;">
     <div style="background:#1565c0; color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center;">
       <span style="font-size:1.1em; font-weight:bold;">📋 OAポリシー（Open Policy Finder）</span>
-      <button style="background:transparent; border:none; color:#fff; font-size:1.4em; cursor:pointer; line-height:1;">&times;</button>
+      <button id="opf-modal-close" style="background:transparent; border:none; color:#fff; font-size:1.4em; cursor:pointer; line-height:1;">&times;</button>
     </div>
     <div id="opf-modal-body" style="padding:20px; font-size:0.9em; line-height:1.6;">
       <!-- JS で生成 -->

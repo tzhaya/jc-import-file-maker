@@ -188,10 +188,13 @@ make_jc_importer.html
     -   `TSV_HEADERS_TEMPLATE` テンプレート駆動方式: `data/tsv_headers.json` の内容をインライン定数として保持し、フィールドグループ化・配列展開を行う
     -   プロパティキープレフィックス自動検出: ユーザがリポジトリのTSVヘッダーを貼り付けると `item_XXXXX_` パターンを自動検出し、出力キーを置換する（デフォルト: `item_30002_`）
     -   カスタムテンプレート完全パース（Phase 2-B）: ユーザが5行ヘッダー（ItemType行・キー行・ラベル行・System行・制約行）を貼り付けた場合、`TSV_HEADERS_TEMPLATE` を丸ごと上書きしてTSV出力に反映する。不足行はデフォルトから補完。`parseCustomTemplate()` がパースを担当し、`groupTsvColumns()` / `buildTsvColumnDefs()` に template 引数として渡す
-    -   ItemType行の自動設定（Phase 2-D）: TSV 1行目のアイテムタイプ名・スキーマURLをデフォルト値（「デフォルトアイテムタイプ（フル）」/ `https://localhost/items/jsonschema/30002`）で自動設定。カスタムテンプレート使用時はその row0 をそのまま使用
+    -   ItemType行の自動設定（Phase 2-D）: TSV 1行目のアイテムタイプ名・スキーマURLをデフォルト値（「デフォルトアイテムタイプ（フル）(30002)」/ `https://localhost/items/jsonschema/30002`）で自動設定。カスタムテンプレート使用時はその row0 をそのまま使用
+    -   複数DOI一括TSV出力（Phase 2-C）: DOIを連続取得して `allMetadata[]` 配列に蓄積し、ヘッダー5行 + データN行の一括TSVを出力する。列数は全metadataの配列フィールド最大長で展開（`buildMaxSizeMetadata()`）。バッチ管理パネルで蓄積件数表示・個別削除・全クリア・アイテム切替が可能
+    -   リポジトリURL入力: `#repo-host` 入力欄でスキーマURLの `https://localhost/` を実際のリポジトリホスト名に置換
+    -   ファイル名: 単一DOIは `{DOI}.tsv`、複数DOIは `import_YYYYMMDD_HHMMSS.tsv`
     -   空フィールド省略: 値が存在しないフィールドの列群はTSVに出力しない
     -   除外フィールド: apc5, heading36, dissertation30〜degree33, item_1698624001〜010 は常に除外
-    -   TSV形式: 5行ヘッダー（ItemType行・プロパティキー行・日本語ラベル行・System印行・制約行）+ データ行、UTF-8 BOM付き・LF改行
+    -   TSV形式: 5行ヘッダー（ItemType行・プロパティキー行・日本語ラベル行・System印行・制約行）+ データN行、UTF-8 BOM付き・LF改行
 
 -   **OpenSearch検索機能**（Chrome拡張版のみ、[issue #72](https://github.com/tzhaya/jc-import-file-maker/issues/72)）:
     -   サイドパネルに「OpenSearch検索」タブを追加し、JAIRO Cloud機関リポジトリの OpenSearch API を用いた文献検索を提供する
