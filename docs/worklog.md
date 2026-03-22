@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-22（複数DOI一括TSV出力 Phase 2-C #100）
+最終更新: 2026-03-22（OA情報統合 + UIラベル日本語化 #51）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約6400行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + TSVエクスポート + ファイル情報UI + ファイルパス自動判定 + カスタムテンプレート完全パース + 複数DOI一括TSV出力）
+現在のファイル規模: **約6400行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + TSVエクスポート + ファイル情報UI + ファイルパス自動判定 + カスタムテンプレート完全パース + 複数DOI一括TSV出力 + OA情報統合）
 
 ---
 
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.8.1 | 2026-03-22 | OA情報統合 + UIラベル日本語化：OAステータス全6値対応、出版タイプ・アクセス権連動、OPFモーダル連動、エンバーゴヒント表示（#51） |
 | 1.8.0 | 2026-03-22 | 複数DOI一括TSV出力（Phase 2-C）：バッチ蓄積・一括エクスポート、リポジトリURL入力、タイムスタンプファイル名（#100） |
 | 1.7.0 | 2026-03-22 | カスタムテンプレート完全パース対応（Phase 2-B）、ItemType行自動設定（Phase 2-D）（#99, #101） |
 | 1.6.0 | 2026-03-22 | ファイルパス自動判定：data/以下のフォルダ選択でfile_path自動設定、PDF/画像判別（#90） |
@@ -38,6 +39,36 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-22: OA情報統合 + UIラベル日本語化（#51）
+
+### 概要
+OpenAlexのOAステータス情報を活用し、出版タイプ・relationType・アクセス権を自動設定する機能を実装。OPFモーダルとの連動表示、エンバーゴヒント表示、UIラベルの日本語化も含む。
+
+### 実装内容
+- **OAステータスバッジ全6値対応**: diamond/gold/green/hybrid/bronze/closed の6値に対応したバッジ表示。各ステータスに固有の色・アイコンを設定
+- **determineVersionInfo()関数**: OAステータスに基づく出版タイプ（VoR/AAM）とrelationType（isIdenticalTo/isVersionOf）の自動判定
+  - gold/diamond/hybrid → VoR + isIdenticalTo（出版者版）
+  - green → AAM + isVersionOf（著者最終稿）
+  - bronze/closed → VoR + isIdenticalTo（出版者版、アクセス制限あり）
+- **determineAccessRights()関数**: OAステータスに基づくアクセス権の動的設定
+  - diamond/gold/hybrid/green → open access
+  - bronze → restricted access
+  - closed + エンバーゴ日付あり → embargoed access
+  - closed + エンバーゴなし → metadata only access
+- **OpenAlexリポジトリ情報**: `any_repository_has_fulltext` が true の場合、`locations[]` からリポジトリ（source.type = "repository"）の landing_page_url を関連情報に追加
+- **OAサマリー表示**: info-barにOPFバッジ横でOA Fee有無・エンバーゴ情報などの概要を日本語表示
+- **OPFモーダル連動**: OAステータスに該当するポリシーをハイライト＋「★ この論文に該当」ラベル、IR向けポリシーを優先配置
+- **エンバーゴヒント表示**: 日付セクション・ファイル情報セクションに公開可能日候補を表示
+- **UIラベル日本語化**: OA Fee表示の日本語化、エンバーゴ単位（months/years）の対応
+
+### 変更ファイル
+- `make_jc_importer.html` — OA情報統合ロジック全般
+- `chrome-extension/make_jc_importer.js` — HTML同期
+- `chrome-extension/panel.html` — 更新概要
+- `chrome-extension/manifest.json` — version 1.8.0 → 1.8.1
 
 ---
 

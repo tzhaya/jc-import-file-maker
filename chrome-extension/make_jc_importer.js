@@ -49,6 +49,17 @@ async function extensionFetch(url, options = {}) {
 // ===== OPF連携グローバル状態 =====
 let lastOpfData   = null;   // 最後に取得したOPFデータ
 let lastOpfStatus = 'none'; // 'none' | 'no-issn' | 'disabled' | 'not-found' | 'found'
+let lastOaStatus  = '';     // OpenAlex oa_status（'diamond'|'gold'|'green'|'hybrid'|'bronze'|'closed'|''）
+
+// ===== OAステータスバッジ定義 =====
+const OA_BADGE_MAP = {
+  diamond: { label: '💎 Diamond OA', bg: '#4caf50' },
+  gold:    { label: '🟡 Gold OA',    bg: '#4caf50' },
+  green:   { label: '🟢 Green OA',   bg: '#4caf50' },
+  hybrid:  { label: '🔵 Hybrid OA',  bg: '#4caf50' },
+  bronze:  { label: '🟤 Bronze OA',  bg: '#ff9800' },
+  closed:  { label: '🔴 Closed',     bg: '#999' },
+};
 
 // ===== バッチ蓄積（Phase 2-C） =====
 let allMetadata = [];       // 蓄積された metadata の配列
@@ -308,6 +319,49 @@ function isKakenhi(awardNumber) {
   if (!awardNumber) return false;
   const num = awardNumber.replace(/^JP/i, '');
   return /^\d{2}[A-Z]{1,2}\d{4,5}$/i.test(num);
+}
+
+// ===== OAステータスに基づく出版タイプ / relationType 判定 =====
+function determineVersionInfo(oaStatus, oaJson) {
+  if (['diamond', 'gold', 'hybrid', 'bronze'].includes(oaStatus)) {
+    return { versionType: 'VoR', relationType: 'isIdenticalTo' };
+  }
+  const bestVersion = oaJson?.best_oa_location?.version
+    || (oaJson?.locations || []).find(l => l.version)?.version
+    || '';
+  const VERSION_RESULT_MAP = {
+    publishedVersion: { versionType: 'VoR',  relationType: 'isIdenticalTo' },
+    acceptedVersion:  { versionType: 'AM',   relationType: 'isVersionOf' },
+    submittedVersion: { versionType: 'SMUR', relationType: 'isVersionOf' },
+  };
+  return VERSION_RESULT_MAP[bestVersion] || { versionType: 'AM', relationType: 'isVersionOf' };
+}
+
+// ===== OAステータスに基づくアクセス権判定 =====
+function determineAccessRights(oaStatus, opfData) {
+  if (['diamond', 'gold', 'hybrid', 'bronze', 'green'].includes(oaStatus)) {
+    return 'open access';
+  }
+  if (oaStatus === 'closed' && opfData?.items?.[0]) {
+    const hasEmbargo = (opfData.items[0].publisher_policy || []).some(p =>
+      (p.permitted_oa || []).some(oa => oa.embargo?.amount > 0)
+    );
+    if (hasEmbargo) return 'embargoed access';
+  }
+  return 'open access';
+}
+
+// ===== エンバーゴ公開可能日算出 =====
+function calcEmbargoEndDate(pubDate, embargo) {
+  if (!pubDate || !embargo?.amount) return null;
+  const d = new Date(pubDate);
+  if (isNaN(d.getTime())) return null;
+  const units = embargo.units || 'months';
+  if (units === 'months') d.setMonth(d.getMonth() + embargo.amount);
+  else if (units === 'years') d.setFullYear(d.getFullYear() + embargo.amount);
+  else if (units === 'weeks') d.setDate(d.getDate() + embargo.amount * 7);
+  else return null;
+  return d.toISOString().slice(0, 10);
 }
 
 // ===== アクセス権マッピング =====
@@ -1067,6 +1121,7 @@ async function fetchOpenPolicyFinder(issns) {
 // ===== 3.5.3 OPF ステータス更新・モーダル制御 =====
 async function updateOpfStatus(issns) {
   const badge = document.getElementById('opf-badge');
+  const summary = document.getElementById('opf-summary');
   if (!badge) return;
 
   const hasKey = CONFIG.OPF_API_KEY && CONFIG.OPF_API_KEY !== 'YOUR_OPF_API_KEY';
@@ -1074,12 +1129,14 @@ async function updateOpfStatus(issns) {
 
   if (!isExtension || !hasKey) {
     badge.style.display = 'none';
+    if (summary) summary.style.display = 'none';
     lastOpfStatus = 'disabled';
     lastOpfData = null;
     return;
   }
   if (!issns.length) {
     badge.style.display = 'none';
+    if (summary) summary.style.display = 'none';
     lastOpfStatus = 'no-issn';
     lastOpfData = null;
     return;
@@ -1087,6 +1144,7 @@ async function updateOpfStatus(issns) {
 
   badge.textContent = '⏳ OAポリシー取得中…';
   badge.style.display = '';
+  if (summary) summary.style.display = 'none';
   try {
     lastOpfData = await fetchOpenPolicyFinder(issns);
     if (lastOpfData) {
@@ -1094,6 +1152,22 @@ async function updateOpfStatus(issns) {
       badge.textContent = '📋 OAポリシー';
       badge.style.background = '#e3f2fd';
       badge.style.color = '#1565c0';
+      // OAステータスに応じたサマリー表示
+      if (summary) {
+        const OA_SUMMARY_MAP = {
+          diamond: '— 出版社版が公開可能',
+          gold:    '— 出版社版が公開可能',
+          hybrid:  '— 出版社版が公開可能',
+          bronze:  '— 出版社版が公開可能（ライセンス不明）',
+          green:   '— 著者最終稿/投稿原稿がリポジトリで公開済み',
+          closed:  '— 著者最終稿のリポジトリ公開条件を確認',
+        };
+        const summaryText = OA_SUMMARY_MAP[lastOaStatus] || '';
+        if (summaryText) {
+          summary.textContent = summaryText;
+          summary.style.display = '';
+        }
+      }
     } else {
       lastOpfStatus = 'not-found';
       badge.textContent = '📋 OAポリシー（情報なし）';
@@ -1113,7 +1187,7 @@ async function updateOpfStatus(issns) {
 function openOpfModal() {
   const modal = document.getElementById('opf-modal');
   const body  = document.getElementById('opf-modal-body');
-  body.innerHTML = renderOpfModal(lastOpfData, lastOpfStatus);
+  body.innerHTML = renderOpfModal(lastOpfData, lastOpfStatus, lastOaStatus);
   modal.style.display = '';
 }
 
@@ -1121,13 +1195,19 @@ function closeOpfModal() {
   document.getElementById('opf-modal').style.display = 'none';
 }
 
-function renderOpfModal(data, status) {
+function renderOpfModal(data, status, oaStatus) {
   if (status === 'disabled') return '<p>OPF APIキーが設定されていないか、Chrome拡張版でご利用ください。</p>';
   if (status === 'no-issn')  return '<p>ISSNが取得できなかったためOAポリシーを検索できません。</p>';
   if (!data?.items?.length)  return '<p>OAポリシー情報が見つかりませんでした。</p>';
 
   const item = data.items[0];
   let html = '';
+
+  // OAステータスバッジ（モーダル上部）
+  if (oaStatus) {
+    const bi = OA_BADGE_MAP[oaStatus];
+    if (bi) html += `<p><span style="background:${bi.bg};color:#fff;border-radius:4px;padding:2px 10px;font-size:0.9em;font-weight:bold;">${bi.label}</span></p>`;
+  }
 
   // 雑誌タイトル
   const title = item.title?.[0]?.title;
@@ -1148,6 +1228,17 @@ function renderOpfModal(data, status) {
   if (!policies.length) {
     html += '<p>ポリシー情報はありません。</p>';
     return html;
+  }
+
+  // OAステータスに基づくハイライト対象 article_version の判定
+  const highlightVersions = new Set();
+  if (['diamond', 'gold', 'hybrid', 'bronze'].includes(oaStatus)) {
+    highlightVersions.add('published');
+  } else if (oaStatus === 'green') {
+    highlightVersions.add('accepted');
+    highlightVersions.add('submitted');
+  } else if (oaStatus === 'closed') {
+    highlightVersions.add('accepted');
   }
 
   policies.forEach(pol => {
@@ -1171,8 +1262,17 @@ function renderOpfModal(data, status) {
       const bV = Math.min(...(b.article_version || []).map(v => VERSION_ORDER[v] ?? 9));
       return aV - bV;
     });
+    // IR含むエントリを先頭に（oaStatus=closed の場合特に重要）
+    if (oaStatus === 'closed') {
+      sortedOa.sort((a, b) => {
+        const aIR = (a.location?.location || []).some(l => l === 'institutional_repository' || l === 'non_commercial_institutional_repository') ? 0 : 1;
+        const bIR = (b.location?.location || []).some(l => l === 'institutional_repository' || l === 'non_commercial_institutional_repository') ? 0 : 1;
+        return aIR - bIR;
+      });
+    }
     const VERSION_BG = { published: '#e0ebe2', accepted: '#e8f0f7', submitted: '#fce8ed' };
     const VERSION_BADGE = { published: 'background:#4caf50;color:#fff', accepted: 'background:#1976d2;color:#fff', submitted: 'background:#e91e63;color:#fff' };
+    const EMBARGO_UNITS = { months: 'ヶ月', years: '年', weeks: '週間' };
     sortedOa.forEach(oa => {
       const versionKeys = oa.article_version || [];
       const badges = (oa.article_version_phrases || []).map(v => {
@@ -1181,14 +1281,28 @@ function renderOpfModal(data, status) {
       }).join(' ');
       const licenses = (oa.license || []).map(l => (l.license_phrases?.[0]?.phrase || l.license)).join(' / ');
       const locations = (oa.location?.location_phrases || []).map(l => l.phrase).join(', ');
-      const embargo = oa.embargo?.amount ? `${oa.embargo.amount}ヶ月` : '';
+      const embargoUnits = EMBARGO_UNITS[oa.embargo?.units] || oa.embargo?.units_phrases?.[0]?.phrase || '';
+      const embargo = oa.embargo?.amount ? `${oa.embargo.amount}${embargoUnits}` : '';
+      const oaFee = oa.additional_oa_fee;
       const conditions = oa.conditions || [];
       const bgColor = versionKeys.reduce((c, v) => VERSION_BG[v] || c, '#f8f9fa');
       const hasIR = (oa.location?.location || []).some(l => l === 'institutional_repository' || l === 'non_commercial_institutional_repository');
 
-      html += `<div style="background:${bgColor}; border-radius:4px; padding:8px 10px; margin:6px 0; font-size:0.88em;${hasIR ? ' border-left:4px solid #ff9800;' : ''}">`;
-      if (badges) html += `<p style="margin:2px 0 6px;">${badges}${hasIR ? ' <span style="background:#ff9800;color:#fff;border-radius:4px;padding:1px 6px;font-size:0.8em;margin-left:4px;">★ リポジトリ公開可</span>' : ''}</p>`;
+      // OAステータスに基づくハイライト判定
+      const isHighlighted = versionKeys.some(v => highlightVersions.has(v));
+      const isClosedMatch = oaStatus === 'closed' && versionKeys.includes('accepted')
+        && oaFee !== 'yes' && hasIR;
+      const showStar = isHighlighted || isClosedMatch;
+
+      html += `<div style="background:${bgColor}; border-radius:4px; padding:8px 10px; margin:6px 0; font-size:0.88em;${hasIR ? ' border-left:4px solid #ff9800;' : ''}${showStar ? ' box-shadow:0 0 0 2px #ff9800;' : ''}">`;
+      if (badges) {
+        html += `<p style="margin:2px 0 6px;">${badges}`;
+        if (hasIR) html += ` <span style="background:#ff9800;color:#fff;border-radius:4px;padding:1px 6px;font-size:0.8em;margin-left:4px;">★ リポジトリ公開可</span>`;
+        if (showStar) html += ` <span style="background:#d32f2f;color:#fff;border-radius:4px;padding:1px 6px;font-size:0.8em;margin-left:4px;">★ この論文に該当</span>`;
+        html += `</p>`;
+      }
       if (licenses) html += `<p style="margin:2px 0;"><strong>ライセンス:</strong> ${escHtml(licenses)}</p>`;
+      if (oaFee) html += `<p style="margin:2px 0;"><strong>OA Fee:</strong> ${oaFee === 'yes' ? 'あり' : oaFee === 'no' ? 'なし' : escHtml(oaFee)}</p>`;
       if (locations) html += `<p style="margin:2px 0;"><strong>掲載先:</strong> ${escHtml(locations)}</p>`;
       if (embargo) html += `<p style="margin:2px 0;"><strong>エンバーゴ:</strong> ${escHtml(embargo)}</p>`;
       if (conditions.length) html += `<p style="margin:2px 0; color:#555;"><strong>条件:</strong> ${conditions.map(c => escHtml(c)).join('; ')}</p>`;
@@ -1219,14 +1333,11 @@ async function fetchCrossrefData(doi) {
 
   const oaStatus = oaJson.open_access?.oa_status || '';
   const isOa = oaJson.open_access?.is_oa || false;
+  lastOaStatus = oaStatus;
   const badge = document.getElementById('oa-badge');
-  badge.textContent = isOa
-    ? (oaStatus === 'gold'   ? '🟡 Gold OA'
-     : oaStatus === 'green'  ? '🟢 Green OA'
-     : oaStatus === 'hybrid' ? '🔵 Hybrid OA'
-     : '⚪ Other OA')
-    : '🔴 Closed';
-  badge.style.background = isOa ? '#4caf50' : '#999';
+  const badgeInfo = OA_BADGE_MAP[oaStatus] || { label: '⚪ Unknown', bg: '#999' };
+  badge.textContent = badgeInfo.label;
+  badge.style.background = badgeInfo.bg;
   document.getElementById('info-bar').style.display = 'flex';
 
   // マッピング → レンダリング
@@ -1820,7 +1931,7 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   const submittedDate = formatDateParts(crJson.submitted?.['date-parts']?.[0] || []);
   const isOa       = oaJson.open_access?.is_oa   || false;
   const oaStatus   = oaJson.open_access?.oa_status || '';
-  const isGoldOa   = isOa && (oaStatus === 'gold' || oaStatus === 'hybrid');
+  const versionInfo = determineVersionInfo(oaStatus, oaJson);
 
   // ===== タイトル =====
   const title = (crJson.title || [])[0] || '';
@@ -1860,10 +1971,13 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   const resourceuri   = resourcetype ? (RESOURCE_TYPE_MAP[resourcetype] || '') : '';
 
   // ===== 出版タイプ =====
-  const versionType     = isGoldOa ? 'VoR' : 'AM';
-  const versionResource = isGoldOa
-    ? 'http://purl.org/coar/version/c_970fb48d4fbd8a85'
-    : 'http://purl.org/coar/version/c_ab4af688f83e57aa';
+  // ===== 出版タイプ（OAステータス連動） =====
+  const versionType     = versionInfo.versionType;
+  const versionResource = VERSION_TYPE_MAP[versionType] || VERSION_TYPE_MAP['AM'];
+
+  // ===== アクセス権（OAステータス + OPFエンバーゴ連動） =====
+  const accessRight    = determineAccessRights(oaStatus, lastOpfData);
+  const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== ISSN =====
   const sourceIdentifiers = [];
@@ -1925,10 +2039,10 @@ async function mapToItemType(crJson, oaJson, rorMap) {
     // ----- 寄与者（空）-----
     item_30002_contributor3: [],
 
-    // ----- アクセス権 -----
+    // ----- アクセス権（OAステータス連動） -----
     item_30002_access_rights4: {
-      subitem_access_right:     'open access',
-      subitem_access_right_uri: 'http://purl.org/coar/access_right/c_abf2',
+      subitem_access_right:     accessRight,
+      subitem_access_right_uri: accessRightUri,
     },
 
     // ----- 権利情報 -----
@@ -1999,10 +2113,10 @@ async function mapToItemType(crJson, oaJson, rorMap) {
         'PISSN','EISSN','ISSN','NAID','NCID','PMID','PURL','SCOPUS','URI','WOS',
       ]);
       const relations = [];
-      // 1) Crossref DOI エントリ
+      // 1) Crossref DOI エントリ（OAステータスに応じた relationType）
       if (doi) {
         relations.push({
-          subitem_relation_type: 'isIdenticalTo',
+          subitem_relation_type: versionInfo.relationType,
           subitem_relation_type_id: {
             subitem_relation_type_id_text: `https://doi.org/${doi}`,
             subitem_relation_type_select: 'DOI',
@@ -2075,12 +2189,35 @@ async function mapToItemType(crJson, oaJson, rorMap) {
           });
         });
       });
-      // 5) DOI タイプの関連エントリにタイトルを設定（isIdenticalTo は自身の識別子なので除外）
+      // 5) OpenAlex リポジトリ情報（any_repository_has_fulltext: true の場合）
+      if (oaJson.open_access?.any_repository_has_fulltext) {
+        (oaJson.locations || [])
+          .filter(loc => loc.source?.type === 'repository' && loc.landing_page_url)
+          .forEach(loc => {
+            const url = loc.landing_page_url;
+            const idType = /^https?:\/\/(dx\.)?doi\.org\//.test(url) ? 'DOI'
+              : /^https?:\/\/hdl\.handle\.net\//.test(url) ? 'HDL'
+              : 'PURL';
+            relations.push({
+              subitem_relation_type: 'isVersionOf',
+              subitem_relation_type_id: {
+                subitem_relation_type_id_text: url,
+                subitem_relation_type_select: idType,
+              },
+              subitem_relation_name: loc.source?.display_name
+                ? [{ subitem_relation_name_text: loc.source.display_name, subitem_relation_name_language: 'en' }]
+                : [],
+            });
+          });
+      }
+      // 6) DOI タイプの関連エントリにタイトルを設定（isIdenticalTo/isVersionOf(自DOI) は除外）
       const doiRelEntries = [];
       relations.forEach((rel, i) => {
         if (rel.subitem_relation_type !== 'isIdenticalTo'
             && rel.subitem_relation_type_id.subitem_relation_type_select === 'DOI') {
-          doiRelEntries.push({ index: i, doi: rel.subitem_relation_type_id.subitem_relation_type_id_text });
+          const relDoi = rel.subitem_relation_type_id.subitem_relation_type_id_text;
+          if (relDoi === `https://doi.org/${doi}`) return;
+          doiRelEntries.push({ index: i, doi: relDoi });
         }
       });
       const relTitles = await Promise.all(doiRelEntries.map(e => fetchRelationTitle(e.doi)));
@@ -4297,6 +4434,46 @@ function renderFileField(def, files) {
   return section;
 }
 
+// ===== 5.4b エンバーゴヒント生成 =====
+function buildEmbargoHint(metadata, context) {
+  if (!lastOpfData?.items?.[0]) return null;
+  const policies = lastOpfData.items[0].publisher_policy || [];
+  const EMBARGO_UNITS = { months: 'ヶ月', years: '年', weeks: '週間' };
+  const embargoEntries = [];
+  policies.forEach(pol => {
+    (pol.permitted_oa || []).forEach(oa => {
+      if (oa.embargo?.amount > 0) {
+        const versions = (oa.article_version_phrases || []).map(v => v.phrase).join(' / ');
+        const unitsLabel = EMBARGO_UNITS[oa.embargo.units] || oa.embargo.units_phrases?.[0]?.phrase || '';
+        embargoEntries.push({ amount: oa.embargo.amount, units: oa.embargo.units, unitsLabel, versions });
+      }
+    });
+  });
+  if (!embargoEntries.length) return null;
+
+  const pubDateEntry = (metadata.item_30002_date11 || []).find(d => d.subitem_date_issued_type === 'Issued');
+  const pubDate = pubDateEntry?.subitem_date_issued_datetime || '';
+
+  const div = document.createElement('div');
+  div.style.cssText = 'padding:8px 16px; background:#fff3e0; border-left:4px solid #ff9800; margin:4px 16px 8px; border-radius:4px; font-size:0.85em; color:#e65100;';
+  let html = '';
+  embargoEntries.forEach(e => {
+    const endDate = calcEmbargoEndDate(pubDate, { amount: e.amount, units: e.units });
+    html += `<div>⏳ エンバーゴ: ${e.amount}${escHtml(e.unitsLabel)}（${escHtml(e.versions)}）`;
+    if (pubDate && endDate) {
+      html += ` — 出版日 ${escHtml(pubDate)} → <strong>公開可能日: ${endDate}</strong>`;
+    }
+    html += '</div>';
+  });
+  if (context === 'date') {
+    html += '<div style="margin-top:4px; font-size:0.9em; color:#795548;">💡 「Available」タイプで公開可能日を入力してください</div>';
+  } else if (context === 'file') {
+    html += '<div style="margin-top:4px; font-size:0.9em; color:#795548;">💡 「公開日タイプ」を Available にし、公開可能日を入力してください</div>';
+  }
+  div.innerHTML = html;
+  return div;
+}
+
 // ===== 5.5 メインレンダリング =====
 function renderAll(metadata) {
   const container = document.getElementById('metadata-fields');
@@ -4351,6 +4528,15 @@ function renderAll(metadata) {
         continue;
     }
     container.appendChild(sectionEl);
+
+    // エンバーゴヒント（日付セクション / ファイルセクション直後）
+    if (def.key === 'item_30002_date11') {
+      const hint = buildEmbargoHint(metadata, 'date');
+      if (hint) container.appendChild(hint);
+    } else if (def.key === 'item_30002_file35') {
+      const hint = buildEmbargoHint(metadata, 'file');
+      if (hint) container.appendChild(hint);
+    }
   }
 
   document.getElementById('preview-area').style.display = 'block';
