@@ -4329,7 +4329,8 @@ function renderAll(metadata) {
   document.getElementById('preview-area').style.display = 'block';
   document.getElementById('preview-btn').style.display = '';
   document.getElementById('export-btn').style.display = '';
-  document.getElementById('tsv-options').style.display = '';
+  const tsvOpts = document.getElementById('tsv-options');
+  if (tsvOpts) tsvOpts.style.display = '';
   updateDoiBadges();
 }
 
