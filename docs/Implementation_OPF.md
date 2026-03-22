@@ -183,19 +183,90 @@ const [ncid, opfData] = await Promise.all([
 
 **目的:** 論文のOAステータス（OpenAlex由来）と雑誌のOAポリシー（OPF由来）を組み合わせて、機関リポジトリ担当者に有用な情報を優先表示する。
 
-### 表示ロジック
+### OpenAlex `open_access.oa_status` の定義
+
+ref: [Issue #51 comment](https://github.com/tzhaya/jc-import-file-maker/issues/51#issuecomment-4101903606)、[OpenAlex docs - Work object: open_access](https://docs.openalex.org/api-entities/works/work-object#open_access)
+
+| 値 | 定義 | 判定条件 |
+|---|---|---|
+| **`diamond`** | DOAJに収録された、またはOAと判定された完全OAジャーナルに掲載。**APC（論文処理費用）なし**（読者・著者ともに無料） | 完全OAジャーナル + APC = 0 |
+| **`gold`** | 完全OAジャーナルに掲載 | 完全OAジャーナル（APCありの場合を含む） |
+| **`green`** | 出版社のランディングページでは有料（toll-access）だが、OAリポジトリに無料コピーがある | 出版社版は有料 + リポジトリに無料版あり |
+| **`hybrid`** | 購読型（toll-access）ジャーナルにおいて、オープンライセンスのもとで無料公開 | 購読型ジャーナル + オープンライセンスあり |
+| **`bronze`** | 出版社のランディングページで無料で読めるが、**識別可能なライセンスがない** | 出版社で無料公開 + ライセンス不明 |
+| **`closed`** | 上記いずれにも該当しないすべての論文 | OAではない |
+
+**注意点:**
+- `diamond` は `gold` のサブセットで、APCゼロが追加条件
+- `green` は出版社版が有料（toll-access）であることが前提条件。出版社で無料公開されていれば green にはならない
+- `hybrid` と `bronze` の違いはオープンライセンスの有無
+- **Shadowed Green:** 出版社でOA公開されている場合（bronze/hybrid/gold/diamond）、そのステータスが優先されリポジトリにもコピーがあっても `green` にはならない。検出には `any_repository_has_fulltext` フィールドを参照する必要がある
+
+### OAステータスに基づく JPCOAR relationtype / 出版タイプの設定
+
+ref: [Issue #51 comment](https://github.com/tzhaya/jc-import-file-maker/issues/51#issuecomment-4101967021)、[JPCOARスキーマ 2.0 関連情報](https://schema.irdb.nii.ac.jp/ja/schema/2.0/20)
+
+JPCOARスキーマでは、出版社版との関係を関連情報（`jpcoar:relation`）の `relationtype` に記述する:
+- **出版社版を掲載:** `relationtype` = `isIdenticalTo`、出版タイプ = `VoR`
+- **著者最終稿を掲載:** `relationtype` = `isVersionOf`、出版タイプ = `AM`
+
+| oa_status | relationtype | 出版タイプ |
+|---|---|---|
+| **`diamond`** | `isIdenticalTo` | VoR |
+| **`gold`** | `isIdenticalTo` | VoR |
+| **`green`** | `version` フィールドにより判定（下記参照） | `version` フィールドにより判定 |
+| **`hybrid`** | `isIdenticalTo` | VoR |
+| **`bronze`** | `isIdenticalTo` | VoR |
+| **`closed`** | `version` フィールドにより判定（下記参照） | `version` フィールドにより判定 |
+
+#### `green` / `closed` の出版タイプ判定
+
+`green` および `closed`（機関リポジトリに新規掲載するケース）では、OpenAlex `locations[]` の `version` フィールドを参照して出版タイプを切り替える。
+
+| `version` の値 | 出版タイプ | relationtype |
+|---|---|---|
+| `publishedVersion` | VoR (Version of Record) | `isIdenticalTo` |
+| `acceptedVersion` | AM (Accepted Manuscript) | `isVersionOf` |
+| `submittedVersion` | SMUR (Submitted Manuscript Under Review) | `isVersionOf` |
+
+※ `closed` の場合、現時点では `any_repository_has_fulltext: false` だが、本ツールで機関リポジトリ（例: 国際農研）に掲載するためのインポートファイルを作成するユースケースを想定している。
+
+#### リポジトリ情報の取得
+
+`any_repository_has_fulltext: true` の場合、`locations` 配列内に `source.type === "repository"` のエントリが含まれる。
+
+この場合は、関連情報 `jpcoar:relation` の `relationtype` に `isVersionOf` として `landing_page_url` の値を `jpcoar:relatedIdentifier` に設定する。`identifierType` は以下の通り:
+- DOIと判定できる場合は `DOI`
+- handleなら `HDL`
+- それ以外のURLは `PURL` とする
+
+各 location オブジェクトの主要フィールド:
+
+| フィールド | 内容 |
+|---|---|
+| `landing_page_url` | リポジトリのページURL |
+| `pdf_url` | 直接PDFリンク（ない場合は `null`） |
+| `source.type` | `"repository"` / `"journal"` で出版社とリポジトリを区別 |
+| `source.display_name` | リポジトリ名（例: "Europe PMC", "DASH (Harvard)"） |
+| `version` | `submittedVersion`（プレプリント） / `acceptedVersion`（著者最終稿） / `publishedVersion`（出版版） |
+| `license` | そのロケーションでのライセンス（例: `cc-by`） |
+| `is_oa` | そのロケーションでOAアクセス可能か（`true` / `false`） |
+
+### OPFモーダルでの表示ロジック
 
 | OAステータス | 優先表示 |
 |-------------|---------|
-| Gold OA | 「出版社版が公開可能」→ Published の permitted_oa を強調 |
-| Green OA | 「著者最終稿/投稿原稿が公開可能」→ Accepted/Submitted を強調 |
-| Hybrid OA | Gold と同様（APC支払い済み） |
-| Closed | 「著者最終稿のリポジトリ公開条件」→ Accepted (fee=no, location=institutional_repository) を強調 |
+| `diamond` / `gold` | 「出版社版が公開可能」→ Published の permitted_oa を強調 |
+| `green` | 「著者最終稿/投稿原稿が公開可能」→ Accepted/Submitted を強調 |
+| `hybrid` | diamond/gold と同様（APC支払い済み） |
+| `bronze` | diamond/gold と同様（ただしライセンス不明の旨を注記） |
+| `closed` | 「著者最終稿のリポジトリ公開条件」→ Accepted (fee=no, location=institutional_repository) を強調 |
 
 ### 変更箇所
 - info-bar の OPF リンク横に、最も関連性の高いポリシーのサマリーを1行で表示
 - モーダル内で **`institutional_repository` を含む `permitted_oa` エントリを視覚的にハイライト**（背景色変更等）し、モーダル上部に配置
 - OAステータスに応じて最も関連性の高いエントリにラベル（例:「★ この論文に該当」）を付与
+- OAステータスに基づく `relationtype` / 出版タイプの自動設定（`mapToItemType()` 内の関連情報マッピングに反映）
 
 ---
 
