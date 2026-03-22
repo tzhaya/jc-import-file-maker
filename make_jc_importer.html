@@ -458,7 +458,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-03-21 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-03-22 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -470,6 +470,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-22</td>
+        <td style="padding:2px 0;">ファイル情報のパス自動判定：data/以下のフォルダ選択でfile_pathを自動設定、PDF→fulltext/画像→thumbnail自動判別（#90）</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-21</td>
         <td style="padding:2px 0;">TSVヘッダーテンプレートを更新：tsv_headers.jsonとTSV_HEADERS_TEMPLATEを同期、.thumbnail_pathシステムフィールド追加（226→232列）（#114）</td>
@@ -485,10 +489,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-20</td>
         <td style="padding:2px 0;">助成機関識別子タイプURI（funderIdentifierTypeURI）を追加：識別子タイプ選択時にURIを自動設定、e-Rad_funder選択肢追加</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-20</td>
-        <td style="padding:2px 0;">WEKO3 v2テンプレート対応：researchmap_linkageシステムフィールド追加、査読の有無（peer_reviewed）フィールド追加</td>
       </tr>
     </tbody>
   </table>
@@ -4632,6 +4632,14 @@ function renderConferenceField(def, confs) {
   return section;
 }
 
+// ----- ファイルパス抽出（webkitRelativePath から data/ 以降の相対パスを返す）-----
+function extractFilePath(webkitRelativePath) {
+  if (!webkitRelativePath) return null;
+  const m = webkitRelativePath.match(/(^|\/)data\/(.+)$/);
+  if (m) return m[2];
+  return null; // data/ が見つからない
+}
+
 // ----- ファイルサイズフォーマット -----
 function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
@@ -4666,6 +4674,8 @@ function renderOneFile(file, idx, defLabel) {
     setVal('filename', f.name);
     setVal('filesize_value', formatFileSize(f.size));
     setVal('format', f.type || 'application/octet-stream');
+    // file_path 自動設定（単一ファイル選択時はファイル名のみ）
+    setVal('file_path', f.name);
     // ヘッダーラベル更新
     const lbl = fileItem.querySelector('.item-label');
     if (lbl) lbl.textContent = `${defLabel}[${idx}]: ${f.name}`;
@@ -4675,6 +4685,7 @@ function renderOneFile(file, idx, defLabel) {
 
   // 基本フィールド
   fileCont.appendChild(createFieldRow('ファイル名', file.filename || '', 'text', null, { fieldKey: 'filename' }));
+  fileCont.appendChild(createFieldRow('ファイルパス', file.file_path || '', 'text', null, { fieldKey: 'file_path' }));
   fileCont.appendChild(createFieldRow('フォーマット', file.format || '', 'text', null, { fieldKey: 'format' }));
   fileCont.appendChild(createFieldRow('サイズ', file.filesize?.[0]?.value || '', 'text', null, { fieldKey: 'filesize_value' }));
 
@@ -4733,6 +4744,95 @@ function renderFileField(def, files) {
   const arr = Array.isArray(files) ? files : [];
   const summaryText = def.sum(arr);
   const { section, content } = createSection(def.key, def.label, summaryText);
+
+  // ----- data/ 以下のフォルダから一括追加 -----
+  const folderPickRow = document.createElement('div');
+  folderPickRow.className = 'field-row';
+  folderPickRow.style.marginBottom = '4px';
+  const folderLabel = document.createElement('span');
+  folderLabel.className = 'field-label';
+  folderLabel.textContent = 'data/\u4EE5\u4E0B\u306E\u30D5\u30A9\u30EB\u30C0\u3092\u9078\u629E';
+  folderPickRow.appendChild(folderLabel);
+  const folderBtn = document.createElement('button');
+  folderBtn.type = 'button';
+  folderBtn.className = 'btn';
+  folderBtn.textContent = '\u30D5\u30A9\u30EB\u30C0\u3092\u9078\u629E\u2026';
+  folderBtn.style.flex = '0 0 auto';
+  folderPickRow.appendChild(folderBtn);
+  content.appendChild(folderPickRow);
+
+  const folderNote = document.createElement('div');
+  folderNote.style.cssText = 'color:#666;margin:0 0 4px;font-size:0.85em;';
+  folderNote.textContent = 'data/ \u307E\u305F\u306F data/ \u4EE5\u4E0B\u306E\u30D5\u30A9\u30EB\u30C0\u3092\u9078\u629E\u3057\u3066\u304F\u3060\u3055\u3044\u3002\u30D5\u30A9\u30EB\u30C0\u76F4\u4E0B\u306EPDF\u30FB\u753B\u50CF\u30D5\u30A1\u30A4\u30EB\u304C\u8FFD\u52A0\u3055\u308C\u307E\u3059\u3002';
+  content.appendChild(folderNote);
+
+  const folderWarn = document.createElement('div');
+  folderWarn.style.cssText = 'color:#c00;margin:0 0 8px;padding:4px 8px;display:none;font-size:0.9em;background:#fff0f0;border:1px solid #fcc;border-radius:4px;';
+  content.appendChild(folderWarn);
+
+  folderBtn.addEventListener('click', async () => {
+    if (typeof window.showDirectoryPicker !== 'function') {
+      folderWarn.textContent = '\u26A0 \u3053\u306E\u30D6\u30E9\u30A6\u30B6\u3067\u306F\u30D5\u30A9\u30EB\u30C0\u9078\u629E\u304C\u5229\u7528\u3067\u304D\u307E\u305B\u3093\u3002\u500B\u5225\u306E\u30D5\u30A1\u30A4\u30EB\u9078\u629E\u3092\u3054\u5229\u7528\u304F\u3060\u3055\u3044\u3002';
+      folderWarn.style.display = '';
+      return;
+    }
+    let dirHandle;
+    try {
+      dirHandle = await window.showDirectoryPicker();
+    } catch (e) {
+      if (e.name === 'AbortError') return; // ユーザーがキャンセル
+      folderWarn.textContent = '\u26A0 \u30D5\u30A9\u30EB\u30C0\u306E\u9078\u629E\u306B\u5931\u6557\u3057\u307E\u3057\u305F: ' + e.message;
+      folderWarn.style.display = '';
+      return;
+    }
+    folderWarn.style.display = 'none';
+    const selectedFolder = dirHandle.name;
+    const isDataFolder = (selectedFolder === 'data');
+
+    // フォルダ直下のファイルのみ列挙（サブフォルダは再帰しない）
+    const directFiles = [];
+    const IMG_EXTS = ['jpg','jpeg','png','gif','tiff','tif','bmp','webp','svg'];
+    for await (const entry of dirHandle.values()) {
+      if (entry.kind !== 'file') continue;
+      const n = entry.name;
+      if (n.startsWith('.')) continue;
+      if (['desktop.ini', 'Thumbs.db'].includes(n)) continue;
+      const ext = n.split('.').pop().toLowerCase();
+      if (ext === 'pdf' || IMG_EXTS.includes(ext)) {
+        directFiles.push(await entry.getFile());
+      }
+    }
+
+    if (!directFiles.length) {
+      folderWarn.textContent = '\u26A0 \u9078\u629E\u3055\u308C\u305F\u30D5\u30A9\u30EB\u30C0\u306E\u76F4\u4E0B\u306BPDF\u30FB\u753B\u50CF\u30D5\u30A1\u30A4\u30EB\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3067\u3057\u305F\u3002';
+      folderWarn.style.display = '';
+      return;
+    }
+
+    const entries = directFiles.map(f => {
+      const filePath = isDataFolder ? f.name : (selectedFolder + '/' + f.name);
+      const type = f.type || '';
+      const isImage = type.startsWith('image/') ||
+        IMG_EXTS.includes(f.name.split('.').pop().toLowerCase());
+      return {
+        filename: f.name, format: type || 'application/octet-stream',
+        filesize: [{ value: formatFileSize(f.size) }],
+        accessrole: 'open_access', displaytype: 'detail',
+        date: [{ dateType: 'Available', dateValue: todayStr() }],
+        fileDate: [{ fileDateType: '', fileDateValue: '' }],
+        licensetype: '', licensefree: '',
+        url: { url: '', label: '', objectType: isImage ? 'thumbnail' : 'fulltext' },
+        groups: '', version: '', file_path: filePath,
+      };
+    });
+
+    // 追加ボタン（content.lastChild）の直前に挿入
+    const addBtn = content.lastChild;
+    for (const entry of entries) {
+      const idx = content.querySelectorAll(':scope > .nested-item').length;
+      content.insertBefore(renderOneFile(entry, idx, def.label), addBtn);
+    }
+  });
 
   arr.forEach((file, idx) => {
     content.appendChild(renderOneFile(file, idx, def.label));
@@ -5353,6 +5453,7 @@ function collectFileField(section) {
     if (!fc) return;
     const file = {
       filename: getFieldVal(fc, 'filename'),
+      file_path: getFieldVal(fc, 'file_path'),
       format: getFieldVal(fc, 'format'),
       filesize: [{ value: getFieldVal(fc, 'filesize_value') }],
       accessrole: getFieldVal(fc, 'accessrole'),
@@ -5552,14 +5653,13 @@ const TSV_SYS_KEY_MAP = {
 };
 
 function getTsvValue(col, metadata) {
-  // file_path フィールド
+  // file_path フィールド（data/ 以降の相対パス or ファイル名）
   const fpMatch = col.lookupKey.match(/^\.file_path\[(\d+)\]$/);
   if (fpMatch) {
     const idx = parseInt(fpMatch[1], 10);
     const files = metadata.item_30002_file35;
     if (!Array.isArray(files) || idx >= files.length) return '';
-    const fn = files[idx]?.filename || '';
-    return fn ? `recid_/${fn}` : '';
+    return files[idx]?.file_path || files[idx]?.filename || '';
   }
   // システムフィールド
   if (!col.lookupKey.startsWith('.metadata.item_')) {
@@ -5899,13 +5999,13 @@ function buildFilePreview(files) {
   if (!nonEmpty.length) return '';
 
   let html = '<table class="pv-inner-table"><thead><tr>';
-  html += '<th>#</th><th>\u30D5\u30A1\u30A4\u30EB\u540D</th><th>\u30B5\u30A4\u30BA</th><th>\u5F62\u5F0F</th><th>\u30A2\u30AF\u30BB\u30B9</th><th>\u30E9\u30A4\u30BB\u30F3\u30B9</th>';
+  html += '<th>#</th><th>\u30D5\u30A1\u30A4\u30EB\u540D</th><th>\u30D1\u30B9</th><th>\u30B5\u30A4\u30BA</th><th>\u5F62\u5F0F</th><th>\u30A2\u30AF\u30BB\u30B9</th><th>\u30E9\u30A4\u30BB\u30F3\u30B9</th>';
   html += '</tr></thead><tbody>';
 
   nonEmpty.forEach((f, i) => {
     const size = f.filesize?.[0]?.value || '';
     const license = LICENSE_TYPE_LABELS[f.licensetype] || f.licensetype || '';
-    html += '<tr><td>' + i + '</td><td>' + fmtVal(f.filename) + '</td><td>' + (size || '') + '</td><td>' + (f.format || '') + '</td><td>' + (f.accessrole || '') + '</td><td>' + license + '</td></tr>';
+    html += '<tr><td>' + i + '</td><td>' + fmtVal(f.filename) + '</td><td>' + fmtVal(f.file_path || '') + '</td><td>' + (size || '') + '</td><td>' + (f.format || '') + '</td><td>' + (f.accessrole || '') + '</td><td>' + license + '</td></tr>';
   });
   html += '</tbody></table>';
   return html;
@@ -6013,7 +6113,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-21';
+  const LOCAL_VERSION = '2026-03-22';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

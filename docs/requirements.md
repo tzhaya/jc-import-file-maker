@@ -173,7 +173,14 @@ make_jc_importer.html
     -   権利情報（rights12）のCC URIから`licensetype`を自動設定（`startsWith()`前方一致）
     -   `licensetype`が`license_free`の場合のみ`licensefree`テキストエリアを表示
     -   複数ファイルの追加・削除に対応
-    -   `file_path`（トップレベル）を`recid_{id}/{filename}`形式で自動生成
+    -   **ファイルパス自動判定**（[issue #90](https://github.com/tzhaya/jc-import-file-maker/issues/90)）:
+        -   `file_path`（トップレベル）を`data/`以下の相対パスから自動生成する
+        -   `showDirectoryPicker()` API によるフォルダ選択で、フォルダ直下のPDF・画像ファイルを一括追加
+        -   `data/` フォルダ選択時: `file_path` = ファイル名のみ（例: `paper.pdf`）
+        -   `data/` 以下のサブフォルダ選択時: `file_path` = `サブフォルダ名/ファイル名`（例: `rec_1/paper.pdf`）
+        -   PDF → オブジェクトタイプ `fulltext`、画像 → `thumbnail` を既定値に自動設定
+        -   個別ファイル選択時はファイル名を `file_path` に設定（手動編集可能）
+        -   プレビューテーブルに「パス」列を追加
     -   TSVエクスポート・プレビュー表示に対応
 
 -   **TSVエクスポート機能**（Phase 2）:
