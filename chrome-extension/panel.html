@@ -482,6 +482,10 @@
     <tbody>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-22</td>
+        <td style="padding:2px 0;">カスタムテンプレート完全パース対応：5行ヘッダー貼り付けでTSVテンプレートを丸ごと上書き、ItemType行の自動設定（#99, #101）</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-22</td>
         <td style="padding:2px 0;">ファイル情報のパス自動判定：data/以下のフォルダ選択でfile_pathを自動設定、PDF→fulltext/画像→thumbnail自動判別（#90）</td>
       </tr>
       <tr>
@@ -491,14 +495,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-21</td>
         <td style="padding:2px 0;">Chrome拡張機能の初期化処理を修正：APIキー警告の誤表示解消、ボタンイベント登録をaddEventListenerに統一（#115）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-20</td>
-        <td style="padding:2px 0;">新規フィールド「出版者情報」（#32）と「日付（リテラル）」（#33）を追加（JPCOAR 2.0）、Crossref/JaLC出版者の自動マッピング対応</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-03-20</td>
-        <td style="padding:2px 0;">助成機関識別子タイプURI（funderIdentifierTypeURI）を追加：識別子タイプ選択時にURIを自動設定、e-Rad_funder選択肢追加</td>
       </tr>
     </tbody>
   </table>
@@ -515,11 +511,11 @@
     <button id="export-btn" style="display:none; background:#2e7d32; color:white;">TSV出力</button>
   </div>
   <details id="tsv-options" style="display:none; margin-top:6px; font-size:0.9em;">
-    <summary style="cursor:pointer; color:#555; user-select:none;">TSV出力オプション（プロパティキーのカスタマイズ）</summary>
+    <summary style="cursor:pointer; color:#555; user-select:none;">TSV出力オプション（テンプレートのカスタマイズ）</summary>
     <div style="margin-top:6px; padding:8px; background:#f5f5f5; border-radius:4px;">
       <label for="tsv-template" style="display:block; margin-bottom:4px; color:#444;">テンプレート（任意）</label>
-      <textarea id="tsv-template" rows="3" style="width:100%; box-sizing:border-box; font-size:0.82em; font-family:monospace;" placeholder="リポジトリからエクスポートしたTSVの先頭2〜3行を貼り付けてください。&#10;空の場合はデフォルト（item_30002_）を使用します。"></textarea>
-      <div style="margin-top:4px; color:#666; font-size:0.82em;">2行目の <code>.metadata.item_XXXXX_</code> パターンを自動検出してプロパティキーを置換します。</div>
+      <textarea id="tsv-template" rows="5" style="width:100%; box-sizing:border-box; font-size:0.82em; font-family:monospace;" placeholder="リポジトリからエクスポートしたTSVの5行ヘッダー（またはプロパティキー行のみ）を貼り付けてください。&#10;5行ヘッダー: ItemType行・キー行・ラベル行・System行・制約行をすべて上書きします。&#10;キー行のみ: プロパティキーのプレフィックスを自動検出して置換します。&#10;空の場合はデフォルト（デフォルトアイテムタイプ（フル）/ item_30002_）を使用します。"></textarea>
+      <div style="margin-top:4px; color:#666; font-size:0.82em;">5行ヘッダーを貼り付けるとItemType名・ラベル・制約を含め完全に上書きします。キー行のみの場合は <code>.metadata.item_XXXXX_</code> パターンを自動検出してプレフィックスを置換します。</div>
     </div>
   </details>
   <div id="loading" style="display:none">⏳ データを取得中です（ROR/ISNIも並行取得）...</div>

@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-22（ファイルパス自動判定 #90）
+最終更新: 2026-03-22（カスタムテンプレート完全パース #99 + ItemType行自動設定 #101）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約6135行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + TSVエクスポート + ファイル情報UI + ファイルパス自動判定）
+現在のファイル規模: **約6186行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + TSVエクスポート + ファイル情報UI + ファイルパス自動判定 + カスタムテンプレート完全パース）
 
 ---
 
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.7.0 | 2026-03-22 | カスタムテンプレート完全パース対応（Phase 2-B）、ItemType行自動設定（Phase 2-D）（#99, #101） |
 | 1.6.0 | 2026-03-22 | ファイルパス自動判定：data/以下のフォルダ選択でfile_path自動設定、PDF/画像判別（#90） |
 | 1.5.2 | 2026-03-21 | TSVヘッダーテンプレート更新：tsv_headers.json同期、.thumbnail_path追加（#114） |
 | 1.5.1 | 2026-03-21 | Chrome拡張初期化処理修正：APIキー警告誤表示解消、ボタンaddEventListener統一（#115） |
@@ -36,6 +37,29 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-22: カスタムテンプレート完全パース + ItemType行自動設定（#99, #101, #120）
+
+### 概要
+
+Phase 2-B（#99）とPhase 2-D（#101）を同時実装。ユーザが自機関のTSVテンプレート（5行ヘッダー）を貼り付けた場合に `TSV_HEADERS_TEMPLATE` を丸ごと上書きしてTSV出力に反映する機能と、ItemType行のデフォルト値自動設定を追加。
+
+### 実装内容
+
+- `parseCustomTemplate(templateText)` 新規追加: 5行ヘッダーを完全パース。2行以上で先頭セルが `#ItemType` を含む場合にパース、不足行はデフォルトから補完
+- `groupTsvColumns(prefix)` → `groupTsvColumns(prefix, template)`: テンプレートを引数で受け取り、グローバル参照を排除。カスタムテンプレートのプレフィックスを自動検出し、lookupKey を `item_30002_` ベースに正規化
+- `buildTsvColumnDefs(prefix, metadata)` → `buildTsvColumnDefs(prefix, metadata, template)`: template 引数を追加して groupTsvColumns に渡す
+- `generateTsv()`: カスタムテンプレートパース試行 → 実効テンプレート決定 → ItemType行を実効テンプレートの row0 から取得
+- `TSV_HEADERS_TEMPLATE[0]` と `data/tsv_headers.json` の row0 を `["#ItemType", "デフォルトアイテムタイプ（フル）", "https://localhost/items/jsonschema/30002"]` に更新
+- UI: テキストエリアの説明文を更新（5行ヘッダー対応の案内）
+
+### 設計判断
+
+- `TSV_HEADERS_TEMPLATE` を直接上書きせず、`generateTsv()` 内で「実効テンプレート」を決定する安全設計
+- カスタムテンプレートの lookupKey を `item_30002_` に正規化することで、別プレフィックス（例: `item_40039_`）のテンプレートでもメタデータアクセスが正しく動作
+- スキーマURLは `https://localhost/items/jsonschema/30002`（汎用URL）をデフォルトとし、カスタムテンプレートの使用を推奨
 
 ---
 

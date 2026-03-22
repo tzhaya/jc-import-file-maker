@@ -1,6 +1,6 @@
 # 残存 Issues 一覧と実装優先順位
 
-最終更新: 2026-03-22
+最終更新: 2026-03-22（#99, #101 完了を反映）
 
 ## 概要
 
@@ -67,15 +67,9 @@ JPCOAR 2.0 対応（#25）は全完了（#32, #33, #87 クローズ済み）。
 
 #85（Phase 2-A）完了に伴い、残りのフェーズを個別issueに分割。
 
-#### #99: カスタムテンプレート完全パース（Phase 2-B）
+#### #99: カスタムテンプレート完全パース（Phase 2-B） — **完了**（2026-03-22）
 
-- **内容**: ユーザが自機関のTSVテンプレート（5行ヘッダー）を貼り付けた場合に `TSV_HEADERS_TEMPLATE` を丸ごと上書き
-- **現状**: プレフィックス自動検出・置換のみ対応。ラベル行・System行・制約行はデフォルト固定
-- **実装内容**:
-  - `parseCustomTemplate(templateText)` 関数の新規実装
-  - ItemType行からアイテムタイプ名・スキーマURLを自動取得
-- **変更対象**: `make_jc_importer.html` の `generateTsv()` / `groupTsvColumns()`
-- **参照**: `docs/Implementation_phase2.md` Phase 2-B セクション
+- **実装内容**: `parseCustomTemplate()` 新規追加、`groupTsvColumns()` / `buildTsvColumnDefs()` に template 引数追加、`generateTsv()` で実効テンプレート決定
 
 #### #100: 複数DOI一括TSV出力（Phase 2-C）
 
@@ -87,11 +81,9 @@ JPCOAR 2.0 対応（#25）は全完了（#32, #33, #87 クローズ済み）。
 - **変更対象**: `make_jc_importer.html` の `exportTsv()` / `generateTsv()` / `buildTsvColumnDefs()`
 - **参照**: `docs/Implementation_phase2.md` Phase 2-C セクション
 
-#### #101: ItemType行の自動設定（Phase 2-D）
+#### #101: ItemType行の自動設定（Phase 2-D） — **完了**（2026-03-22）
 
-- **内容**: TSV 1行目のアイテムタイプ名・スキーマURLを自動設定（現在は `(未設定)` 固定）
-- **変更対象**: `make_jc_importer.html` の `generateTsv()` / `TSV_HEADERS_TEMPLATE[0]`
-- **備考**: #99（カスタムテンプレート）実装時に合わせて対応可能
+- **実装内容**: `TSV_HEADERS_TEMPLATE[0]` と `data/tsv_headers.json` の row0 をデフォルトアイテムタイプ名+スキーマURLに更新。カスタムテンプレート使用時はその row0 をそのまま使用
 
 ---
 
@@ -186,10 +178,10 @@ JPCOAR 2.0 対応（#25）は全完了（#32, #33, #87 クローズ済み）。
 ## 推奨実装順序
 
 ```
-Step 1: グループ E — Phase 2 TSV拡張（#99 → #101 → #100）
-         ※ #101 は #99 と同時実装可能
-         ※ #100（複数DOI）は最も複雑なため最後
-         ※ #111（CONFIG共通化）は #99 と連動可能
+Step 1: グループ E — Phase 2 TSV拡張（#100）
+         ※ #99（カスタムテンプレート）と #101（ItemType行自動設定）は完了済み
+         ※ #100（複数DOI一括出力）が残り
+         ※ #111（CONFIG共通化）は別PRで後続実装
 
 Step 2: グループ K — ドキュメント整備（#116, #43）
          ※ Phase 2 TSV拡張の前後いずれでも可
@@ -216,7 +208,7 @@ Step 7: グループ J — コード品質改善（#74, #111）
 
 | ファイル | 変更 issues |
 |---------|------------|
-| `make_jc_importer.html` | #8, #74, #95, #99, #100, #101, #111 |
+| `make_jc_importer.html` | #8, #74, #95, #100, #111 |
 | `chrome-extension/make_jc_importer.js` | 上記と同期 |
 | `chrome-extension/panel.html` | UI 変更があれば同期 |
 | `chrome-extension/` 全般 | #73, #112 |
