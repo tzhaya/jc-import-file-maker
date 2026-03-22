@@ -187,6 +187,8 @@ make_jc_importer.html
     -   `collectFromDOM()` で収集した構造化JSONから WEKO3 インポート用TSVを生成してダウンロードする
     -   `TSV_HEADERS_TEMPLATE` テンプレート駆動方式: `data/tsv_headers.json` の内容をインライン定数として保持し、フィールドグループ化・配列展開を行う
     -   プロパティキープレフィックス自動検出: ユーザがリポジトリのTSVヘッダーを貼り付けると `item_XXXXX_` パターンを自動検出し、出力キーを置換する（デフォルト: `item_30002_`）
+    -   カスタムテンプレート完全パース（Phase 2-B）: ユーザが5行ヘッダー（ItemType行・キー行・ラベル行・System行・制約行）を貼り付けた場合、`TSV_HEADERS_TEMPLATE` を丸ごと上書きしてTSV出力に反映する。不足行はデフォルトから補完。`parseCustomTemplate()` がパースを担当し、`groupTsvColumns()` / `buildTsvColumnDefs()` に template 引数として渡す
+    -   ItemType行の自動設定（Phase 2-D）: TSV 1行目のアイテムタイプ名・スキーマURLをデフォルト値（「デフォルトアイテムタイプ（フル）」/ `https://localhost/items/jsonschema/30002`）で自動設定。カスタムテンプレート使用時はその row0 をそのまま使用
     -   空フィールド省略: 値が存在しないフィールドの列群はTSVに出力しない
     -   除外フィールド: apc5, heading36, dissertation30〜degree33, item_1698624001〜010 は常に除外
     -   TSV形式: 5行ヘッダー（ItemType行・プロパティキー行・日本語ラベル行・System印行・制約行）+ データ行、UTF-8 BOM付き・LF改行
