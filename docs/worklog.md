@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-22（カスタムテンプレート完全パース #99 + ItemType行自動設定 #101）
+最終更新: 2026-03-22（複数DOI一括TSV出力 Phase 2-C #100）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約6186行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + TSVエクスポート + ファイル情報UI + ファイルパス自動判定 + カスタムテンプレート完全パース）
+現在のファイル規模: **約6400行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + TSVエクスポート + ファイル情報UI + ファイルパス自動判定 + カスタムテンプレート完全パース + 複数DOI一括TSV出力）
 
 ---
 
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.8.0 | 2026-03-22 | 複数DOI一括TSV出力（Phase 2-C）：バッチ蓄積・一括エクスポート、リポジトリURL入力、タイムスタンプファイル名（#100） |
 | 1.7.0 | 2026-03-22 | カスタムテンプレート完全パース対応（Phase 2-B）、ItemType行自動設定（Phase 2-D）（#99, #101） |
 | 1.6.0 | 2026-03-22 | ファイルパス自動判定：data/以下のフォルダ選択でfile_path自動設定、PDF/画像判別（#90） |
 | 1.5.2 | 2026-03-21 | TSVヘッダーテンプレート更新：tsv_headers.json同期、.thumbnail_path追加（#114） |
@@ -37,6 +38,31 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-22: 複数DOI一括TSV出力 Phase 2-C（#100）
+
+### 概要
+複数DOIのメタデータを蓄積し、ヘッダー5行+データN行の一括TSVファイルとして出力する機能を実装。
+
+### 実装内容
+- **バッチ蓄積機構**: グローバル変数 `allMetadata[]` + `currentBatchIndex` で複数metadata管理
+- **saveCurrent()**: DOM編集内容を次のDOI取得前/TSV出力前に自動保存
+- **buildMaxSizeMetadata()**: 複数metadataの配列フィールド最大長を統合した仮想metadataを生成（列展開用）
+- **generateTsv() 拡張**: 引数を `metadataArray` に変更、N個のデータ行を出力、`repoHost` 引数でスキーマURL置換
+- **exportTsv() 拡張**: バッチ対応、複数件時はタイムスタンプベースのファイル名 `import_YYYYMMDD_HHMMSS.tsv`
+- **バッチ管理パネルUI**: 蓄積件数表示、アイテムリスト（DOI+タイトル）、個別削除ボタン、全件クリアボタン、アイテムクリックで表示切替
+- **リポジトリURL入力フィールド**: `#repo-host` 入力欄で `https://localhost/` をリポジトリのホスト名に置換
+- **ItemType名修正**: TSV_HEADERS_TEMPLATE/tsv_headers.json の row0[1] を `"デフォルトアイテムタイプ（フル）(30002)"` に修正
+- **Chrome拡張対応**: バッチUI削除ボタンはイベント委譲（data-batch-remove属性）で MV3 CSP に対応
+
+### 変更ファイル
+- `make_jc_importer.html` — メインロジック全変更
+- `chrome-extension/make_jc_importer.js` — HTML同期
+- `chrome-extension/panel.html` — バッチパネルUI + 更新概要
+- `chrome-extension/manifest.json` — version 1.7.0 → 1.8.0
+- `data/tsv_headers.json` — row0 ItemType名修正
 
 ---
 

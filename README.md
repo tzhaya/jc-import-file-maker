@@ -75,8 +75,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-03-22 | ver. 1.7.0 | カスタムテンプレート完全パース対応：5行ヘッダー貼り付けでTSVテンプレートを丸ごと上書き、ItemType行の自動設定（[#99](https://github.com/tzhaya/jc-import-file-maker/issues/99), [#101](https://github.com/tzhaya/jc-import-file-maker/issues/101)） |
-| インポート用TSV生成ツール | 2026-03-22 | — | カスタムテンプレート完全パース＋ItemType行自動設定（[#99](https://github.com/tzhaya/jc-import-file-maker/issues/99), [#101](https://github.com/tzhaya/jc-import-file-maker/issues/101)） |
+| Chrome拡張機能版 | 2026-03-22 | ver. 1.8.0 | 複数DOI一括TSV出力：DOIを連続取得して蓄積し、ヘッダー5行+データN行の一括TSVを出力。リポジトリURL入力でスキーマURL置換対応（[#100](https://github.com/tzhaya/jc-import-file-maker/issues/100)） |
+| インポート用TSV生成ツール | 2026-03-22 | — | 複数DOI一括TSV出力（Phase 2-C）＋リポジトリURL入力（[#100](https://github.com/tzhaya/jc-import-file-maker/issues/100)） |
 | 助成情報検索ツール | 2026-03-17 | — | 課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
 
 ## 導入方法
@@ -250,6 +250,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-22 | 複数DOI一括TSV出力（Phase 2-C）：DOIを連続取得して蓄積し、ヘッダー5行+データN行の一括TSVを出力。バッチ管理パネル（蓄積件数表示・個別削除・全クリア・アイテム切替）、リポジトリURL入力でスキーマURL置換、タイムスタンプベースファイル名（[#100](https://github.com/tzhaya/jc-import-file-maker/issues/100)） |
 | 2026-03-22 | カスタムテンプレート完全パース対応（Phase 2-B）：5行ヘッダー貼り付けでTSVテンプレートを丸ごと上書き、ItemType行の自動設定（Phase 2-D）（[#99](https://github.com/tzhaya/jc-import-file-maker/issues/99), [#101](https://github.com/tzhaya/jc-import-file-maker/issues/101)） |
 | 2026-03-22 | ファイル情報のパス自動判定：data/以下のフォルダ選択（showDirectoryPicker API）でfile_pathを自動設定、PDF→fulltext/画像→thumbnail自動判別、ファイルパスフィールド追加（[#90](https://github.com/tzhaya/jc-import-file-maker/issues/90)） |
 | 2026-03-21 | TSVヘッダーテンプレートを更新：data/tsv_headers.jsonとTSV_HEADERS_TEMPLATEを同期（226→232列）、.thumbnail_pathシステムフィールド追加（[#114](https://github.com/tzhaya/jc-import-file-maker/issues/114)） |
