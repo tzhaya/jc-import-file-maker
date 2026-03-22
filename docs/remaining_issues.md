@@ -1,11 +1,12 @@
 # 残存 Issues 一覧と実装優先順位
 
-最終更新: 2026-03-15
+最終更新: 2026-03-22
 
 ## 概要
 
 Phase 1（データ取得・編集UI）は完了済み。Phase 2-A（単一DOI TSV出力）も実装完了（#85 クローズ済み）。
-残りは Phase 2-B〜D（TSV拡張）、JPCOAR 2.0 新規フィールド、UI改善。
+JPCOAR 2.0 対応（#25）は全完了（#32, #33, #87 クローズ済み）。
+残りは Phase 2-B〜D（TSV拡張）、Chrome拡張強化、UI改善、ドキュメント整備。
 
 ---
 
@@ -23,17 +24,50 @@ Phase 1（データ取得・編集UI）は完了済み。Phase 2-A（単一DOI T
 | #31 | resourceType 語彙更新 | 完了 |
 | #34 | 助成情報にプログラム情報追加 | 完了 |
 
+### グループ D: JPCOAR 2.0 新規フィールド追加 — **全完了**
+
+| Issue | 内容 | 状態 |
+|-------|------|------|
+| #32 | 出版者情報（publisherDetail）追加 | 完了（2026-03-20） |
+| #33 | 日付リテラル（dcterms:date）追加 | 完了（2026-03-20） |
+
+### グループ B: UI改善 — **全完了**
+
+| Issue | 内容 | 状態 |
+|-------|------|------|
+| #87 | JPCOARスキーマ 項目別説明リンクを2.0に更新 | 完了（2026-03-15） |
+| #90 | file_path のディレクトリ構造ベース自動設定 | 完了（2026-03-22） |
+
+### 親issue #25: JPCOAR スキーマ 2.0 対応 — **全完了**（クローズ済み）
+
+| フェーズ | Issue | 状態 |
+|---------|-------|------|
+| 1（既存フィールド変更） | #26, #27, #28, #29, #30, #31, #34 | **全完了** |
+| 2（新規フィールド追加） | #32, #33 | **全完了** |
+| ドキュメント | #87 | **完了** |
+
 ### Phase 2-A: 単一DOI TSV出力 — **完了**（#85 クローズ済み）
 
 `TSV_HEADERS_TEMPLATE` / `generateTsv()` / `downloadTsv()` / `exportTsv()` / `collectFromDOM()` 等、単一DOIのTSV出力に必要な機能は全て実装済み。
 
+### その他の完了済み Issue
+
+| Issue | 内容 | 状態 |
+|-------|------|------|
+| #107 | 助成機関識別子タイプURI（funderIdentifierTypeURI）追加 | 完了（2026-03-20） |
+| #108 | WEKO3 v2テンプレート対応（researchmap_linkage / peer_reviewed） | 完了（2026-03-20） |
+| #114 | data/tsv_headers.json の更新（226→232列） | 完了（2026-03-21） |
+| #115 | Chrome拡張の初期化処理修正 | 完了 |
+
 ---
 
-## グループ E: Phase 2 TSV 拡張（#85 から分割）
+## OPEN Issues
+
+### グループ E: Phase 2 TSV 拡張（#85 から分割）
 
 #85（Phase 2-A）完了に伴い、残りのフェーズを個別issueに分割。
 
-### #99: カスタムテンプレート完全パース（Phase 2-B）
+#### #99: カスタムテンプレート完全パース（Phase 2-B）
 
 - **内容**: ユーザが自機関のTSVテンプレート（5行ヘッダー）を貼り付けた場合に `TSV_HEADERS_TEMPLATE` を丸ごと上書き
 - **現状**: プレフィックス自動検出・置換のみ対応。ラベル行・System行・制約行はデフォルト固定
@@ -41,8 +75,9 @@ Phase 1（データ取得・編集UI）は完了済み。Phase 2-A（単一DOI T
   - `parseCustomTemplate(templateText)` 関数の新規実装
   - ItemType行からアイテムタイプ名・スキーマURLを自動取得
 - **変更対象**: `make_jc_importer.html` の `generateTsv()` / `groupTsvColumns()`
+- **参照**: `docs/Implementation_phase2.md` Phase 2-B セクション
 
-### #100: 複数DOI一括TSV出力（Phase 2-C）
+#### #100: 複数DOI一括TSV出力（Phase 2-C）
 
 - **内容**: 複数DOIのメタデータを蓄積し、1つのTSVファイルとして一括出力
 - **実装内容**:
@@ -50,8 +85,9 @@ Phase 1（データ取得・編集UI）は完了済み。Phase 2-A（単一DOI T
   - `generateTsv()` の複数 metadata 対応（全件の配列最大サイズで列展開）
   - 複数DOI時のファイル名をタイムスタンプベースに
 - **変更対象**: `make_jc_importer.html` の `exportTsv()` / `generateTsv()` / `buildTsvColumnDefs()`
+- **参照**: `docs/Implementation_phase2.md` Phase 2-C セクション
 
-### #101: ItemType行の自動設定（Phase 2-D）
+#### #101: ItemType行の自動設定（Phase 2-D）
 
 - **内容**: TSV 1行目のアイテムタイプ名・スキーマURLを自動設定（現在は `(未設定)` 固定）
 - **変更対象**: `make_jc_importer.html` の `generateTsv()` / `TSV_HEADERS_TEMPLATE[0]`
@@ -59,42 +95,91 @@ Phase 1（データ取得・編集UI）は完了済み。Phase 2-A（単一DOI T
 
 ---
 
-## グループ B: UI改善（任意のタイミングで実施可能）
+### グループ F: Chrome拡張強化
 
-### #87: JPCOARスキーマ 項目別説明リンクの変更
+#### #73: 電子ジャーナルページからのDOI自動取り込み
 
-- **内容**: 各項目名からのJPCOARスキーマ説明リンクを2.0に更新し、下位項目にもリンクを追加
-- **DOM 構造への影響**: なし（リンクURL変更のみ）
-- **変更対象**:
-  - `make_jc_importer.html` の JPCOAR_LINKS 定数（~L570–610）
-  - `docs/JPCOARschema_guide.md` の更新（1.0/2.0 リンク併記）
+- **内容**: 電子ジャーナルページのメタデータ（`citation_doi`, `prism.doi`, `dc.identifier`, `DOI`）からDOIを自動取得し、Chrome拡張で利用
+- **トリガー**: 要検討（ボタン押下・サイドパネル表示・拡張機能起動等）
+- **変更対象**: Chrome拡張（content script追加等）
 
-### #90: file_path の設定方法の改善
+#### #112: Chromeウェブストアへの登録
 
-- **内容**: ファイル情報（file35）の `file_path` をディレクトリ構造ベースの相対パスで設定する方法を検討
-- **DOM 構造への影響**: なし（既存file_path入力フィールドの動作変更のみ）
-- **関連**: #84（実装完了・クローズ済み）
-- **WEKO3仕様**（[weko3_tsv_import_spec.md](weko3_tsv_import_spec.md) §6）:
-  - `file_path` はZIP内 `data/` からの相対パス（`recid_{id}/` プレフィックスは必須ではない）
-  - 新規アイテム: ZIP内にファイルが存在しない場合はエラー
-  - 更新アイテム: 存在しない場合は警告（メタデータのみ更新）
-  - メタデータ内の `filename` と `file_path` の整合性が必要
+- **内容**: Chrome拡張機能のChromeウェブストア登録に必要な事項の整理
+- **前提**: 機能が安定してから着手
 
 ---
 
-## グループ D: JPCOAR 2.0 新規フィールド追加
+### グループ G: OPF連携拡張
 
-### #32: 出版者情報（新規フィールド）
+#### #44: Open Policy Finder連携対応（親issue）
 
-- **内容**: JPCOAR 2.0 で追加された出版者情報フィールド（`item_1698624005` / `jpcoar:publisherDetail`）
-- **対応方針**: TSV出力の `TSV_EXCL_TIMESTAMP` から `item_1698624005` を除外し、UI・collectFromDOMを追加
-- **親issue**: #25
+- **内容**: OPF APIによるOAポリシー取得・表示。基盤実装（#50）は完了済み
+- **サブissue**: #51（OA情報統合 + UIラベル日本語化）が残存
+- **参照**: `docs/Implementation_OPF.md`
 
-### #33: 日付リテラル（新規フィールド）
+#### #51: OA情報統合 + UIラベル日本語化
 
-- **内容**: JPCOAR 2.0 で追加された日付リテラルフィールド（`item_1698624008` / `dcterms:date`）
-- **対応方針**: TSV出力の `TSV_EXCL_TIMESTAMP` から `item_1698624008` を除外し、UI・collectFromDOMを追加
-- **親issue**: #25
+- **内容**: OpenAlex由来のOAステータスとOPF由来のOAポリシーを統合表示、UIラベルの日本語化
+- **前提**: #50（OPF API連携基盤）完了済み
+- **参照**: `docs/Implementation_OPF.md`
+
+---
+
+### グループ H: JaLC対応拡張
+
+#### #4: JaLC DOIのインポート対応
+
+- **内容**: JaLC DOIのインポート完全対応（基本実装は #6 で完了済み、残りは改善・拡張）
+
+#### #6: JaLC APIからのデータマッピング
+
+- **内容**: JaLC REST APIからのデータマッピング改善
+- **現状**: 基本マッピングは実装済み。CORS制約によりChrome拡張でのみ動作
+
+#### #8: KAKENから日本語の作成者名を取得する
+
+- **内容**: KAKEN XMLから日本語作成者名・e-Rad/NRID識別子を取得し、ORCID一致で著者にマッピング
+- **変更対象**: `make_jc_importer.html` の著者マッピング処理
+
+---
+
+### グループ I: JPCOAR 2.0 追加対応
+
+#### #95: JPCOARスキーマ 2.0 必須度の表示・判定機能
+
+- **内容**: DOI登録要件とは独立した、JPCOARスキーマレベルの必須度（R / R.cond / MA / O）をUIに表示
+- **検討事項**: 全フィールド必須度一覧整理、DOIバッジとの併存方法、入力漏れ検知の要否
+- **関連**: #30, #15
+
+---
+
+### グループ J: コード品質・設計改善
+
+#### #74: HTMLファイルからCORS制限コードの削除・再構成
+
+- **内容**: JaLC・KAKEN・OPFはCORS制限によりHTMLファイルからは利用不可。Chrome拡張で利用可能になったため、HTMLファイルからの削除を検討
+- **考慮**: HTML版とChrome拡張版の両方を維持する必要があり、保守性を考慮
+
+#### #111: CONFIGの共通化
+
+- **内容**: `make_jc_importer.html` と `funder_lookup.html` のAPIキー設定を外部ファイルに共通化。TSVテンプレートの外部ファイル参照も含む
+- **関連**: #99（カスタムテンプレート）と連動可能
+
+---
+
+### グループ K: ドキュメント整備
+
+#### #43: WEKO3 TSVインポート仕様の調査結果
+
+- **内容**: Phase 2 実装に向けたWEKO3 TSVインポート/エクスポート仕様の調査。`tsv_headers.json` の配列展開ルール等
+- **成果物**: `docs/weko3_tsv_import_spec.md`（作成済み）
+- **備考**: 調査は完了しているが、issueがクローズされていない
+
+#### #116: JPCOARスキーマ2.0対応に伴うドキュメント修正
+
+- **内容**: JPCOAR 2.0対応によるTSVフォーマット変更に伴うドキュメント修正
+- **対象**: `docs/fieldmapping.md`, `docs/Implementation_phase2.md`, `docs/remaining_issues.md`, `docs/weko3_property_key_naming.md`
 
 ---
 
@@ -104,26 +189,26 @@ Phase 1（データ取得・編集UI）は完了済み。Phase 2-A（単一DOI T
 Step 1: グループ E — Phase 2 TSV拡張（#99 → #101 → #100）
          ※ #101 は #99 と同時実装可能
          ※ #100（複数DOI）は最も複雑なため最後
+         ※ #111（CONFIG共通化）は #99 と連動可能
 
-Step 2: グループ D — JPCOAR 2.0 新規フィールド（#32, #33）
-         ※ TSV_EXCL_TIMESTAMP からの除外 + UI追加
+Step 2: グループ K — ドキュメント整備（#116, #43）
+         ※ Phase 2 TSV拡張の前後いずれでも可
 
-Step 3: グループ B — UI改善（#87, #90）は任意のタイミングで
+Step 3: グループ H — JaLC対応拡張（#8, #6, #4）
+         ※ Chrome拡張でのCORS解消済み
+
+Step 4: グループ I — JPCOAR 2.0 追加対応（#95）
+         ※ 検討段階
+
+Step 5: グループ F — Chrome拡張強化（#73, #112）
+         ※ #112（ウェブストア登録）は機能安定後
+
+Step 6: グループ G — OPF連携拡張（#51, #44）
+         ※ 優先度低め
+
+Step 7: グループ J — コード品質改善（#74, #111）
+         ※ 任意のタイミングで実施可能
 ```
-
----
-
-## 親issue との関係
-
-### #25: JPCOAR スキーマ 2.0 対応（親issue）
-
-| フェーズ | Issue | 状態 |
-|---------|-------|------|
-| 1（既存フィールド変更） | #26, #27, #28, #29, #30, #31, #34 | **全完了** |
-| 2（新規フィールド追加） | #32, #33 | OPEN |
-| ドキュメント | #87 | OPEN |
-
-#25 の完了条件: #32, #33, #87 の全完了。
 
 ---
 
@@ -131,10 +216,12 @@ Step 3: グループ B — UI改善（#87, #90）は任意のタイミングで
 
 | ファイル | 変更 issues |
 |---------|------------|
-| `make_jc_importer.html` | #32, #33, #87, #90, #99, #100, #101 |
-| `chrome-extension/make_jc_importer.js` | #32, #33, #87 と同期 |
+| `make_jc_importer.html` | #8, #74, #95, #99, #100, #101, #111 |
+| `chrome-extension/make_jc_importer.js` | 上記と同期 |
 | `chrome-extension/panel.html` | UI 変更があれば同期 |
-| `docs/JPCOARschema_guide.md` | #87 |
+| `chrome-extension/` 全般 | #73, #112 |
+| `funder_lookup.html` | #111 |
+| `docs/` | #43, #116 |
 
 ---
 
@@ -142,8 +229,9 @@ Step 3: グループ B — UI改善（#87, #90）は任意のタイミングで
 
 | 機能 | 参照先 |
 |------|--------|
-| #32, #33 新規フィールド追加パターン | #84（file35 実装）の FIELD_DEFS / render / collect / TSV対応 |
-| #87 JPCOARリンク | `docs/JPCOARschema_guide.md`、JPCOAR_LINKS 定数（~L570–610） |
 | #99 カスタムテンプレート | `docs/Implementation_phase2.md` Phase 2-B セクション |
 | #100 複数DOI | `docs/Implementation_phase2.md` Phase 2-C セクション |
 | #101 ItemType行 | `TSV_HEADERS_TEMPLATE[0]`（~L5142） |
+| #43 WEKO3仕様 | `docs/weko3_tsv_import_spec.md` |
+| #73 DOI自動取込 | HTML meta tag（citation_doi, prism.doi, dc.identifier, DOI） |
+| #95 JPCOAR必須度 | `DOI_REQUIREMENTS` + `createDoiBadges()` の拡張 |
