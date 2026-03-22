@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-21（tsv_headers.json更新 #114）
+最終更新: 2026-03-22（ファイルパス自動判定 #90）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約5560行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + TSVエクスポート + ファイル情報UI）
+現在のファイル規模: **約6135行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + TSVエクスポート + ファイル情報UI + ファイルパス自動判定）
 
 ---
 
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.6.0 | 2026-03-22 | ファイルパス自動判定：data/以下のフォルダ選択でfile_path自動設定、PDF/画像判別（#90） |
 | 1.5.2 | 2026-03-21 | TSVヘッダーテンプレート更新：tsv_headers.json同期、.thumbnail_path追加（#114） |
 | 1.5.1 | 2026-03-21 | Chrome拡張初期化処理修正：APIキー警告誤表示解消、ボタンaddEventListener統一（#115） |
 | 1.5.0 | 2026-03-20 | 新規フィールド「出版者情報」「日付（リテラル）」追加（#32, #33） |
@@ -35,6 +36,32 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-22: ファイル情報のパス自動判定（#90）
+
+### 概要
+ファイル情報セクションにフォルダ選択機能を追加し、`data/` 以下のファイルパスを自動判定する。
+
+### 実装内容
+- **`extractFilePath()`**: `webkitRelativePath` から `data/` 以降の相対パスを抽出するヘルパー
+- **`renderOneFile()`**: `file_path` 編集可能フィールドを追加、個別ファイル選択時はファイル名を自動設定
+- **`renderFileField()`**: 「data/以下のフォルダを選択」ボタンを追加
+  - `showDirectoryPicker()` API を使用（`webkitdirectory` は OneDrive 環境でブラウザクラッシュのため不採用）
+  - フォルダ直下の PDF・画像ファイルのみ対象（サブフォルダは再帰しない）
+  - `data/` 選択時: `file_path` = ファイル名のみ
+  - サブフォルダ選択時: `file_path` = `フォルダ名/ファイル名`
+  - 画像ファイル → オブジェクトタイプ `thumbnail` 既定、PDF → `fulltext` 既定
+- **`collectFileField()`**: `file_path` を収集対象に追加
+- **`getTsvValue()`**: 固定値 `recid_/{filename}` → 保存された `file_path` を使用
+- **`buildFilePreview()`**: 「パス」列を追加
+
+### 変更ファイル
+- `make_jc_importer.html`
+- `chrome-extension/make_jc_importer.js`
+- `chrome-extension/panel.html`
+- `chrome-extension/manifest.json` (1.5.2 → 1.6.0)
 
 ---
 
