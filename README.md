@@ -31,7 +31,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
     - 機関リポジトリのメタデータ検索（OpenSearch）
   - JaLC DOIからのメタデータ取り込み
   - KAKEN APIによる科研費課題番号の検索と取り込み
-  - Open Policy Finderから取得したOAポリシー情報表示
+  - Open Policy Finderから取得したOAポリシーの表示とエンバーゴの設定
 
 ### 機能比較
 
@@ -44,6 +44,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 | OpenAlex によるOA状況の表示 | ✅ | ✅ | Crossref DOIがある論文で表示 |
 | Open Policy Finder への参照リンク生成 | ✅ | ✅ | ISSN付き雑誌論文で表示 |
 | Open Policy Finder API によるOAポリシー表示 | ✅ | ❌ | CORS制約のためChrome拡張機能版のみ |
+| Open Policy Finder API の情報によるエンバーゴ有無と期間の設定 | ✅ | ❌ | CORS制約のためChrome拡張機能版のみ |
 | **メタデータ取得** | | | |
 | Crossref DOI からのメタデータ取得 | ✅ | ✅ | |
 | JaLC DOI からのメタデータ取得 | ✅ | ❌ | CORS制約のためChrome拡張機能のService Worker経由が必要 |
@@ -250,6 +251,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-23 | APIフロードキュメント更新：OPF API・KAKEN XML API追加、助成金フォールバック順序修正、アクセス権・出版タイプ判定ロジック更新、出版者情報マッピング追加 |
 | 2026-03-23 | エンバーゴアクセス権修正：OA Status=closed時のアクセス権をOPFエンバーゴ情報に基づきembargoed accessに自動設定、OPF取得タイミング修正（mapToItemType前に移動）、JaLCパスのアクセス権動的化（[#51](https://github.com/tzhaya/jc-import-file-maker/issues/51)） |
 | 2026-03-22 | OA情報統合 + UIラベル日本語化：OAステータス全6値対応（diamond/bronze追加）、出版タイプ・relationType・アクセス権のOAステータス連動自動設定、OpenAlexリポジトリ情報取得、OPFモーダル連動表示、エンバーゴヒント表示（[#51](https://github.com/tzhaya/jc-import-file-maker/issues/51)） |
 | 2026-03-22 | 複数DOI一括TSV出力（Phase 2-C）：DOIを連続取得して蓄積し、ヘッダー5行+データN行の一括TSVを出力。バッチ管理パネル（蓄積件数表示・個別削除・全クリア・アイテム切替）、リポジトリURL入力でスキーマURL置換、タイムスタンプベースファイル名（[#100](https://github.com/tzhaya/jc-import-file-maker/issues/100)） |
