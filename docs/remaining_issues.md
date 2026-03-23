@@ -1,12 +1,13 @@
 # 残存 Issues 一覧と実装優先順位
 
-最終更新: 2026-03-22（#99, #101 完了を反映）
+最終更新: 2026-03-23（#51 エンバーゴアクセス権修正完了、#44 全完了を反映）
 
 ## 概要
 
-Phase 1（データ取得・編集UI）は完了済み。Phase 2-A（単一DOI TSV出力）も実装完了（#85 クローズ済み）。
+Phase 1（データ取得・編集UI）は完了済み。Phase 2（TSV拡張）も全完了（#85, #99, #100, #101 クローズ済み）。
 JPCOAR 2.0 対応（#25）は全完了（#32, #33, #87 クローズ済み）。
-残りは Phase 2-B〜D（TSV拡張）、Chrome拡張強化、UI改善、ドキュメント整備。
+OPF連携（#44）も全完了（#50, #51 クローズ済み）。
+残りは Chrome拡張強化、JaLC対応拡張、ドキュメント整備。
 
 ---
 
@@ -50,6 +51,23 @@ JPCOAR 2.0 対応（#25）は全完了（#32, #33, #87 クローズ済み）。
 
 `TSV_HEADERS_TEMPLATE` / `generateTsv()` / `downloadTsv()` / `exportTsv()` / `collectFromDOM()` 等、単一DOIのTSV出力に必要な機能は全て実装済み。
 
+### グループ E: Phase 2 TSV拡張 — **全完了**
+
+| Issue | 内容 | 状態 |
+|-------|------|------|
+| #85 | Phase 2-A 単一DOI TSV出力 | 完了 |
+| #99 | Phase 2-B カスタムテンプレート完全パース | 完了（2026-03-22） |
+| #100 | Phase 2-C 複数DOI一括TSV出力 | 完了（2026-03-22） |
+| #101 | Phase 2-D ItemType行自動設定 | 完了（2026-03-22） |
+
+### グループ G: OPF連携拡張 — **全完了**
+
+| Issue | 内容 | 状態 |
+|-------|------|------|
+| #44 | Open Policy Finder連携対応（親issue） | 完了（2026-03-22） |
+| #50 | OPF API連携基盤 | 完了 |
+| #51 | OA情報統合 + UIラベル日本語化 + エンバーゴアクセス権修正 | 完了（2026-03-23） |
+
 ### その他の完了済み Issue
 
 | Issue | 内容 | 状態 |
@@ -63,30 +81,6 @@ JPCOAR 2.0 対応（#25）は全完了（#32, #33, #87 クローズ済み）。
 
 ## OPEN Issues
 
-### グループ E: Phase 2 TSV 拡張（#85 から分割）
-
-#85（Phase 2-A）完了に伴い、残りのフェーズを個別issueに分割。
-
-#### #99: カスタムテンプレート完全パース（Phase 2-B） — **完了**（2026-03-22）
-
-- **実装内容**: `parseCustomTemplate()` 新規追加、`groupTsvColumns()` / `buildTsvColumnDefs()` に template 引数追加、`generateTsv()` で実効テンプレート決定
-
-#### #100: 複数DOI一括TSV出力（Phase 2-C）— **完了**（2026-03-22）
-
-- **内容**: 複数DOIのメタデータを蓄積し、1つのTSVファイルとして一括出力
-- **実装内容**:
-  - `allMetadata = []` 蓄積機構の導入
-  - `generateTsv()` の複数 metadata 対応（全件の配列最大サイズで列展開）
-  - 複数DOI時のファイル名をタイムスタンプベースに
-- **変更対象**: `make_jc_importer.html` の `exportTsv()` / `generateTsv()` / `buildTsvColumnDefs()`
-- **参照**: `docs/Implementation_phase2.md` Phase 2-C セクション
-
-#### #101: ItemType行の自動設定（Phase 2-D） — **完了**（2026-03-22）
-
-- **実装内容**: `TSV_HEADERS_TEMPLATE[0]` と `data/tsv_headers.json` の row0 をデフォルトアイテムタイプ名+スキーマURLに更新。カスタムテンプレート使用時はその row0 をそのまま使用
-
----
-
 ### グループ F: Chrome拡張強化
 
 #### #73: 電子ジャーナルページからのDOI自動取り込み
@@ -99,22 +93,6 @@ JPCOAR 2.0 対応（#25）は全完了（#32, #33, #87 クローズ済み）。
 
 - **内容**: Chrome拡張機能のChromeウェブストア登録に必要な事項の整理
 - **前提**: 機能が安定してから着手
-
----
-
-### グループ G: OPF連携拡張
-
-#### #44: Open Policy Finder連携対応（親issue）— **完了**（2026-03-22）
-
-- **内容**: OPF APIによるOAポリシー取得・表示。基盤実装（#50）は完了済み
-- **サブissue**: #51（OA情報統合 + UIラベル日本語化）が残存
-- **参照**: `docs/Implementation_OPF.md`
-
-#### #51: OA情報統合 + UIラベル日本語化 — **完了**（2026-03-22）
-
-- **内容**: OpenAlex由来のOAステータスとOPF由来のOAポリシーを統合表示、UIラベルの日本語化
-- **前提**: #50（OPF API連携基盤）完了済み
-- **参照**: `docs/Implementation_OPF.md`
 
 ---
 
@@ -178,29 +156,24 @@ JPCOAR 2.0 対応（#25）は全完了（#32, #33, #87 クローズ済み）。
 ## 推奨実装順序
 
 ```
-Step 1: グループ E — Phase 2 TSV拡張（#100）
-         ※ #99（カスタムテンプレート）と #101（ItemType行自動設定）は完了済み
-         ※ #100（複数DOI一括出力）は完了済み
-         ※ #111（CONFIG共通化）は別PRで後続実装
+Step 1: グループ K — ドキュメント整備（#116, #43）
 
-Step 2: グループ K — ドキュメント整備（#116, #43）
-         ※ Phase 2 TSV拡張の前後いずれでも可
-
-Step 3: グループ H — JaLC対応拡張（#8, #6, #4）
+Step 2: グループ H — JaLC対応拡張（#8, #6, #4）
          ※ Chrome拡張でのCORS解消済み
 
-Step 4: グループ I — JPCOAR 2.0 追加対応（#95）
+Step 3: グループ I — JPCOAR 2.0 追加対応（#95）
          ※ 検討段階
 
-Step 5: グループ F — Chrome拡張強化（#73, #112）
+Step 4: グループ F — Chrome拡張強化（#73, #112）
          ※ #112（ウェブストア登録）は機能安定後
 
-Step 6: グループ G — OPF連携拡張（#51, #44）
-          完了済み
-
-Step 7: グループ J — コード品質改善（#74, #111）
+Step 5: グループ J — コード品質改善（#74, #111）
          ※ 任意のタイミングで実施可能
 ```
+
+### 完了済みグループ（実装順序から除外）
+- グループ E — Phase 2 TSV拡張（#99, #100, #101）— 全完了
+- グループ G — OPF連携拡張（#44, #50, #51）— 全完了
 
 ---
 
@@ -208,7 +181,7 @@ Step 7: グループ J — コード品質改善（#74, #111）
 
 | ファイル | 変更 issues |
 |---------|------------|
-| `make_jc_importer.html` | #8, #74, #95, #100, #111 |
+| `make_jc_importer.html` | #8, #74, #95, #111 |
 | `chrome-extension/make_jc_importer.js` | 上記と同期 |
 | `chrome-extension/panel.html` | UI 変更があれば同期 |
 | `chrome-extension/` 全般 | #73, #112 |
@@ -221,9 +194,6 @@ Step 7: グループ J — コード品質改善（#74, #111）
 
 | 機能 | 参照先 |
 |------|--------|
-| #99 カスタムテンプレート | `docs/Implementation_phase2.md` Phase 2-B セクション |
-| #100 複数DOI | `docs/Implementation_phase2.md` Phase 2-C セクション |
-| #101 ItemType行 | `TSV_HEADERS_TEMPLATE[0]`（~L5142） |
 | #43 WEKO3仕様 | `docs/weko3_tsv_import_spec.md` |
 | #73 DOI自動取込 | HTML meta tag（citation_doi, prism.doi, dc.identifier, DOI） |
 | #95 JPCOAR必須度 | `DOI_REQUIREMENTS` + `createDoiBadges()` の拡張 |

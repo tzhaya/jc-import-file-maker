@@ -251,6 +251,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-23 | JPCOARスキーマ2.0対応に伴うドキュメント修正：fieldmapping.md（新規フィールド・アクセス権動的判定・JaLCパス・外部API一覧）、Implementation_phase2.md（列数232）、weko3_property_key_naming.md（サブフィールド構造）を更新（[#116](https://github.com/tzhaya/jc-import-file-maker/issues/116)） |
 | 2026-03-23 | APIフロードキュメント更新：OPF API・KAKEN XML API追加、助成金フォールバック順序修正、アクセス権・出版タイプ判定ロジック更新、出版者情報マッピング追加 |
 | 2026-03-23 | エンバーゴアクセス権修正：OA Status=closed時のアクセス権をOPFエンバーゴ情報に基づきembargoed accessに自動設定、OPF取得タイミング修正（mapToItemType前に移動）、JaLCパスのアクセス権動的化（[#51](https://github.com/tzhaya/jc-import-file-maker/issues/51)） |
 | 2026-03-22 | OA情報統合 + UIラベル日本語化：OAステータス全6値対応（diamond/bronze追加）、出版タイプ・relationType・アクセス権のOAステータス連動自動設定、OpenAlexリポジトリ情報取得、OPFモーダル連動表示、エンバーゴヒント表示（[#51](https://github.com/tzhaya/jc-import-file-maker/issues/51)） |
