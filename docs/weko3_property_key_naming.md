@@ -119,6 +119,51 @@ item_1698624010  → 物理的形態
 
 これらは連番のタイムスタンプ（`1698624001`〜`1698624010`）であり、一括でシステム的に追加されたことを示す。
 
+#### JPCOARスキーマ項目番号との対応
+
+| プロパティキー | JPCOAR項目番号 | 日本語名 | 本ツールでの実装状況 |
+|---|---|---|---|
+| `item_1698624001` | #36 | データセットシリーズ | 未実装 |
+| `item_1698624002` | #37 | 原文の言語 | 未実装 |
+| `item_1698624003` | #38 | 大きさ | 未実装 |
+| `item_1698624004` | #39 | カタログ | 未実装 |
+| `item_1698624005` | #11 | 出版者情報 | **実装済み**（#32） |
+| `item_1698624006` | #40 | 版 | 未実装 |
+| `item_1698624007` | #41 | 部編名 | 未実装 |
+| `item_1698624008` | #13 | 日付（リテラル） | **実装済み**（#33） |
+| `item_1698624009` | #42 | 所蔵機関 | 未実装 |
+| `item_1698624010` | #44 | 物理的形態 | 未実装 |
+
+#### 主要フィールドのサブフィールド構造
+
+**item_1698624005（出版者情報）**
+
+```
+item_1698624005[N].publisher_names[M].publisher_name           → 出版者名
+item_1698624005[N].publisher_names[M].publisher_name_language   → 出版者名 言語
+item_1698624005[N].publisher_locations[M].publisher_location    → 出版者所在地
+item_1698624005[N].publication_places[M].publication_place      → 出版地
+item_1698624005[N].publisher_descriptions[M].publisher_description          → 出版者注記
+item_1698624005[N].publisher_descriptions[M].publisher_description_language → 出版者注記 言語
+```
+
+**item_1698624008（日付リテラル）**
+
+```
+item_1698624008[N].subitem_dcterms_date            → 日付（リテラル）
+item_1698624008[N].subitem_dcterms_date_language    → 言語
+```
+
+#### WEKO3 v2テンプレートで追加されたシステムフィールド・サブフィールド
+
+以下は JPCOAR 2.0 対応に伴い `data/tsv_headers.json`（232列）に追加されたフィールド（#108, #107, #114）:
+
+| フィールド | 親プロパティ | 追加Issue |
+|---|---|---|
+| `.researchmap_linkage` | システムフィールド | #108 |
+| `.subitem_peer_reviewed` | `item_30002_version_type15` | #108 |
+| `.subitem_funder_identifier_type_uri` | `item_30002_funding_reference21` | #107 |
+
 ## パターン2: `item_{timestamp}`
 
 ### 形式

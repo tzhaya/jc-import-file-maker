@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-23（api-flow.md ドキュメント更新）
+最終更新: 2026-03-23（#116 JPCOARスキーマ2.0対応ドキュメント修正）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -40,6 +40,33 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-23: JPCOARスキーマ2.0対応に伴うドキュメント修正（#116）
+
+### 概要
+JPCOAR 2.0対応で実装済みの変更がドキュメントに反映されていなかった乖離を解消。
+
+### 修正内容
+
+**docs/fieldmapping.md**（主要変更）
+- メインテーブルにJPCOAR 2.0新規フィールドを追加: #11 出版者情報（publisherDetail / item_1698624005）、#13 日付リテラル（dateLiteral / item_1698624008）
+- アクセス権: 「'open access'にハードコード」→ `determineAccessRights()` による動的判定（OAステータス+OPFエンバーゴ）に更新
+- 出版タイプ: `determineVersionInfo()` のOAステータス全6値対応ロジックに更新、peer_reviewedサブフィールド追記
+- 助成機関識別子タイプURI: 「空（未使用）」→ `FUNDER_ID_TYPE_URI_MAP` による自動設定に更新
+- 外部API連携テーブル: JaLC / KAKEN XML / CiNii / JGN / OPF / GitHub / DOI RA を追加、CORS制約列を追加
+- JaLCパスの差異セクションを新設（著者・助成情報のCrossrefパスとの違い）
+- 出版者情報・日付リテラル・アクセス権判定の詳細セクションを追加
+- システムフィールド一覧（researchmap_linkage含む）を追加
+
+**docs/Implementation_phase2.md**
+- TSVテンプレート列数を「226列」→「232列」に修正（#114完了分）
+
+**docs/weko3_property_key_naming.md**
+- JPCOARスキーマ項目番号との対応表を追加（item_1698624001〜010 → JPCOAR #11〜#44）
+- 主要フィールド（出版者情報・日付リテラル）のサブフィールド構造を追記
+- WEKO3 v2テンプレートで追加されたシステムフィールド・サブフィールド一覧（researchmap_linkage, peer_reviewed, funderIdentifierTypeURI）を追記
 
 ---
 

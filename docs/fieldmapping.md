@@ -1,6 +1,8 @@
 # フィールドマッピング一覧
 
-Crossref / OpenAlex / ROR API から取得したデータを、JPCOARスキーマの各フィールドにどのようにマッピングしているかの一覧です。
+Crossref / JaLC / OpenAlex / ROR API から取得したデータを、JPCOARスキーマの各フィールドにどのようにマッピングしているかの一覧です。Crossrefパス（`mapToItemType`）とJaLCパス（`mapToItemTypeJaLC`）の2系統があり、DOIのRA（Registration Agency）に応じて自動分岐します。
+
+本ドキュメントではCrossrefパスを中心に記載し、JaLCパス固有の差異は「JaLCパスの差異」セクションにまとめています。
 
 ## メインデータソース
 
@@ -10,31 +12,43 @@ Crossref / OpenAlex / ROR API から取得したデータを、JPCOARスキー�
 | 2 | **その他のタイトル** (alternative_title) | — | — | 空（未実装） |
 | 3 | **作成者** (creator) | `author[].family`, `author[].given`, `author[].ORCID` | `authorships[].author.display_name`, `authorships[].author.orcid`, `authorships[].institutions[]` | 下記詳細参照 |
 | 4 | **寄与者** (contributor) | — | — | 空（未実装） |
-| 5 | **アクセス権** (access_rights) | — | — | 'open access'にハードコード |
+| 5 | **アクセス権** (access_rights) | — | `open_access.oa_status` + OPFエンバーゴ | `determineAccessRights()` で動的判定。下記詳細参照 |
 | 6 | **権利情報** (rights) | `license[].URL` (VoR優先), `assertion[]` (Copyright) | — | VoRライセンスを優先取得 |
 | 7 | **権利者情報** (rights_holder) | — | — | 空（未実装） |
 | 8 | **主題** (subject) | — | — | 空（編集可能フィールド） |
 | 9 | **内容記述** (description) | `abstract` | — | JATS XMLをクリーニング処理 |
 | 10 | **出版者** (publisher) | `publisher` | — | 言語は'en'固定 |
-| 11 | **日付** (date) | `published-online` → `published-print` → `published` の優先順 | — | ISO 8601形式に変換、タイプ='Issued' |
-| 12 | **言語** (language) | — | — | 'eng'にハードコード |
-| 13 | **資源タイプ** (resource_type) | `type` | — | COAR語彙URIにマッピング（50種以上） |
-| 14 | **バージョン情報** (version) | — | — | 空（未実装） |
-| 15 | **出版タイプ** (version_type) | — | `open_access.is_oa`, `open_access.oa_status` | Gold/Hybrid→VoR、それ以外→AM |
-| 16 | **識別子** (identifier) | — | — | 空（未実装） |
-| 17 | **ID登録** (identifier_registration) | — | — | 空（未実装） |
-| 18 | **関連情報** (relation) | `DOI` → 'isIdenticalTo' | `ids` (ARXIV, PMIDなど、DOI・OPENALEX除外) | 19種の識別子タイプに対応 |
-| 19 | **時間的範囲** (temporal) | — | — | 空（未実装） |
-| 20 | **位置情報** (geolocation) | — | — | 空（未実装） |
-| 21 | **助成情報** (funding_reference) | `funder[].name`, `funder[].DOI`, `funder[].award[]` | — | DOIはURL形式に変換。JGN/KAKEN連携で課題名・URI・プログラム情報を補完（#14, #52） |
-| 22 | **収録物識別子** (source_identifier) | `issn-type[].value` / `ISSN[]` | — | electronic→EISSN, print→PISSN |
-| 23 | **収録物名** (source_title) | `container-title[0]` | — | 言語は'en'固定 |
-| 24 | **巻** (volume) | `volume` | — | 直接マッピング |
-| 25 | **号** (issue) | `issue` | — | 直接マッピング |
-| 26 | **ページ数** (number_of_pages) | — | — | 空（未実装） |
-| 27 | **開始ページ** (page_start) | `page` ('-'で分割、前半) | — | |
-| 28 | **終了ページ** (page_end) | `page` ('-'で分割、後半) | — | |
-| 29 | **書誌情報** (bibliographic_info) | `container-title`, `volume`, `issue`, `page`, 日付 | — | container-titleがある場合のみ生成 |
+| 11 | **出版者情報** (publisherDetail) | `publisher` | — | JPCOAR 2.0新規（#32）。`item_1698624005`。下記詳細参照 |
+| 12 | **日付** (date) | `published-online` → `published-print` → `published` の優先順 | — | ISO 8601形式に変換、タイプ='Issued' |
+| 13 | **日付（リテラル）** (dateLiteral) | — | — | JPCOAR 2.0新規（#33）。`item_1698624008`。手動入力用。下記詳細参照 |
+| 14 | **言語** (language) | — | — | 'eng'にハードコード |
+| 15 | **資源タイプ** (resource_type) | `type` | — | COAR語彙URIにマッピング（74種） |
+| 16 | **バージョン情報** (version) | — | — | 空（未実装） |
+| 17 | **出版タイプ** (version_type) | — | `open_access.oa_status`, `locations[].version` | `determineVersionInfo()` で判定。`peer_reviewed` サブフィールド追加（#108）。下記詳細参照 |
+| 18 | **識別子** (identifier) | — | — | 空（未実装） |
+| 19 | **ID登録** (identifier_registration) | — | — | 空（未実装） |
+| 20 | **関連情報** (relation) | `DOI` → relationType（OAステータスで判定） | `ids` (ARXIV, PMIDなど、DOI・OPENALEX除外) | 19種の識別子タイプに対応。relationTypeは `determineVersionInfo()` で決定 |
+| 21 | **時間的範囲** (temporal) | — | — | 空（未実装） |
+| 22 | **位置情報** (geolocation) | — | — | 空（未実装） |
+| 23 | **助成情報** (funding_reference) | `funder[].name`, `funder[].DOI`, `funder[].award[]` | — | DOIはURL形式に変換。JGN/KAKEN連携で課題名・URI・プログラム情報を補完（#14, #52）。`funderIdentifierTypeURI` 自動設定（#107） |
+| 24 | **収録物識別子** (source_identifier) | `issn-type[].value` / `ISSN[]` | — | electronic→EISSN, print→PISSN |
+| 25 | **収録物名** (source_title) | `container-title[0]` | — | 言語は'en'固定 |
+| 26 | **巻** (volume) | `volume` | — | 直接マッピング |
+| 27 | **号** (issue) | `issue` | — | 直接マッピング |
+| 28 | **ページ数** (number_of_pages) | — | — | 空（未実装） |
+| 29 | **開始ページ** (page_start) | `page` ('-'で分割、前半) | — | |
+| 30 | **終了ページ** (page_end) | `page` ('-'で分割、後半) | — | |
+| 31 | **書誌情報** (bibliographic_info) | `container-title`, `volume`, `issue`, `page`, 日付 | — | container-titleがある場合のみ生成 |
+
+### システムフィールド
+
+| フィールド | 初期値 | 備考 |
+|---|---|---|
+| `publish_status` | `'private'` | |
+| `edit_mode` | `'Keep'` | |
+| `pubdate` | 当日日付（JST） | |
+| `researchmap_linkage` | 空 | WEKO3 v2追加（#108）。手動入力用 |
+| その他 (`id`, `uri`, `path` 等) | 空 | |
 
 ## 作成者 (Creator) フィールドの詳細マッピング
 
@@ -60,6 +74,41 @@ Crossrefの著者とOpenAlexの著者の突合は、以下の手順で行われ�
 1. **Crossref** の `author[].ORCID` を優先的に使用
 2. Crossrefに存在しない場合、**OpenAlex** の `authorships[].author.orcid` をフォールバックとして使用（警告フラグ `_warnOrcid` 付き）
 
+## アクセス権 (Access Rights) の判定ロジック
+
+`determineAccessRights()` 関数により、OAステータスとOPFエンバーゴ情報から動的に判定します。
+
+| OAステータス | OPFエンバーゴ | アクセス権 |
+|---|---|---|
+| diamond / gold / hybrid / bronze / green | — | `open access` |
+| closed / 不明 | あり（`embargo.amount > 0`） | `embargoed access` |
+| closed / 不明 | なし / OPFデータなし | `open access`（IR登録用途を想定） |
+
+## 出版者情報 (Publisher Detail) フィールドの詳細マッピング
+
+JPCOAR 2.0で追加されたフィールド（#32）。プロパティキー: `item_1698624005`。
+
+Crossrefの `publisher` フィールドから出版者名を取得し、4つのサブ配列を持つ構造で格納します。
+
+| サブフィールド | WEKOキー | Crossref | 備考 |
+|---|---|---|---|
+| **出版者名** | `publisher_names[].publisher_name` | `publisher` | |
+| **出版者名 言語** | `publisher_names[].publisher_name_language` | — | 'en'にハードコード |
+| **出版者所在地** | `publisher_locations[]` | — | 空（手動入力用） |
+| **出版地** | `publication_places[]` | — | 空（手動入力用） |
+| **出版者注記** | `publisher_descriptions[]` | — | 空（手動入力用） |
+
+## 日付（リテラル）(Date Literal) フィールドの詳細マッピング
+
+JPCOAR 2.0で追加されたフィールド（#33）。プロパティキー: `item_1698624008`。
+
+ISO 8601形式以外の日付文字列を記録するためのフィールドです。APIからは自動取得されず、手動入力用です。
+
+| サブフィールド | WEKOキー | 備考 |
+|---|---|---|
+| **日付（リテラル）** | `subitem_dcterms_date` | 自由形式の日付文字列 |
+| **言語** | `subitem_dcterms_date_language` | 言語選択 |
+
 ## 助成情報 (Funding Reference) フィールドの詳細マッピング
 
 Crossrefの `funder[]` 配列から助成情報を構築します。1つのfunderに複数のawardがある場合、各awardごとに同一funder情報を持つエントリを生成します（`flatMap`で展開）。
@@ -72,7 +121,7 @@ Crossrefの `funder[]` 配列から助成情報を構築します。1つのfunde
 | **助成機関名 言語** | `subitem_funder_names[].subitem_funder_name_language` | — | 'en'にハードコード |
 | **助成機関識別子** | `subitem_funder_identifiers.subitem_funder_identifier` | `funder[].DOI` | `https://doi.org/{DOI}` 形式に変換 |
 | **助成機関識別子タイプ** | `subitem_funder_identifiers.subitem_funder_identifier_type` | — | DOIがある場合 'Crossref Funder'、なければ空 |
-| **助成機関識別子タイプURI** | `subitem_funder_identifiers.subitem_funder_identifier_type_uri` | — | 空（未使用） |
+| **助成機関識別子タイプURI** | `subitem_funder_identifiers.subitem_funder_identifier_type_uri` | — | `FUNDER_ID_TYPE_URI_MAP` で自動設定（#107）。下記参照 |
 | **研究課題番号** | `subitem_award_numbers.subitem_award_number` | `funder[].award[]` | 各awardごとに1エントリ生成 |
 | **研究課題番号タイプ** | `subitem_award_numbers.subitem_award_number_type` | — | 空（未使用） |
 | **研究課題番号URI** | `subitem_award_numbers.subitem_award_uri` | JGN: `https://doi.org/10.52926/{番号}` / KAKEN: CiNii Research URL | JGN/KAKEN連携で設定（#14, #2） |
@@ -80,16 +129,27 @@ Crossrefの `funder[]` 配列から助成情報を構築します。1つのfunde
 | **プログラム情報 言語** | `subitem_funding_streams[].subitem_funding_stream_language` | JGN: 空 / KAKEN: ja/en | JPCOAR 2.0（#34） |
 | **プログラム情報識別子** | `subitem_funding_stream_identifiers.subitem_funding_stream_identifier` | JGN: 課題番号から自動抽出 | `/^JP([A-Z]+)\d/i` で JGN_fundingStream コード抽出（#56） |
 | **プログラム情報識別子タイプ** | `subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type` | JGN: `JGN_fundingStream` | fundingStreamId が存在する場合に設定 |
-| **プログラム情報識別子タイプURI** | `subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri` | — | 空（未使用） |
+| **プログラム情報識別子タイプURI** | `subitem_funding_stream_identifiers.subitem_funding_stream_identifier_type_uri` | — | 空（未実装） |
 | **研究課題名** | `subitem_award_titles[].subitem_award_title` | JGN: `project-title` / KAKEN: CiNii Research API | JGN/KAKEN連携で取得（#14, #2） |
 | **研究課題名 言語** | `subitem_award_titles[].subitem_award_title_language` | JGN/KAKEN: 空 | 言語自動判定なし |
 
 ### 助成機関識別子の変換ロジック
 
-| 条件 | 識別子値 | 識別子タイプ |
-|---|---|---|
-| `funder[].DOI` が存在する | `https://doi.org/{funder.DOI}` | `Crossref Funder` |
-| `funder[].DOI` が存在しない | 空文字 | 空文字 |
+| 条件 | 識別子値 | 識別子タイプ | 識別子タイプURI |
+|---|---|---|---|
+| `funder[].DOI` が存在する | `https://doi.org/{funder.DOI}` | `Crossref Funder` | `https://www.crossref.org/services/funder-registry/` |
+| `funder[].DOI` が存在しない | 空文字 | 空文字 | 空文字 |
+
+### 助成機関識別子タイプURI マッピング（JPCOAR 2.0）
+
+`FUNDER_ID_TYPE_URI_MAP` 定数により、識別子タイプからURIを自動設定します（#107）。
+
+| 識別子タイプ | URI |
+|---|---|
+| `Crossref Funder` | `https://www.crossref.org/services/funder-registry/` |
+| `e-Rad_funder` | `https://www.e-rad.go.jp/datasets/files/haibunkikan.csv` |
+| `ISNI` | `https://isni.org/` |
+| `ROR` | `https://ror.org/` |
 
 ### 研究課題番号の取得
 
@@ -135,12 +195,33 @@ Crossrefの `funder[]` 配列から助成情報を構築します。1つのfunde
 
 ## 出版タイプ (Version Type) の判定ロジック
 
-OpenAlexの `open_access` フィールドを使用して判定します。
+`determineVersionInfo()` 関数により、OpenAlexのOAステータスとlocation情報から出版タイプとrelationTypeを判定します。
 
-| 条件 | 出版タイプ | COAR URI |
+### OAステータス別判定
+
+| OAステータス | 出版タイプ | relationType | COAR URI |
+|---|---|---|---|
+| diamond / gold / hybrid / bronze | VoR (Version of Record) | isIdenticalTo | `http://purl.org/coar/version/c_970fb48d4fbd8a85` |
+| green / closed | OpenAlexの `locations[].version` で判定（下表参照） | — | — |
+
+### Green/Closed時のversion判定
+
+| OpenAlex `version` | 出版タイプ | relationType |
 |---|---|---|
-| `is_oa === true` かつ `oa_status === 'gold'` または `'hybrid'` | VoR (Version of Record) | `http://purl.org/coar/version/c_970fb48d4fbd8a85` |
-| 上記以外 | AM (Accepted Manuscript) | `http://purl.org/coar/version/c_ab4af688f83e57aa` |
+| `publishedVersion` | VoR | isIdenticalTo |
+| `acceptedVersion` | AM (Accepted Manuscript) | isVersionOf |
+| `submittedVersion` | SMUR (Submitted Manuscript Under Review) | isVersionOf |
+| その他 / 不明 | AM（デフォルト） | isVersionOf |
+
+### peer_reviewed サブフィールド（JPCOAR 2.0 / #108）
+
+出版タイプフィールドに `subitem_peer_reviewed` サブフィールドが追加されています。APIからは自動設定されず、手動で以下の値を選択します。
+
+| 選択肢 |
+|---|
+| （空） |
+| `Peer reviewed` |
+| `Not peer reviewed` |
 
 ## 関連情報 (Relation) の対応識別子タイプ
 
@@ -187,11 +268,42 @@ Crossrefの `date-parts` 配列をISO 8601形式に変換します。取得優�
 
 ## 外部API連携
 
-| API | エンドポイント | 用途 |
+| API | エンドポイント | 用途 | CORS制約 |
+|---|---|---|---|
+| **DOI RA** | `https://doi.org/doiRA/{DOI}` | Registration Agency判定（Crossref/JaLC分岐） | なし |
+| **Crossref** | `https://api.crossref.org/works/{DOI}` | 書誌データの主要ソース | なし |
+| **OpenAlex** | `https://api.openalex.org/works/doi:{DOI}` | 著者所属・OA情報の補完 | なし |
+| **ROR v2** | `https://api.ror.org/v2/organizations/{ror_id}` | 機関名・ISNI情報の取得（並列フェッチ） | なし |
+| **JaLC** | `https://api.japanlinkcenter.org/v2/dois/{DOI}` | JaLC DOIの書誌データ取得 | あり（拡張のみ） |
+| **KAKEN XML** | `https://kaken.nii.ac.jp/opensearch/` | 科研費情報取得（補助金番号→正規番号解決） | あり（拡張のみ） |
+| **CiNii Research** | `https://cir.nii.ac.jp/opensearch/v2/projects` | KAKEN情報フォールバック・NCID取得 | なし |
+| **Crossref JGN** | `https://api.crossref.org/works/10.52926/{award}` | Japan Grant Number連携（課題名・URI・プログラム情報） | なし |
+| **OPF** | Open Policy Finder API | SHERPA/RoMEO OAポリシー・エンバーゴ情報 | あり（拡張のみ） |
+| **GitHub** | `https://api.github.com/repos/.../commits` | 更新チェック | なし |
+
+※ CORS制約「あり」のAPIはChrome拡張版でのみ利用可能（HTML版では非対応）。
+
+## JaLCパスの差異
+
+RA判定でJaLCと判定されたDOIは、`mapToItemTypeJaLC()` / `buildJaLCAuthors()` / `buildJaLCFunders()` で処理されます。Crossrefパスとの主な差異は以下の通りです。
+
+### 作成者 (buildJaLCAuthors vs buildAuthors)
+
+| 観点 | Crossrefパス | JaLCパス |
 |---|---|---|
-| **Crossref** | `https://api.crossref.org/works/{DOI}` | 書誌データの主要ソース |
-| **OpenAlex** | `https://api.openalex.org/works/doi:{DOI}` | 著者所属・OA情報の補完 |
-| **ROR v2** | `https://api.ror.org/v2/organizations/{ror_id}` | 機関名・ISNI情報の取得（並列フェッチ） |
+| **名前** | 単一言語（family + given） | 多言語（`names[]` 配列、`lang` フィールド） |
+| **言語** | 'en'固定（`_warnLang` フラグ付き） | JaLC `names[].lang` をそのまま使用 |
+| **所属** | OpenAlex `institutions[]` → ROR API並列フェッチ | JaLC `affiliation_list` から直接取得 |
+| **ROR/ISNI** | ROR API経由で取得 | `affiliation_identifier_list` から type で判別（ROR/ISNI/GRID/WIKIDATA） |
+| **識別子** | ORCIDのみ | ORCID + e-Rad（researcher ID） |
+
+### 助成情報 (buildJaLCFunders vs buildFunders)
+
+| 観点 | Crossrefパス | JaLCパス |
+|---|---|---|
+| **助成機関名** | 単一言語（'en'） | 多言語（`funder_name[]` の `lang` を使用） |
+| **助成機関識別子** | `funder[].DOI` から直接取得 | `funder_identifier_list` から FundRef タイプのDOIを正規表現抽出 |
+| **研究課題番号** | 各awardを個別処理 | カンマ区切り（`,` / `、`）を分割して個別処理 |
 
 ## TSVプロパティキーの命名規則
 
