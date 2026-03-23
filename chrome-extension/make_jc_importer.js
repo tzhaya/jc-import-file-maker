@@ -342,12 +342,15 @@ function determineAccessRights(oaStatus, opfData) {
   if (['diamond', 'gold', 'hybrid', 'bronze', 'green'].includes(oaStatus)) {
     return 'open access';
   }
-  if (oaStatus === 'closed' && opfData?.items?.[0]) {
+  // Closed / Unknown → OPFエンバーゴの有無で判定
+  // （open系5種は上で早期リターン済み。ここに到達するのは closed か OAステータス不明のみ）
+  if (opfData?.items?.[0]) {
     const hasEmbargo = (opfData.items[0].publisher_policy || []).some(p =>
       (p.permitted_oa || []).some(oa => oa.embargo?.amount > 0)
     );
     if (hasEmbargo) return 'embargoed access';
   }
+  // エンバーゴなし / OPFデータなし → open access（機関リポジトリ登録用途を想定）
   return 'open access';
 }
 
@@ -1118,7 +1121,28 @@ async function fetchOpenPolicyFinder(issns) {
   return null;
 }
 
-// ===== 3.5.3 OPF ステータス更新・モーダル制御 =====
+// ===== 3.5.3 ISSN早期抽出（生APIレスポンスから） =====
+function extractIssnsFromRaw(crJson, jalcJson) {
+  const issns = [];
+  if (crJson) {
+    const issnType = crJson['issn-type'] || [];
+    if (issnType.length) {
+      issnType.forEach(i => issns.push(i.value));
+    } else {
+      (crJson.ISSN || []).forEach(i => issns.push(i));
+    }
+  }
+  if (jalcJson) {
+    (jalcJson.journal_id_list || []).forEach(j => {
+      if ((j.type || '').toUpperCase() === 'ISSN' && j.journal_id) {
+        issns.push(j.journal_id);
+      }
+    });
+  }
+  return issns;
+}
+
+// ===== 3.5.4 OPF ステータス更新・モーダル制御 =====
 async function updateOpfStatus(issns) {
   const badge = document.getElementById('opf-badge');
   const summary = document.getElementById('opf-summary');
@@ -1322,9 +1346,6 @@ async function fetchCrossrefData(doi) {
     fetchOpenAlex(doi),
   ]);
 
-  // ROR データを並列取得
-  const rorMap = await fetchAllRorData(oaJson);
-
   // 情報バー表示
   const doiUrl = `https://doi.org/${doi}`;
   const doiLink = document.getElementById('doi-link');
@@ -1340,10 +1361,17 @@ async function fetchCrossrefData(doi) {
   badge.style.background = badgeInfo.bg;
   document.getElementById('info-bar').style.display = 'flex';
 
-  // マッピング → レンダリング
+  // ISSN早期抽出 → ROR + OPF を並列取得（OPFはmapToItemType前に必要）
+  const earlyIssns = extractIssnsFromRaw(crJson, null);
+  const [rorMap] = await Promise.all([
+    fetchAllRorData(oaJson),
+    updateOpfStatus(earlyIssns),
+  ]);
+
+  // マッピング → レンダリング（lastOpfData が設定済みの状態で実行）
   const metadata = await mapToItemType(crJson, oaJson, rorMap);
 
-  // ISSN抽出
+  // ISSN抽出（メタデータから、OPF参照リンク用）
   const issns = (metadata.item_30002_source_identifier22 || [])
     .filter(si => ['ISSN','PISSN','EISSN'].includes(si.subitem_source_identifier_type))
     .map(si => si.subitem_source_identifier);
@@ -1358,9 +1386,6 @@ async function fetchCrossrefData(doi) {
   } else {
     opfRow.style.display = 'none';
   }
-
-  // OPF API 連携（Chrome拡張 + OPF_API_KEY 設定時のみ）
-  await updateOpfStatus(issns);
 
   showHints = true;
   renderAll(metadata);
@@ -1383,16 +1408,15 @@ async function fetchJaLCData(doi) {
   const badge = document.getElementById('oa-badge');
   badge.textContent = '⚪ Unknown';
   badge.style.background = '#999';
+  lastOaStatus = '';
   document.getElementById('info-bar').style.display = 'flex';
 
-  // マッピング → レンダリング
-  const metadata = await mapToItemTypeJaLC(jalcJson);
+  // ISSN早期抽出 → OPF取得（mapToItemTypeJaLC前に必要）
+  const earlyIssns = extractIssnsFromRaw(null, jalcJson);
+  await updateOpfStatus(earlyIssns);
 
-  // ISSN抽出 + OPF API 連携
-  const issns = (metadata.item_30002_source_identifier22 || [])
-    .filter(si => ['ISSN','PISSN','EISSN'].includes(si.subitem_source_identifier_type))
-    .map(si => si.subitem_source_identifier);
-  await updateOpfStatus(issns);
+  // マッピング → レンダリング（lastOpfData が設定済みの状態で実行）
+  const metadata = await mapToItemTypeJaLC(jalcJson);
 
   showHints = true;
   renderAll(metadata);
@@ -2472,6 +2496,10 @@ async function mapToItemTypeJaLC(jalcJson) {
     ? VERSION_TYPE_MAP['AO']
     : VERSION_TYPE_MAP['VoR'];
 
+  // ===== アクセス権（OPFエンバーゴ連動） =====
+  const accessRight    = determineAccessRights(lastOaStatus, lastOpfData);
+  const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
+
   // ===== メタデータオブジェクト =====
   const metadata = {
     system: {
@@ -2487,8 +2515,8 @@ async function mapToItemTypeJaLC(jalcJson) {
     item_30002_contributor3: [],
 
     item_30002_access_rights4: {
-      subitem_access_right:     'open access',
-      subitem_access_right_uri: 'http://purl.org/coar/access_right/c_abf2',
+      subitem_access_right:     accessRight,
+      subitem_access_right_uri: accessRightUri,
     },
 
     item_30002_rights6: rights,
@@ -5976,7 +6004,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-22';
+  const LOCAL_VERSION = '2026-03-23';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

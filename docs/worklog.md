@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-22（OA情報統合 + UIラベル日本語化 #51）
+最終更新: 2026-03-23（エンバーゴアクセス権修正 #51）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.8.2 | 2026-03-23 | エンバーゴアクセス権修正：OPF取得タイミング修正、JaLCパスのアクセス権動的化（#51） |
 | 1.8.1 | 2026-03-22 | OA情報統合 + UIラベル日本語化：OAステータス全6値対応、出版タイプ・アクセス権連動、OPFモーダル連動、エンバーゴヒント表示（#51） |
 | 1.8.0 | 2026-03-22 | 複数DOI一括TSV出力（Phase 2-C）：バッチ蓄積・一括エクスポート、リポジトリURL入力、タイムスタンプファイル名（#100） |
 | 1.7.0 | 2026-03-22 | カスタムテンプレート完全パース対応（Phase 2-B）、ItemType行自動設定（Phase 2-D）（#99, #101） |
@@ -39,6 +40,30 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-23: エンバーゴアクセス権修正（#51）
+
+### 概要
+OA Status=closed時のアクセス権を「embargoed access」に自動設定する機能が、OPFデータ取得タイミングの問題で機能していなかったバグを修正。
+
+### 根本原因
+- `fetchCrossrefData()`で`mapToItemType()`が`updateOpfStatus()`より前に実行されるため、`determineAccessRights()`呼び出し時に`lastOpfData`が常にnull
+- `mapToItemTypeJaLC()`ではアクセス権が`'open access'`にハードコードされ、`determineAccessRights()`を使用していなかった
+
+### 実装内容
+- `extractIssnsFromRaw()`: 生APIレスポンスからISSNを早期抽出するヘルパー関数を追加
+- `fetchCrossrefData()`: ROR + OPF並列取得を`mapToItemType()`の前に移動
+- `fetchJaLCData()`: OPF取得を`mapToItemTypeJaLC()`の前に移動、`lastOaStatus`を明示設定
+- `mapToItemTypeJaLC()`: ハードコード`'open access'`を`determineAccessRights()`呼び出しに変更
+- `determineAccessRights()`: `oaStatus === 'closed'`条件を緩和（open系以外すべてチェック）
+
+### 変更ファイル
+- `make_jc_importer.html` — コアロジック5箇所変更
+- `chrome-extension/make_jc_importer.js` — 同一変更の同期
+- `chrome-extension/panel.html` — 更新概要テーブル更新
+- `chrome-extension/manifest.json` — 1.8.1→1.8.2
 
 ---
 
