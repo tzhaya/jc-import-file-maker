@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-23（エンバーゴアクセス権修正 #51）
+最終更新: 2026-03-23（api-flow.md ドキュメント更新）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -40,6 +40,23 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-23: api-flow.md ドキュメント更新
+
+### 概要
+`api-flow.md` を現在の実装に合わせて修正。#51 のOPF連携実装や過去のKAKEN XML API対応などが反映されていなかった不整合を解消。
+
+### 修正内容
+- フロー図にOPF APIステップ・ISSN早期抽出を追加
+- ROR + OPF並列取得（Promise.all）を反映
+- 助成金フォールバックチェーンの順序を修正（KAKEN XML → JGN → CiNii）
+- アクセス権を`determineAccessRights()`による動的判定に更新
+- 出版タイプを`determineVersionInfo()`のロジックに更新（SMUR対応含む）
+- OAバッジ全6値（diamond/gold/hybrid/bronze/green/closed）を反映
+- 出版者情報（item_1698624005）のマッピングセクションを新設
+- API一覧にOPF・KAKEN XML APIを追加、JaLCエンドポイントをv2に修正
 
 ---
 
