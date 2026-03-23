@@ -161,11 +161,11 @@ make_jc_importer.html
         -   green: AAM + isVersionOf（著者最終稿）
         -   bronze/closed: VoR + isIdenticalTo（出版者版、アクセス制限あり）
     -   **アクセス権の動的設定**（`determineAccessRights()`関数）:
-        -   OAステータスに基づいてアクセス権を自動設定する
-        -   open access: diamond/gold/hybrid/green（即時OA）
-        -   restricted access: bronze（制限付きOA）
-        -   metadata only access: closed（本文非公開）
-        -   embargoed access: closed かつ OpenAlex の best_oa_location にエンバーゴ日付がある場合
+        -   OAステータスとOPFエンバーゴ情報に基づいてアクセス権を自動設定する
+        -   open access: diamond/gold/hybrid/bronze/green（OA系ステータス）
+        -   embargoed access: closed/unknown かつ OPFにエンバーゴ情報がある場合
+        -   open access（デフォルト）: closed/unknown でエンバーゴなし（機関リポジトリ登録用途を想定）
+        -   OPFデータはmapToItemType/mapToItemTypeJaLCの前に取得される（ISSN早期抽出による）
     -   **OpenAlexリポジトリ情報の関連情報追加**:
         -   OpenAlex の `any_repository_has_fulltext` が true の場合、`locations[]` からリポジトリ（source.type = "repository"）の landing_page_url を抽出し、関連情報（relationType: isIdenticalTo, identifierType: URI）として追加する
     -   **OPFモーダルのOAステータス連動**:
@@ -350,12 +350,11 @@ make_jc_importer.html
 - **アクセス権の設定**
     - アクセス権（"key": "item_30002_access_rights4"）は以下のように設定します。
         - アクセス権（"key": "item_30002_access_rights4.subitem_access_right"）
-            - OpenAlexのOAステータスに基づき `determineAccessRights()` で動的に設定（[#51](https://github.com/tzhaya/jc-import-file-maker/issues/51)）
-            - diamond/gold/hybrid/green: "open access"
-            - bronze: "restricted access"
-            - closed（エンバーゴあり）: "embargoed access"
-            - closed（エンバーゴなし）: "metadata only access"
-            - OpenAlex未取得時のデフォルト: "open access"
+            - OAステータスとOPFエンバーゴ情報に基づき `determineAccessRights()` で動的に設定（[#51](https://github.com/tzhaya/jc-import-file-maker/issues/51)）
+            - diamond/gold/hybrid/bronze/green: "open access"
+            - closed/unknown + OPFエンバーゴあり: "embargoed access"
+            - closed/unknown + エンバーゴなし/OPFデータなし: "open access"（機関リポジトリ登録用途を想定）
+            - JaLCパスでも `determineAccessRights()` を使用（OAステータスは空文字）
         - アクセス権URI（"key": "item_30002_access_rights4.subitem_access_right_uri"）
             - アクセス権の値に応じて `ACCESS_RIGHTS_MAP` から自動設定
 
