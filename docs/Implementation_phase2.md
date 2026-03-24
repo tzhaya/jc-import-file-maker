@@ -1,27 +1,28 @@
 # Phase 2: TSV エクスポート機能の実装プラン
 
+**ステータス: 全フェーズ完了**（Phase 2-A〜2-D、2026-03-22）
+
 ## Context
 
-`make_jc_importer.html` は DOI → API取得 → メタデータ編集UI を実装済みだが、WEKO インポート用TSVファイルの出力機能が未実装。Phase 2 として DOM → JSON → TSV のパイプラインを追加する。
+`make_jc_importer.html` の TSV エクスポート機能の実装記録。DOM → JSON → TSV のパイプラインにより、単一DOI・複数DOI一括のインポート用TSVファイルを出力する。
 
-## 前提条件
+## 前提条件（すべて完了済み）
 
-**JPCOAR スキーマ 2.0 対応（#25）のフェーズ1-a が完了していること。**
+JPCOAR スキーマ 2.0 対応（#25）の全フェーズが完了していること。
 
-DOM の構造・フィールドキー・語彙が固まってから TSV 出力を実装することで、列定義の二度手間を防ぐ。
-以下の issue がすべて完了していることを確認してから着手すること:
-
-| issue | 内容 | TSV への影響 |
+| issue | 内容 | 状態 |
 |---|---|---|
-| #26 | nameIdentifier スキーム語彙の更新 | スキーム値が変わる |
-| #27 | `creatorType` 属性の追加 | creator の DOM にサブフィールドが増える |
-| #28 | 言語コード `ja-Kana` → `ja-Latn` | lang 属性の値が変わる |
-| #29 | `relationType` 語彙への追加 | relationType の値が変わる |
-| #31 | `resourceType` 語彙の更新 | resourcetype の値が変わる |
-| #34 | 助成情報にプログラム情報フィールドを追加 | funding の DOM にサブフィールドが増える |
-
-フェーズ1-b（#30 出版者必須度変更）は UI のみで DOM 構造に影響しないため、TSV 実装と並行可能。
-フェーズ2-b（#32 出版者情報・#33 日付リテラル）は新規フィールド追加であり、TSV 実装後に `TSV_EXCL_SUFFIXES` / `TSV_EXCL_TIMESTAMP` から除外して対応する。
+| #26 | nameIdentifier スキーム語彙の更新 | 完了 |
+| #27 | `creatorType` 属性の追加 | 完了 |
+| #28 | 言語コード `ja-Kana` → `ja-Latn` | 完了 |
+| #29 | `relationType` 語彙への追加 | 完了 |
+| #31 | `resourceType` 語彙の更新 | 完了 |
+| #34 | 助成情報にプログラム情報フィールドを追加 | 完了 |
+| #32 | 出版者情報（publisherDetail）追加 | 完了 |
+| #33 | 日付リテラル（dateLiteral）追加 | 完了 |
+| #107 | 助成機関識別子タイプURI追加 | 完了 |
+| #108 | researchmap_linkage / peer_reviewed 追加 | 完了 |
+| #114 | tsv_headers.json 更新（232列） | 完了 |
 
 ## 対象ファイル
 
@@ -58,8 +59,11 @@ TSV の列定義・プロパティキーは `tsv_headers.json` 駆動とし、2�
 - **空フィールドの省略**: 値が存在しないフィールドの列はTSVに出力しない
   - フィールド全体が空の場合（例: contributor3 にデータなし → contributor3 の列群すべてを省略）
   - ※ 内部配列（creatorAffiliations 等）は `tsv_headers.json` テンプレートで [0] のみ定義。1要素のみ出力（WEKO3 TSVフォーマット上の制約）
-- **除外フィールド**: heading36, file35, dissertation30〜degree33, apc5, item_1698624001〜item_1698624010 は常に出力しない
+- **除外フィールド**: heading36, dissertation30〜degree33, item_1698624001〜item_1698624010 は常に除外（file35 は #84 で対応済み、item_1698624005・item_1698624008 は #32/#33 で対応済み）
 - **System列の自動補完**: RESOURCE_TYPE_MAP, ACCESS_RIGHTS_MAP 等から自動計算
+- **複数DOI出力**: `allMetadata[]` に蓄積した複数metadataからヘッダー5行+データN行を出力（#100）
+- **リポジトリURL置換**: `#repo-host` 入力欄でスキーマURL `https://localhost/` を実際のリポジトリURLに置換
+- **ファイル名**: 単一DOI → `{DOI}.tsv`、複数DOI → `import_YYYYMMDD_HHMMSS.tsv`
 
 ## アーキテクチャ
 
@@ -67,13 +71,23 @@ TSV の列定義・プロパティキーは `tsv_headers.json` 駆動とし、2�
 DOM (input/select/textarea)
   ↓ collectFromDOM()
 metadata JSON （mapToItemType()と同じ構造）
-  ↓ generateTsv(metadata, templateText)
+  ↓ saveCurrent() で allMetadata[] に蓄積（複数DOI時）
+  ↓
+exportTsv()
+  ├─ allMetadata[] から metadataArray を構築
+  ├─ buildMaxSizeMetadata(metadataArray) ... 列展開用の仮想metadata（最大配列サイズ）
+  ↓
+generateTsv(metadataArray, templateText, repoHost)
+  ├─ parseCustomTemplate(templateText)       ... カスタムテンプレート解析（Phase 2-B）
+  │   └─ 5行ヘッダーを完全パースして実効テンプレートを構築
   ├─ detectTsvPrefix(templateText, metadata) ... プレフィックス検出
-  ├─ buildTsvColumnDefs(prefix, metadata)    ... TSV_HEADERS_TEMPLATE から列定義を展開
-  │   ├─ groupTsvColumns(prefix)             ... フィールドグループ化 + 除外フィールド除去
+  ├─ buildTsvColumnDefs(prefix, metadata, template) ... テンプレートから列定義を展開
+  │   ├─ groupTsvColumns(prefix, template)   ... フィールドグループ化 + 除外フィールド除去
   │   └─ 配列フィールドを size 分展開、空フィールドはスキップ
-  ├─ buildHeaderRows(cols)                   ... ヘッダ5行の組み立て
-  └─ getTsvValue(col, metadata)              ... lookupKey（item_30002_ ベース）で値取得
+  ├─ buildHeaderRows(cols)                   ... ヘッダー5行の組み立て
+  │   └─ ItemType行の自動設定（Phase 2-D）
+  ├─ getTsvValue(col, metadata) × N行       ... lookupKey（item_30002_ ベース）で値取得
+  └─ repoHost による URL 置換
   ↓
 TSV文字列 → downloadTsv() → ブラウザダウンロード（UTF-8 BOM, LF）
 ```
@@ -109,13 +123,20 @@ const TSV_HEADERS_TEMPLATE = [/* data/tsv_headers.json の内容 */];
 
 ```javascript
 // suffix（item_30002_ 以降の名前）で照合 → prefix が変わっても機能する
+// ※ file35 は #84 で対応済みのため除外対象から削除
 const TSV_EXCL_SUFFIXES = new Set([
-  'apc5', 'heading36', 'file35',
+  'apc5', 'heading36',
   'dissertation_number30', 'degree_name31', 'date_granted32', 'degree_grantor33',
 ]);
 // timestamp ベースのフィールドは full key で照合
+// ※ item_1698624005（出版者情報）と item_1698624008（日付リテラル）は
+//   #32/#33 で対応済みのため除外対象から削除
 const TSV_EXCL_TIMESTAMP = new Set([
-  'item_1698624001', /* ... */ 'item_1698624010',
+  'item_1698624001', 'item_1698624002', 'item_1698624003', 'item_1698624004',
+  /* item_1698624005 は出力対象 */
+  'item_1698624006', 'item_1698624007',
+  /* item_1698624008 は出力対象 */
+  'item_1698624009', 'item_1698624010',
 ]);
 
 function isTsvExcluded(key) {
@@ -168,7 +189,7 @@ DOM の `dataset.key` には `sys_*` プレフィックスが付く（`sys_id`, 
 const SYS_KEY_MAP = {
   sys_id: 'id', sys_uri: 'uri', sys_path: 'path',
   sys_pos: 'pos_index', sys_status: 'publish_status',
-  sys_mail: 'feedback_mail', sys_cnri: 'cnri',
+  sys_mail: 'feedback_mail', sys_researchmap: 'researchmap_linkage', sys_cnri: 'cnri',
   sys_doi_ra: 'doi_ra', sys_doi: 'doi',
   sys_edit: 'edit_mode', sys_pubdate: 'pubdate',
 };
@@ -203,30 +224,41 @@ function getTsvValue(col, metadata) {
 const TSV_SYS_KEY_MAP = {
   '.id': 'id', '.uri': 'uri', '.metadata.path[0]': 'path',
   '.pos_index[0]': 'pos_index', '.publish_status': 'publish_status',
-  '.feedback_mail[0]': 'feedback_mail', '.cnri': 'cnri',
-  '.doi_ra': 'doi_ra', '.doi': 'doi', '.edit_mode': 'edit_mode',
-  '.metadata.pubdate': 'pubdate',
+  '.feedback_mail[0]': 'feedback_mail', '.researchmap_linkage': 'researchmap_linkage',
+  '.cnri': 'cnri', '.doi_ra': 'doi_ra', '.doi': 'doi',
+  '.edit_mode': 'edit_mode', '.metadata.pubdate': 'pubdate',
 };
 ```
 
 ### Step 7: TSV文字列生成（`generateTsv`）
 
 ```javascript
-function generateTsv(metadata, templateText) {
-  const prefix = detectTsvPrefix(templateText, metadata);
-  const cols = buildTsvColumnDefs(prefix, metadata);
+// Phase 2-C: metadataArray（複数DOI対応）、repoHost（URL置換）を追加
+function generateTsv(metadataArray, templateText, repoHost) {
+  const maxMeta = buildMaxSizeMetadata(metadataArray); // 列展開用仮想metadata
+  const parsed = parseCustomTemplate(templateText);     // Phase 2-B
+  const prefix = detectTsvPrefix(templateText, maxMeta);
+  const cols = buildTsvColumnDefs(prefix, maxMeta, parsed);
   if (!cols.length) return null;
 
-  const tmpl = TSV_HEADERS_TEMPLATE[0];
-  const n = cols.length;
-  const row1 = [tmpl[0], tmpl[1], tmpl[2], ...Array(Math.max(0, n - 3)).fill('')];
+  // ヘッダー5行
+  const tmpl = (parsed || TSV_HEADERS_TEMPLATE)[0];
+  const row1 = [tmpl[0], tmpl[1], tmpl[2], ...Array(Math.max(0, cols.length - 3)).fill('')];
   const row2 = cols.map((c, i) => (i === 0 ? '#' : '') + c.key);
   const row3 = cols.map((c, i) => (i === 0 ? '#' : '') + c.label);
   const row4 = ['#', ...cols.slice(1).map(c => c.sys)];
   const row5 = ['#', ...cols.slice(1).map(c => c.con)];
-  const row6 = cols.map(c => getTsvValue(c, metadata));
 
-  return [row1, row2, row3, row4, row5, row6].map(r => r.join('\t')).join('\n') + '\n';
+  // データN行（各metadataに対して1行）
+  const dataRows = metadataArray.map(meta =>
+    cols.map(c => {
+      let v = getTsvValue(c, meta);
+      if (repoHost && typeof v === 'string') v = v.replace(/https:\/\/localhost\//g, repoHost);
+      return v;
+    })
+  );
+
+  return [row1, row2, row3, row4, row5, ...dataRows].map(r => r.join('\t')).join('\n') + '\n';
 }
 ```
 
@@ -247,36 +279,61 @@ function downloadTsv(tsvString, filename) {
 ### Step 9: UI追加
 
 1. ボタンエリアに「TSV出力」ボタンを追加（緑色、データ取得後に表示）
-2. `<details>` 要素でTSVオプションパネルを追加（テンプレート貼り付けテキストエリア）
-3. `showPreview()` 内でボタンとオプションパネルを表示
-
-```html
-<button id="export-btn" onclick="exportTsv()" style="display:none; background:#2e7d32; color:white;">TSV出力</button>
-
-<details id="tsv-options" style="display:none;">
-  <summary>TSV出力オプション（プロパティキーのカスタマイズ）</summary>
-  <textarea id="tsv-template" rows="3"
-    placeholder="リポジトリからエクスポートしたTSVの先頭2〜3行を貼り付けてください。&#10;空の場合はデフォルト（item_30002_）を使用します。"></textarea>
-  <div>2行目の .metadata.item_XXXXX_ パターンを自動検出してプロパティキーを置換します。</div>
-</details>
-```
+2. `<details>` 要素でTSVオプションパネルを追加（テンプレート貼り付けテキストエリア + リポジトリURL入力）
+3. バッチ管理パネル（蓄積件数表示・個別削除・全クリア・アイテム切替）（Phase 2-C）
+4. Chrome拡張では `addEventListener` でボタンイベントを登録（MV3 CSP対応）
 
 ```javascript
+// Phase 2-C: バッチ対応のexportTsv
 function exportTsv() {
-  const metadata = collectFromDOM();
+  saveCurrent();  // 現在のDOM編集内容をallMetadataに保存
+  const metadataArray = allMetadata.filter(m => m);
+  if (!metadataArray.length) { alert('TSV出力できるデータがありません。'); return; }
   const templateText = document.getElementById('tsv-template')?.value || '';
-  const tsv = generateTsv(metadata, templateText);
+  const repoHost = document.getElementById('repo-host')?.value?.trim() || '';
+  const tsv = generateTsv(metadataArray, templateText, repoHost);
   if (!tsv) { alert('TSV出力できるデータがありません。'); return; }
-  const doi = metadata.system?.doi || 'import';
-  downloadTsv(tsv, `${doi.replace(/\//g, '_')}.tsv`);
+  // ファイル名: 単一DOI→{DOI}.tsv、複数DOI→import_YYYYMMDD_HHMMSS.tsv
+  let filename;
+  if (metadataArray.length === 1) {
+    const doi = metadataArray[0].system?.doi || 'import';
+    filename = `${doi.replace(/\//g, '_')}.tsv`;
+  } else {
+    const now = new Date();
+    filename = `import_${now.toISOString().replace(/[-:T]/g, '').slice(0, 15)}.tsv`;
+  }
+  downloadTsv(tsv, filename);
 }
 ```
+
+### Step 10: カスタムテンプレート完全パース（Phase 2-B / #99）
+
+5行ヘッダーの貼り付けでTSVテンプレートを丸ごと上書きする機能。
+
+```javascript
+function parseCustomTemplate(templateText) {
+  // 5行（またはそれ以上）のTSVヘッダーをパースして
+  // TSV_HEADERS_TEMPLATE と同じ構造の配列を返す
+  // groupTsvColumns / buildTsvColumnDefs に template 引数として渡す
+}
+```
+
+### Step 11: 複数DOI一括TSV出力（Phase 2-C / #100）
+
+- `allMetadata[]` + `currentBatchIndex` でバッチ蓄積・管理
+- `saveCurrent()`: DOM編集内容を `allMetadata[currentBatchIndex]` に保存
+- `buildMaxSizeMetadata(metadataArray)`: 複数metadataの各配列フィールドの最大サイズを持つ仮想metadataを生成（列展開用）
+- バッチ管理UI: `updateBatchPanel()` / `removeBatchItem()` / `clearBatch()`
+
+### Step 12: ItemType行自動設定（Phase 2-D / #101）
+
+カスタムテンプレートの1行目（`#ItemType`行）からItemType名・IDを自動検出し、TSV出力時に設定する。
 
 ## 対象フィールド一覧（tsv_headers.json の列順）
 
 | # | フィールド | 展開 | 除外 |
 |---|---|---|---|
-| 1 | system（固定11列） | なし | 常に出力 |
+| 1 | system（固定12列、researchmap_linkage含む） | なし | 常に出力 |
 | 2 | title0 | [i] | 空なら省略 |
 | 3 | alternative_title1 | [i] | 空なら省略 |
 | 4 | creator2 | [i] + 内部[0]固定 | 空なら省略 |
@@ -309,23 +366,41 @@ function exportTsv() {
 | 30 | bibliographic_information29 | [0]固定（bibliographic_titles） | 全値空なら省略 |
 | - | dissertation_number30〜degree_grantor33 | - | **常に除外** |
 | 31 | conference34 | [i] + 内部[0]固定 | 空なら省略 |
-| - | file35, heading36 | - | **常に除外** |
-| - | item_1698624001〜1698624010 | - | **常に除外** |
+| 32 | file35 | [i] + 内部[0]固定 | 空なら省略（#84 で対応済み） |
+| - | heading36 | - | **常に除外** |
+| 33 | item_1698624005（出版者情報） | [i] + 内部[0]固定 | 空なら省略（#32 で対応済み） |
+| 34 | item_1698624008（日付リテラル） | [i] | 空なら省略（#33 で対応済み） |
+| - | item_1698624001〜1698624004, 1698624006〜1698624007, 1698624009〜1698624010 | - | **常に除外** |
 
 ※「内部[0]固定」= tsv_headers.json テンプレートが [0] のみ定義しているため、外部配列のみ展開し内部は常に [0]。WEKO3 TSVフォーマット上の制約。
 
 ## 検証方法
 
+### 単一DOI出力（Phase 2-A）
 1. DOI入力 → データ取得 → 「TSV出力」ボタン押下
 2. ダウンロードされた .tsv ファイルを開き以下を確認:
    - UTF-8 BOM付き、LF改行
-   - ヘッダ5行 + データ1行
+   - ヘッダー5行 + データ1行
    - 列キー（2行目）が 30002.tsv のパターンと一致
    - 作成者が複数の場合、[0],[1],...と列が動的に増加
    - System列（resourceuri, access_right_uri等）が自動補完
-3. 空値表示モード → TSV出力 → 全列が [0] のみの基本構造で出力
-4. TSV出力オプション: 別リポジトリのTSVヘッダーを貼り付け → 列キーのプレフィックスが変わることを確認
-5. 出力TSVをWEKOテスト環境にインポートして動作確認（可能な場合）
+   - ファイル名が `{DOI}.tsv`
+
+### カスタムテンプレート（Phase 2-B）
+3. TSV出力オプションに別リポジトリの5行ヘッダーを貼り付け → 列キーのプレフィックスが変わることを確認
+4. カスタムテンプレートの列順序・列数がそのまま出力に反映されることを確認
+
+### 複数DOI一括出力（Phase 2-C）
+5. 複数DOIを連続取得 → バッチパネルに蓄積件数が表示されることを確認
+6. 「TSV出力」→ ヘッダー5行 + データN行が出力されることを確認
+7. ファイル名が `import_YYYYMMDD_HHMMSS.tsv` であることを確認
+8. リポジトリURL入力 → `https://localhost/` が置換されることを確認
+
+### ItemType行（Phase 2-D）
+9. カスタムテンプレート貼り付け時にItemType行が自動設定されることを確認
+
+### 共通
+10. 出力TSVをWEKOテスト環境にインポートして動作確認（可能な場合）
 
 ## フォーマット変更時の対応チェックリスト
 
@@ -335,18 +410,9 @@ function exportTsv() {
 - [ ] 追加フィールドの値取得が必要なら `collectFromDOM()` の各 collect 関数を更新
 - [ ] 検証方法に従い動作確認
 
-## 作業完了後のドキュメント更新
+## 実装完了後のドキュメント更新（完了済み）
 
-実装完了後、以下のドキュメントを更新すること。
-
-### README.md
-- 「未実装（Phase 2）」セクションを「実装済み（Phase 2）」に変更
-- ベータ版の注意文言を削除または更新
-- Phase 2 の機能概要を「実装済み」セクションに追記
-- ドキュメントセクションに `Implementation_phase2.md` へのリンクを追加
-
-### docs/worklog.md
-- 最終更新日を更新
-- Phase 2 の実装記録を追加（Step 1〜9 の各ステップ完了内容）
-- 「未完了タスク」セクションの Phase 2 項目を完了済みに更新
-- 技術メモに Phase 2 固有の知見を追記（TSV_HEADERS_TEMPLATE 駆動方式、lookupKey/key の分離、プレフィックス自動検出等）
+- [x] README.md: Phase 2 の機能概要を変更履歴に追記
+- [x] docs/worklog.md: Phase 2 の実装記録を追加
+- [x] function.md: Phase 2 セクションを全完了状態に更新
+- [x] docs/remaining_issues.md: グループ E を全完了に更新
