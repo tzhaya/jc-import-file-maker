@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-23（#116 JPCOARスキーマ2.0対応ドキュメント修正）
+最終更新: 2026-03-24（function.md 更新）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -40,6 +40,22 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-24: function.md 更新
+
+### 概要
+`function.md` を現在の実装に合わせて更新。
+
+### 修正内容
+- Phase 2セクション: 「2b 未着手」→ 全4フェーズ（2-A〜2-D）の実装完了状態に更新
+- OA情報統合（#51）: OAバッジ6値対応、出版タイプ・アクセス権動的判定、OAサマリー・エンバーゴヒント表示を追加
+- JPCOAR 2.0新規フィールド: 出版者情報（#32）、日付リテラル（#33）、funderIdentifierTypeURI（#107）、peer_reviewed・researchmap_linkage（#108）を追加
+- ファイルパス自動判定（#90）を追加
+- フィールド数: 28→30に修正
+- 外部API: OPFを追加
+- ドキュメントリンク: ファイル情報UI・残存Issues・プロパティキー命名規則・APIフローを追加
 
 ---
 
