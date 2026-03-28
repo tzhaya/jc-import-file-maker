@@ -290,7 +290,10 @@ async function lookupOne(awardNumber) {
     ? '厚生労働科研費の可能性があります。<a href="https://mhlw-grants.niph.go.jp/" target="_blank" class="pv-link">厚生労働科学研究成果データベース</a>で検索して研究課題名を確認してください。'
     : '';
   const noKeyHint = !hasCiNiiKey ? 'CiNii APIキーが設定されていません。' : '';
-  return { award: awardNumber, source: null, error: noKeyHint || '該当なし（JGN・KAKEN いずれも見つかりません）', nistepHint: noKeyHint ? '' : nistepHint, kakenSearchHint, amedHint, mhlwHint };
+  const errorMsg = noKeyHint
+    ? noKeyHint + '該当なし（JGN・KAKEN いずれも見つかりません）'
+    : '該当なし（JGN・KAKEN いずれも見つかりません）';
+  return { award: awardNumber, source: null, error: errorMsg, nistepHint, kakenSearchHint, amedHint, mhlwHint };
 }
 
 // ===== 結果カードを生成 =====
