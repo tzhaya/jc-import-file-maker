@@ -76,9 +76,9 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-03-23 | ver. 1.8.2 | エンバーゴアクセス権修正：OA Status=closed時のアクセス権をOPFエンバーゴ情報に基づき自動設定（[#51](https://github.com/tzhaya/jc-import-file-maker/issues/51)） |
+| Chrome拡張機能版 | 2026-03-28 | ver. 1.8.3 | AMED課題番号抽出・検索失敗時ヒント強化（[#130](https://github.com/tzhaya/jc-import-file-maker/issues/130), [#131](https://github.com/tzhaya/jc-import-file-maker/issues/131)） |
 | インポート用TSV生成ツール | 2026-03-23 | — | エンバーゴアクセス権修正：OPF取得タイミング修正、JaLCパスのアクセス権動的化（[#51](https://github.com/tzhaya/jc-import-file-maker/issues/51)） |
-| 助成情報検索ツール | 2026-03-17 | — | 課題番号抽出を改善：セミコロン・カンマ区切り入力対応、Ackテキストから科研費番号を抽出（[#104](https://github.com/tzhaya/jc-import-file-maker/issues/104)） |
+| 助成情報検索ツール | 2026-03-28 | — | AMED課題番号抽出・AMED find/厚生労働科研DB検索ヒント追加（[#130](https://github.com/tzhaya/jc-import-file-maker/issues/130), [#131](https://github.com/tzhaya/jc-import-file-maker/issues/131)） |
 
 ## 導入方法
 
@@ -251,6 +251,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-28 | AMED課題番号抽出・検索失敗時ヒント強化：AckテキストからのAMED番号抽出、AMED find/厚生労働科研DB検索リンク追加（[#130](https://github.com/tzhaya/jc-import-file-maker/issues/130), [#131](https://github.com/tzhaya/jc-import-file-maker/issues/131)） |
 | 2026-03-24 | function.mdを現在の実装に合わせて更新：OA情報統合・JPCOAR 2.0新規フィールド・Phase 2全完了・外部API追加・ドキュメントリンク追加 |
 | 2026-03-23 | JPCOARスキーマ2.0対応に伴うドキュメント修正：fieldmapping.md（新規フィールド・アクセス権動的判定・JaLCパス・外部API一覧）、Implementation_phase2.md（列数232）、weko3_property_key_naming.md（サブフィールド構造）を更新（[#116](https://github.com/tzhaya/jc-import-file-maker/issues/116)） |
 | 2026-03-23 | APIフロードキュメント更新：OPF API・KAKEN XML API追加、助成金フォールバック順序修正、アクセス権・出版タイプ判定ロジック更新、出版者情報マッピング追加 |

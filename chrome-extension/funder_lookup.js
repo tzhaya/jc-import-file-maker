@@ -43,6 +43,14 @@ function isKakenhi(awardNumber) {
   return /^\d{2}[A-Z]{1,2}\d{4,5}$/i.test(num);
 }
 
+// AMED課題番号パターン判定
+// 形式: 2桁年度 + 2〜3文字コード(英数小文字) + 5桁以上連番 + 任意接尾辞(英1文字+数字)
+// 例: 24bm1123057h0001, 22ama121002
+function isAmed(awardNumber) {
+  if (!awardNumber) return false;
+  return /^\d{2}[a-z0-9]{2,3}\d{5,}(?:[a-z]\d{1,4})?$/i.test(awardNumber);
+}
+
 const KAKENHI_FUNDING_STREAM = [
   { fundingStream: '科学研究費助成事業',                                    fundingStreamLang: 'ja' },
   { fundingStream: 'Grants-in-Aid for Scientific Research (KAKENHI)', fundingStreamLang: 'en' },
@@ -273,8 +281,16 @@ async function lookupOne(awardNumber) {
   const kakenSearchHint = /^\d+[A-Z]/i.test(strippedNumber)
     ? '補助金番号の可能性があります。<a href="https://kaken.nii.ac.jp/ja/search/?qb=' + encodeURIComponent(strippedNumber) + '" target="_blank" class="pv-link">KAKENで検索</a>して正規の研究課題番号を確認してください。'
     : '';
+  // AMED ヒント
+  const amedHint = isAmed(strippedNumber)
+    ? 'AMED研究開発課題の可能性があります。<a href="https://amedfind.amed.go.jp/amed/" target="_blank" class="pv-link">AMED find</a>で検索して研究課題名を確認してください。'
+    : '';
+  // 厚生労働科研費ヒント（KAKENHI同一パターンだがKAKENで見つからなかった場合）
+  const mhlwHint = (!amedHint && isKakenhi(awardNumber))
+    ? '厚生労働科研費の可能性があります。<a href="https://mhlw-grants.niph.go.jp/" target="_blank" class="pv-link">厚生労働科学研究成果データベース</a>で検索して研究課題名を確認してください。'
+    : '';
   const noKeyHint = !hasCiNiiKey ? 'CiNii APIキーが設定されていません。' : '';
-  return { award: awardNumber, source: null, error: noKeyHint || '該当なし（JGN・KAKEN いずれも見つかりません）', nistepHint: noKeyHint ? '' : nistepHint, kakenSearchHint };
+  return { award: awardNumber, source: null, error: noKeyHint || '該当なし（JGN・KAKEN いずれも見つかりません）', nistepHint: noKeyHint ? '' : nistepHint, kakenSearchHint, amedHint, mhlwHint };
 }
 
 // ===== 結果カードを生成 =====
@@ -286,6 +302,8 @@ function buildResultCards(results) {
         + '<div class="result-card-body"><table class="pv-table">'
         + '<tr><td style="color:#c62828">' + fmtVal(r.error)
         + (r.kakenSearchHint ? '<br>' + r.kakenSearchHint : '')
+        + (r.mhlwHint ? '<br>' + r.mhlwHint : '')
+        + (r.amedHint ? '<br>' + r.amedHint : '')
         + (r.nistepHint ? '<br>' + r.nistepHint : '') + '</td></tr>'
         + '</table></div></div>';
     }
@@ -339,7 +357,13 @@ function buildResultCards(results) {
 let lastResults = [];
 
 // 科研費課題番号パターン（Ackテキスト抽出用、isKakenhi() と同一ルール）
+// 厚生労働科研費（21HA2016 等）も同一形式のためマッチする
 const KAKENHI_RE = /\b\d{2}[A-Z]{1,2}\d{4,5}\b/gi;
+
+// AMED課題番号パターン（Ackテキスト抽出用）
+// 形式: 2桁年度 + 2〜3文字コード(英数) + 5桁以上連番 + 任意接尾辞(英1文字+数字)
+// 例: 24bm1123057h0001, 22ama121002, 223fa627001
+const AMED_RE = /\b\d{2}[a-z0-9]{2,3}\d{5,}(?:[a-z]\d{1,4})?\b/gi;
 
 // ===== 入力から課題番号を抽出（自動判定） =====
 function extractAwardNumbers(input) {
@@ -366,12 +390,17 @@ function extractAwardNumbers(input) {
       // (B) セミコロン/カンマ区切りの課題番号リスト
       for (const t of tokens) addUnique(t);
     } else {
-      // (C) Acknowledgementsテキスト: JP... パターン + 科研費パターンを抽出
+      // (C) Acknowledgementsテキスト: JP... + 科研費 + AMEDパターンを抽出
+      // 体系的番号（JPCA24DA1234等）は常にJP付きのため JP[A-Za-z0-9]+ で対応済み
       const jpMatches = trimmed.match(/JP[A-Za-z0-9]+/g) || [];
       const kakenMatches = trimmed.match(KAKENHI_RE) || [];
+      const amedMatches = trimmed.match(AMED_RE) || [];
       for (const m of jpMatches) addUnique(m);
       for (const m of kakenMatches) {
         // JP付きで既に抽出済みなら重複スキップ（JP21H04856 と 21H04856）
+        if (!seen.has(m) && !seen.has('JP' + m)) addUnique(m);
+      }
+      for (const m of amedMatches) {
         if (!seen.has(m) && !seen.has('JP' + m)) addUnique(m);
       }
     }
@@ -604,7 +633,7 @@ async function copyTsvToClipboard(btn) {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-17';
+  const LOCAL_VERSION = '2026-03-28';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;

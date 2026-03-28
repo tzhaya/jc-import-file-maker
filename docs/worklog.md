@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-24（function.md 更新）
+最終更新: 2026-03-28（AMED課題番号抽出対応 #130）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.8.3 | 2026-03-28 | AMED課題番号の抽出対応：Ackテキストからの課題番号抽出を強化（#130） |
 | 1.8.2 | 2026-03-23 | エンバーゴアクセス権修正：OPF取得タイミング修正、JaLCパスのアクセス権動的化（#51） |
 | 1.8.1 | 2026-03-22 | OA情報統合 + UIラベル日本語化：OAステータス全6値対応、出版タイプ・アクセス権連動、OPFモーダル連動、エンバーゴヒント表示（#51） |
 | 1.8.0 | 2026-03-22 | 複数DOI一括TSV出力（Phase 2-C）：バッチ蓄積・一括エクスポート、リポジトリURL入力、タイムスタンプファイル名（#100） |
@@ -40,6 +41,42 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-28: AMED課題番号の抽出対応（#130）
+
+### 概要
+`funder_lookup.html` の `extractAwardNumbers()` に AMED 課題番号パターン（`AMED_RE`）を追加。JP プレフィックスなしの AMED 番号（`24bm1123057h0001` 等）が Acknowledgements テキストから正し���抽出されるようにした。
+
+### 変更内容
+- `AMED_RE` 正規表現を追加: `/\b\d{2}[a-z0-9]{2,3}\d{5,}(?:[a-z]\d{1,4})?\b/gi`
+  - AMED 番号形式: 2桁年度 + 2〜3文字コード(英数) + 5桁以上連番 + 任意接尾辞
+- `extractAwardNumbers()` Case C に AMED パターンマッチングを追加（JP重複スキップ対応）
+- ヒントテキスト更新: AMED・体���的番号対応を明記
+- 対応済み確認: 厚生労働科研費（`21HA2016` 等）は既存の `KAKENHI_RE` でマッチ、体��的番号（`JPCA24DA1234` 等）は JP パターンでマッチ
+
+### 変更ファイル
+- `funder_lookup.html`: AMED_RE 追加、extractAwardNumbers() 更新、ヒントテキスト・最終更新日・LOCAL_VERSION 更新
+- `chrome-extension/funder_lookup.js`: 同上同��
+- `chrome-extension/funder_panel.html`: ヒントテキスト・最終更新日同期
+- `chrome-extension/manifest.json`: 1.8.2 → 1.8.3
+
+## 2026-03-28: AMED find・厚生労働科研DB検索ヒント追加（#131）
+
+### 概要
+`funder_lookup.html` の検索失敗時ヒントに AMED find および厚生労働科学研究成果データベースへのリンクを追加。課題番号パターンに基づき該当しそうなデータベースを案内する。
+
+### 変更内容
+- `isAmed()` 関数を新設（`isKakenhi()` の直後）
+- `lookupOne()` のエラーヒント生成に `amedHint` / `mhlwHint` を追加
+  - AMED パターン → AMED find リンク
+  - KAKENHI パターンだが KAKEN で見つからない → 厚生労働科研費 DB リンク（+ 既存の KAKEN 検索ヒント）
+- `buildResultCards()` にヒント表示を追加
+
+### 変更ファイル
+- `funder_lookup.html`: isAmed() 追加、lookupOne() / buildResultCards() 更新
+- `chrome-extension/funder_lookup.js`: 同上同期
 
 ---
 
