@@ -279,6 +279,20 @@
 
 <script src="shared.js"></script>
 <script>
+// ===== shared.js 未読み込み時のフォールバック =====
+if (typeof CONFIG === 'undefined') {
+  console.warn('shared.js が読み込めませんでした。APIキーなしで動作します。');
+  window.CONFIG = { OpenAlex_API_KEY: '', CiNii_API_KEY: '', OPF_API_KEY: '' };
+  window.loadConfig = async function() {};
+  window.extensionFetch = function(url, options) { return fetch(url, options); };
+  document.addEventListener('DOMContentLoaded', () => {
+    const h1 = document.querySelector('h1');
+    if (h1) h1.insertAdjacentHTML('afterend',
+      '<div style="background:#fff3cd;border:1px solid #ffc107;padding:8px 14px;border-radius:6px;margin-bottom:10px;font-size:0.9em;color:#856404;">' +
+      '⚠ <code>shared.js</code> が見つかりません。APIキーなしで動作しています。' +
+      '<code>shared.js</code> を同じフォルダに配置してください。</div>');
+  });
+}
 // ===== JSPS 助成機関定数 =====
 const JSPS_FUNDER_DOI = '10.13039/501100001691';
 const JSPS_FUNDER_NAMES = [

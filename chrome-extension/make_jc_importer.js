@@ -4,6 +4,16 @@
 // ================================================================
 // CONFIG, loadConfig(), extensionFetch() は shared.js で定義
 // TSV_HEADERS_TEMPLATE は tsv_headers_template.js で定義
+if (typeof CONFIG === 'undefined') {
+  console.warn('shared.js が読み込めませんでした。APIキーなしで動作します。');
+  window.CONFIG = { OpenAlex_API_KEY: '', CiNii_API_KEY: '', OPF_API_KEY: '' };
+  window.loadConfig = async function() {};
+  window.extensionFetch = function(url, options) { return fetch(url, options); };
+}
+if (typeof TSV_HEADERS_TEMPLATE === 'undefined') {
+  console.warn('tsv_headers_template.js が読み込めませんでした。TSV出力は使用できません。');
+  window.TSV_HEADERS_TEMPLATE = null;
+}
 
 // ===== OPF連携グローバル状態 =====
 let lastOpfData   = null;   // 最後に取得したOPFデータ

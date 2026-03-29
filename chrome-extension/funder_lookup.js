@@ -1,4 +1,10 @@
 // CONFIG, loadConfig(), extensionFetch() は shared.js で定義
+if (typeof CONFIG === 'undefined') {
+  console.warn('shared.js が読み込めませんでした。APIキーなしで動作します。');
+  window.CONFIG = { OpenAlex_API_KEY: '', CiNii_API_KEY: '', OPF_API_KEY: '' };
+  window.loadConfig = async function() {};
+  window.extensionFetch = function(url, options) { return fetch(url, options); };
+}
 
 // ===== JSPS 助成機関定数 =====
 const JSPS_FUNDER_DOI = '10.13039/501100001691';
