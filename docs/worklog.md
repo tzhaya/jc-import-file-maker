@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-28（AMED課題番号抽出対応 #130）
+最終更新: 2026-03-29（CONFIG共通化 #111）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -8,7 +8,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 実装計画: `Implementation_phase1.md`
 対象ファイル: `make_jc_importer.html`（新規作成）
-現在のファイル規模: **約6400行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + TSVエクスポート + ファイル情報UI + ファイルパス自動判定 + カスタムテンプレート完全パース + 複数DOI一括TSV出力 + OA情報統合）
+現在のファイル規模: **約6600行**（STEP 1〜8 + クリーンアップ＋フィールド補完＋参照用列 + APIキー設定 + RA判定 + KAKEN連携 + NCID取得 + DOI必須項目バッジ + Crossref typeマッピング + ISBN/relation取り込み + JGN連携 + 識別子逆引き + JPCOAR 2.0 語彙対応 + JaLC API対応 + プレビュー機能 + 関連情報取得改善 + TSVエクスポート + ファイル情報UI + ファイルパス自動判定 + カスタムテンプレート完全パース + 複数DOI一括TSV出力 + OA情報統合）
 
 ---
 
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.9.0 | 2026-03-29 | CONFIG共通化：APIキー設定・ユーティリティをshared.jsに外部化、TSVテンプレートをtsv_headers_template.jsに外部化（#111） |
 | 1.8.3 | 2026-03-28 | AMED課題番号の抽出対応：Ackテキストからの課題番号抽出を強化（#130） |
 | 1.8.2 | 2026-03-23 | エンバーゴアクセス権修正：OPF取得タイミング修正、JaLCパスのアクセス権動的化（#51） |
 | 1.8.1 | 2026-03-22 | OA情報統合 + UIラベル日本語化：OAステータス全6値対応、出版タイプ・アクセス権連動、OPFモーダル連動、エンバーゴヒント表示（#51） |
@@ -41,6 +42,28 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-03-29: CONFIG共通化 + TSVテンプレート外部化（#111）
+
+### 概要
+`make_jc_importer.html` と `funder_lookup.html` で重複定義されていたCONFIG定数・`loadConfig()`・`extensionFetch()` を `shared.js` に外部化し、`<script src="shared.js">` で共有するように変更。TSV_HEADERS_TEMPLATE（約32KB）を `tsv_headers_template.js` に外部化。
+
+### 新規ファイル
+- `shared.js` — CONFIG定数 + loadConfig() + extensionFetch()（両HTML・Chrome拡張で共有）
+- `tsv_headers_template.js` — TSV_HEADERS_TEMPLATE定数（make_jc_importer.htmlのみ使用）
+- `chrome-extension/shared.js` — ルートのコピー
+- `chrome-extension/tsv_headers_template.js` — ルートのコピー
+
+### 変更ファイル
+- `make_jc_importer.html` — `<script src>` 2つ追加、インラインCONFIG/loadConfig/extensionFetch/TSV_HEADERS_TEMPLATE削除
+- `funder_lookup.html` — `<script src>` 1つ追加、インラインCONFIG/loadConfig/extensionFetch削除
+- `chrome-extension/panel.html` — shared.js + tsv_headers_template.js のscriptタグ追加
+- `chrome-extension/funder_panel.html` — shared.js のscriptタグ追加
+- `chrome-extension/make_jc_importer.js` — CONFIG/loadConfig/extensionFetch/TSV_HEADERS_TEMPLATE定義削除
+- `chrome-extension/funder_lookup.js` — CONFIG/loadConfig/extensionFetch定義削除
+- `chrome-extension/manifest.json` — version 1.8.3→1.9.0
 
 ---
 

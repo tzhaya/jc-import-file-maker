@@ -1,34 +1,4 @@
-// ===== 設定 =====
-const CONFIG = {
-  // CiNii APIキー（任意）
-  // CiNiiウェブAPI 利用登録 https://support.nii.ac.jp/ja/cinii/api/developer で取得したキーを貼り付けてください
-  // Chrome拡張版では options.html で設定できます
-  CiNii_API_KEY: "YOUR_CiNii_API_KEY",
-};
-
-// ===== Chrome拡張: chrome.storage.local からAPIキーを読み込む =====
-async function loadConfig() {
-  if (typeof chrome === 'undefined' || !chrome.storage) return;
-  try {
-    const stored = await chrome.storage.local.get(['CiNii_API_KEY']);
-    if (stored.CiNii_API_KEY) CONFIG.CiNii_API_KEY = stored.CiNii_API_KEY;
-  } catch { /* 拡張外環境では無視 */ }
-}
-
-// ===== Chrome拡張: CORS非対応APIへのfetchをService Worker経由でプロキシ =====
-async function extensionFetch(url, options = {}) {
-  if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
-    const result = await chrome.runtime.sendMessage({ type: 'FETCH', url, options });
-    if (result.error) throw new Error(result.error);
-    return {
-      ok: result.ok,
-      status: result.status,
-      text: () => Promise.resolve(result.text),
-      json: () => Promise.resolve(JSON.parse(result.text)),
-    };
-  }
-  return fetch(url, options);
-}
+// CONFIG, loadConfig(), extensionFetch() は shared.js で定義
 
 // ===== JSPS 助成機関定数 =====
 const JSPS_FUNDER_DOI = '10.13039/501100001691';
@@ -636,7 +606,7 @@ async function copyTsvToClipboard(btn) {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-28';
+  const LOCAL_VERSION = '2026-03-29';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;
