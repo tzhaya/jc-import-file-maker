@@ -11,6 +11,10 @@ make_jc_importer.html
 ## 技術詳細と依存関係
 
 **フロントエンド技術**: HTML5, CSS3, JavaScript
+**共通ファイル構成**（#111）:
+    -   `shared.js` — CONFIG定数（APIキー）、`loadConfig()`（Chrome拡張用ストレージ読込）、`extensionFetch()`（CORS プロキシ）を定義。`make_jc_importer.html`・`funder_lookup.html`・Chrome拡張で `<script src>` により共有
+    -   `tsv_headers_template.js` — TSV_HEADERS_TEMPLATE定数（`data/tsv_headers.json` と同一内容、232列）を定義。`make_jc_importer.html`・Chrome拡張のみ使用
+    -   スタンドアロン版のAPIキー設定は `shared.js` の CONFIG定数を直接編集
 **外部API**:
     -   DOI RA判定 API (`https://doi.org/doiRA/`)
     -   Crossref API (`https://api.crossref.org/works/`)

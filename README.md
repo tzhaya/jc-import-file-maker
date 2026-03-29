@@ -65,7 +65,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 | **設定・運用** | | | |
 | 更新チェック | ✅ | ✅ | 更新がある場合はその旨表示されます |
 | APIキー設定（GUI） | ✅ | ❌ | Chrome拡張機能版は設定ページで管理 |
-| APIキー設定（ソースコード編集） | ❌ | ✅ | CONFIG定数を直接編集 |
+| APIキー設定（ソースコード編集） | ❌ | ✅ | `shared.js` のCONFIG定数を編集 |
 | APIキーの永続保存 | ✅ | ❌ | Chrome拡張機能版は `chrome.storage.local` に保存 |
 | **関連ツール** | | | |
 | 助成情報検索ツール | ✅ | ✅ | Chrome拡張機能版はタブ切替、ブラウザ版は別HTMLファイル |
@@ -76,9 +76,9 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-03-28 | ver. 1.8.3 | AMED課題番号抽出・検索失敗時ヒント強化（[#130](https://github.com/tzhaya/jc-import-file-maker/issues/130), [#131](https://github.com/tzhaya/jc-import-file-maker/issues/131)） |
-| インポート用TSV生成ツール | 2026-03-23 | — | エンバーゴアクセス権修正：OPF取得タイミング修正、JaLCパスのアクセス権動的化（[#51](https://github.com/tzhaya/jc-import-file-maker/issues/51)） |
-| 助成情報検索ツール | 2026-03-28 | — | AMED課題番号抽出・AMED find/厚生労働科研DB検索ヒント追加（[#130](https://github.com/tzhaya/jc-import-file-maker/issues/130), [#131](https://github.com/tzhaya/jc-import-file-maker/issues/131)） |
+| Chrome拡張機能版 | 2026-03-29 | ver. 1.9.0 | CONFIG共通化：APIキー設定・ユーティリティをshared.jsに外部化、TSVテンプレートをtsv_headers_template.jsに外部化（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
+| インポート用TSV生成ツール | 2026-03-29 | — | CONFIG共通化：APIキー設定をshared.jsに外部化、TSVテンプレートをtsv_headers_template.jsに外部化（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
+| 助成情報検索ツール | 2026-03-29 | — | CONFIG共通化：APIキー設定をshared.jsに外部化（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 
 ## 導入方法
 
@@ -164,9 +164,7 @@ CORS非対応のAPI（KAKEN XML API・JaLC API・Open Policy Finder API）が Ch
 
 #### 通常ブラウザ版
 
-`make_jc_importer.html` をテキストエディタで開き、ファイル冒頭付近の `CONFIG` 定数にAPIキーを設定してください。
-
-助成情報検索ツール `funder_lookup.html` でも、同様にCiNii APIキーを設定できます。
+`shared.js` をテキストエディタで開き、`CONFIG` 定数にAPIキーを設定してください。この設定は `make_jc_importer.html` と `funder_lookup.html` の両方に反映されます。
 
 ```js
 const CONFIG = {
@@ -255,6 +253,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-29 | CONFIG共通化：APIキー設定（CONFIG）・loadConfig()・extensionFetch()をshared.jsに外部化し両HTML・Chrome拡張で共有、TSVテンプレートをtsv_headers_template.jsに外部化（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 | 2026-03-28 | AMED課題番号抽出・検索失敗時ヒント強化：AckテキストからのAMED番号抽出、AMED find/厚生労働科研DB検索リンク追加（[#130](https://github.com/tzhaya/jc-import-file-maker/issues/130), [#131](https://github.com/tzhaya/jc-import-file-maker/issues/131)） |
 | 2026-03-24 | function.mdを現在の実装に合わせて更新：OA情報統合・JPCOAR 2.0新規フィールド・Phase 2全完了・外部API追加・ドキュメントリンク追加 |
 | 2026-03-23 | JPCOARスキーマ2.0対応に伴うドキュメント修正：fieldmapping.md（新規フィールド・アクセス権動的判定・JaLCパス・外部API一覧）、Implementation_phase2.md（列数232）、weko3_property_key_naming.md（サブフィールド構造）を更新（[#116](https://github.com/tzhaya/jc-import-file-maker/issues/116)） |
