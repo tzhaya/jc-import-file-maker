@@ -100,7 +100,10 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 HTMLファイルを直接ブラウザで開いて使用します。
 
 1. [make_jc_importer.html](make_jc_importer.html) ←右クリック→「名前をつけてリンク(先)を保存」で保存
-2. 保存したファイルをブラウザで開きます
+2. [shared.js](https://github.com/tzhaya/jc-import-file-maker/blob/master/shared.js)←右クリック→「名前をつけてリンク(先)を保存」で保存
+3. [tsv_headers_template.js](https://github.com/tzhaya/jc-import-file-maker/blob/master/tsv_headers_template.js)←右クリック→「名前をつけてリンク(先)を保存」で保存
+4. 「メモ帳」などで shared.js を開き、APIキーを入力して保存します。 
+5. make_jc_importer.htmlをブラウザで開きます
 
 ## 使い方
 
