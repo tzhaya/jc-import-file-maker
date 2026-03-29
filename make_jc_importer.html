@@ -642,6 +642,24 @@
 <script src="shared.js"></script>
 <script src="tsv_headers_template.js"></script>
 <script>
+// ===== shared.js / tsv_headers_template.js 未読み込み時のフォールバック =====
+if (typeof CONFIG === 'undefined') {
+  console.warn('shared.js が読み込めませんでした。APIキーなしで動作します。');
+  window.CONFIG = { OpenAlex_API_KEY: '', CiNii_API_KEY: '', OPF_API_KEY: '' };
+  window.loadConfig = async function() {};
+  window.extensionFetch = function(url, options) { return fetch(url, options); };
+  document.addEventListener('DOMContentLoaded', () => {
+    const area = document.getElementById('input-area');
+    if (area) area.insertAdjacentHTML('beforebegin',
+      '<div style="background:#fff3cd;border:1px solid #ffc107;padding:8px 14px;border-radius:6px;margin-bottom:10px;font-size:0.9em;color:#856404;">' +
+      '⚠ <code>shared.js</code> が見つかりません。APIキーなしで動作しています。' +
+      '<code>shared.js</code> を同じフォルダに配置してください。</div>');
+  });
+}
+if (typeof TSV_HEADERS_TEMPLATE === 'undefined') {
+  console.warn('tsv_headers_template.js が読み込めませんでした。TSV出力は使用できません。');
+  window.TSV_HEADERS_TEMPLATE = null;
+}
 // ================================================================
 // STEP 2: 定数・マスターデータ定義
 // ================================================================

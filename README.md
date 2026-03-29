@@ -76,9 +76,9 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-03-29 | ver. 1.9.0 | CONFIG共通化：APIキー設定・ユーティリティをshared.jsに外部化、TSVテンプレートをtsv_headers_template.jsに外部化（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
-| インポート用TSV生成ツール | 2026-03-29 | — | CONFIG共通化：APIキー設定をshared.jsに外部化、TSVテンプレートをtsv_headers_template.jsに外部化（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
-| 助成情報検索ツール | 2026-03-29 | — | CONFIG共通化：APIキー設定をshared.jsに外部化（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
+| Chrome拡張機能版 | 2026-03-29 | ver. 1.9.1 | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
+| インポート用TSV生成ツール | 2026-03-29 | — | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
+| 助成情報検索ツール | 2026-03-29 | — | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 
 ## 導入方法
 
@@ -253,6 +253,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-03-29 | shared.js未配置時のフォールバック：警告表示しAPIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 | 2026-03-29 | CONFIG共通化：APIキー設定（CONFIG）・loadConfig()・extensionFetch()をshared.jsに外部化し両HTML・Chrome拡張で共有、TSVテンプレートをtsv_headers_template.jsに外部化（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 | 2026-03-28 | AMED課題番号抽出・検索失敗時ヒント強化：AckテキストからのAMED番号抽出、AMED find/厚生労働科研DB検索リンク追加（[#130](https://github.com/tzhaya/jc-import-file-maker/issues/130), [#131](https://github.com/tzhaya/jc-import-file-maker/issues/131)） |
 | 2026-03-24 | function.mdを現在の実装に合わせて更新：OA情報統合・JPCOAR 2.0新規フィールド・Phase 2全完了・外部API追加・ドキュメントリンク追加 |
