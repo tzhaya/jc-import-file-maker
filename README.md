@@ -99,9 +99,9 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 HTMLファイルを直接ブラウザで開いて使用します。
 
-1. [make_jc_importer.html](make_jc_importer.html) ←右クリック→「名前をつけてリンク(先)を保存」で保存
-2. [shared.js](https://github.com/tzhaya/jc-import-file-maker/blob/master/shared.js)←右クリック→「名前をつけてリンク(先)を保存」で保存
-3. [tsv_headers_template.js](https://github.com/tzhaya/jc-import-file-maker/blob/master/tsv_headers_template.js)←右クリック→「名前をつけてリンク(先)を保存」で保存
+1. [make_jc_importer.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/make_jc_importer.html) ←右クリック→「名前をつけてリンク(先)を保存」で保存
+2. [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js)←右クリック→「名前をつけてリンク(先)を保存」で保存
+3. [tsv_headers_template.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/tsv_headers_template.js)←右クリック→「名前をつけてリンク(先)を保存」で保存
 4. 「メモ帳」などで shared.js を開き、APIキーを入力して保存します。 
 5. make_jc_importer.htmlをブラウザで開きます
 
@@ -126,7 +126,7 @@ HTMLファイルを直接ブラウザで開いて使用します。
 - 付属ツールとして、助成情報検索ツールを同梱しています。
 - 科研費課題番号やJGN課題番号から、助成機関識別子・助成機関名・プログラム情報・研究課題名を検索します。
 - Chrome拡張機能版ではサイドパネルのタブから「助成情報検索」に切り替えて利用できます。
-- 通常ブラウザ版では [funder_lookup.html](https://github.com/tzhaya/jc-import-file-maker/blob/master/funder_lookup.html) を右クリック→「名前をつけてリンク(先)を保存」で保存してご利用ください。
+- 通常ブラウザ版では [funder_lookup.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/funder_lookup.html) を右クリック→「名前をつけてリンク(先)を保存」で保存してご利用ください。
 
 #### 利用方法
 
