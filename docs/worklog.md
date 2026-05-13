@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-03-29（CONFIG共通化 #111）
+最終更新: 2026-05-13（Chromeウェブストア登録準備 / 拡張機能アイコン追加 + プライバシーポリシー策定 #112）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.9.2 | 2026-05-13 | Chromeウェブストア登録準備：拡張機能アイコン（16/48/128 PNG）追加、プライバシーポリシー策定、manifest.jsonにicons/action.default_iconを設定（#112） |
 | 1.9.1 | 2026-03-29 | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（#111） |
 | 1.9.0 | 2026-03-29 | CONFIG共通化：APIキー設定・ユーティリティをshared.jsに外部化、TSVテンプレートをtsv_headers_template.jsに外部化（#111） |
 | 1.8.3 | 2026-03-28 | AMED課題番号の抽出対応：Ackテキストからの課題番号抽出を強化（#130） |
@@ -43,6 +44,45 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-05-13: Chromeウェブストア登録準備 / 拡張機能アイコン追加 + プライバシーポリシー策定（#112）
+
+### 概要
+Chromeウェブストアへの登録に向け、必須要件である (1) 拡張機能アイコン（16/48/128 PNG）と (2) プライバシーポリシーを整備。`manifest.json` に `icons` と `action.default_icon` を設定。アイコン意匠は「雲＋表セル」のフラットアイコン（青系グラデーション背景＋白い雲＋3x3のグリッドセル）で、JAIRO **Cloud** 連携と TSV データ生成という機能の双方を表現。
+
+### 新規ファイル
+- `chrome-extension/icons/icon.svg` — マスター意匠（128x128 viewBox）
+- `chrome-extension/icons/icon16.png` — ツールバー縮小表示用
+- `chrome-extension/icons/icon48.png` — 拡張機能管理画面用
+- `chrome-extension/icons/icon128.png` — Chromeウェブストア掲載用
+- `docs/privacy-policy.md` — プライバシーポリシー（GitHub Pages で公開予定）
+
+### 変更ファイル
+- `chrome-extension/manifest.json` — `icons` フィールド追加、`action.default_icon` 追加、version 1.9.1 → 1.9.2
+- `README.md` — プライバシーポリシーへのリンク追加、最新の更新・変更履歴更新
+
+### アイコン意匠仕様
+- 背景: 角丸スクエア（半径 20）+ 縦方向グラデーション（#42A5F5 → #1565C0）
+- 雲: 白塗りシルエット（横長楕円ベース + 円3つで構成）
+- 表セル: 雲内部に3x3配置、#1976D2 塗り、各セル 14x3px、角丸 1.5px
+- 16x16 ではグリッドは溶けるが雲のシルエットは残るためツール識別性を維持
+
+### プライバシーポリシーの要点
+- 提供者側にサーバーは無く、すべての処理はブラウザ内で完結
+- 個人特定情報・閲覧履歴・コンテンツ・操作履歴・Cookie は一切取得しない
+- 利用者が入力した DOI・課題番号・ISSN 等はメタデータ取得目的で外部 API へ送信のみ
+- API キーは `chrome.storage.local` にのみ保存、外部送信なし（各 API への認証を除く）
+- 外部サービス: Crossref / OpenAlex / JaLC / CiNii・KAKEN / OPF / ROR / WEKO3 各機関
+- リモートコード・アクセス解析・トラッキング SDK は一切不使用
+- 必要権限（`storage` / `sidePanel` / `host_permissions`）の利用目的を明示
+
+### 残タスク（#112 続き）
+- [ ] ストア掲載用スクリーンショット（1280x800、最低1枚）
+- [ ] GitHub Pages の有効化（Settings → Pages → master /docs）と公開URL確認
+- [ ] `host_permissions` の最適化検討（必須3ドメイン以外を `optional_host_permissions` 化するか）
+- [ ] Chrome Developer アカウント登録（$5）
 
 ---
 

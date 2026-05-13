@@ -76,7 +76,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-03-29 | ver. 1.9.1 | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
+| Chrome拡張機能版 | 2026-05-13 | ver. 1.9.2 | Chromeウェブストア登録準備：拡張機能アイコン（16/48/128）追加、プライバシーポリシー策定、manifest.jsonにiconsとaction.default_iconを設定（[#112](https://github.com/tzhaya/jc-import-file-maker/issues/112)） |
 | インポート用TSV生成ツール | 2026-03-29 | — | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 | 助成情報検索ツール | 2026-03-29 | — | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 
@@ -248,6 +248,10 @@ CiNii APIキー未設定でも、以下の機能が動作します：
   -  [ROR](https://ror.org/about/terms/),
   -  [CiNii Research、KAKEN API](https://support.nii.ac.jp/ja/cinii/terms)
 
+## プライバシーポリシー
+
+- [プライバシーポリシー](docs/privacy-policy.md)をご参照ください。
+
 ## AIの利用
 
 このアプリケーションの作成は、生成AIによるコーディング支援を受けています。
@@ -256,6 +260,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-05-13 | Chromeウェブストア登録準備：拡張機能アイコン（16/48/128 PNG、雲＋表モチーフ）を追加、プライバシーポリシー（`docs/privacy-policy.md`）を策定、manifest.json に `icons` と `action.default_icon` を設定（[#112](https://github.com/tzhaya/jc-import-file-maker/issues/112)） |
 | 2026-03-29 | shared.js未配置時のフォールバック：警告表示しAPIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 | 2026-03-29 | CONFIG共通化：APIキー設定（CONFIG）・loadConfig()・extensionFetch()をshared.jsに外部化し両HTML・Chrome拡張で共有、TSVテンプレートをtsv_headers_template.jsに外部化（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 | 2026-03-28 | AMED課題番号抽出・検索失敗時ヒント強化：AckテキストからのAMED番号抽出、AMED find/厚生労働科研DB検索リンク追加（[#130](https://github.com/tzhaya/jc-import-file-maker/issues/130), [#131](https://github.com/tzhaya/jc-import-file-maker/issues/131)） |
