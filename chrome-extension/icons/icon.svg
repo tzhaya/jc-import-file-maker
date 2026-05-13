@@ -1,0 +1,35 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#42A5F5"/>
+      <stop offset="1" stop-color="#1565C0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="128" height="128" rx="20" fill="url(#bg)"/>
+
+  <!-- Cloud silhouette (white) -->
+  <g fill="#ffffff">
+    <rect x="22" y="68" width="84" height="24" rx="12"/>
+    <circle cx="42" cy="60" r="18"/>
+    <circle cx="68" cy="46" r="24"/>
+    <circle cx="92" cy="58" r="20"/>
+  </g>
+
+  <!-- Tabular data cells inside cloud (suggesting TSV) -->
+  <g fill="#1976D2">
+    <!-- Row 1 -->
+    <rect x="38" y="60" width="14" height="3" rx="1.5"/>
+    <rect x="56" y="60" width="14" height="3" rx="1.5"/>
+    <rect x="74" y="60" width="14" height="3" rx="1.5"/>
+    <!-- Row 2 -->
+    <rect x="38" y="70" width="14" height="3" rx="1.5"/>
+    <rect x="56" y="70" width="14" height="3" rx="1.5"/>
+    <rect x="74" y="70" width="14" height="3" rx="1.5"/>
+    <!-- Row 3 -->
+    <rect x="38" y="80" width="14" height="3" rx="1.5"/>
+    <rect x="56" y="80" width="14" height="3" rx="1.5"/>
+    <rect x="74" y="80" width="14" height="3" rx="1.5"/>
+  </g>
+</svg>
