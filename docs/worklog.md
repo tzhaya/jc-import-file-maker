@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-05-13（Chromeウェブストア登録準備 / 拡張機能アイコン追加 + プライバシーポリシー策定 #112）
+最終更新: 2026-05-14（Chrome拡張 ver. 1.9.3 / ストア公開名と一致するようツール名統一・manifest version更新）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.9.3 | 2026-05-14 | ストア公開名と一致するようツール名・タイトルを「JAIRO Cloud インポート支援ツール」に統一（panel.html / options.html / make_jc_importer.html）、ストア再配布用に manifest version を更新 |
 | 1.9.2 | 2026-05-13 | Chromeウェブストア登録準備：拡張機能アイコン（16/48/128 PNG）追加、プライバシーポリシー策定、manifest.jsonにicons/action.default_iconを設定（#112） |
 | 1.9.1 | 2026-03-29 | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（#111） |
 | 1.9.0 | 2026-03-29 | CONFIG共通化：APIキー設定・ユーティリティをshared.jsに外部化、TSVテンプレートをtsv_headers_template.jsに外部化（#111） |
@@ -44,6 +45,31 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-05-14: Chrome拡張 ver. 1.9.3 — ストア公開名と一致するようツール名統一 + manifest version 更新
+
+### 概要
+Chromeウェブストア公開後の保守として、ストア公開名（「JAIRO Cloud インポート支援ツール」）と拡張機能内 UI のタイトルを揃え、その更新版をストアに再配布できるよう `manifest.json` の `version` を `1.9.2` → `1.9.3` に更新。
+
+### 背景
+- ストア公開名: 「JAIRO Cloud インポート支援ツール」
+- 拡張機能内タイトル: 旧称が一部残存していたため、表記の不一致をなくすため統一（commit `688be70` で `panel.html` / `options.html` / `make_jc_importer.html` を更新）
+- 上記時点では manifest version が据え置きだったため、本変更で 1.9.3 にバンプし、ウェブストア再アップロード可能な状態にした
+
+### 変更ファイル
+- `chrome-extension/manifest.json` — `version` を `1.9.2` → `1.9.3`
+- `README.md` — 最新の更新テーブル・変更履歴テーブルに 2026-05-14 を追記
+- `docs/worklog.md` — バージョン履歴テーブルに 1.9.3 を追記、本セクションを追加
+
+### 配布パッケージ
+- `C:\tmp\jc-import-file-maker-v1.9.3.zip`（16 ファイル、約 106 KB）
+- 同梱: manifest.json, shared.js, tsv_headers_template.js, make_jc_importer.js, funder_lookup.js, panel.html, funder_panel.html, opensearch_panel.html, opensearch_panel.js, options.html, options.js, background.js, icons/{icon.svg, icon16.png, icon48.png, icon128.png}
+- 除外: `icons/generate_icons.py`（開発用スクリプト）
+
+### 機能的変更
+- なし（ストア再配布のための version bump のみ。挙動は 1.9.2 と同等）
 
 ---
 

@@ -80,7 +80,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-05-13 | ver. 1.9.2 | Chromeウェブストア登録準備：拡張機能アイコン（16/48/128）追加、プライバシーポリシー策定、manifest.jsonにiconsとaction.default_iconを設定（[#112](https://github.com/tzhaya/jc-import-file-maker/issues/112)） |
+| Chrome拡張機能版 | 2026-05-14 | ver. 1.9.3 | Chromeウェブストア公開名と一致するようツール名・タイトルを「JAIRO Cloud インポート支援ツール」に統一、ストア再配布用にmanifest版数を更新 |
 | インポート用TSV生成ツール | 2026-03-29 | — | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 | 助成情報検索ツール | 2026-03-29 | — | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 
@@ -276,6 +276,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-05-14 | Chrome拡張機能 ver. 1.9.3：Chromeウェブストア公開名と一致するようツール名・タイトルを「JAIRO Cloud インポート支援ツール」に統一（`panel.html` / `options.html` / `make_jc_importer.html`）、ストア再配布用に manifest version を `1.9.2` → `1.9.3` に更新 |
 | 2026-05-13 | Chromeウェブストア登録準備：拡張機能アイコン（16/48/128 PNG、雲＋表モチーフ）を追加、プライバシーポリシー（`docs/privacy-policy.md`）を策定、manifest.json に `icons` と `action.default_icon` を設定（[#112](https://github.com/tzhaya/jc-import-file-maker/issues/112)） |
 | 2026-03-29 | shared.js未配置時のフォールバック：警告表示しAPIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 | 2026-03-29 | CONFIG共通化：APIキー設定（CONFIG）・loadConfig()・extensionFetch()をshared.jsに外部化し両HTML・Chrome拡張で共有、TSVテンプレートをtsv_headers_template.jsに外部化（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
