@@ -1,4 +1,8 @@
-# JAIRO Cloud インポート用TSV生成ツール(β)
+# JAIRO Cloud インポート支援ツール
+
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/jknijceijdmdglahkopllhlgnikapmfn?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/jairo-cloud-%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88%E6%94%AF%E6%8F%B4%E3%83%84%E3%83%BC%E3%83%AB/jknijceijdmdglahkopllhlgnikapmfn)
+[![Users](https://img.shields.io/chrome-web-store/users/jknijceijdmdglahkopllhlgnikapmfn?label=users)](https://chromewebstore.google.com/detail/jairo-cloud-%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88%E6%94%AF%E6%8F%B4%E3%83%84%E3%83%BC%E3%83%AB/jknijceijdmdglahkopllhlgnikapmfn)
+[![Rating](https://img.shields.io/chrome-web-store/rating/jknijceijdmdglahkopllhlgnikapmfn?label=rating)](https://chromewebstore.google.com/detail/jairo-cloud-%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88%E6%94%AF%E6%8F%B4%E3%83%84%E3%83%BC%E3%83%AB/jknijceijdmdglahkopllhlgnikapmfn)
 
 ## 概要
 
@@ -84,16 +88,28 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 ### Chrome拡張機能版（推奨）
 
+**[👉 Chromeウェブストアからインストール](https://chromewebstore.google.com/detail/jairo-cloud-%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88%E6%94%AF%E6%8F%B4%E3%83%84%E3%83%BC%E3%83%AB/jknijceijdmdglahkopllhlgnikapmfn)**
+
+1. 上記リンクからChromeウェブストアを開きます
+2. 「**Chromeに追加**」をクリックしてインストールします
+3. ツールバーの拡張機能アイコンをクリックすると、サイドパネルで起動します
+4. 拡張機能の設定ページ（`chrome://extensions` → 詳細 → 拡張機能のオプション）で必要に応じてAPIキーを設定してください
+
+**動作要件**: Chrome 114以降（サイドパネルAPI対応）
+
+<details>
+<summary>開発版（リポジトリから直接読み込み）</summary>
+
+最新の開発版を試したい場合や、ローカルで改造したい場合は以下の手順で読み込めます。
+
 1. このリポジトリをダウンロードします
    - `git clone https://github.com/tzhaya/jc-import-file-maker.git`、または
    - [ZIPダウンロード](https://github.com/tzhaya/jc-import-file-maker/archive/refs/heads/master.zip) して展開
 2. Chromeで `chrome://extensions` を開きます
 3. 右上の「**デベロッパーモード**」を有効にします
 4. 「**パッケージ化されていない拡張機能を読み込む**」をクリックし、`chrome-extension` フォルダを選択します
-5. ツールバーの拡張機能アイコンをクリックすると、サイドパネルで起動します
-6. 拡張機能の設定ページ（`chrome://extensions` → 詳細 → 拡張機能のオプション）でAPIキーを設定してください
 
-**動作要件**: Chrome 114以降（サイドパネルAPI対応）
+</details>
 
 ### 通常ブラウザ版
 
