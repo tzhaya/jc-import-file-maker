@@ -276,6 +276,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-05-14 | Chrome拡張機能の配布用zipパッケージ作成をGitHub Actionsで自動化：`v*` タグpush時に `chrome-extension/` を `git archive` でzip化し、tag↔manifest version整合チェックの上で GitHub Releases へ自動添付（`.github/workflows/release.yml`） |
 | 2026-05-14 | Chrome拡張機能 ver. 1.9.3：Chromeウェブストア公開名と一致するようツール名・タイトルを「JAIRO Cloud インポート支援ツール」に統一（`panel.html` / `options.html` / `make_jc_importer.html`）、ストア再配布用に manifest version を `1.9.2` → `1.9.3` に更新 |
 | 2026-05-13 | Chromeウェブストア登録準備：拡張機能アイコン（16/48/128 PNG、雲＋表モチーフ）を追加、プライバシーポリシー（`docs/privacy-policy.md`）を策定、manifest.json に `icons` と `action.default_icon` を設定（[#112](https://github.com/tzhaya/jc-import-file-maker/issues/112)） |
 | 2026-03-29 | shared.js未配置時のフォールバック：警告表示しAPIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
