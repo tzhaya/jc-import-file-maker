@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-05-14（Chrome拡張 ver. 1.9.3 / ストア公開名と一致するようツール名統一・manifest version更新）
+最終更新: 2026-05-15（Chrome拡張 ver. 1.9.4 / 表示情報整理：5月の実作業を更新概要テーブルに反映、LOCAL_VERSION 同期）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.9.4 | 2026-05-15 | 表示情報整理：`panel.html` / `make_jc_importer.html` の最終更新日と更新概要テーブル（直近5件）を5月の実作業を反映する形に更新、LOCAL_VERSION（`make_jc_importer.html` / `chrome-extension/make_jc_importer.js`）を `2026-05-15` に同期 |
 | 1.9.3 | 2026-05-14 | ストア公開名と一致するようツール名・タイトルを「JAIRO Cloud インポート支援ツール」に統一（panel.html / options.html / make_jc_importer.html）、ストア再配布用に manifest version を更新 |
 | 1.9.2 | 2026-05-13 | Chromeウェブストア登録準備：拡張機能アイコン（16/48/128 PNG）追加、プライバシーポリシー策定、manifest.jsonにicons/action.default_iconを設定（#112） |
 | 1.9.1 | 2026-03-29 | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（#111） |
@@ -45,6 +46,32 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-05-15: Chrome拡張 ver. 1.9.4 — 表示情報整理（最終更新日・更新概要テーブルの5月反映）
+
+### 概要
+`chrome-extension/panel.html` と `make_jc_importer.html` の「最終更新」日付および更新概要テーブルが 3月時点のまま（直近の 5月の実作業が未反映）となっていたため、本日（2026-05-15 JST）に整理。テーブルは「直近5件」ルールに従い、古い 2026-03-22 の3件（OA情報統合 / 複数DOI一括TSV / カスタムテンプレート完全パース）を 2026-05-15 / 05-14 / 05-13 の3件に差し替え。あわせて GitHub 更新チェックが参照する `LOCAL_VERSION` を `2026-05-15` に揃え、manifest version を `1.9.3` → `1.9.4` (patch) に更新。
+
+### 背景
+- 1.9.2（ストア登録準備、#112）と 1.9.3（ツール名統一、#138/#139）の作業は実施済みだが、各 HTML 内の「最終更新」日付と更新概要テーブルには反映されていなかった
+- 機能変更なし。表示情報整理のみのため patch バンプ（CLAUDE.md のバージョニング規約「軽微な改善」に該当）
+
+### 変更ファイル
+- `chrome-extension/panel.html` — 最終更新日 `2026-03-29` → `2026-05-15`、更新概要テーブルを直近5件（2026-05-15 / 05-14 / 05-13 / 03-29 / 03-23）に差し替え
+- `make_jc_importer.html` — 同上の差し替え、`LOCAL_VERSION` を `2026-03-29` → `2026-05-15`
+- `chrome-extension/make_jc_importer.js` — `LOCAL_VERSION` を `2026-03-29` → `2026-05-15`（make_jc_importer.html と同期）
+- `chrome-extension/manifest.json` — `version` を `1.9.3` → `1.9.4`
+- `make_jc_importer_test.html`（git管理外）— 上記 HTML 変更を反映（CONFIG セクションのAPIキーは据え置き）
+- `README.md` — 「最新の更新」テーブルおよび変更履歴テーブルに 2026-05-15 を追記
+- `docs/worklog.md` — バージョン履歴テーブルに 1.9.4 を追記、本セクションを追加
+
+### 機能的変更
+- なし（表示情報の整理および GitHub 更新チェック用 LOCAL_VERSION の同期のみ）
+
+### 配布パッケージ（予定）
+- `C:\tmp\jc-import-file-maker-v1.9.4.zip`（ストア再配布が必要な場合）
 
 ---
 

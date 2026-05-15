@@ -5969,7 +5969,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-29';
+  const LOCAL_VERSION = '2026-05-15';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
