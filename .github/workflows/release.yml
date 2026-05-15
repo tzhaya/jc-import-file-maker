@@ -1,0 +1,40 @@
+name: Release Chrome Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify manifest version matches tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          MANIFEST_VERSION=$(jq -r .version chrome-extension/manifest.json)
+          echo "Tag version: $TAG_VERSION"
+          echo "Manifest version: $MANIFEST_VERSION"
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match chrome-extension/manifest.json version ($MANIFEST_VERSION)."
+            exit 1
+          fi
+
+      - name: Build Chrome extension zip
+        run: |
+          ZIP_NAME="jc-import-file-maker-${GITHUB_REF_NAME}.zip"
+          git archive --format=zip -o "$ZIP_NAME" HEAD:chrome-extension
+          echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
+          unzip -l "$ZIP_NAME"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP_NAME }}
+          generate_release_notes: true
