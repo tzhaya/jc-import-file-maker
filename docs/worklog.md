@@ -72,6 +72,32 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 ### 配布パッケージ（予定）
 - `C:\tmp\jc-import-file-maker-v1.9.4.zip`（ストア再配布が必要な場合）
+## 2026-05-14: Chrome拡張配布zipの作成をGitHub Actionsで自動化
+
+### 概要
+これまで手動で `C:\tmp\jc-import-file-maker-v*.zip` を作成して Chrome ウェブストアにアップロードしていた配布パッケージの生成を、GitHub Actions で自動化。`v*` タグを push すると、GitHub Releases に整合性チェック済みの配布zipが自動で添付される。
+
+### 実装内容
+- `.github/workflows/release.yml` を新規追加
+  - トリガー: `push` で `v*` タグ（例: `v1.9.4`）
+  - 整合性チェック: タグから `v` を除いた値が `chrome-extension/manifest.json` の `version` と一致することを検証（不一致時はジョブを失敗）
+  - zip 生成: `git archive --format=zip -o jc-import-file-maker-<TAG>.zip HEAD:chrome-extension`
+    - `chrome-extension/` 配下を zip ルートに展開（Chrome ウェブストアが期待する構造）
+    - git 追跡ファイルのみ対象 → `.gitignore` に登録済みの `icons/generate_icons.py` 等は自動的に除外される
+  - Release 作成: `softprops/action-gh-release@v2` でドラフトではなく公開リリースとして作成、`generate_release_notes: true` で前回タグからの PR/コミットを自動集約
+
+### 運用フロー（次回以降の配布手順）
+1. `chrome-extension/manifest.json` の `version` を更新（例: `1.9.3` → `1.9.4`）
+2. master にマージ
+3. `git tag v1.9.4 && git push origin v1.9.4`
+4. Actions が `jc-import-file-maker-v1.9.4.zip` を生成し、Release v1.9.4 に添付
+5. ストア再配布時は Release の Assets から zip をダウンロードして Chrome ウェブストア Developer Dashboard にアップロード
+
+### 設計判断
+- **`git archive` を採用**（vs ローカル `zip` コマンドで `chrome-extension/*` を圧縮）:
+  - 利点: 追跡外ファイルが混入しない、`.gitignore` ルールを別途維持しなくてよい、リプロダクシブル（同一コミットなら同一zip）
+- **タグ↔manifest整合チェックを必須化**: バージョン不一致のzipを誤って公開する事故を防止
+- **CWS API 自動アップロードは見送り**: OAuth credentials の Secrets 管理コストとレビュー待ち挙動を考慮し、当面は Releases までで停止。必要になれば `mnao305/chrome-extension-upload` 等で追加可能
 
 ---
 
