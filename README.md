@@ -80,8 +80,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-05-15 | ver. 1.9.4 | 最終更新日・更新概要テーブルの表示情報を整理し、5月の実作業（ストア登録準備・名前統一）を反映 |
-| インポート用TSV生成ツール | 2026-05-15 | — | 最終更新日・更新概要テーブルの表示情報を整理し、5月の実作業を反映、LOCAL_VERSION 同期 |
+| Chrome拡張機能版 | 2026-06-06 | ver. 1.9.5 | IndexID・公開日がTSVに出力されないバグ修正（[#142](https://github.com/tzhaya/jc-import-file-maker/issues/142)）、管理フィールドのIndexID/POS_INDEX候補値ヒント誤りを修正（[#143](https://github.com/tzhaya/jc-import-file-maker/issues/143)） |
+| インポート用TSV生成ツール | 2026-06-06 | — | IndexID・公開日がTSVに出力されないバグ修正（[#142](https://github.com/tzhaya/jc-import-file-maker/issues/142)）、管理フィールドのIndexID/POS_INDEX候補値ヒント誤りを修正（[#143](https://github.com/tzhaya/jc-import-file-maker/issues/143)） |
 | 助成情報検索ツール | 2026-03-29 | — | shared.js未配置時のフォールバック：警告表示+APIキーなしで動作継続（[#111](https://github.com/tzhaya/jc-import-file-maker/issues/111)） |
 
 ## 導入方法
@@ -276,6 +276,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-06 | IndexID・公開日がTSVに出力されないバグを修正：`groupTsvColumns()` 内 `.metadata.path[0]` / `.metadata.pubdate` が `__other__` に分類されTSVスキップされていた問題を `__system__` に変更して解消（[#142](https://github.com/tzhaya/jc-import-file-maker/issues/142)）。管理フィールドのIndexID/POS_INDEX候補値ヒント誤り（入れ違い）を修正（[#143](https://github.com/tzhaya/jc-import-file-maker/issues/143)）。manifest version `1.9.4` → `1.9.5` |
 | 2026-05-15 | Chrome拡張機能 ver. 1.9.4：`panel.html` / `make_jc_importer.html` の最終更新日と更新概要テーブルを整理し、5月の実作業（ストア登録準備・名前統一）を直近5件として反映。LOCAL_VERSION（`make_jc_importer.html` / `chrome-extension/make_jc_importer.js`）を `2026-05-15` に同期、manifest version を `1.9.3` → `1.9.4` に更新 |
 | 2026-05-14 | Chrome拡張機能の配布用zipパッケージ作成をGitHub Actionsで自動化：`v*` タグpush時に `chrome-extension/` を `git archive` でzip化し、tag↔manifest version整合チェックの上で GitHub Releases へ自動添付（`.github/workflows/release.yml`） |
 | 2026-05-14 | Chrome拡張機能 ver. 1.9.3：Chromeウェブストア公開名と一致するようツール名・タイトルを「JAIRO Cloud インポート支援ツール」に統一（`panel.html` / `options.html` / `make_jc_importer.html`）、ストア再配布用に manifest version を `1.9.2` → `1.9.3` に更新 |

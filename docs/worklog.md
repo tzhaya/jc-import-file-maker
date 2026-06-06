@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-05-15（Chrome拡張 ver. 1.9.4 / 表示情報整理：5月の実作業を更新概要テーブルに反映、LOCAL_VERSION 同期）
+最終更新: 2026-06-06（Chrome拡張 ver. 1.9.5 / #142: IndexID・公開日TSV出力バグ修正、#143: IndexID/POS_INDEX候補値ヒント誤り修正）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.9.5 | 2026-06-06 | #142: `groupTsvColumns()` 内 `.metadata.path[0]`/`.metadata.pubdate` が `__other__` に分類されTSVスキップされていたバグを修正（`__system__` に変更）、#143: 管理フィールドのIndexID/POS_INDEX候補値ヒントの入れ違いを修正 |
 | 1.9.4 | 2026-05-15 | 表示情報整理：`panel.html` / `make_jc_importer.html` の最終更新日と更新概要テーブル（直近5件）を5月の実作業を反映する形に更新、LOCAL_VERSION（`make_jc_importer.html` / `chrome-extension/make_jc_importer.js`）を `2026-05-15` に同期 |
 | 1.9.3 | 2026-05-14 | ストア公開名と一致するようツール名・タイトルを「JAIRO Cloud インポート支援ツール」に統一（panel.html / options.html / make_jc_importer.html）、ストア再配布用に manifest version を更新 |
 | 1.9.2 | 2026-05-13 | Chromeウェブストア登録準備：拡張機能アイコン（16/48/128 PNG）追加、プライバシーポリシー策定、manifest.jsonにicons/action.default_iconを設定（#112） |
@@ -46,6 +47,25 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-06-06: Chrome拡張 ver. 1.9.5 — IndexID/公開日TSV出力バグ修正、管理フィールドヒント誤り修正 (#142, #143)
+
+### 概要
+2つのバグを修正。
+
+**#142**: `groupTsvColumns()` 内で `.metadata.path[0]`（IndexID）と `.metadata.pubdate`（公開日）が `__other__` に分類されてしまい、対応する `metadata['__other__']` が `undefined` となりTSVがスキップされていた。`.metadata.item_` にマッチしない `.metadata.*` 系フィールドも `__system__` として扱うよう1行修正。
+
+**#143**: 管理フィールドの候補値ヒントが入れ違い。`.IndexID[0]` に表示される候補値が `.metadata.path[0]`（プロパティパス名）、`.POS_INDEX[0]` に数値IDが表示されていたが、正しくは IndexID には数値ID（例: `1697430475875`）、POS_INDEX にはインデックスラベル（例: `【テスト】学術雑誌論文`）。
+
+### 変更ファイル
+- `make_jc_importer.html` — `groupTsvColumns()`: `'__other__'` → `'__system__'`、`sysRows` IndexID/POS_INDEX hint 修正、最終更新日・更新概要テーブル更新、`LOCAL_VERSION` `2026-05-15` → `2026-06-06`
+- `chrome-extension/make_jc_importer.js` — 同上3件を同期
+- `chrome-extension/panel.html` — 最終更新日・更新概要テーブル更新
+- `chrome-extension/manifest.json` — `version` `1.9.4` → `1.9.5`
+- `README.md` — 「最新の更新」テーブルおよび変更履歴テーブルに 2026-06-06 を追記
+- `docs/worklog.md` — バージョン履歴テーブルに 1.9.5 を追記、本セクションを追加
 
 ---
 
