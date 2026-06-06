@@ -684,8 +684,8 @@ function renderSystemFields(systemData) {
   const sysRows = [
     { label: '.id',                  hint: '新規登録時は空欄', key: 'sys_id',      type: 'text',   default: '' },
     { label: '.uri',                 hint: '新規登録時は空欄', key: 'sys_uri',     type: 'text',   default: '' },
-    { label: '.IndexID[0]',          hint: '.metadata.path[0]', key: 'sys_path',  type: 'text',   default: '' },
-    { label: '.POS_INDEX[0]',        hint: '1718256617194',    key: 'sys_pos',     type: 'text',   default: '' },
+    { label: '.IndexID[0]',          hint: '1697430475875',     key: 'sys_path',  type: 'text',   default: '' },
+    { label: '.POS_INDEX[0]',        hint: '学術雑誌論文',          key: 'sys_pos', type: 'text',   default: '' },
     { label: '.PUBLISH_STATUS',      hint: 'private / public', key: 'sys_status',  type: 'select', options: ['private','public'], default: 'private' },
     { label: '.FEEDBACK_MAIL[0]',    hint: '',                  key: 'sys_mail',   type: 'text',   default: '' },
     { label: '.RESEAECHMAP_LINKAGE', hint: '',                  key: 'sys_researchmap', type: 'text', default: '' },
@@ -5364,7 +5364,7 @@ function groupTsvColumns(prefix, template) {
       fieldKey = '.metadata.item_30002_file35';
     } else if (lookupKey.startsWith('.metadata.')) {
       const m = lookupKey.match(/^(\.metadata\.item_[^.\[]+)/);
-      fieldKey = m ? m[1] : '__other__';
+      fieldKey = m ? m[1] : '__system__';
     } else {
       fieldKey = '__system__';
     }
@@ -5969,7 +5969,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-05-15';
+  const LOCAL_VERSION = '2026-06-06';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
