@@ -2,8 +2,8 @@
 
 WEKO3 ソースコード（[RCOSDP/weko](https://github.com/RCOSDP/weko)）から調査したTSVインポート処理の仕様をまとめる。
 
-- 最終確認日: 2026-03-20
-- 確認対象: `main` ブランチ
+- 最終確認日: 2026-06-10（前回調査: 2026-03-20。`modules/weko-search-ui` の最終コミットは2025-12-15であり、前回調査以降ソースコードに変更なし）
+- 確認対象: `main` ブランチ（デフォルトブランチ）
 
 主要ソースファイル:
 - [`modules/weko-search-ui/weko_search_ui/utils.py`](https://github.com/RCOSDP/weko/blob/main/modules/weko-search-ui/weko_search_ui/utils.py) — インポート処理のメインロジック
@@ -26,6 +26,36 @@ import.zip
 - `data/` ディレクトリ内に複数のTSV/CSVファイルを含めることが可能（すべて読み込まれる）
 - ZIPファイル名のエンコーディング: `chardet` で検出し、`cp437` の場合は `cp932` にデコード（日本語ファイル名対応）
 - 一時ディレクトリ: `/tmp/weko_import_YYYYMMDDHHMMSSfff/data/` に展開
+- アーカイブ形式は **ZIPのみ対応**（`zipfile.ZipFile` で展開）。エラーメッセージには "zip, tar, gztar, bztar, xztar" と表示されるが、実装上ZIP以外は処理できない（レガシー文言）
+
+### TSV/CSVファイル名の規則（ファイル名に指定はない）
+
+`check_tsv_import_items()` のファイル検出ロジック:
+
+```python
+list_csv = list(filter(lambda x: x.endswith(".csv"), os.listdir(data_path)))
+list_tsv = list(filter(lambda x: x.endswith(".tsv"), os.listdir(data_path)))
+if not list_csv and not list_tsv:
+    raise FileNotFoundError()
+```
+
+| 項目 | 仕様 |
+|------|------|
+| ベース名（拡張子より前の部分） | **完全に任意。** パターン・文字種・長さの検証は一切なし。`items.tsv` はWEKO3マニュアル等で使われる慣例にすぎない |
+| 拡張子 | `.tsv` または `.csv`。`str.endswith()` による判定のため **小文字必須**（`.TSV` / `.Csv` 等は検出されず無視される） |
+| 区切り文字の決定 | 拡張子のみで決定: `.csv` → カンマ（`dialect="excel"`）、`.tsv` → タブ。ファイル内容からの自動判別はしない |
+| 複数ファイル時の処理順 | CSVファイル群 → TSVファイル群の順。各群内は `os.listdir()` の返却順（OS依存、名前順保証なし） |
+| 配置場所 | ZIP内 `data/` ディレクトリ **直下** のみ検索（サブディレクトリは検索されない） |
+| ファイル名の用途 | エラーメッセージ表示のみ（`read_stats_file()` に渡されるが処理ロジックには不使用） |
+| 日本語ファイル名 | ZIPエントリ名が `chardet` で `cp437` と検出された場合に `cp932` でデコードされるため使用可能 |
+| アップロードするZIP自体の名前 | 検証なし。一時ディレクトリに元の名前のまま保存されるのみ（`admin.py`: `file_path = temp_path + "/" + file.filename`） |
+
+> **本ツールへの含意:** `make_jc_importer.html` が出力するファイル名（単一DOI: `10.1016_j.advnut.2025.100480.tsv`、複数: `import_YYYYMMDD_HHMMSS.tsv`）はいずれもWEKO3側の制約に抵触しない。必須条件は「ZIP内 `data/` 直下に置くこと」と「拡張子が小文字 `.tsv` であること」のみ。
+
+参考: WEKO3自身のエクスポート機能が生成するファイル名の慣例（仕様上の要求ではない）:
+- テンプレートエクスポート: `{アイテムタイプ名}({ID}).tsv`（例: `デフォルトアイテムタイプ（フル）(30002).tsv`）
+- インポートチェック結果: `check_{日時}.tsv`
+- 全アイテムエクスポート: `export-all.zip`
 
 ## 2. TSVファイル構造 — 5行のヘッダー + データ行
 
