@@ -62,6 +62,12 @@
     background: #aaa;
     cursor: not-allowed;
   }
+  .btn-inline {
+    margin-top: 0;
+    padding: 8px 16px;
+    font-size: 0.9em;
+    white-space: nowrap;
+  }
   .hint {
     color: #777;
     font-size: 0.85em;
@@ -231,10 +237,19 @@
 </nav>
 <h1>助成情報検索ツール</h1>
 <p style="font-size:0.82em; color:#555; margin:4px 0 12px;">
-  最終更新: 2026-03-29 &nbsp;|&nbsp;
+  最終更新: 2026-06-10 &nbsp;|&nbsp;
   <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#555;">github.com/tzhaya/jc-import-file-maker</a>
   <span id="update-check"></span>
 </p>
+
+<div class="input-section" id="doi-section" style="margin-bottom:8px;">
+  <label for="doi-input-funder">DOI（任意）—DOIから課題番号を自動取得</label>
+  <div style="display:flex; gap:4px; margin-top:4px;">
+    <input type="text" id="doi-input-funder" placeholder="例: 10.1016/j.advnut.2025.100480" style="flex:1; min-width:0; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:0.95em;">
+    <button class="btn btn-inline" id="get-doi-from-page-funder" title="現在のページのmetaタグからDOIを自動取得">ページから取得</button>
+    <button class="btn btn-inline" id="fetch-awards-by-doi" title="DOIからCrossref/OpenAlexで課題番号を取得してテキストエリアに追加">課題番号を取得</button>
+  </div>
+</div>
 
 <div class="input-section">
   <label for="award-input">課題番号またはAcknowledgementsテキストを入力してください。</label>

@@ -59,6 +59,12 @@
     background: #aaa;
     cursor: not-allowed;
   }
+  .btn-inline {
+    margin-top: 0;
+    padding: 8px 16px;
+    font-size: 0.9em;
+    white-space: nowrap;
+  }
   .hint {
     color: #777;
     font-size: 0.85em;
@@ -223,10 +229,18 @@
 <body>
 <h1>助成情報検索ツール</h1>
 <p style="font-size:0.82em; color:#555; margin:4px 0 12px;">
-  最終更新: 2026-03-29 &nbsp;|&nbsp;
+  最終更新: 2026-06-10 &nbsp;|&nbsp;
   <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#555;">github.com/tzhaya/jc-import-file-maker</a>
   <span id="update-check"></span>
 </p>
+
+<div class="input-section" style="margin-bottom:8px;">
+  <label for="doi-input-funder">DOI（任意）—DOIから課題番号を自動取得</label>
+  <div style="display:flex; gap:4px; margin-top:4px;">
+    <input type="text" id="doi-input-funder" placeholder="例: 10.1016/j.advnut.2025.100480" style="flex:1; min-width:0; padding:8px; font-size:0.95em; border:1px solid #ccc; border-radius:4px;">
+    <button class="btn btn-inline" id="fetch-awards-by-doi" onclick="fetchAwardsByDoiFromInput()" title="DOIからCrossref/OpenAlexで課題番号を取得してテキストエリアに追加">課題番号を取得</button>
+  </div>
+</div>
 
 <div class="input-section">
   <label for="award-input">課題番号またはAcknowledgementsテキストを入力してください。</label>
@@ -293,6 +307,92 @@ if (typeof CONFIG === 'undefined') {
       '<code>shared.js</code> を同じフォルダに配置してください。</div>');
   });
 }
+// ===== DOI 正規化 =====
+function normalizeDoi(raw) {
+  return raw.trim()
+    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
+    .replace(/^doi:/i, '')
+    .trim();
+}
+
+// ===== DOI 形式の検証 =====
+function isValidDoi(doi) {
+  return typeof doi === 'string' && doi.length <= 256 && /^10\.\d{4,9}\/\S+$/.test(doi);
+}
+
+// ===== DOIからCrossref/OpenAlex経由で課題番号を取得 =====
+// 戻り値: { awards: string[], errors: string[] }
+async function fetchAwardsByDoi(doi) {
+  const awards = new Set();
+  const errors = [];
+  try {
+    const r = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+    if (r.ok) {
+      const data = await r.json();
+      (data.message?.funder ?? []).forEach(f =>
+        (f.award ?? []).forEach(a => { if (a.trim()) awards.add(a.trim()); })
+      );
+    } else if (r.status !== 404) {
+      errors.push(`Crossref APIエラー (${r.status})`);
+    }
+  } catch (e) {
+    console.warn('Crossref fetch failed:', e);
+    errors.push('Crossref への接続に失敗しました');
+  }
+  try {
+    let url = `https://api.openalex.org/works/doi:${encodeURIComponent(doi)}`;
+    if (CONFIG.OpenAlex_API_KEY && CONFIG.OpenAlex_API_KEY !== 'YOUR_OpenAlex_API_KEY') {
+      url += `?api_key=${encodeURIComponent(CONFIG.OpenAlex_API_KEY)}`;
+    }
+    const r2 = await fetch(url);
+    if (r2.ok) {
+      const data2 = await r2.json();
+      (data2.grants ?? []).forEach(g => { if (g.award_id?.trim()) awards.add(g.award_id.trim()); });
+    } else if (r2.status === 409) {
+      errors.push('OpenAlex のAPIキーなし利用回数制限を超えました（設定画面でAPIキーを設定してください）');
+    } else if (r2.status !== 404) {
+      errors.push(`OpenAlex APIエラー (${r2.status})`);
+    }
+  } catch (e) {
+    console.warn('OpenAlex fetch failed:', e);
+    errors.push('OpenAlex への接続に失敗しました');
+  }
+  return { awards: [...awards], errors };
+}
+
+async function fetchAwardsByDoiFromInput() {
+  const btn = document.getElementById('fetch-awards-by-doi');
+  const raw = document.getElementById('doi-input-funder').value.trim();
+  if (!raw) { alert('DOIを入力してください。'); return; }
+  const doi = normalizeDoi(raw);
+  if (!isValidDoi(doi)) { alert('DOIの形式が正しくありません（例: 10.1016/j.xxxx）。'); return; }
+  const statusEl = document.getElementById('status');
+  const ta = document.getElementById('award-input');
+  if (btn) btn.disabled = true;
+  statusEl.textContent = 'DOIから課題番号を検索中...';
+  try {
+    const { awards, errors } = await fetchAwardsByDoi(doi);
+    statusEl.textContent = '';
+    if (awards.length === 0) {
+      alert(errors.length
+        ? '課題番号を取得できませんでした:\n' + errors.join('\n')
+        : 'このDOIから課題番号を取得できませんでした。');
+      return;
+    }
+    // 既存の課題番号と重複しないものだけ追記
+    const existing = new Set(ta.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean));
+    const toAdd = awards.filter(a => !existing.has(a));
+    if (toAdd.length === 0) {
+      alert('取得した課題番号はすべて入力済みです。');
+    } else {
+      ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + toAdd.join('\n');
+    }
+    if (errors.length) console.warn('一部のAPIでエラーが発生しました:', errors);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 // ===== JSPS 助成機関定数 =====
 const JSPS_FUNDER_DOI = '10.13039/501100001691';
 const JSPS_FUNDER_NAMES = [
@@ -900,7 +1000,7 @@ async function copyTsvToClipboard(btn) {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-29';
+  const LOCAL_VERSION = '2026-06-10';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;

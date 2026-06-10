@@ -500,7 +500,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-06-06 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-06-10 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -512,6 +512,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-10</td>
+        <td style="padding:2px 0;">Chrome拡張 ver. 1.10.0：電子ジャーナルページのmetaタグからDOIを自動取得するボタンを追加（#73）。助成情報検索タブにDOI入力欄とCrossref/OpenAlex経由の課題番号自動取得機能を追加</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-06</td>
         <td style="padding:2px 0;">Chrome拡張 ver. 1.9.5：IndexID・公開日がTSVに出力されないバグ修正（#142）、管理フィールドのIndexID/POS_INDEX候補値ヒント誤りを修正（#143）</td>
@@ -541,6 +545,7 @@
   <div class="input-row">
     <label>DOI:</label>
     <input type="text" id="doi-input" placeholder="例: 10.1016/j.advnut.2025.100480" value="">
+    <button id="get-doi-from-page" title="現在のページのmetaタグからDOIを自動取得">ページからDOI取得</button>
     <button id="fetch-btn">データ取得</button>
     <button id="empty-btn">空値で全フィールド表示</button>
     <button id="preview-btn" style="display:none; background:#1565c0; color:white;">プレビュー表示</button>

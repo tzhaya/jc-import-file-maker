@@ -743,6 +743,62 @@ function normalizeDoi(raw) {
     .trim();
 }
 
+// ===== DOI 形式の検証 =====
+function isValidDoi(doi) {
+  return typeof doi === 'string' && doi.length <= 256 && /^10\.\d{4,9}\/\S+$/.test(doi);
+}
+
+// ===== 現在のタブのmetaタグからDOIを取得（Chrome拡張専用） =====
+// 戻り値: { doi } または { error: <ユーザー向けメッセージ> }
+async function getDoiFromCurrentTab() {
+  try {
+    // ページのDOMを読み取るための権限を最初に要求（ユーザージェスチャー保持のため最初のawaitにする）。
+    // 初回のみ許可ダイアログ、許可後は同一ブラウザで再確認不要。
+    // この権限付与後でないと chrome.tabs.query() が tab.url を返さない点に注意。
+    const granted = await chrome.permissions.request({ origins: ['https://*/*', 'http://*/*'] });
+    if (!granted) return { error: 'ページの読み取りが許可されませんでした。許可するとページからDOIを取得できます。' };
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) return { error: 'アクティブなタブが見つかりませんでした。' };
+    // 特権ページ（chrome:// 等）では実行不可。tab.url は権限付与後に読める
+    if (tab.url) {
+      try {
+        const u = new URL(tab.url);
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+          return { error: 'このページではDOIを取得できません。通常のウェブページで実行してください。' };
+        }
+      } catch { /* URL解析失敗時はそのまま実行を試みる */ }
+    }
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        const selectors = [
+          'meta[name="citation_doi" i]',
+          'meta[name="prism.doi" i]',
+          'meta[name="DOI" i]',
+        ];
+        for (const sel of selectors) {
+          const el = document.querySelector(sel);
+          if (el?.content?.trim()) return el.content.trim();
+        }
+        // dc.identifier はDOI形式（doi: / doi.org / 素の 10.xxxx）のみ採用
+        const dcId = document.querySelector('meta[name="dc.identifier" i]');
+        if (dcId?.content && /^(doi:|https?:\/\/(dx\.)?doi\.org\/|10\.\d{4,9}\/)/i.test(dcId.content)) {
+          return dcId.content.trim();
+        }
+        return null;
+      },
+    });
+    const raw = results?.[0]?.result ?? null;
+    if (!raw) return { error: 'このページからDOIを取得できませんでした（DOIのmetaタグが見つかりません）。' };
+    const doi = normalizeDoi(raw);
+    if (!isValidDoi(doi)) return { error: 'このページのDOIを正しく認識できませんでした。' };
+    return { doi };
+  } catch (e) {
+    console.warn('getDoiFromCurrentTab failed:', e);
+    return { error: 'DOIの取得中にエラーが発生しました。' };
+  }
+}
+
 // ===== 3.0 DOI RA判定 =====
 async function fetchDoiRA(doi) {
   const resp = await fetch(`https://doi.org/doiRA/${encodeURIComponent(doi)}`);
@@ -5934,6 +5990,20 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
   }
 
   // ボタンイベント登録（MV3 CSP対応: inline onclick は使用不可）
+  document.getElementById('get-doi-from-page').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      const res = await getDoiFromCurrentTab();
+      if (res.doi) {
+        document.getElementById('doi-input').value = res.doi;
+      } else {
+        alert(res.error);
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  });
   document.getElementById('fetch-btn').addEventListener('click', fetchData);
   document.getElementById('empty-btn').addEventListener('click', showEmptyFields);
   document.getElementById('preview-btn').addEventListener('click', showPreview);
@@ -5969,7 +6039,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-06';
+  const LOCAL_VERSION = '2026-06-10';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
