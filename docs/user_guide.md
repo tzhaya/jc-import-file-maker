@@ -4,7 +4,7 @@
 
 JAIRO Cloud (WEKO3) にメタデータをインポートするためのTSVファイルを生成するツールです。DOIを入力するだけで、Crossref・OpenAlex・JaLC などのAPIからメタデータを自動取得し、JPCOAR スキーマに準拠した形式で編集・確認できます。
 
-単一のHTMLファイル (`make_jc_importer.html`) をブラウザで開くだけで使用でき、インストールは不要です。
+通常ブラウザ版は、3つのファイル（`make_jc_importer.html`・`shared.js`・`tsv_headers_template.js`）を同じフォルダに置いて `make_jc_importer.html` をブラウザで開くだけで使用でき、インストールは不要です。サイドパネルで利用できるChrome拡張機能版もあります（導入方法は [README](../README.md#導入方法) を参照）。
 
 ---
 
@@ -31,6 +31,7 @@ JAIRO Cloud (WEKO3) にメタデータをインポートするためのTSVファ
 1. **DOI入力欄** に対象論文のDOIを入力します
    - 例: `10.1016/j.advnut.2025.100480`
    - `https://doi.org/` 付きのURLでも入力できます
+   - （Chrome拡張機能版のみ）電子ジャーナルの論文ページを開いた状態で **「ページからDOI取得」ボタン** をクリックすると、ページのmetaタグ（`citation_doi` など）からDOIを自動入力できます
 2. **「データ取得」ボタン** をクリック（またはEnterキー）します
 3. データ取得中は「⏳ データを取得中です…」と表示されます
 4. 取得が完了すると、DOIリンクとオープンアクセス状態、（Chrome拡張のみ）Open Policy Finderへのリンクが表示され、下部にメタデータ編集エリアが出現します
@@ -53,7 +54,7 @@ JAIRO Cloud (WEKO3) にメタデータをインポートするためのTSVファ
 #### データ取り込みの詳細
 
 Crossrefから得られる情報を元に、OpenAlex、ROR、CiNii Research、KAKEN XML、JGN（Japan Grant Number）、Open Policy Finder（OPF）からの情報で補完しています。
-詳しくは [api-flow.md](/api-flow.md) を参照してください。
+詳しくは [api-flow.md](../api-flow.md) を参照してください。
 
 1. 共通
    - 「⚠ 要確認」と赤字で表示された場合は、OpenAlexから取り込んだ情報を示します。
@@ -209,7 +210,7 @@ TSV出力時に、TSVヘッダー1行目のスキーマURLを機関リポジト�
 
 #### TSV出力
 
-- **1件のみ**: `import.tsv` のファイル名で出力されます
+- **1件のみ**: DOIをベースにしたファイル名（例: `10.1016_j.advnut.2025.100480.tsv`、DOI中の `/` は `_` に置換）で出力されます
 - **複数件**: `import_YYYYMMDD_HHMMSS.tsv` のタイムスタンプ付きファイル名で出力されます
 - TSVファイルは5行のヘッダー + N行のデータ行（アイテムごとに1行）で構成されます
 
@@ -226,7 +227,7 @@ TSV出力時に、TSVヘッダー1行目のスキーマURLを機関リポジト�
 
 ## APIキーの設定（任意）
 
-ソースコード内の `CONFIG` 定数でAPIキーを設定できます。
+通常ブラウザ版では `shared.js` 内の `CONFIG` 定数を、Chrome拡張機能版では拡張機能のオプションページ（設定ページ）でAPIキーを設定できます。
 
 | キー | 用途 | 未設定時 |
 |------|------|---------|

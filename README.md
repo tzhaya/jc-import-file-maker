@@ -6,7 +6,7 @@
 
 ## 概要
 
-DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO Cloud](https://jpcoar.org/support/jairo-cloud/)へのインポート用TSVファイルを生成するツールです。
+DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO Cloud](https://jpcoar.org/support/jairo-cloud/)へのインポート用TSVファイルを生成するツールです。Chrome拡張機能版では、閲覧中の電子ジャーナルページからDOIを自動取得することもできます。
 
 特に、以下の課題の解決を目指しています。
 
@@ -33,6 +33,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
     - JAIRO Cloud インポート用TSV生成ツール
     - 助成情報検索ツール
     - 機関リポジトリのメタデータ検索（OpenSearch）
+  - 閲覧中の電子ジャーナルページからのDOI自動取得（「ページからDOI取得」ボタン）
   - JaLC DOIからのメタデータ取り込み
   - KAKEN APIによる科研費課題番号の検索と取り込み
   - Open Policy Finderから取得したOAポリシーの表示とエンバーゴの設定
@@ -50,6 +51,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 | Open Policy Finder API によるOAポリシー表示 | ✅ | ❌ | CORS制約のためChrome拡張機能版のみ |
 | Open Policy Finder API の情報によるエンバーゴ有無と期間の設定 | ✅ | ❌ | CORS制約のためChrome拡張機能版のみ |
 | **メタデータ取得** | | | |
+| 閲覧中ページからのDOI自動取得 | ✅ | ❌ | 電子ジャーナルページのmetaタグから取得（ボタン押下時のみ） |
 | Crossref DOI からのメタデータ取得 | ✅ | ✅ | |
 | JaLC DOI からのメタデータ取得 | ✅ | ❌ | CORS制約のためChrome拡張機能のService Worker経由が必要 |
 | DataCite DOI からのメタデータ取得 | ❌ | ❌ | 未対応です |
@@ -63,6 +65,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 | **収録物識別子補完** | | | |
 | NCID 自動取得 | ✅ | ✅ | ISSNからCiNii Researchを検索 |
 | **助成情報補完** | | | |
+| DOIからの課題番号自動取得（助成情報検索ツール） | ✅ | ✅ | Crossref/OpenAlex APIから課題番号を抽出 |
 | JGN（科学技術振興機構）課題番号検索 | ✅ | ✅ |  |
 | CiNii Research API による科研費課題名取得 | ✅ | ✅ |  |
 | KAKEN XML API による科研費課題検索 | ✅ | ❌ | CORS制約のためChrome拡張機能版のみ |
@@ -126,14 +129,15 @@ HTMLファイルを直接ブラウザで開いて使用します。
 **このツールはベータ版です。**
 **アイテムタイプ「デフォルトアイテムタイプ（フル）」の形式でのインポート用TSVファイルのみ生成できます。なお、インポートは未検証です。正しく取り込まれないことがあります。**
 
-現在のバージョン（Phase 1）では、APIからのデータ取得・マッピング・編集UIが実装されています。
+APIからのデータ取得・マッピング・編集UI・プレビュー・TSV出力（複数DOIの一括出力を含む）が実装されています。
 
 1. DOIを「DOI」の入力欄に入力します。
+   - （Chrome拡張機能版のみ）電子ジャーナルの論文ページを開いた状態で「ページからDOI取得」ボタンを押すと、ページのmetaタグからDOIを自動入力できます。
 2. 「データ取得」ボタンを押します
 3. Crossrefなどから必要なメタデータを取得して、「メタデータ確認・編集」として表示します。編集も可能です。
 4. 「プレビュー表示」ボタンでプレビューができます。
 5. （Chrome拡張機能版のみ）外国雑誌等でOpen Policy Finderに登録されている雑誌にはDOIの隣に「OAポリシー」のボタンが表示されます。クリックすると、Open Policy Finderから取得したオープンアクセスにできる版や掲載場所の情報を表示します。
-6. TSVファイルとしてダウンロードができます（β版提供中：未検証です）
+6. TSVファイルとしてダウンロードができます（β版提供中：未検証です）。複数のDOIを連続取得して1つのTSVファイルにまとめて出力することもできます。
 
 詳しい使い方と取得したデータの取り扱いは[使い方ガイド](docs/user_guide.md)を参照ください。
 
@@ -143,10 +147,12 @@ HTMLファイルを直接ブラウザで開いて使用します。
 - 科研費課題番号やJGN課題番号から、助成機関識別子・助成機関名・プログラム情報・研究課題名を検索します。
 - Chrome拡張機能版ではサイドパネルのタブから「助成情報検索」に切り替えて利用できます。
 - 通常ブラウザ版では [funder_lookup.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/funder_lookup.html) を右クリック→「名前をつけてリンク(先)を保存」で保存してご利用ください。
+  - 動作には [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js) も必要です。同じフォルダに保存してください（インポート用TSV生成ツールの導入時に保存済みであれば共用できます）。
 
 #### 利用方法
 
 1. 科研費課題番号やJGN課題番号、論文の謝辞（Acknowledgement）をコピー＆ペーストして「検索」を押します。
+     - 論文のDOIがわかっている場合は、「DOI（任意）」欄にDOIを入力して「課題番号を取得」を押すと、Crossref/OpenAlex APIから課題番号を自動取得して入力欄に追加できます。
 2. JPCOAR 2.0 準拠の助成情報（助成機関識別子・助成機関名・プログラム情報・研究課題名）を検索できます。
      - ヒットしない場合は、以下の参照用リンクを表示します。
        - [体系的番号](https://www.nistep.go.jp/taikei/)（NISTEP）
@@ -200,7 +206,7 @@ const CONFIG = {
 };
 ```
 
-#### OpenAlex API Key（必須）
+#### OpenAlex API Key（推奨）
 
 OpenAlex APIは、APIキーなしでの利用回数に制限があります。継続的に利用する場合は、APIキーの設定を推奨します。
 
@@ -220,8 +226,10 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 ## ディレクトリ構成
 
 ```
-├── make_jc_importer.html      # メインツール（通常ブラウザ版・単一HTMLファイル）
+├── make_jc_importer.html      # メインツール（通常ブラウザ版）
 ├── funder_lookup.html         # 助成情報検索ツール（通常ブラウザ版）
+├── shared.js                  # 共通設定（CONFIG定数・APIキー）と通信処理（両HTML・Chrome拡張で共有）
+├── tsv_headers_template.js    # TSVヘッダーテンプレート定義（メインツールで使用）
 ├── chrome-extension/          # Chrome拡張機能版（このフォルダを読み込んで使用）
 │   ├── manifest.json          #   Manifest V3 定義
 │   ├── background.js          #   Service Worker（CORS プロキシ）
@@ -229,8 +237,13 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 │   ├── make_jc_importer.js    #   メインツール ロジック
 │   ├── funder_panel.html      #   サイドパネル（助成情報検索）
 │   ├── funder_lookup.js       #   助成情報検索 ロジック
+│   ├── opensearch_panel.html  #   サイドパネル（OpenSearch検索）
+│   ├── opensearch_panel.js    #   OpenSearch検索 ロジック
 │   ├── options.html           #   設定ページ（APIキー管理 UI）
-│   └── options.js             #   設定ページ ロジック
+│   ├── options.js             #   設定ページ ロジック
+│   ├── shared.js              #   ルートの shared.js の同期コピー
+│   ├── tsv_headers_template.js#   ルートの tsv_headers_template.js の同期コピー
+│   └── icons/                 #   拡張機能アイコン（16/48/128 PNG + SVG）
 ├── api-flow.md                # APIフロー整理（Crossref/OpenAlex等の取得順・JPCOARマッピング）
 ├── data/                      # 参照・設定データ
 │   ├── ItemType.json          # JAIRO Cloud アイテムタイプ定義
@@ -276,6 +289,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-10 | ドキュメント整合性修正：README・使い方ガイドを現在の実装に同期（#73新機能の反映、`shared.js`/`tsv_headers_template.js` 依存の明記、TSV出力ファイル名の記述修正、機能比較表・ディレクトリ構成の更新） |
 | 2026-06-10 | 電子ジャーナルページのmetaタグ（`citation_doi`, `prism.doi`, `DOI`, `dc.identifier`）からDOIを自動取得するボタンをDOIインポートタブに追加。助成情報検索タブにDOI入力欄を新設し、Crossref/OpenAlex APIから課題番号を自動抽出してテキストエリアへ流し込む機能を追加（[#73](https://github.com/tzhaya/jc-import-file-maker/issues/73)）。manifest version `1.9.5` → `1.10.0` |
 | 2026-06-06 | IndexID・公開日がTSVに出力されないバグを修正：`groupTsvColumns()` 内 `.metadata.path[0]` / `.metadata.pubdate` が `__other__` に分類されTSVスキップされていた問題を `__system__` に変更して解消（[#142](https://github.com/tzhaya/jc-import-file-maker/issues/142)）。管理フィールドのIndexID/POS_INDEX候補値ヒント誤り（入れ違い）を修正（[#143](https://github.com/tzhaya/jc-import-file-maker/issues/143)）。manifest version `1.9.4` → `1.9.5` |
 | 2026-05-15 | Chrome拡張機能 ver. 1.9.4：`panel.html` / `make_jc_importer.html` の最終更新日と更新概要テーブルを整理し、5月の実作業（ストア登録準備・名前統一）を直近5件として反映。LOCAL_VERSION（`make_jc_importer.html` / `chrome-extension/make_jc_importer.js`）を `2026-05-15` に同期、manifest version を `1.9.3` → `1.9.4` に更新 |
