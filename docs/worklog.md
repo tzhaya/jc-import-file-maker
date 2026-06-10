@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-10（Chrome拡張 ver. 1.10.0 / #73: 電子ジャーナルページからのDOI自動取り込み）
+最終更新: 2026-06-10（README・使い方ガイドのドキュメント整合性修正）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -48,6 +48,28 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 | 1.2.0 | 2026-03-13 | TSVエクスポート機能追加、残存issues優先順位整理 |
 | 1.1.0 | 2026-03-11 | OpenSearch検索タブ統合、JaLCデータ取込修正、書誌情報UI修正、入力モード自動判定 |
 | 1.0.0 | 2026-03-10 | 初期リリース（Manifest V3、Service Worker、OPFモーダル） |
+
+---
+
+## 2026-06-10: README・使い方ガイドのドキュメント整合性修正
+
+### 概要
+`README.md` と `docs/user_guide.md` を現在の実装（Chrome拡張 ver. 1.10.0 / #73 マージ後）と突き合わせてレビューし、事実と異なる記述・新機能の未反映箇所を修正。コード変更なし（ドキュメントのみ）。
+
+### README.md の修正内容
+- 概要・Chrome拡張版機能リスト・機能比較表に #73 の新機能（閲覧中ページからのDOI自動取得、助成情報検索のDOIからの課題番号自動取得）を反映
+- 助成情報検索ツールの通常ブラウザ版導入手順に `shared.js` の保存が必要な旨を追記（#111 以降の必須依存だが記載漏れ）
+- 助成情報検索ツールの利用方法にDOI入力欄の手順を追加
+- 「使い方」の「現在のバージョン（Phase 1）では…」を Phase 2 完了後の現状（プレビュー・複数DOI一括TSV出力を含む）に更新
+- 「OpenAlex API Key（必須）」見出しを本文（任意・推奨）と整合する「（推奨）」に修正
+- ディレクトリ構成に `shared.js` / `tsv_headers_template.js`（ルート・chrome-extension 双方）、`opensearch_panel.html` / `opensearch_panel.js`、`icons/` を追加
+
+### docs/user_guide.md の修正内容
+- 冒頭の「単一のHTMLファイルを開くだけ」を3ファイル構成（`make_jc_importer.html` + `shared.js` + `tsv_headers_template.js`）に修正し、Chrome拡張版への導線を追加
+- STEP 1 に「ページからDOI取得」ボタン（Chrome拡張版のみ）の説明を追加
+- TSV出力ファイル名の記述を実装に合わせて修正：1件のみの場合は `import.tsv` ではなく `{DOI}.tsv`（`/`→`_` 置換、`exportTsv()` 参照）
+- APIキー設定の記述を「`shared.js` の `CONFIG` 定数（通常版）/ オプションページ（Chrome拡張版）」に修正
+- `api-flow.md` へのリンクをルート相対 `/api-flow.md` から相対パス `../api-flow.md` に修正
 
 ---
 
