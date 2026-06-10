@@ -6,6 +6,144 @@ if (typeof CONFIG === 'undefined') {
   window.extensionFetch = function(url, options) { return fetch(url, options); };
 }
 
+// ===== DOI 正規化 =====
+function normalizeDoi(raw) {
+  return raw.trim()
+    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
+    .replace(/^doi:/i, '')
+    .trim();
+}
+
+// ===== DOI 形式の検証 =====
+function isValidDoi(doi) {
+  return typeof doi === 'string' && doi.length <= 256 && /^10\.\d{4,9}\/\S+$/.test(doi);
+}
+
+// ===== 現在のタブのmetaタグからDOIを取得（Chrome拡張専用） =====
+// 戻り値: { doi } または { error: <ユーザー向けメッセージ> }
+async function getDoiFromCurrentTab() {
+  try {
+    // ページのDOMを読み取るための権限を最初に要求（ユーザージェスチャー保持のため最初のawaitにする）。
+    // 初回のみ許可ダイアログ、許可後は同一ブラウザで再確認不要。
+    // この権限付与後でないと chrome.tabs.query() が tab.url を返さない点に注意。
+    const granted = await chrome.permissions.request({ origins: ['https://*/*', 'http://*/*'] });
+    if (!granted) return { error: 'ページの読み取りが許可されませんでした。許可するとページからDOIを取得できます。' };
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) return { error: 'アクティブなタブが見つかりませんでした。' };
+    // 特権ページ（chrome:// 等）では実行不可。tab.url は権限付与後に読める
+    if (tab.url) {
+      try {
+        const u = new URL(tab.url);
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+          return { error: 'このページではDOIを取得できません。通常のウェブページで実行してください。' };
+        }
+      } catch { /* URL解析失敗時はそのまま実行を試みる */ }
+    }
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () => {
+        const selectors = [
+          'meta[name="citation_doi" i]',
+          'meta[name="prism.doi" i]',
+          'meta[name="DOI" i]',
+        ];
+        for (const sel of selectors) {
+          const el = document.querySelector(sel);
+          if (el?.content?.trim()) return el.content.trim();
+        }
+        // dc.identifier はDOI形式（doi: / doi.org / 素の 10.xxxx）のみ採用
+        const dcId = document.querySelector('meta[name="dc.identifier" i]');
+        if (dcId?.content && /^(doi:|https?:\/\/(dx\.)?doi\.org\/|10\.\d{4,9}\/)/i.test(dcId.content)) {
+          return dcId.content.trim();
+        }
+        return null;
+      },
+    });
+    const raw = results?.[0]?.result ?? null;
+    if (!raw) return { error: 'このページからDOIを取得できませんでした（DOIのmetaタグが見つかりません）。' };
+    const doi = normalizeDoi(raw);
+    if (!isValidDoi(doi)) return { error: 'このページのDOIを正しく認識できませんでした。' };
+    return { doi };
+  } catch (e) {
+    console.warn('getDoiFromCurrentTab failed:', e);
+    return { error: 'DOIの取得中にエラーが発生しました。' };
+  }
+}
+
+// ===== DOIからCrossref/OpenAlex経由で課題番号を取得 =====
+// 戻り値: { awards: string[], errors: string[] }
+async function fetchAwardsByDoi(doi) {
+  const awards = new Set();
+  const errors = [];
+  try {
+    const r = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+    if (r.ok) {
+      const data = await r.json();
+      (data.message?.funder ?? []).forEach(f =>
+        (f.award ?? []).forEach(a => { if (a.trim()) awards.add(a.trim()); })
+      );
+    } else if (r.status !== 404) {
+      errors.push(`Crossref APIエラー (${r.status})`);
+    }
+  } catch (e) {
+    console.warn('Crossref fetch failed:', e);
+    errors.push('Crossref への接続に失敗しました');
+  }
+  try {
+    let url = `https://api.openalex.org/works/doi:${encodeURIComponent(doi)}`;
+    if (CONFIG.OpenAlex_API_KEY && CONFIG.OpenAlex_API_KEY !== 'YOUR_OpenAlex_API_KEY') {
+      url += `?api_key=${encodeURIComponent(CONFIG.OpenAlex_API_KEY)}`;
+    }
+    const r2 = await fetch(url);
+    if (r2.ok) {
+      const data2 = await r2.json();
+      (data2.grants ?? []).forEach(g => { if (g.award_id?.trim()) awards.add(g.award_id.trim()); });
+    } else if (r2.status === 409) {
+      errors.push('OpenAlex のAPIキーなし利用回数制限を超えました（設定画面でAPIキーを設定してください）');
+    } else if (r2.status !== 404) {
+      errors.push(`OpenAlex APIエラー (${r2.status})`);
+    }
+  } catch (e) {
+    console.warn('OpenAlex fetch failed:', e);
+    errors.push('OpenAlex への接続に失敗しました');
+  }
+  return { awards: [...awards], errors };
+}
+
+// ===== DOI入力欄から課題番号を取得してテキストエリアに追記 =====
+async function fetchAwardsByDoiFromInput() {
+  const btn = document.getElementById('fetch-awards-by-doi');
+  const raw = document.getElementById('doi-input-funder').value.trim();
+  if (!raw) { alert('DOIを入力してください。'); return; }
+  const doi = normalizeDoi(raw);
+  if (!isValidDoi(doi)) { alert('DOIの形式が正しくありません（例: 10.1016/j.xxxx）。'); return; }
+  const statusEl = document.getElementById('status');
+  const ta = document.getElementById('award-input');
+  if (btn) btn.disabled = true;
+  statusEl.textContent = 'DOIから課題番号を検索中...';
+  try {
+    const { awards, errors } = await fetchAwardsByDoi(doi);
+    statusEl.textContent = '';
+    if (awards.length === 0) {
+      alert(errors.length
+        ? '課題番号を取得できませんでした:\n' + errors.join('\n')
+        : 'このDOIから課題番号を取得できませんでした。');
+      return;
+    }
+    // 既存の課題番号と重複しないものだけ追記
+    const existing = new Set(ta.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean));
+    const toAdd = awards.filter(a => !existing.has(a));
+    if (toAdd.length === 0) {
+      alert('取得した課題番号はすべて入力済みです。');
+    } else {
+      ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + toAdd.join('\n');
+    }
+    if (errors.length) console.warn('一部のAPIでエラーが発生しました:', errors);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 // ===== JSPS 助成機関定数 =====
 const JSPS_FUNDER_DOI = '10.13039/501100001691';
 const JSPS_FUNDER_NAMES = [
@@ -612,7 +750,7 @@ async function copyTsvToClipboard(btn) {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-03-29';
+  const LOCAL_VERSION = '2026-06-10';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;
@@ -631,6 +769,23 @@ async function copyTsvToClipboard(btn) {
 })();
 
 // ===== イベントリスナー登録（Chrome拡張CSP対応） =====
+document.getElementById('get-doi-from-page-funder').addEventListener('click', async (e) => {
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  try {
+    const res = await getDoiFromCurrentTab();
+    if (res.doi) {
+      document.getElementById('doi-input-funder').value = res.doi;
+    } else {
+      alert(res.error);
+    }
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('fetch-awards-by-doi').addEventListener('click', fetchAwardsByDoiFromInput);
+
 document.getElementById('search-btn').addEventListener('click', doSearch);
 document.getElementById('tsv-generate-btn').addEventListener('click', generateTsv);
 document.querySelectorAll('input[name="jpcoar-version"]').forEach(radio => {

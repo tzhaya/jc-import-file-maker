@@ -222,6 +222,24 @@ make_jc_importer.html
     -   除外フィールド: apc5, heading36, dissertation30〜degree33, item_1698624001〜010 は常に除外
     -   TSV形式: 5行ヘッダー（ItemType行・プロパティキー行・日本語ラベル行・System印行・制約行）+ データN行、UTF-8 BOM付き・LF改行
 
+-   **電子ジャーナルページからのDOI自動取り込み**（Chrome拡張版のみ、[issue #73](https://github.com/tzhaya/jc-import-file-maker/issues/73)）:
+    -   DOIインポートタブに「ページからDOI取得」ボタンを追加し、現在表示中のページのmetaタグからDOIを自動検出してDOI入力欄にセットする
+    -   metaタグの優先順位: `meta[name="citation_doi"]` → `meta[name="prism.doi"]` → `meta[name="DOI"]` → `meta[name="dc.identifier"]`（DOI形式のみ）。`name` 属性は大文字小文字を区別しない（CSSセレクタの `i` フラグ）
+    -   `dc.identifier` は `doi:` / `https://doi.org/` / `https://dx.doi.org/` / 素の `10.xxxx/` で始まる場合のみ採用（ISBN・ISSN等との混在対策）
+    -   取得したDOIは `normalizeDoi()` で正規化（`https://(dx.)doi.org/` プレフィックス・`doi:` プレフィックスを除去）し、`isValidDoi()`（`^10.\d{4,9}/\S+$`・256文字以内）で形式検証してから入力欄にセット。検証に失敗した場合はエラーメッセージを表示
+    -   `chrome.scripting.executeScript()` を使用。`chrome://` 等の特権ページでは実行不可のためtry-catchでエラーを吸収し、`console.warn()` でログ出力
+    -   権限: `scripting` + `optional_host_permissions`（`http(s)://*/*`）。`activeTab` はサイドパネル内ボタンからの遷移後に失効するため使用しない。ボタン押下時の**最初の `await`** で `chrome.permissions.request({ origins: ['https://*/*','http://*/*'] })` を呼び、ウェブサイトへのアクセス許可を1回だけ要求する（初回のみ許可ダイアログ、許可後は再確認不要・全サイトで動作）。この設計により、(1) ユーザージェスチャーが失効しない、(2) 権限付与後に `chrome.tabs.query()` が `tab.url` を返すようになる（未付与時は `tabs`/host 権限がないため `tab.url` が `undefined` になる仕様）の2点を同時に解決する
+
+-   **助成情報検索タブのDOI入力欄とCrossref/OpenAlex連携**（Chrome拡張版・スタンドアロン版、[issue #73](https://github.com/tzhaya/jc-import-file-maker/issues/73)）:
+    -   助成情報検索タブ（`funder_panel.html` / `funder_lookup.html`）にDOI入力欄を追加する
+    -   Chrome拡張版では「ページから取得」ボタンで現在ページのDOIを自動取得する機能も提供
+    -   「課題番号を取得」ボタンで入力されたDOIに基づき Crossref `funder[].award[]` と OpenAlex `grants[].award_id` から課題番号を収集し、既存の課題番号テキストエリアに追記する（テキストエリア既存値と重複する番号は追記しない）
+    -   入力DOIは `normalizeDoi()` + `isValidDoi()` で正規化・検証してから送信する
+    -   OpenAlex 呼び出しには設定済みのAPIキー（`CONFIG.OpenAlex_API_KEY`）を付与し、API エラー（OpenAlex 409 レート制限等）と「課題番号なし」を区別してメッセージ表示する
+    -   取得処理中はボタンを `disabled` にして二重送信・重複追記を防ぐ
+    -   Crossref・OpenAlexはCORSを許可しているため background.js プロキシ不要、直接 `fetch()` で呼び出す
+    -   取得した課題番号はそのまま既存の検索フロー（KAKEN/JGN連携）に渡す
+
 -   **OpenSearch検索機能**（Chrome拡張版のみ、[issue #72](https://github.com/tzhaya/jc-import-file-maker/issues/72)）:
     -   サイドパネルに「OpenSearch検索」タブを追加し、JAIRO Cloud機関リポジトリの OpenSearch API を用いた文献検索を提供する
     -   検索条件: リポジトリURL・タイトル・内容記述・資源タイプ（全47種）

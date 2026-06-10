@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-06（Chrome拡張 ver. 1.9.5 / #142: IndexID・公開日TSV出力バグ修正、#143: IndexID/POS_INDEX候補値ヒント誤り修正）
+最終更新: 2026-06-10（Chrome拡張 ver. 1.10.0 / #73: 電子ジャーナルページからのDOI自動取り込み）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.10.0 | 2026-06-10 | #73: 電子ジャーナルページのmetaタグからDOIを自動取得するボタンを追加（DOIインポートタブ）。助成情報検索タブにDOI入力欄を新設し、Crossref/OpenAlex経由で課題番号を自動取得する機能を追加 |
 | 1.9.5 | 2026-06-06 | #142: `groupTsvColumns()` 内 `.metadata.path[0]`/`.metadata.pubdate` が `__other__` に分類されTSVスキップされていたバグを修正（`__system__` に変更）、#143: 管理フィールドのIndexID/POS_INDEX候補値ヒントの入れ違いを修正 |
 | 1.9.4 | 2026-05-15 | 表示情報整理：`panel.html` / `make_jc_importer.html` の最終更新日と更新概要テーブル（直近5件）を5月の実作業を反映する形に更新、LOCAL_VERSION（`make_jc_importer.html` / `chrome-extension/make_jc_importer.js`）を `2026-05-15` に同期 |
 | 1.9.3 | 2026-05-14 | ストア公開名と一致するようツール名・タイトルを「JAIRO Cloud インポート支援ツール」に統一（panel.html / options.html / make_jc_importer.html）、ストア再配布用に manifest version を更新 |
@@ -2104,3 +2105,34 @@ const resourcetype = TITLE_MAPS.resourcetype.includes(crTypeLabel)
 - **会議記述**: 7サブセクション構造。開催国は ISO 3166-1 alpha-3 コード（249か国、`TITLE_MAPS.subitem_conference_country`）
 - **権利者情報**: 権利者名（配列）+ 権利者識別子（配列）のネスト構造。`renderItemFields` の `t:'nested'` スキップ問題を専用レンダラーで解消
 - **参照用列**: `showHints` フラグで制御。`createFieldRow()` がラベル→ヒント→入力欄の順で配置。selectフィールドはドロップダウン自体が値を表示するためヒント非表示。readonlyフィールド（URI自動連動等）もヒント不要のため非表示。[+ 追加]ボタンで新規追加したエントリは値が空のためヒント非表示（正しい挙動）
+
+---
+
+## 2026-06-10: 電子ジャーナルページからのDOI自動取り込み（#73）
+
+### 概要
+Chrome拡張のサイドパネルに「ページからDOI取得」ボタンを追加。電子ジャーナルページのmetaタグからDOIを自動検出して各入力欄にセット。助成情報検索タブにはDOI入力欄を新設し、Crossref/OpenAlexから課題番号を自動取得するフローも追加。
+
+### 変更ファイル
+| ファイル | 変更内容 |
+|---|---|
+| `chrome-extension/manifest.json` | `scripting` 権限 + `optional_host_permissions`（`http(s)://*/*`）追加、version `1.9.5` → `1.10.0` |
+| `chrome-extension/panel.html` | `doi-input` 直後に「ページからDOI取得」ボタン追加、最終更新日・更新概要テーブル更新 |
+| `chrome-extension/funder_panel.html` | `award-input` 前にDOI入力セクション（入力欄＋「ページから取得」＋「課題番号を取得」ボタン）追加、最終更新日更新 |
+| `chrome-extension/make_jc_importer.js` | `getDoiFromCurrentTab()` / `isValidDoi()` 追加、`init()` にボタンイベント登録、`LOCAL_VERSION` 更新 |
+| `chrome-extension/funder_lookup.js` | `normalizeDoi()` / `isValidDoi()` / `getDoiFromCurrentTab()` / `fetchAwardsByDoi()` / `fetchAwardsByDoiFromInput()` 追加、ボタンイベント登録、`LOCAL_VERSION` 更新 |
+| `funder_lookup.html` | DOI入力セクション追加（「ページから取得」なし）、`normalizeDoi()` / `isValidDoi()` / `fetchAwardsByDoi()` / `fetchAwardsByDoiFromInput()` 追加、最終更新日・`LOCAL_VERSION` 更新 |
+| `docs/privacy-policy.md` | metaタグ読み取り（3-4節）・`scripting` / `optional_host_permissions` 権限の開示を追記、最終更新日更新 |
+
+### 技術メモ
+- `chrome.scripting.executeScript()` を使用して表示中タブのDOMからmetaタグを読み取る
+- 権限設計（#145 B1対応）: `activeTab` はサイドパネル内ボタンからのページ遷移後に失効するため不採用。`optional_host_permissions`（`http(s)://*/*`）を宣言し、ボタン押下時の**最初の `await`** で `chrome.permissions.request({ origins: ['https://*/*','http://*/*'] })` を呼んで全サイトへのアクセス許可を1回だけ要求する（初回のみ許可ダイアログ、許可後は全サイトで再確認不要）
+  - 実機検証で判明した重要点: 権限未付与の状態では `chrome.tabs.query()` の返す `tab.url` が `undefined`（`tabs`/host 権限がない場合 url は隠される Chrome 仕様）。当初のオリジン単位要求案は「url を読むには権限が必要 / 権限要求には url（オリジン）が必要」の循環に陥り「アクティブなタブが見つかりません」で失敗していた。権限要求を最初に行う構成にすることで (1) ジェスチャー失効回避、(2) 付与後に `tab.url` 読取可能、の両方を解決
+  - ユーザー選択: 全サイト権限を初回1回要求する方式（サイト単位の都度要求＋ `tabs` 権限案より、多数の出版社サイトを横断する本ツールでは初回承認後に無確認で動作する方を採用）
+- metaタグ優先順位: `citation_doi` > `prism.doi` > `DOI` > `dc.identifier`（DOI形式のみ）。`name` は case-insensitive（`[name="..." i]`）
+- `dc.identifier` は `doi:` / `doi.org` / `dx.doi.org` / 素の `10.xxxx/` で始まる場合のみ採用（ISBN等との混在対策）
+- DOI検証: `normalizeDoi()`（`(dx.)doi.org` プレフィックス + `doi:` 除去）→ `isValidDoi()`（`^10.\d{4,9}/\S+$`・256文字以内）。ページ由来・手入力の両方で検証（#145 S1/B3対応）
+- Crossref・OpenAlexはCORSを許可しているためbackground.jsプロキシ不要、直接`fetch()`で呼び出す
+- `fetchAwardsByDoi()` はCrossref `funder[].award[]` + OpenAlex `grants[].award_id` を集約して重複排除。`{ awards, errors }` を返し、OpenAlexにはAPIキーを付与、API エラー（409 等）と「課題番号なし」を区別（#145 B4対応）
+- `fetchAwardsByDoiFromInput()` は取得中ボタンを `disabled` 化し、テキストエリア既存値と重複する番号は追記しない（#145 B5/B6対応）
+- 残課題（フォローアップ）: `normalizeDoi()` / `isValidDoi()` / `fetchAwardsByDoi()` の `shared.js` 集約、`getDoiFromCurrentTab()` の一元化（#145 Phase 3 / M1）
