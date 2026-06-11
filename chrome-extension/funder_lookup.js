@@ -492,14 +492,16 @@ function extractAwardNumbers(input) {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    if (!/\s/.test(trimmed)) {
-      // (A) スペースなし: そのまま1つの課題番号
+    if (/^[A-Za-z0-9._-]+$/.test(trimmed)) {
+      // (A) 行全体が課題番号として妥当な文字のみ: そのまま1つの課題番号
+      // （日本語等のマルチバイトを含む行は Case B/C の判定へ回す）
       addUnique(trimmed);
       continue;
     }
 
-    // スペースを含む行 → 区切りリストか Ack テキストか判定
-    const tokens = trimmed.split(/[;,]/).map(t => t.trim()).filter(Boolean);
+    // 課題番号以外の文字を含む行 → 区切りリストか Ack テキストか判定
+    // 区切り文字は半角 ; , と全角 、 ， ； に対応
+    const tokens = trimmed.split(/[;,、，；]/).map(t => t.trim()).filter(Boolean);
     const allLookLikeIds = tokens.length > 1
       && tokens.every(t => /^[A-Za-z0-9._-]+$/.test(t));
 
@@ -750,7 +752,7 @@ async function copyTsvToClipboard(btn) {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-10';
+  const LOCAL_VERSION = '2026-06-11';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;
@@ -791,3 +793,20 @@ document.getElementById('tsv-generate-btn').addEventListener('click', generateTs
 document.querySelectorAll('input[name="jpcoar-version"]').forEach(radio => {
   radio.addEventListener('change', updateJpcoarNote);
 });
+
+// 検索結果内の外部リンクは新しいタブで開く（#150）
+// Chrome拡張のサイドパネルでは target="_blank" の外部リンクをクリックすると
+// パネル自体が既定ページ（panel.html）にリセットされてしまうため、
+// chrome.tabs.create で明示的に新しいタブを開く。スタンドアロン版（chrome未定義）では
+// target="_blank" がそのまま機能するためこのハンドラは登録しない。
+if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    if (/^https?:\/\//i.test(href)) {
+      e.preventDefault();
+      chrome.tabs.create({ url: href });
+    }
+  });
+}

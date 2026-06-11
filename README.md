@@ -83,9 +83,9 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-06-10 | ver. 1.10.0 | 電子ジャーナルページのmetaタグからDOIを自動取得するボタンを追加（[#73](https://github.com/tzhaya/jc-import-file-maker/issues/73)）。助成情報検索タブにDOI入力欄とCrossref/OpenAlex経由の課題番号自動取得機能を追加 |
+| Chrome拡張機能版 | 2026-06-11 | ver. 1.10.1 | 助成情報検索でマルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとサイドパネルがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 | インポート用TSV生成ツール | 2026-06-06 | — | IndexID・公開日がTSVに出力されないバグ修正（[#142](https://github.com/tzhaya/jc-import-file-maker/issues/142)）、管理フィールドのIndexID/POS_INDEX候補値ヒント誤りを修正（[#143](https://github.com/tzhaya/jc-import-file-maker/issues/143)） |
-| 助成情報検索ツール | 2026-06-10 | — | DOI入力欄を追加し、DOIからCrossref/OpenAlex経由で課題番号を自動取得する機能を追加（[#73](https://github.com/tzhaya/jc-import-file-maker/issues/73)） |
+| 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 
 ## 導入方法
 
@@ -289,6 +289,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-11 | 助成情報検索ツールの課題番号抽出を修正：マルチバイト文字列（日本語）を含む行を1つの課題番号として誤取り込みするバグを修正し、課題番号として妥当な文字のみの行を判定対象とするよう変更。区切り文字に全角「、，；」を追加（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとサイドパネルが既定ページにリセットされる不具合を修正（`chrome.tabs.create` で新しいタブを開く、[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)）。manifest version `1.10.0` → `1.10.1` |
 | 2026-06-10 | ドキュメント整合性修正：README・使い方ガイドを現在の実装に同期（#73新機能の反映、`shared.js`/`tsv_headers_template.js` 依存の明記、TSV出力ファイル名の記述修正、機能比較表・ディレクトリ構成の更新） |
 | 2026-06-10 | 電子ジャーナルページのmetaタグ（`citation_doi`, `prism.doi`, `DOI`, `dc.identifier`）からDOIを自動取得するボタンをDOIインポートタブに追加。助成情報検索タブにDOI入力欄を新設し、Crossref/OpenAlex APIから課題番号を自動抽出してテキストエリアへ流し込む機能を追加（[#73](https://github.com/tzhaya/jc-import-file-maker/issues/73)）。manifest version `1.9.5` → `1.10.0` |
 | 2026-06-06 | IndexID・公開日がTSVに出力されないバグを修正：`groupTsvColumns()` 内 `.metadata.path[0]` / `.metadata.pubdate` が `__other__` に分類されTSVスキップされていた問題を `__system__` に変更して解消（[#142](https://github.com/tzhaya/jc-import-file-maker/issues/142)）。管理フィールドのIndexID/POS_INDEX候補値ヒント誤り（入れ違い）を修正（[#143](https://github.com/tzhaya/jc-import-file-maker/issues/143)）。manifest version `1.9.4` → `1.9.5` |

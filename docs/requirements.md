@@ -240,6 +240,18 @@ make_jc_importer.html
     -   Crossref・OpenAlexはCORSを許可しているため background.js プロキシ不要、直接 `fetch()` で呼び出す
     -   取得した課題番号はそのまま既存の検索フロー（KAKEN/JGN連携）に渡す
 
+-   **課題番号入力の自動解析**（Chrome拡張版・スタンドアロン版、`extractAwardNumbers()`）:
+    -   入力テキストエリアを行単位で解析し、各行を3つのモードで判定する
+        -   (A) 行全体が課題番号として妥当な文字（`^[A-Za-z0-9._-]+$`）のみの場合: その行をそのまま1つの課題番号として扱う
+        -   (B) 区切り文字（半角 `;` `,` ／ 全角 `、` `，` `；`）で分割した全トークンが課題番号として妥当な文字のみの場合: 課題番号リストとして各トークンを抽出する
+        -   (C) それ以外（謝辞テキスト等）: `JP[A-Za-z0-9]+`・科研費パターン（`KAKENHI_RE`）・AMEDパターン（`AMED_RE`）に一致する文字列を抽出する
+    -   日本語等のマルチバイト文字を含む行は (A) に該当しないため (B)/(C) の判定へ回し、`...「タイトル」JPMJMI22I2` のような行から課題番号のみを正しく抽出する（[issue #149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）
+
+-   **検索結果の外部リンクのタブ表示**（Chrome拡張版、[issue #150](https://github.com/tzhaya/jc-import-file-maker/issues/150)）:
+    -   助成情報検索の結果に表示される外部リンク（`http(s)://` で始まる `<a>`）をクリックした際、サイドパネル内で遷移せず新しいタブで開く
+    -   サイドパネルでは `target="_blank"` のリンクをクリックするとパネルが既定ページ（`panel.html`）にリセットされてしまうため、クリックを `document` レベルで委譲補足し `chrome.tabs.create()` で開く
+    -   `chrome` が未定義のスタンドアロン版では本ハンドラを登録せず、`target="_blank"` の既定動作に委ねる
+
 -   **OpenSearch検索機能**（Chrome拡張版のみ、[issue #72](https://github.com/tzhaya/jc-import-file-maker/issues/72)）:
     -   サイドパネルに「OpenSearch検索」タブを追加し、JAIRO Cloud機関リポジトリの OpenSearch API を用いた文献検索を提供する
     -   検索条件: リポジトリURL・タイトル・内容記述・資源タイプ（全47種）
