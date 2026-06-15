@@ -173,7 +173,17 @@ APIからのデータ取得・マッピング・編集UI・プレビュー・TSV
 - 検索結果はタイトル・著者・書誌情報・ファイルリンクとともに一覧表示され、クリックで詳細フィールドを展開できます。
 - 設定ページでデフォルトのリポジトリURLを登録しておくと、タブを開いた際に自動入力されます。
 
-### API Key の設定
+### 設定（APIキー・初期値）
+
+APIキーと、TSV出力時の管理（システム）フィールド・リポジトリURLの初期値は、いずれも **Chrome拡張機能版は設定ページ**、**通常ブラウザ版は `shared.js` の `CONFIG` 定数** で設定します。APIキー・初期値ともすべて任意です（未設定でも動作します）。
+
+設定できる初期値（任意）:
+
+| 項目 | 説明 |
+|------|------|
+| `.IndexID[0]`（登録先インデックスID） | アイテムの登録先インデックスID（例: `1697430475875`） |
+| `.POS_INDEX[0]`（インデックス名パス） | 人間可読のインデックス名パス（例: `学術雑誌論文`） |
+| リポジトリURL | TSV出力時にスキーマURLの `https://localhost/` を置換するリポジトリのURL |
 
 #### Chrome拡張機能版（推奨）
 
@@ -187,9 +197,11 @@ Chrome拡張機能版では設定ページでAPIキーをまとめて設定で�
 
 CORS非対応のAPI（KAKEN XML API・JaLC API・Open Policy Finder API）が Chrome拡張機能のService Worker経由で利用可能になります。
 
+管理フィールド・リポジトリURLの初期値も同じ設定ページで指定できます。`.IndexID[0]` と `.POS_INDEX[0]` は「TSV 管理フィールドの初期値」で設定し、リポジトリURLは「JAIRO Cloud OpenSearch」の「デフォルトリポジトリ URL」と共用されます（OpenSearch検索タブとTSV生成ツールの両方に反映されます）。
+
 #### 通常ブラウザ版
 
-`shared.js` をテキストエディタで開き、`CONFIG` 定数にAPIキーを設定してください。この設定は `make_jc_importer.html` と `funder_lookup.html` の両方に反映されます。
+`shared.js` をテキストエディタで開き、`CONFIG` 定数にAPIキーと初期値をまとめて設定してください。この設定は `make_jc_importer.html` と `funder_lookup.html` の両方に反映されます。初期値（`DEFAULT_*`）は空欄のままでも動作します。
 
 ```js
 const CONFIG = {
@@ -203,8 +215,22 @@ const CONFIG = {
 
     // Open Policy Finder APIキー（任意・Chrome拡張機能版のみ有効）
     OPF_API_KEY: "YOUR_OPF_API_KEY",
+
+    // ===== システム（管理フィールド）・リポジトリURLの初期値（任意） =====
+    // よく使う登録先インデックスやリポジトリURLを設定すると、フォームに初期値として入力されます。
+
+    // リポジトリURL（repo-host）。TSVのスキーマURL置換に使用
+    DEFAULT_REPOSITORY_URL: "",
+
+    // .IndexID[0]（.metadata.path[0]）アイテムの登録先インデックスID  例: 1697430475875
+    DEFAULT_INDEX_ID: "",
+
+    // .POS_INDEX[0]（.pos_index[0]）インデックス名パス（人間可読）  例: 学術雑誌論文
+    DEFAULT_POS_INDEX: "",
 };
 ```
+
+`DEFAULT_*` に設定した値は、「データ取得」後や「空値で全フィールド表示」時に管理フィールドの初期値として入力され、リポジトリURLは入力欄が空のときに自動入力されます。
 
 #### OpenAlex API Key（推奨）
 
@@ -222,44 +248,6 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 - JSPS（日本学術振興会）が助成機関に含まれる場合に、CiNii Research Projects API を通じて科研費の課題名（日英）とKAKEN課題ページURLを自動取得
 - ISSNをもとにCiNii Research OpenSearch APIからNCID（NACSIS-CAT書誌ID）を自動取得
-
-### 管理フィールド・リポジトリURLの初期値設定（任意）
-
-同じリポジトリへ繰り返しインポートする場合、TSVの管理（システム）フィールドの初期値を事前に設定しておくと、毎回の入力を省けます。設定できる項目は以下の3つです。
-
-| 項目 | 説明 |
-|------|------|
-| `.IndexID[0]`（登録先インデックスID） | アイテムの登録先インデックスID（例: `1697430475875`） |
-| `.POS_INDEX[0]`（インデックス名パス） | 人間可読のインデックス名パス（例: `学術雑誌論文`） |
-| リポジトリURL | TSV出力時にスキーマURLの `https://localhost/` を置換するリポジトリのURL |
-
-#### Chrome拡張機能版
-
-設定ページ（`chrome://extensions` → 詳細 → 拡張機能のオプション）の「TSV 管理フィールドの初期値」で `.IndexID[0]` と `.POS_INDEX[0]` を設定できます。リポジトリURLは「JAIRO Cloud OpenSearch」の「デフォルトリポジトリ URL」と共用されます（OpenSearch検索タブとTSV生成ツールの両方に反映されます）。
-
-#### 通常ブラウザ版
-
-`shared.js` をテキストエディタで開き、`CONFIG` 定数の以下の項目を設定してください（空欄のままでも動作します）。
-
-```js
-const CONFIG = {
-    // ... APIキーの設定 ...
-
-    // ===== システム（管理フィールド）・リポジトリURLの初期値（任意） =====
-    // よく使う登録先インデックスやリポジトリURLを設定すると、フォームに初期値として入力されます。
-
-    // リポジトリURL（repo-host）。TSVのスキーマURL置換に使用
-    DEFAULT_REPOSITORY_URL: "",
-
-    // .IndexID[0]（.metadata.path[0]）アイテムの登録先インデックスID  例: 1697430475875
-    DEFAULT_INDEX_ID: "",
-
-    // .POS_INDEX[0]（.pos_index[0]）インデックス名パス（人間可読）  例: 学術雑誌論文
-    DEFAULT_POS_INDEX: "",
-};
-```
-
-設定した値は、「データ取得」後や「空値で全フィールド表示」時に管理フィールドの初期値として入力され、リポジトリURLは入力欄が空のときに自動入力されます。
 
 ## ディレクトリ構成
 
