@@ -103,7 +103,22 @@
     <div class="field">
       <label for="default-repo-url">デフォルトリポジトリ URL</label>
       <input type="text" id="default-repo-url" placeholder="https://example.repo.nii.ac.jp/">
-      <p class="hint">OpenSearch検索タブを開いたときに自動入力されるリポジトリのURLを設定します。</p>
+      <p class="hint">OpenSearch検索タブを開いたときに自動入力されるリポジトリのURLを設定します。
+        TSV生成ツールの「リポジトリURL」初期値としても共用されます。</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>TSV 管理フィールドの初期値</h2>
+    <div class="field">
+      <label for="default-index-id">.IndexID[0]（登録先インデックスID）</label>
+      <input type="text" id="default-index-id" placeholder="例: 1697430475875">
+      <p class="hint">TSV生成ツールでアイテムの登録先インデックスIDの初期値として入力されます。</p>
+    </div>
+    <div class="field">
+      <label for="default-pos-index">.POS_INDEX[0]（インデックス名パス）</label>
+      <input type="text" id="default-pos-index" placeholder="例: 学術雑誌論文">
+      <p class="hint">インデックス名パス（人間可読）の初期値として入力されます。</p>
     </div>
   </div>
 

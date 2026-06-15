@@ -1,6 +1,6 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-11（助成情報検索ツールのバグ修正 #149/#150）
+最終更新: 2026-06-15（管理フィールド初期値の定義 #148、ページからのDOI取得をJSON-LD対応に拡張 #159）
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
@@ -16,6 +16,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.11.0 | 2026-06-15 | #148: TSV管理フィールド（`.IndexID[0]` / `.POS_INDEX[0]`）とリポジトリURLの初期値を `shared.js` の `CONFIG`（スタンドアロン版）・`options.html`（Chrome拡張版）で定義可能に。リポジトリURLはChrome拡張ではOpenSearch検索の既定値（`defaultRepositoryUrl`）と共用。`loadConfig()` で `defaultIndexId` / `defaultPosIndex` / `defaultRepositoryUrl` を読込、`renderSystemFields()` / `mapToItemType()` / `mapToItemTypeJaLC()` / `buildEmptyMetadata()` の既定値と `init()` での `repo-host` プリフィルに反映。#159: ページからのDOI取得をJSON-LD対応に拡張（metaタグで取得できない場合、schema.org `ScholarlyArticle` の `identifier` をフォールバック採用、`@graph` 入れ子・`PropertyValue` 形式に対応） |
 | 1.10.1 | 2026-06-11 | #149: 助成情報検索ツールでマルチバイト文字列を含む行から課題番号を抽出できないバグを修正（Case A の判定を「空白なし」→「課題番号として妥当な文字のみ」に変更、区切り文字に全角「、，；」を追加）。#150: 検索結果の外部リンククリックでサイドパネルが既定ページにリセットされる不具合を `chrome.tabs.create` で修正 |
 | 1.10.0 | 2026-06-10 | #73: 電子ジャーナルページのmetaタグからDOIを自動取得するボタンを追加（DOIインポートタブ）。助成情報検索タブにDOI入力欄を新設し、Crossref/OpenAlex経由で課題番号を自動取得する機能を追加 |
 | 1.9.5 | 2026-06-06 | #142: `groupTsvColumns()` 内 `.metadata.path[0]`/`.metadata.pubdate` が `__other__` に分類されTSVスキップされていたバグを修正（`__system__` に変更）、#143: 管理フィールドのIndexID/POS_INDEX候補値ヒントの入れ違いを修正 |

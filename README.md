@@ -83,8 +83,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-06-11 | ver. 1.10.1 | 助成情報検索でマルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとサイドパネルがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
-| インポート用TSV生成ツール | 2026-06-06 | — | IndexID・公開日がTSVに出力されないバグ修正（[#142](https://github.com/tzhaya/jc-import-file-maker/issues/142)）、管理フィールドのIndexID/POS_INDEX候補値ヒント誤りを修正（[#143](https://github.com/tzhaya/jc-import-file-maker/issues/143)） |
+| Chrome拡張機能版 | 2026-06-15 | ver. 1.11.0 | TSV管理フィールド（`.IndexID[0]` / `.POS_INDEX[0]`）とリポジトリURLの初期値を設定画面で定義可能に（[#148](https://github.com/tzhaya/jc-import-file-maker/issues/148)）。ページからのDOI自動取得をJSON-LD（schema.org `ScholarlyArticle`）対応に拡張（[#159](https://github.com/tzhaya/jc-import-file-maker/issues/159)） |
+| インポート用TSV生成ツール | 2026-06-15 | — | TSV管理フィールド（`.IndexID[0]` / `.POS_INDEX[0]`）とリポジトリURLの初期値を `shared.js` で定義可能に（[#148](https://github.com/tzhaya/jc-import-file-maker/issues/148)） |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 
 ## 導入方法
@@ -223,6 +223,44 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 - JSPS（日本学術振興会）が助成機関に含まれる場合に、CiNii Research Projects API を通じて科研費の課題名（日英）とKAKEN課題ページURLを自動取得
 - ISSNをもとにCiNii Research OpenSearch APIからNCID（NACSIS-CAT書誌ID）を自動取得
 
+### 管理フィールド・リポジトリURLの初期値設定（任意）
+
+同じリポジトリへ繰り返しインポートする場合、TSVの管理（システム）フィールドの初期値を事前に設定しておくと、毎回の入力を省けます。設定できる項目は以下の3つです。
+
+| 項目 | 説明 |
+|------|------|
+| `.IndexID[0]`（登録先インデックスID） | アイテムの登録先インデックスID（例: `1697430475875`） |
+| `.POS_INDEX[0]`（インデックス名パス） | 人間可読のインデックス名パス（例: `学術雑誌論文`） |
+| リポジトリURL | TSV出力時にスキーマURLの `https://localhost/` を置換するリポジトリのURL |
+
+#### Chrome拡張機能版
+
+設定ページ（`chrome://extensions` → 詳細 → 拡張機能のオプション）の「TSV 管理フィールドの初期値」で `.IndexID[0]` と `.POS_INDEX[0]` を設定できます。リポジトリURLは「JAIRO Cloud OpenSearch」の「デフォルトリポジトリ URL」と共用されます（OpenSearch検索タブとTSV生成ツールの両方に反映されます）。
+
+#### 通常ブラウザ版
+
+`shared.js` をテキストエディタで開き、`CONFIG` 定数の以下の項目を設定してください（空欄のままでも動作します）。
+
+```js
+const CONFIG = {
+    // ... APIキーの設定 ...
+
+    // ===== システム（管理フィールド）・リポジトリURLの初期値（任意） =====
+    // よく使う登録先インデックスやリポジトリURLを設定すると、フォームに初期値として入力されます。
+
+    // リポジトリURL（repo-host）。TSVのスキーマURL置換に使用
+    DEFAULT_REPOSITORY_URL: "",
+
+    // .IndexID[0]（.metadata.path[0]）アイテムの登録先インデックスID  例: 1697430475875
+    DEFAULT_INDEX_ID: "",
+
+    // .POS_INDEX[0]（.pos_index[0]）インデックス名パス（人間可読）  例: 学術雑誌論文
+    DEFAULT_POS_INDEX: "",
+};
+```
+
+設定した値は、「データ取得」後や「空値で全フィールド表示」時に管理フィールドの初期値として入力され、リポジトリURLは入力欄が空のときに自動入力されます。
+
 ## ディレクトリ構成
 
 ```
@@ -289,7 +327,8 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
-| 2026-06-11 | 助成情報検索ツールの課題番号抽出を修正：マルチバイト文字列（日本語）を含む行を1つの課題番号として誤取り込みするバグを修正し、課題番号として妥当な文字のみの行を判定対象とするよう変更。区切り文字に全角「、，；」を追加（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとサイドパネルが既定ページにリセットされる不具合を修正（`chrome.tabs.create` で新しいタブを開く、[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)）。manifest version `1.10.0` → `1.10.1` |
+| 2026-06-15 | TSV管理フィールドの初期値を設定可能に：`.IndexID[0]`（登録先インデックスID）・`.POS_INDEX[0]`（インデックス名パス）とリポジトリURLの初期値を、スタンドアロン版は `shared.js` の `CONFIG`、Chrome拡張版は設定画面（`options.html`）で定義できるよう対応。リポジトリURLはChrome拡張ではOpenSearch検索の既定値と共用（[#148](https://github.com/tzhaya/jc-import-file-maker/issues/148)） |
+| 2026-06-15 | 電子ジャーナルページからのDOI自動取得（[#73](https://github.com/tzhaya/jc-import-file-maker/issues/73)）をJSON-LD対応に拡張：metaタグでDOIを取得できない場合、`<script type="application/ld+json">` 内の schema.org `ScholarlyArticle` の `identifier`（文字列／`PropertyValue` 形式、`@graph` 入れ子に対応）をフォールバックとして採用（[#159](https://github.com/tzhaya/jc-import-file-maker/issues/159)）。manifest version `1.10.1` → `1.11.0` |
 | 2026-06-10 | ドキュメント整合性修正：README・使い方ガイドを現在の実装に同期（#73新機能の反映、`shared.js`/`tsv_headers_template.js` 依存の明記、TSV出力ファイル名の記述修正、機能比較表・ディレクトリ構成の更新） |
 | 2026-06-10 | 電子ジャーナルページのmetaタグ（`citation_doi`, `prism.doi`, `DOI`, `dc.identifier`）からDOIを自動取得するボタンをDOIインポートタブに追加。助成情報検索タブにDOI入力欄を新設し、Crossref/OpenAlex APIから課題番号を自動抽出してテキストエリアへ流し込む機能を追加（[#73](https://github.com/tzhaya/jc-import-file-maker/issues/73)）。manifest version `1.9.5` → `1.10.0` |
 | 2026-06-06 | IndexID・公開日がTSVに出力されないバグを修正：`groupTsvColumns()` 内 `.metadata.path[0]` / `.metadata.pubdate` が `__other__` に分類されTSVスキップされていた問題を `__system__` に変更して解消（[#142](https://github.com/tzhaya/jc-import-file-maker/issues/142)）。管理フィールドのIndexID/POS_INDEX候補値ヒント誤り（入れ違い）を修正（[#143](https://github.com/tzhaya/jc-import-file-maker/issues/143)）。manifest version `1.9.4` → `1.9.5` |

@@ -216,7 +216,7 @@ make_jc_importer.html
     -   カスタムテンプレート完全パース（Phase 2-B）: ユーザが5行ヘッダー（ItemType行・キー行・ラベル行・System行・制約行）を貼り付けた場合、`TSV_HEADERS_TEMPLATE` を丸ごと上書きしてTSV出力に反映する。不足行はデフォルトから補完。`parseCustomTemplate()` がパースを担当し、`groupTsvColumns()` / `buildTsvColumnDefs()` に template 引数として渡す
     -   ItemType行の自動設定（Phase 2-D）: TSV 1行目のアイテムタイプ名・スキーマURLをデフォルト値（「デフォルトアイテムタイプ（フル）(30002)」/ `https://localhost/items/jsonschema/30002`）で自動設定。カスタムテンプレート使用時はその row0 をそのまま使用
     -   複数DOI一括TSV出力（Phase 2-C）: DOIを連続取得して `allMetadata[]` 配列に蓄積し、ヘッダー5行 + データN行の一括TSVを出力する。列数は全metadataの配列フィールド最大長で展開（`buildMaxSizeMetadata()`）。バッチ管理パネルで蓄積件数表示・個別削除・全クリア・アイテム切替が可能
-    -   リポジトリURL入力: `#repo-host` 入力欄でスキーマURLの `https://localhost/` を実際のリポジトリホスト名に置換
+    -   リポジトリURL入力: `#repo-host` 入力欄でスキーマURLの `https://localhost/` を実際のリポジトリホスト名に置換。初期値は設定で定義可能（[issue #148](https://github.com/tzhaya/jc-import-file-maker/issues/148)、後述「管理フィールド・リポジトリURLの初期値設定」）
     -   ファイル名: 単一DOIは `{DOI}.tsv`、複数DOIは `import_YYYYMMDD_HHMMSS.tsv`
     -   空フィールド省略: 値が存在しないフィールドの列群はTSVに出力しない
     -   除外フィールド: apc5, heading36, dissertation30〜degree33, item_1698624001〜010 は常に除外
@@ -226,6 +226,7 @@ make_jc_importer.html
     -   DOIインポートタブに「ページからDOI取得」ボタンを追加し、現在表示中のページのmetaタグからDOIを自動検出してDOI入力欄にセットする
     -   metaタグの優先順位: `meta[name="citation_doi"]` → `meta[name="prism.doi"]` → `meta[name="DOI"]` → `meta[name="dc.identifier"]`（DOI形式のみ）。`name` 属性は大文字小文字を区別しない（CSSセレクタの `i` フラグ）
     -   `dc.identifier` は `doi:` / `https://doi.org/` / `https://dx.doi.org/` / 素の `10.xxxx/` で始まる場合のみ採用（ISBN・ISSN等との混在対策）
+    -   JSON-LDフォールバック（[issue #159](https://github.com/tzhaya/jc-import-file-maker/issues/159)）: 上記metaタグでDOIを取得できない場合、`<script type="application/ld+json">` 内の `@context` が schema.org（`http(s)://schema.org`）かつ `@type` に `ScholarlyArticle` を含むノードの `identifier` をDOIとして採用する。`@graph` 入れ子・トップレベル配列を平坦化して走査し、`identifier` は文字列・schema.org `PropertyValue`（`{ value: ... }`）形式・それらの配列に対応。採用は `dc.identifier` と同じDOI形式ガードを通過した値のみ（Taylor & Francis 等、metaタグにDOIを持たないページへの対応）
     -   取得したDOIは `normalizeDoi()` で正規化（`https://(dx.)doi.org/` プレフィックス・`doi:` プレフィックスを除去）し、`isValidDoi()`（`^10.\d{4,9}/\S+$`・256文字以内）で形式検証してから入力欄にセット。検証に失敗した場合はエラーメッセージを表示
     -   `chrome.scripting.executeScript()` を使用。`chrome://` 等の特権ページでは実行不可のためtry-catchでエラーを吸収し、`console.warn()` でログ出力
     -   権限: `scripting` + `optional_host_permissions`（`http(s)://*/*`）。`activeTab` はサイドパネル内ボタンからの遷移後に失効するため使用しない。ボタン押下時の**最初の `await`** で `chrome.permissions.request({ origins: ['https://*/*','http://*/*'] })` を呼び、ウェブサイトへのアクセス許可を1回だけ要求する（初回のみ許可ダイアログ、許可後は再確認不要・全サイトで動作）。この設計により、(1) ユーザージェスチャーが失効しない、(2) 権限付与後に `chrome.tabs.query()` が `tab.url` を返すようになる（未付与時は `tabs`/host 権限がないため `tab.url` が `undefined` になる仕様）の2点を同時に解決する
@@ -261,6 +262,12 @@ make_jc_importer.html
     -   ページング: 1ページ20件固定、前へ/次へボタンで移動
     -   Service Worker経由のfetchラッパー（CORS回避）を使用
     -   `options.html` にデフォルトリポジトリURL設定欄を追加。`chrome.storage.local` の `defaultRepositoryUrl` に保存し、タブ開放時に自動入力する
+
+-   **管理フィールド・リポジトリURLの初期値設定**（[issue #148](https://github.com/tzhaya/jc-import-file-maker/issues/148)）:
+    -   TSV管理（システム）フィールド `.IndexID[0]`（`.metadata.path[0]`、登録先インデックスID）・`.POS_INDEX[0]`（`.pos_index[0]`、インデックス名パス）、およびリポジトリURL（`#repo-host`）の初期値を定義できる
+    -   スタンドアロン版: `shared.js` の `CONFIG`（`DEFAULT_INDEX_ID` / `DEFAULT_POS_INDEX` / `DEFAULT_REPOSITORY_URL`）を編集して定義
+    -   Chrome拡張版: `options.html` の設定画面で定義し `chrome.storage.local`（`defaultIndexId` / `defaultPosIndex`）に保存。リポジトリURLは OpenSearch 検索のデフォルト値（`defaultRepositoryUrl`）と共用する
+    -   `loadConfig()` が `chrome.storage.local` から `CONFIG` へ反映し、`renderSystemFields()`（管理フィールドの初期表示値）・`buildEmptyMetadata()` / `mapToItemType()` / `mapToItemTypeJaLC()`（メタデータ初期値）・`init()`（`#repo-host` のプリフィル、未入力時のみ）に適用する
 
 -   **更新チェック機能**:
     -   ページ読み込み時に GitHub API で `make_jc_importer.html` の最新コミット日を取得し、HTML内の最終更新日（`LOCAL_VERSION`）と比較する
