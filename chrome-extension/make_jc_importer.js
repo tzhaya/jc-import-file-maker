@@ -684,8 +684,8 @@ function renderSystemFields(systemData) {
   const sysRows = [
     { label: '.id',                  hint: '新規登録時は空欄', key: 'sys_id',      type: 'text',   default: '' },
     { label: '.uri',                 hint: '新規登録時は空欄', key: 'sys_uri',     type: 'text',   default: '' },
-    { label: '.IndexID[0]',          hint: '1697430475875',     key: 'sys_path',  type: 'text',   default: '' },
-    { label: '.POS_INDEX[0]',        hint: '学術雑誌論文',          key: 'sys_pos', type: 'text',   default: '' },
+    { label: '.IndexID[0]',          hint: '1697430475875',     key: 'sys_path',  type: 'text',   default: CONFIG.DEFAULT_INDEX_ID || '' },
+    { label: '.POS_INDEX[0]',        hint: '学術雑誌論文',          key: 'sys_pos', type: 'text',   default: CONFIG.DEFAULT_POS_INDEX || '' },
     { label: '.PUBLISH_STATUS',      hint: 'private / public', key: 'sys_status',  type: 'select', options: ['private','public'], default: 'private' },
     { label: '.FEEDBACK_MAIL[0]',    hint: '',                  key: 'sys_mail',   type: 'text',   default: '' },
     { label: '.RESEAECHMAP_LINKAGE', hint: '',                  key: 'sys_researchmap', type: 'text', default: '' },
@@ -771,6 +771,8 @@ async function getDoiFromCurrentTab() {
     const results = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => {
+        // func はページコンテキストへシリアライズされ外部スコープを参照できないため、ロジックを自己完結させる
+        const DOI_GUARD = /^(doi:|https?:\/\/(dx\.)?doi\.org\/|10\.\d{4,9}\/)/i;
         const selectors = [
           'meta[name="citation_doi" i]',
           'meta[name="prism.doi" i]',
@@ -782,14 +784,62 @@ async function getDoiFromCurrentTab() {
         }
         // dc.identifier はDOI形式（doi: / doi.org / 素の 10.xxxx）のみ採用
         const dcId = document.querySelector('meta[name="dc.identifier" i]');
-        if (dcId?.content && /^(doi:|https?:\/\/(dx\.)?doi\.org\/|10\.\d{4,9}\/)/i.test(dcId.content)) {
+        if (dcId?.content && DOI_GUARD.test(dcId.content)) {
           return dcId.content.trim();
+        }
+        // JSON-LD（schema.org ScholarlyArticle）の identifier をフォールバックとして採用
+        const isSchemaOrg = (ctx) => {
+          if (!ctx) return false;
+          const vals = Array.isArray(ctx) ? ctx : [ctx];
+          return vals.some(v => typeof v === 'string' && /^https?:\/\/schema\.org\/?$/i.test(v.trim()));
+        };
+        const hasType = (t, target) => {
+          const arr = Array.isArray(t) ? t : [t];
+          return arr.some(x => typeof x === 'string' && x.toLowerCase() === target.toLowerCase());
+        };
+        // identifier（文字列 / PropertyValue / それらの配列）から最初のDOI文字列を取り出す
+        const extractIdentifier = (idf) => {
+          const items = Array.isArray(idf) ? idf : [idf];
+          for (const it of items) {
+            if (typeof it === 'string' && DOI_GUARD.test(it.trim())) return it.trim();
+            if (it && typeof it === 'object') {
+              const v = it.value ?? it['@value'];
+              if (typeof v === 'string' && DOI_GUARD.test(v.trim())) return v.trim();
+            }
+          }
+          return null;
+        };
+        // @graph 入れ子も平坦化して全ノードを収集
+        const collect = (node, out) => {
+          if (!node) return;
+          if (Array.isArray(node)) { node.forEach(n => collect(n, out)); return; }
+          if (typeof node === 'object') {
+            out.push(node);
+            if (node['@graph']) collect(node['@graph'], out);
+          }
+        };
+        const blocks = document.querySelectorAll('script[type="application/ld+json" i]');
+        for (const block of blocks) {
+          let data;
+          try { data = JSON.parse(block.textContent); } catch { continue; }
+          const roots = Array.isArray(data) ? data : [data];
+          for (const root of roots) {
+            if (!root || typeof root !== 'object' || !isSchemaOrg(root['@context'])) continue;
+            const nodes = [];
+            collect(root, nodes);
+            for (const n of nodes) {
+              if (hasType(n['@type'], 'ScholarlyArticle')) {
+                const found = extractIdentifier(n.identifier);
+                if (found) return found;
+              }
+            }
+          }
         }
         return null;
       },
     });
     const raw = results?.[0]?.result ?? null;
-    if (!raw) return { error: 'このページからDOIを取得できませんでした（DOIのmetaタグが見つかりません）。' };
+    if (!raw) return { error: 'このページからDOIを取得できませんでした（DOIのmetaタグ・JSON-LDが見つかりません）。' };
     const doi = normalizeDoi(raw);
     if (!isValidDoi(doi)) return { error: 'このページのDOIを正しく認識できませんでした。' };
     return { doi };
@@ -2062,8 +2112,8 @@ async function mapToItemType(crJson, oaJson, rorMap) {
     system: {
       id:             '',
       uri:            '',
-      path:           '',
-      pos_index:      '',
+      path:           CONFIG.DEFAULT_INDEX_ID || '',
+      pos_index:      CONFIG.DEFAULT_POS_INDEX || '',
       publish_status: 'private',
       feedback_mail:  '',
       researchmap_linkage: '',
@@ -2528,7 +2578,7 @@ async function mapToItemTypeJaLC(jalcJson) {
   // ===== メタデータオブジェクト =====
   const metadata = {
     system: {
-      id: '', uri: '', path: '', pos_index: '',
+      id: '', uri: '', path: CONFIG.DEFAULT_INDEX_ID || '', pos_index: CONFIG.DEFAULT_POS_INDEX || '',
       publish_status: 'private', feedback_mail: '', researchmap_linkage: '',
       cnri: '', doi_ra: '', doi: '',
       edit_mode: 'Keep', pubdate: todayStr(),
@@ -4724,8 +4774,8 @@ function buildMaxSizeMetadata(metadataArray) {
 function buildEmptyMetadata() {
   return {
     system: {
-      id: '', uri: '', path: '',
-      pos_index: '',
+      id: '', uri: '', path: CONFIG.DEFAULT_INDEX_ID || '',
+      pos_index: CONFIG.DEFAULT_POS_INDEX || '',
       publish_status: 'private', feedback_mail: '', researchmap_linkage: '', cnri: '',
       doi_ra: '', doi: '', edit_mode: 'Keep', pubdate: todayStr(),
     },
@@ -5989,6 +6039,12 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
     document.getElementById('cinii-apikey-warning').style.display = 'block';
   }
 
+  // リポジトリURL初期値（未入力時のみ。Chrome拡張は OpenSearch の既定値と共用）
+  const repoHostInput = document.getElementById('repo-host');
+  if (repoHostInput && !repoHostInput.value && CONFIG.DEFAULT_REPOSITORY_URL) {
+    repoHostInput.value = CONFIG.DEFAULT_REPOSITORY_URL;
+  }
+
   // ボタンイベント登録（MV3 CSP対応: inline onclick は使用不可）
   document.getElementById('get-doi-from-page').addEventListener('click', async (e) => {
     const btn = e.currentTarget;
@@ -6039,7 +6095,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-10';
+  const LOCAL_VERSION = '2026-06-15';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

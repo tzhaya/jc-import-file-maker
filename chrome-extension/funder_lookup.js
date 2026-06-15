@@ -42,6 +42,8 @@ async function getDoiFromCurrentTab() {
     const results = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => {
+        // func はページコンテキストへシリアライズされ外部スコープを参照できないため、ロジックを自己完結させる
+        const DOI_GUARD = /^(doi:|https?:\/\/(dx\.)?doi\.org\/|10\.\d{4,9}\/)/i;
         const selectors = [
           'meta[name="citation_doi" i]',
           'meta[name="prism.doi" i]',
@@ -53,14 +55,62 @@ async function getDoiFromCurrentTab() {
         }
         // dc.identifier はDOI形式（doi: / doi.org / 素の 10.xxxx）のみ採用
         const dcId = document.querySelector('meta[name="dc.identifier" i]');
-        if (dcId?.content && /^(doi:|https?:\/\/(dx\.)?doi\.org\/|10\.\d{4,9}\/)/i.test(dcId.content)) {
+        if (dcId?.content && DOI_GUARD.test(dcId.content)) {
           return dcId.content.trim();
+        }
+        // JSON-LD（schema.org ScholarlyArticle）の identifier をフォールバックとして採用
+        const isSchemaOrg = (ctx) => {
+          if (!ctx) return false;
+          const vals = Array.isArray(ctx) ? ctx : [ctx];
+          return vals.some(v => typeof v === 'string' && /^https?:\/\/schema\.org\/?$/i.test(v.trim()));
+        };
+        const hasType = (t, target) => {
+          const arr = Array.isArray(t) ? t : [t];
+          return arr.some(x => typeof x === 'string' && x.toLowerCase() === target.toLowerCase());
+        };
+        // identifier（文字列 / PropertyValue / それらの配列）から最初のDOI文字列を取り出す
+        const extractIdentifier = (idf) => {
+          const items = Array.isArray(idf) ? idf : [idf];
+          for (const it of items) {
+            if (typeof it === 'string' && DOI_GUARD.test(it.trim())) return it.trim();
+            if (it && typeof it === 'object') {
+              const v = it.value ?? it['@value'];
+              if (typeof v === 'string' && DOI_GUARD.test(v.trim())) return v.trim();
+            }
+          }
+          return null;
+        };
+        // @graph 入れ子も平坦化して全ノードを収集
+        const collect = (node, out) => {
+          if (!node) return;
+          if (Array.isArray(node)) { node.forEach(n => collect(n, out)); return; }
+          if (typeof node === 'object') {
+            out.push(node);
+            if (node['@graph']) collect(node['@graph'], out);
+          }
+        };
+        const blocks = document.querySelectorAll('script[type="application/ld+json" i]');
+        for (const block of blocks) {
+          let data;
+          try { data = JSON.parse(block.textContent); } catch { continue; }
+          const roots = Array.isArray(data) ? data : [data];
+          for (const root of roots) {
+            if (!root || typeof root !== 'object' || !isSchemaOrg(root['@context'])) continue;
+            const nodes = [];
+            collect(root, nodes);
+            for (const n of nodes) {
+              if (hasType(n['@type'], 'ScholarlyArticle')) {
+                const found = extractIdentifier(n.identifier);
+                if (found) return found;
+              }
+            }
+          }
         }
         return null;
       },
     });
     const raw = results?.[0]?.result ?? null;
-    if (!raw) return { error: 'このページからDOIを取得できませんでした（DOIのmetaタグが見つかりません）。' };
+    if (!raw) return { error: 'このページからDOIを取得できませんでした（DOIのmetaタグ・JSON-LDが見つかりません）。' };
     const doi = normalizeDoi(raw);
     if (!isValidDoi(doi)) return { error: 'このページのDOIを正しく認識できませんでした。' };
     return { doi };
@@ -752,7 +802,7 @@ async function copyTsvToClipboard(btn) {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-11';
+  const LOCAL_VERSION = '2026-06-15';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;
