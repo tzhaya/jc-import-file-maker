@@ -560,7 +560,7 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
 **プログラム情報（JPCOAR 2.0 fundingStream / fundingStreamIdentifier）**（[issue #34](https://github.com/tzhaya/jc-import-file-maker/issues/34)）:
 - `subitem_funding_stream_identifiers`: プログラム情報識別子（単一オブジェクト）
   - `subitem_funding_stream_identifier`: 識別子値
-  - `subitem_funding_stream_identifier_type`: 識別子タイプ（`Crossref Funder` / `JGN_fundingStream`）
+  - `subitem_funding_stream_identifier_type`: 識別子タイプ（`Crossref Funder` / `JGN_fundingStream`）。選択肢の先頭は空項目（未設定）とし、識別子値が空のときは識別子タイプも空のままTSV出力する（既定値 `Crossref Funder` の誤出力を防止、[issue #161](https://github.com/tzhaya/jc-import-file-maker/issues/161)）
   - `subitem_funding_stream_identifier_type_uri`: 識別子タイプURI
 - `subitem_funding_streams[]`: プログラム情報（配列、複数言語対応）
   - `subitem_funding_stream`: プログラム情報テキスト

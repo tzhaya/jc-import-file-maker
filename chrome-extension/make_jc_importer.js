@@ -563,7 +563,8 @@ const TITLE_MAPS = {
   // 助成機関識別子タイプ
   subitem_funder_identifier_type: ['Crossref Funder','e-Rad_funder','ISNI','ROR','Other'],
   // プログラム情報識別子タイプ（JPCOAR 2.0）
-  subitem_funding_stream_identifier_type: ['Crossref Funder','JGN_fundingStream'],
+  // 先頭に空選択肢を置き、識別子本体が空のとき既定値が誤出力されるのを防ぐ（#161）
+  subitem_funding_stream_identifier_type: [{ name: '（未設定）', value: '' }, 'Crossref Funder', 'JGN_fundingStream'],
   // ファイル情報: アクセス
   file_accessrole: ['open_access','open_date','open_login','open_no'],
   // ファイル情報: 表示形式
@@ -6095,7 +6096,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-15';
+  const LOCAL_VERSION = '2026-06-19';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
