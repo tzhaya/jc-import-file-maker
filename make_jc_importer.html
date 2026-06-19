@@ -490,7 +490,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-06-15 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-06-19 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -502,6 +502,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-19</td>
+        <td style="padding:2px 0;">助成情報「プログラム情報識別子タイプ」が、識別子本体が空欄のときに既定値（Crossref Funder）を誤ってTSV出力する不具合を修正（#161）（Chrome拡張 ver. 1.11.1 と同期）</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-15</td>
         <td style="padding:2px 0;">TSV管理フィールド（.IndexID[0]/.POS_INDEX[0]）とリポジトリURLの初期値を shared.js／設定画面で定義可能に（#148）。電子ジャーナルページからのDOI自動取得をJSON-LD（schema.org）対応に拡張（#159、Chrome拡張版）（Chrome拡張 ver. 1.11.0 と同期）</td>
@@ -517,10 +521,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-05-14</td>
         <td style="padding:2px 0;">Chrome拡張 ver. 1.9.3：ストア公開名と一致するようツール名を「JAIRO Cloud インポート支援ツール」に統一（#138, #139）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-05-13</td>
-        <td style="padding:2px 0;">Chrome拡張 ver. 1.9.2：Chromeウェブストア登録準備 - 拡張機能アイコン追加 + プライバシーポリシー策定（#112）</td>
       </tr>
     </tbody>
   </table>
@@ -1215,7 +1215,8 @@ const TITLE_MAPS = {
   // 助成機関識別子タイプ
   subitem_funder_identifier_type: ['Crossref Funder','e-Rad_funder','ISNI','ROR','Other'],
   // プログラム情報識別子タイプ（JPCOAR 2.0）
-  subitem_funding_stream_identifier_type: ['Crossref Funder','JGN_fundingStream'],
+  // 先頭に空選択肢を置き、識別子本体が空のとき既定値が誤出力されるのを防ぐ（#161）
+  subitem_funding_stream_identifier_type: [{ name: '（未設定）', value: '' }, 'Crossref Funder', 'JGN_fundingStream'],
   // ファイル情報: アクセス
   file_accessrole: ['open_access','open_date','open_login','open_no'],
   // ファイル情報: 表示形式
@@ -6628,7 +6629,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-15';
+  const LOCAL_VERSION = '2026-06-19';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

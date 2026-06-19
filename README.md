@@ -83,8 +83,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-06-15 | ver. 1.11.0 | TSV管理フィールド（`.IndexID[0]` / `.POS_INDEX[0]`）とリポジトリURLの初期値を設定画面で定義可能に（[#148](https://github.com/tzhaya/jc-import-file-maker/issues/148)）。ページからのDOI自動取得をJSON-LD（schema.org `ScholarlyArticle`）対応に拡張（[#159](https://github.com/tzhaya/jc-import-file-maker/issues/159)） |
-| インポート用TSV生成ツール | 2026-06-15 | — | TSV管理フィールド（`.IndexID[0]` / `.POS_INDEX[0]`）とリポジトリURLの初期値を `shared.js` で定義可能に（[#148](https://github.com/tzhaya/jc-import-file-maker/issues/148)） |
+| Chrome拡張機能版 | 2026-06-19 | ver. 1.11.1 | 助成情報「プログラム情報識別子タイプ」が、識別子本体が空欄のときに既定値（`Crossref Funder`）を誤ってTSV出力する不具合を修正（[#161](https://github.com/tzhaya/jc-import-file-maker/issues/161)） |
+| インポート用TSV生成ツール | 2026-06-19 | — | 助成情報「プログラム情報識別子タイプ」が、識別子本体が空欄のときに既定値（`Crossref Funder`）を誤ってTSV出力する不具合を修正（[#161](https://github.com/tzhaya/jc-import-file-maker/issues/161)） |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 
 ## 導入方法
@@ -315,6 +315,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-19 | 助成情報の「プログラム情報識別子タイプ」（`subitem_funding_stream_identifier_type`）の選択肢先頭に空の項目を追加し、識別子本体が空欄のときに既定値 `Crossref Funder` が自動選択されてTSVに誤出力される不具合を修正（[#161](https://github.com/tzhaya/jc-import-file-maker/issues/161)）。manifest version `1.11.0` → `1.11.1` |
 | 2026-06-15 | TSV管理フィールドの初期値を設定可能に：`.IndexID[0]`（登録先インデックスID）・`.POS_INDEX[0]`（インデックス名パス）とリポジトリURLの初期値を、スタンドアロン版は `shared.js` の `CONFIG`、Chrome拡張版は設定画面（`options.html`）で定義できるよう対応。リポジトリURLはChrome拡張ではOpenSearch検索の既定値と共用（[#148](https://github.com/tzhaya/jc-import-file-maker/issues/148)） |
 | 2026-06-15 | 電子ジャーナルページからのDOI自動取得（[#73](https://github.com/tzhaya/jc-import-file-maker/issues/73)）をJSON-LD対応に拡張：metaタグでDOIを取得できない場合、`<script type="application/ld+json">` 内の schema.org `ScholarlyArticle` の `identifier`（文字列／`PropertyValue` 形式、`@graph` 入れ子に対応）をフォールバックとして採用（[#159](https://github.com/tzhaya/jc-import-file-maker/issues/159)）。manifest version `1.10.1` → `1.11.0` |
 | 2026-06-10 | ドキュメント整合性修正：README・使い方ガイドを現在の実装に同期（#73新機能の反映、`shared.js`/`tsv_headers_template.js` 依存の明記、TSV出力ファイル名の記述修正、機能比較表・ディレクトリ構成の更新） |
