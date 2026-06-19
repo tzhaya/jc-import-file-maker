@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAIRO Cloud インポート支援ツール</title>
+<meta name="description" content="DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、JAIRO Cloud へのインポート用TSVファイルを生成するツール。Chrome拡張機能版・通常ブラウザ版を提供。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="JAIRO Cloud インポート支援ツール">
+<meta property="og:description" content="DOIから書誌情報を取得し、JAIRO Cloud インポート用TSVファイルを生成するツール。">
+<meta property="og:image" content="https://tzhaya.github.io/jc-import-file-maker/images/01_overview.png">
+<meta property="og:url" content="https://tzhaya.github.io/jc-import-file-maker/">
+<link rel="icon" href="images/icon128.png">
+<style>
+  :root {
+    --fg: #1f2328;
+    --muted: #59636e;
+    --line: #d1d9e0;
+    --bg: #ffffff;
+    --soft: #f6f8fa;
+    --accent: #2563a8;
+    --accent-dark: #1b4a7e;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans",
+                 "Hiragino Kaku Gothic ProN", "Noto Sans JP", Meiryo, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.75;
+    font-size: 16px;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+
+  /* Header */
+  header.site {
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+  header.site .wrap {
+    display: flex; align-items: center; gap: 12px;
+    padding-top: 16px; padding-bottom: 16px;
+  }
+  header.site img.logo { width: 36px; height: 36px; }
+  header.site .name { font-weight: 700; font-size: 1.05rem; }
+  header.site nav { margin-left: auto; display: flex; gap: 18px; font-size: .92rem; }
+  header.site nav a { color: var(--muted); }
+
+  /* Hero */
+  .hero { padding: 48px 0 36px; }
+  .hero h1 { font-size: 2rem; line-height: 1.4; margin: 0 0 12px; }
+  .hero p.lead { font-size: 1.1rem; color: var(--muted); margin: 0 0 24px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .btn {
+    display: inline-block; padding: 10px 20px; border-radius: 8px;
+    font-weight: 600; font-size: .98rem; border: 1px solid var(--line);
+  }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-dark); text-decoration: none; }
+  .btn.ghost { background: var(--bg); color: var(--fg); }
+  .btn.ghost:hover { background: var(--soft); text-decoration: none; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .badges img { height: 20px; }
+  .screenshot {
+    width: 100%; border: 1px solid var(--line); border-radius: 10px;
+    margin-top: 28px; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+
+  /* Sections */
+  section { padding: 36px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 1.5rem; margin: 0 0 16px; }
+  h3 { font-size: 1.1rem; margin: 24px 0 8px; }
+  .note { color: var(--muted); font-size: .95rem; }
+
+  ul.clean { padding-left: 1.2em; margin: 8px 0; }
+  ul.clean li { margin: 4px 0; }
+
+  /* Cards */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card {
+    border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px;
+    background: var(--soft);
+  }
+  .card h3 { margin-top: 0; }
+  .card .tag {
+    display: inline-block; font-size: .75rem; font-weight: 700;
+    color: var(--accent-dark); background: #e3eef9; border-radius: 999px;
+    padding: 2px 10px; margin-bottom: 8px;
+  }
+
+  /* Tool list */
+  .tool { display: flex; gap: 20px; align-items: flex-start; margin: 22px 0; }
+  .tool .txt { flex: 1; min-width: 0; }
+  .tool img {
+    width: 280px; max-width: 45%; border: 1px solid var(--line);
+    border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.06);
+  }
+
+  /* Table */
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; }
+  th { background: var(--soft); }
+  td.c, th.c { text-align: center; }
+  details > summary { cursor: pointer; font-weight: 600; color: var(--accent); margin-bottom: 12px; }
+
+  /* Doc links */
+  .doclinks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+  .doclinks a { display: block; padding: 4px 0; }
+
+  /* Footer */
+  footer.site {
+    border-top: 1px solid var(--line); background: var(--soft);
+    color: var(--muted); font-size: .9rem; padding: 28px 0 40px; margin-top: 8px;
+  }
+  footer.site a { color: var(--muted); text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    .cards { grid-template-columns: 1fr; }
+    .tool { flex-direction: column; }
+    .tool img { width: 100%; max-width: 100%; }
+    .doclinks { grid-template-columns: 1fr; }
+    header.site nav { display: none; }
+    .hero h1 { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <img class="logo" src="images/icon128.png" alt="">
+    <span class="name">JAIRO Cloud インポート支援ツール</span>
+    <nav>
+      <a href="#features">機能</a>
+      <a href="#tools">ツール</a>
+      <a href="#install">導入</a>
+      <a href="https://github.com/tzhaya/jc-import-file-maker">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- Hero -->
+  <section class="hero" style="border-top:none">
+    <h1>JAIRO Cloud インポート支援ツール - DOIからインポート用TSVを生成</h1>
+    <p class="lead">
+      DOIを入力するだけで Crossref・OpenAlex などのAPIから書誌情報を取得し、
+      <a href="https://jpcoar.org/support/jairo-cloud/">JAIRO Cloud</a>（WEKO3）への
+      インポート用TSVファイルを生成します。識別子の検索やオープンアクセスポリシーの参照を支援する、機関リポジトリ担当者向けのツールです。
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="https://chromewebstore.google.com/detail/jairo-cloud-%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88%E6%94%AF%E6%8F%B4%E3%83%84%E3%83%BC%E3%83%AB/jknijceijdmdglahkopllhlgnikapmfn">Chromeウェブストアでインストール</a>
+      <a class="btn ghost" href="https://github.com/tzhaya/jc-import-file-maker">GitHubリポジトリ</a>
+    </div>
+    <div class="badges">
+      <a href="https://chromewebstore.google.com/detail/jairo-cloud-%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88%E6%94%AF%E6%8F%B4%E3%83%84%E3%83%BC%E3%83%AB/jknijceijdmdglahkopllhlgnikapmfn"><img src="https://img.shields.io/chrome-web-store/v/jknijceijdmdglahkopllhlgnikapmfn?label=Chrome%20Web%20Store&logo=googlechrome&logoColor=white" alt="Chrome Web Store version"></a>
+      <a href="https://chromewebstore.google.com/detail/jairo-cloud-%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88%E6%94%AF%E6%8F%B4%E3%83%84%E3%83%BC%E3%83%AB/jknijceijdmdglahkopllhlgnikapmfn"><img src="https://img.shields.io/chrome-web-store/users/jknijceijdmdglahkopllhlgnikapmfn?label=users" alt="Users"></a>
+      <a href="https://chromewebstore.google.com/detail/jairo-cloud-%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88%E6%94%AF%E6%8F%B4%E3%83%84%E3%83%BC%E3%83%AB/jknijceijdmdglahkopllhlgnikapmfn"><img src="https://img.shields.io/chrome-web-store/rating/jknijceijdmdglahkopllhlgnikapmfn?label=rating" alt="Rating"></a>
+    </div>
+    <img class="screenshot" src="images/01_overview.png" alt="ツールの画面イメージ：DOI入力欄、メタデータ確認・編集UI、TSV出力ボタン">
+    <p class="note" style="margin-top:12px">
+      ※ 本ツールはベータ版です。アイテムタイプ「デフォルトアイテムタイプ（フル）」形式のTSV生成に対応します。インポートは未検証のため、正しく取り込まれない場合があります。
+    </p>
+  </section>
+
+  <!-- What it solves -->
+  <section id="features">
+    <h2>何を解決するか</h2>
+    <ul class="clean">
+      <li>識別子（ORCID・ROR・KAKEN など）の検索時間を短縮します。</li>
+      <li>メタデータ入力のサンプルを提示します。</li>
+      <li>オープンアクセスポリシー（Open Policy Finder）を容易に参照できます。</li>
+      <li>JAIRO Cloud 用インポートファイル（import.zip）の作成を支援します。</li>
+    </ul>
+  </section>
+
+  <!-- Two editions -->
+  <section>
+    <h2>2つの利用方法</h2>
+    <div class="cards">
+      <div class="card">
+        <span class="tag">推奨</span>
+        <h3>Chrome拡張機能版</h3>
+        <p class="note">サイドパネルで3ツールを切り替えて利用。高機能版です。</p>
+        <ul class="clean">
+          <li>閲覧中のページからのDOI自動取得</li>
+          <li>JaLC DOI からのメタデータ取り込み</li>
+          <li>KAKEN API による科研費課題の検索</li>
+          <li>Open Policy Finder API による OAポリシー・エンバーゴ表示</li>
+          <li>APIキー・初期値を設定ページでGUI管理</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>通常ブラウザ版</h3>
+        <p class="note">HTMLファイルを開くだけ。インストール不要です。</p>
+        <ul class="clean">
+          <li>Crossref DOI からのメタデータ取り込み</li>
+          <li>ROR・OpenAlex・CiNii Research によるデータ補完</li>
+          <li>OpenAlex による OA状況の表示</li>
+          <li>JPCOARスキーマ 2.0 対応の入力・プレビュー</li>
+          <li>インポート用TSVファイル生成</li>
+        </ul>
+      </div>
+    </div>
+
+    <details style="margin-top:24px">
+      <summary>機能比較表を開く</summary>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>機能</th><th class="c">拡張機能版</th><th class="c">ブラウザ版</th><th>備考</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>インストール不要</td><td class="c">—</td><td class="c">✅</td><td>HTMLを開くだけ</td></tr>
+            <tr><td>OpenAlex による OA状況の表示</td><td class="c">✅</td><td class="c">✅</td><td>Crossref DOI がある論文</td></tr>
+            <tr><td>Open Policy Finder API による OAポリシー表示</td><td class="c">✅</td><td class="c">—</td><td>CORS制約のため拡張機能版のみ</td></tr>
+            <tr><td>閲覧中ページからのDOI自動取得</td><td class="c">✅</td><td class="c">—</td><td>metaタグ/JSON-LDから取得</td></tr>
+            <tr><td>Crossref DOI からのメタデータ取得</td><td class="c">✅</td><td class="c">✅</td><td></td></tr>
+            <tr><td>JaLC DOI からのメタデータ取得</td><td class="c">✅</td><td class="c">—</td><td>Service Worker 経由が必要</td></tr>
+            <tr><td>メタデータ編集UI・プレビュー・TSV出力</td><td class="c">✅</td><td class="c">✅</td><td>JPCOARスキーマ2.0準拠</td></tr>
+            <tr><td>OpenAlex による ORCID補完 / NCID自動取得</td><td class="c">✅</td><td class="c">✅</td><td></td></tr>
+            <tr><td>KAKEN XML API による科研費課題検索</td><td class="c">✅</td><td class="c">—</td><td>CORS制約のため拡張機能版のみ</td></tr>
+            <tr><td>OpenSearch リポジトリ検索ツール</td><td class="c">✅</td><td class="c">—</td><td>拡張機能版のみ</td></tr>
+            <tr><td>APIキー設定（GUI / ソースコード）</td><td class="c">GUI</td><td class="c">編集</td><td>拡張版は設定ページ、ブラウザ版は shared.js</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">完全な比較表は <a href="https://github.com/tzhaya/jc-import-file-maker#機能比較">README</a> を参照してください。</p>
+    </details>
+  </section>
+
+  <!-- Tools -->
+  <section id="tools">
+    <h2>3つのツール</h2>
+
+    <div class="tool">
+      <div class="txt">
+        <h3>① インポート用TSV生成ツール</h3>
+        <p>DOIを入力して書誌情報を取得し、JPCOARスキーマ2.0準拠のメタデータを確認・編集してTSVを生成します。複数のDOIを連続取得して1ファイルにまとめて出力することもできます。</p>
+      </div>
+      <img src="images/08_preview_modal.png" alt="メタデータのプレビュー表示">
+    </div>
+
+    <div class="tool">
+      <div class="txt">
+        <h3>② 助成情報検索ツール</h3>
+        <p>科研費課題番号・JGN課題番号や論文の謝辞から、助成機関識別子・助成機関名・プログラム情報・研究課題名を一括検索し、インポート用TSV形式で出力します。</p>
+      </div>
+      <img src="images/09_lookup_result.png" alt="助成情報の検索結果">
+    </div>
+
+    <div class="tool">
+      <div class="txt">
+        <h3>③ OpenSearch検索ツール<span class="note">（拡張機能版のみ）</span></h3>
+        <p>JAIRO Cloud 利用機関のリポジトリURL・タイトル・内容記述・資源タイプを条件に文献を検索し、書誌情報やファイルリンクとともに一覧表示します。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Install -->
+  <section id="install">
+    <h2>導入方法</h2>
+
+    <h3>Chrome拡張機能版（推奨）</h3>
+    <ul class="clean">
+      <li><a href="https://chromewebstore.google.com/detail/jairo-cloud-%E3%82%A4%E3%83%B3%E3%83%9D%E3%83%BC%E3%83%88%E6%94%AF%E6%8F%B4%E3%83%84%E3%83%BC%E3%83%AB/jknijceijdmdglahkopllhlgnikapmfn">Chromeウェブストア</a>から「Chromeに追加」でインストールします。</li>
+      <li>ツールバーの拡張機能アイコンをクリックすると、サイドパネルで起動します。</li>
+      <li>設定ページ（拡張機能のオプション）で必要に応じてAPIキーを設定します。</li>
+    </ul>
+    <p class="note">動作要件：Chrome 114以降（サイドパネルAPI対応）</p>
+
+    <h3>通常ブラウザ版</h3>
+    <p>
+      <a href="https://github.com/tzhaya/jc-import-file-maker#通常ブラウザ版">README の手順</a>に従って
+      <code>make_jc_importer.html</code> / <code>shared.js</code> / <code>tsv_headers_template.js</code> を保存し、
+      <code>shared.js</code> にAPIキーを設定してから HTML をブラウザで開きます（APIキーは任意）。
+    </p>
+  </section>
+
+  <!-- Docs -->
+  <section>
+    <h2>ドキュメント</h2>
+    <div class="doclinks">
+      <a href="https://github.com/tzhaya/jc-import-file-maker/blob/master/docs/user_guide.md">📖 使い方ガイド</a>
+      <a href="https://github.com/tzhaya/jc-import-file-maker/blob/master/docs/requirements.md">📋 要件定義</a>
+      <a href="https://github.com/tzhaya/jc-import-file-maker#readme">📄 README</a>
+      <a href="privacy-policy.html">🔒 プライバシーポリシー</a>
+    </div>
+  </section>
+
+  <!-- Author comments -->
+  <section>
+    <h2>作者から</h2>
+    <p>
+      JPCOARスキーマに沿ったメタデータの入力は、論文記載の情報を転記するほかに、識別子を調べて入力する、またオープンアクセスのポリシーの確認と適切なエンバーゴ設定など、図書・雑誌の目録入力とは異なる要素や難しさがあります。
+    </p>
+    <p>
+      特に助成情報の識別子は、即時オープンアクセス政策で主に求められる科研費補助金による研究成果の公開があるかどうかの識別のためには重要な情報ですが、多くの論文にはその番号のみで課題名までは載っていません。番号から検索して調べる必要があります。</p>
+    <p>「メタデータはCrossrefにあるのだから、それをそのまま利用すればいいのでは？」最初はそう考えていました。しかし、たとえば作成者の所属が機関名のみ、機関名＋学部名＋住所など出版社によって精粗はまちまちで、そのまま利用するとJPCOARスキーマに適合しないデータが生成されてしまいます。そこで、OpenAlexその他のAPIを活用して、より精度の高いメタデータを取得する仕組みを導入しました。科研費についても番号からURLと課題名を取り出せるようにしています。</p>
+    <p>作成には生成AIである Claude による大きな支援を受けています。しかし、JPCOARスキーマや各種APIの利用方法、実際のデータ例、何より入力する図書館員が何を求めているかは、作者が理解して生成AIに伝える必要があります。もし、行き届かない点があれば、それは作者の知見が不足していることによるものです。</p>
+    <p>このツールにより入力作業が少しでも楽になることを願っています。そして入力されたメタデータが、自機関の機関リポジトリやCiNii Researchだけでなく識別子により相互にリンクし、また全世界に流通させ、多くの人々が研究成果へアクセスできるようにすること、それが図書館員のミッションに新たに加わるものと信じています。</p>
+  </section>
+
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <p>
+      ライセンス：<a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0 Universal</a>（パブリックドメイン）。
+      外部APIから得られたデータの利用は、各APIの利用規約に従ってください。
+    </p>
+    <p>
+      このアプリケーションの作成は、生成AIによるコーディング支援を受けています。<br>
+      作者：Takanori Hayashi ／
+      <a href="https://github.com/tzhaya/jc-import-file-maker">GitHub</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

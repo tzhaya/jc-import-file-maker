@@ -275,7 +275,8 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 │   ├── ItemType.json          # JAIRO Cloud アイテムタイプ定義
 │   ├── tsv_headers.json       # TSVヘッダー定義
 │   └── crossref_fields.json   # Crossrefフィールド定義
-├── docs/                      # 仕様・設計ドキュメント
+├── docs/                      # 仕様・設計ドキュメント（GitHub Pages 公開元）
+│   ├── index.html              # 紹介ページ（https://tzhaya.github.io/jc-import-file-maker/）
 │   ├── requirements.md         # 要件定義
 │   ├── user_guide.md           # 使い方ガイド
 │   ├── worklog.md              # 作業ログ
@@ -315,6 +316,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-19 | GitHub Pages の紹介ページ（`docs/index.html`）を新規作成。空だった https://tzhaya.github.io/jc-import-file-maker/ に、概要・2つの利用方法・機能比較・3つのツール・導入方法・「作者から」を掲載（README をベースにした自己完結HTML） |
 | 2026-06-19 | 助成情報の「プログラム情報識別子タイプ」（`subitem_funding_stream_identifier_type`）の選択肢先頭に空の項目を追加し、識別子本体が空欄のときに既定値 `Crossref Funder` が自動選択されてTSVに誤出力される不具合を修正（[#161](https://github.com/tzhaya/jc-import-file-maker/issues/161)）。manifest version `1.11.0` → `1.11.1` |
 | 2026-06-15 | TSV管理フィールドの初期値を設定可能に：`.IndexID[0]`（登録先インデックスID）・`.POS_INDEX[0]`（インデックス名パス）とリポジトリURLの初期値を、スタンドアロン版は `shared.js` の `CONFIG`、Chrome拡張版は設定画面（`options.html`）で定義できるよう対応。リポジトリURLはChrome拡張ではOpenSearch検索の既定値と共用（[#148](https://github.com/tzhaya/jc-import-file-maker/issues/148)） |
 | 2026-06-15 | 電子ジャーナルページからのDOI自動取得（[#73](https://github.com/tzhaya/jc-import-file-maker/issues/73)）をJSON-LD対応に拡張：metaタグでDOIを取得できない場合、`<script type="application/ld+json">` 内の schema.org `ScholarlyArticle` の `identifier`（文字列／`PropertyValue` 形式、`@graph` 入れ子に対応）をフォールバックとして採用（[#159](https://github.com/tzhaya/jc-import-file-maker/issues/159)）。manifest version `1.10.1` → `1.11.0` |
