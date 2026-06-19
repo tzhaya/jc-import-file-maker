@@ -1,6 +1,17 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-19（助成情報「プログラム情報識別子タイプ」の空欄時 既定値誤出力を修正 #161）
+最終更新: 2026-06-19（GitHub Pages 紹介ページ `docs/index.html` を新規作成）
+
+## GitHub Pages 紹介ページの作成（2026-06-19）
+
+- 公開元は `master` ブランチ `/docs`（GitHub Pages 設定）。`docs/` に `index.html` / `index.md` が無く、ルート URL https://tzhaya.github.io/jc-import-file-maker/ が空だったため新規作成
+- `docs/index.html` — README をベースにした自己完結HTML（front matter 無し＝Jekyll はそのまま静的配信）。外部依存なし、インライン CSS、`<html lang="ja">`、OGP メタ付き、レスポンシブ
+- 構成: ヘッダー / ヒーロー（CTA＋ストアバッジ＋スクショ） / 何を解決するか / 2つの利用方法（カード＋折りたたみ機能比較表） / 3つのツール / 導入方法 / ドキュメントリンク / 作者から / フッター
+- 「最新の更新」「変更履歴」はページに載せず README で一元管理（二重メンテ回避）、最新版へはストアバッジで誘導
+- `docs/images/icon128.png` — ヘッダー/favicon 用に `chrome-extension/icons/icon128.png` をコピー（Pages は `/docs` をルートとするため拡張機能配下を参照できない）
+- 既存スクショを流用: `01_overview.png`（ヒーロー）/ `08_preview_modal.png`（TSV生成）/ `09_lookup_result.png`（助成情報検索）
+- プライバシーポリシーは `privacy-policy.html` で参照可（`.html`・拡張子なしとも 200 を確認）
+- `make_jc_importer.html` / `funder_lookup.html` には変更なし → テストファイル更新・LOCAL_VERSION・manifest 更新・E2E は対象外
 
 ## プロジェクト概要
 JAIRO Cloud インポート用TSV生成ツール (`make_jc_importer.html`) の新規実装。
