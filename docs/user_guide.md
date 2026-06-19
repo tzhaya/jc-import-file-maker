@@ -85,18 +85,18 @@ Crossrefから得られる情報を元に、OpenAlex、ROR、CiNii Research、KA
 5. 収録物識別子
    - Crossrefから得られたISSNでCiNii Researchを検索し、ヒットした場合はNCIDを設定します。
    - Crossrefから得られたEISSNとPISSNを、いずれもない場合はISSNを設定します。
-6.  権利情報
+6. 権利情報
    - Crossrefから得られたライセンスのURLを設定します。
    - Crossrefのフィールド `assertion` に label=Copyright がある場合は、その値を設定します。
-7.  助成情報
+7. 助成情報
    - 助成機関名はCrossrefから得られた情報を使用しています。
    - 実際の機関名と一致しない場合があります（例: [逆引き結果の画像](#識別子の逆引き機能)）。「[識別子の逆引き機能](#識別子の逆引き機能)」を使って、Crossref Funder等から助成機関名を上書きできます。
-8.  研究課題名
+8. 研究課題名
    - Chrome拡張版では、科研費課題の場合にKAKEN XML APIを最優先で使用して研究課題名・課題番号を取得します（補助金番号→研究課題番号の自動補正を含む）。
    - KAKEN XML APIで取得できない場合は、JGN（Japan Grant Number）APIを試行し、さらに失敗した場合はCiNii Research KAKEN APIにフォールバックします。
    - 通常ブラウザ版では、JGN API → CiNii Research KAKEN API の順で取得を試みます。
    - JSTの研究課題は、JGN APIから研究課題名・プログラム情報を取得して設定しています。
-9.  出版者情報
+9. 出版者情報
    - JPCOAR 2.0 の出版者情報フィールド（出版者名・出版地）を自動設定します。
 
 #### アコーディオン操作
