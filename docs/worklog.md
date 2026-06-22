@@ -1,6 +1,31 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-19（GitHub Pages 紹介ページ `docs/index.html` を新規作成）
+最終更新: 2026-06-22（#165: OpenAlex由来RORの誤同定検出・注意喚起）
+
+## OpenAlex由来RORの誤同定への対応（2026-06-22, #165）
+
+### 概要
+Crossref が著者所属に ROR を持たない場合、本ツールは OpenAlex `authorships[].institutions[]` から所属名・ROR を付与しているが、OpenAlex の機関同定が誤っているケースがある（例: https://doi.org/10.3759/tropics.simm06 の 1st author で生所属 `College of Fisheries and Marine Sciences, Aklan State University` が `NOAA National Marine Fisheries Service` に誤同定）。ORCID 同様の注意喚起表示に加え、誤同定の疑いを検出して ROR を設定しない対応を実装。
+
+### 実装内容
+- `buildAuthors()` 直前に判定ヘルパーを追加:
+  - `affNameTokens()` — 機関名を正規化（小文字化・記号除去）し、汎用語（`AFF_GENERIC_WORDS`: university/college/institute 等）と3文字未満を除いた有意トークン配列を返す
+  - `topLevelOrgSegment()` — Crossref 所属表記の末尾カンマセグメント（最上位組織名）を返す。末尾の国・地域名（`AFF_GEO_WORDS`）は除外
+  - `isAffMisidentified()` — 2段階判定。(1) 機関名トークンの過半数が `raw_affiliation_string` に出現すれば整合（住所・メール等を含む実データの誤検出を防ぐ）。(2) 過半数未満のときのみ最上位組織名とのトークン共有を確認し、共有しなければ誤同定。判定材料が無い場合は false（設定維持）。※当初は最上位組織名のみで判定したが、E2E で `advnut.2025.100480`（JIRCAS、住所・メール付き raw）が誤検出されたため過半数判定を前段に追加
+- `buildAuthors()` 所属マッピング:
+  - `oaEntry.affiliations[]` の `institution_ids` で OpenAlex 機関 id → 同定元 `raw_affiliation_string` を対応付け
+  - 誤同定の疑い時は ROR/ISNI を付与せず、`affiliationName` に Crossref 所属表記を採用し `_warnAffNameRaw` フラグを付与
+  - 正常同定時は従来どおり `display_name` + ROR を付与し、ROR 識別子に `_warnRor` フラグを付与
+- `renderOneAffiliation()`:
+  - 所属機関名欄に `_warnAffNameRaw` の warn バッジ（ROR 未設定理由＋「機関名まで編集」喚起、JPCOAR スキーマ準拠）
+  - ROR URI 欄に `_warnRor` の warn バッジ（「OpenAlex が機械同定した ROR です。正確か確認してください」）
+
+### 変更ファイル
+- `make_jc_importer.html` — 判定ヘルパー追加、`buildAuthors()`、`renderOneAffiliation()`、最終更新日・更新概要テーブル、`LOCAL_VERSION` `2026-06-19` → `2026-06-22`
+- `chrome-extension/make_jc_importer.js` — 同期（ボタン追加なしのため `init()` 変更なし）、`LOCAL_VERSION` 同期
+- `make_jc_importer_test.html` — 同期（E2E用）
+- `chrome-extension/panel.html` — 最終更新日・更新概要テーブル
+- `chrome-extension/manifest.json` — version `1.11.1` → `1.12.0`（feature/minor）
 
 ## GitHub Pages 紹介ページの作成（2026-06-19）
 
@@ -27,6 +52,7 @@ DOI を入力して Crossref / OpenAlex / ROR API から書誌メタデータを
 
 | バージョン | 日付 | 内容 |
 |---|---|---|
+| 1.12.0 | 2026-06-22 | #165: OpenAlex由来で著者所属に付与したRORの誤同定対応。ROR識別子に `_warnRor`、所属機関名に `_warnAffNameRaw` フラグを追加し warn バッジ表示。`isAffMisidentified()`（機関名トークンの過半数一致→不足時に最上位組織名照合の2段階）で誤同定の疑いを検出した場合、ROR/ISNIを設定せず Crossref所属表記を機関名に採用。E2E ALL PASSED（`tropics.simm06` でAklan→NOAA誤同定を検出、`advnut.2025.100480` のJIRCAS誤検出が無いことを確認） |
 | 1.11.1 | 2026-06-19 | #161: 助成情報「プログラム情報識別子タイプ」（`subitem_funding_stream_identifier_type`）の選択肢先頭に空項目 `{ name: '（未設定）', value: '' }` を追加。識別子本体が空欄のとき `<select>` が先頭の `Crossref Funder` を自動選択し、`collectFundingField()` の DOM 再回収を経てTSVへ既定値が誤出力される不具合を修正 |
 | 1.11.0 | 2026-06-15 | #148: TSV管理フィールド（`.IndexID[0]` / `.POS_INDEX[0]`）とリポジトリURLの初期値を `shared.js` の `CONFIG`（スタンドアロン版）・`options.html`（Chrome拡張版）で定義可能に。リポジトリURLはChrome拡張ではOpenSearch検索の既定値（`defaultRepositoryUrl`）と共用。`loadConfig()` で `defaultIndexId` / `defaultPosIndex` / `defaultRepositoryUrl` を読込、`renderSystemFields()` / `mapToItemType()` / `mapToItemTypeJaLC()` / `buildEmptyMetadata()` の既定値と `init()` での `repo-host` プリフィルに反映。#159: ページからのDOI取得をJSON-LD対応に拡張（metaタグで取得できない場合、schema.org `ScholarlyArticle` の `identifier` をフォールバック採用、`@graph` 入れ子・`PropertyValue` 形式に対応） |
 | 1.10.1 | 2026-06-11 | #149: 助成情報検索ツールでマルチバイト文字列を含む行から課題番号を抽出できないバグを修正（Case A の判定を「空白なし」→「課題番号として妥当な文字のみ」に変更、区切り文字に全角「、，；」を追加）。#150: 検索結果の外部リンククリックでサイドパネルが既定ページにリセットされる不具合を `chrome.tabs.create` で修正 |

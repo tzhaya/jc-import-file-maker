@@ -118,6 +118,11 @@ make_jc_importer.html
 -   **ROR/ISNI情報との連携**
     -   OpenAlexから取得したROR IDを基に、ROR v2 APIを介してISNI情報を取得し、所属機関の識別子として活用します。
     -   所属機関名として、ROR v2 APIから得られる情報のうち "types" が ["ror_display"] に該当する要素のlabelを使用します。 
+    -   **OpenAlex由来RORの注意喚起と誤同定検出**（[issue #165](https://github.com/tzhaya/jc-import-file-maker/issues/165)）:
+        -   OpenAlexが機械同定したROR（`authorships[].institutions[].ror`）由来の所属機関識別子URIには、ORCID同様に`⚠ 要確認`を表示します。titleは`OpenAlex が機械同定した ROR です。正確か確認してください`とします。
+        -   OpenAlexが同定した機関名（`institutions[].display_name`）と、同定元のCrossref所属表記（`affiliations[].institution_ids` で対応付く `raw_affiliation_string`）を、汎用語（university/college/institute 等）と3文字未満を除いた有意トークンで照合します。判定は2段階です。(1) 機関名トークンの過半数が所属表記に出現すれば整合とみなします（住所・メールアドレス等を含む実データでも、機関名が綴られていれば誤検出しません）。(2) 過半数に満たない場合のみ、所属表記の最上位組織名（末尾カンマセグメント。末尾の国・地域名は除外）とトークンを共有するか確認し、共有しない場合に誤同定の疑いありと判定します。
+        -   誤同定の疑いがある場合は ROR/ISNI を所属機関識別子として設定せず、所属機関名にはCrossref所属表記をそのまま採用したうえで、所属機関名欄に`⚠ 要確認`を表示します。titleは`OpenAlex が同定した機関が Crossref の所属表記と一致しないため ROR を設定していません。記入は機関名までです。部局名など下位階層がある場合は編集してください。`とし、JPCOARスキーマガイドライン（記入は機関名までとし、部局名など下位階層の所属は記入しない）への対応も促します。
+        -   判定材料（対応付くCrossref所属表記）が無い場合は誤同定と判定せず、ROR を維持したうえで上記の`⚠ 要確認`表示のみ行います。
 -   **ORCIDの取得**
     -   ORCIDは次の優先順位で取得します。
         + Crossref APIから取得
