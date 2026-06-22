@@ -83,8 +83,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-06-19 | ver. 1.11.1 | 助成情報「プログラム情報識別子タイプ」が、識別子本体が空欄のときに既定値（`Crossref Funder`）を誤ってTSV出力する不具合を修正（[#161](https://github.com/tzhaya/jc-import-file-maker/issues/161)） |
-| インポート用TSV生成ツール | 2026-06-19 | — | 助成情報「プログラム情報識別子タイプ」が、識別子本体が空欄のときに既定値（`Crossref Funder`）を誤ってTSV出力する不具合を修正（[#161](https://github.com/tzhaya/jc-import-file-maker/issues/161)） |
+| Chrome拡張機能版 | 2026-06-22 | ver. 1.12.0 | OpenAlex由来で著者所属に付与したRORに「要確認」表示を追加。OpenAlexの機関同定がCrossrefの所属表記と一致しない誤同定の疑いを検出し、RORを設定せず注意喚起（[#165](https://github.com/tzhaya/jc-import-file-maker/issues/165)） |
+| インポート用TSV生成ツール | 2026-06-22 | — | OpenAlex由来で著者所属に付与したRORに「要確認」表示を追加。OpenAlexの機関同定がCrossrefの所属表記と一致しない誤同定の疑いを検出し、RORを設定せず注意喚起（[#165](https://github.com/tzhaya/jc-import-file-maker/issues/165)） |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 
 ## 導入方法
@@ -316,6 +316,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-22 | Crossref が著者所属に ROR を持たない場合に OpenAlex が機械同定した ROR を付与しているが、誤同定があるため対応（[#165](https://github.com/tzhaya/jc-import-file-maker/issues/165)）。(1) OpenAlex 由来の ROR の URI 欄に「⚠ 要確認」バッジを常時表示。(2) OpenAlex が同定した機関名と、同定元の Crossref 所属表記（`raw_affiliation_string`）を有意トークンで照合し（機関名トークンの過半数一致を主、最上位組織名照合を補助とする2段階判定）、誤同定の疑いがある場合は ROR を設定せず Crossref 所属表記を機関名として採用、機関名欄に注意喚起（部局名など下位階層は機関名まで編集する旨も表示）。manifest version `1.11.1` → `1.12.0` |
 | 2026-06-19 | GitHub Pages の紹介ページ（`docs/index.html`）を新規作成。空だった https://tzhaya.github.io/jc-import-file-maker/ に、概要・2つの利用方法・機能比較・3つのツール・導入方法・「作者から」を掲載（README をベースにした自己完結HTML） |
 | 2026-06-19 | 助成情報の「プログラム情報識別子タイプ」（`subitem_funding_stream_identifier_type`）の選択肢先頭に空の項目を追加し、識別子本体が空欄のときに既定値 `Crossref Funder` が自動選択されてTSVに誤出力される不具合を修正（[#161](https://github.com/tzhaya/jc-import-file-maker/issues/161)）。manifest version `1.11.0` → `1.11.1` |
 | 2026-06-15 | TSV管理フィールドの初期値を設定可能に：`.IndexID[0]`（登録先インデックスID）・`.POS_INDEX[0]`（インデックス名パス）とリポジトリURLの初期値を、スタンドアロン版は `shared.js` の `CONFIG`、Chrome拡張版は設定画面（`options.html`）で定義できるよう対応。リポジトリURLはChrome拡張ではOpenSearch検索の既定値と共用（[#148](https://github.com/tzhaya/jc-import-file-maker/issues/148)） |

@@ -1598,6 +1598,54 @@ function getPubDate(cr) {
   return formatDateParts(parts);
 }
 
+// ===== 4.3 著者所属の誤同定判定（OpenAlex ROR） =====
+// 機関名照合で無視する汎用語（組織種別・接続詞・分野語など）
+const AFF_GENERIC_WORDS = new Set([
+  'of','the','and','for','de','des','du','la','le','el','et',
+  'university','universities','univ','college','faculty','department','dept',
+  'school','institute','institut','institution','center','centre','graduate',
+  'division','laboratory','lab','research','science','sciences','studies',
+  'national','state','co','corp','corporation','inc','ltd',
+]);
+// 末尾セグメント判定で除外する国・地域名
+const AFF_GEO_WORDS = new Set([
+  'japan','usa','us','uk','china','korea','france','germany','italy','spain',
+  'india','philippines','canada','australia','brazil','russia','taiwan',
+  'thailand','indonesia','malaysia','vietnam','singapore','netherlands',
+]);
+function affNameTokens(s) {
+  return (s || '').toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter(t => t.length >= 3 && !AFF_GENERIC_WORDS.has(t));
+}
+// Crossref 所属表記の最上位組織名（末尾カンマセグメント。末尾の国・地域名は除外）を返す
+function topLevelOrgSegment(rawAff) {
+  const segs = (rawAff || '').split(',').map(s => s.trim()).filter(Boolean);
+  while (segs.length > 1) {
+    const toks = segs[segs.length - 1].toLowerCase().split(/\s+/).filter(Boolean);
+    if (toks.length && toks.every(t => AFF_GEO_WORDS.has(t))) segs.pop();
+    else break;
+  }
+  return segs[segs.length - 1] || (rawAff || '');
+}
+// OpenAlex が同定した機関名と Crossref 所属表記を照合し、誤同定の疑いを判定する。
+// (1) 機関名の有意トークンの過半数が所属表記に出現すれば整合とみなす（住所・メール等の
+//     雑多な文字列を含む実データでも、機関名が綴られていれば誤検出しない）。
+// (2) 過半数に満たない場合のみ、最上位組織名（末尾カンマセグメント）とのトークン共有を確認。
+//     どちらとも共有しなければ誤同定の疑いありとする。判定材料が無い場合は false（設定維持）。
+function isAffMisidentified(instName, rawAff) {
+  if (!rawAff) return false;
+  const instTokens = affNameTokens(instName);
+  if (!instTokens.length) return false;
+  const rawSet = new Set(affNameTokens(rawAff));
+  const matched = instTokens.filter(t => rawSet.has(t)).length;
+  if (matched * 2 > instTokens.length) return false;
+  const orgTokens = affNameTokens(topLevelOrgSegment(rawAff));
+  if (!orgTokens.length) return false;
+  return !orgTokens.some(t => instTokens.includes(t));
+}
+
 // ===== 4.3 著者マッピング =====
 function buildAuthors(crAuthors, oaAuthorships, rorMap) {
   // OpenAlex 著者を姓で索引化
@@ -1629,6 +1677,14 @@ function buildAuthors(crAuthors, oaAuthorships, rorMap) {
     const orcidId = orcidUri.replace(/^https?:\/\/orcid\.org\//i, '');
 
     // 所属: OpenAlex authorships[].institutions を使用
+    // OpenAlex 機関 id → 同定元の Crossref 所属表記 を対応付け（誤同定判定用）
+    const instIdToRaw = {};
+    (oaEntry?.affiliations || []).forEach(af => {
+      (af.institution_ids || []).forEach(id => {
+        if (id && !instIdToRaw[id]) instIdToRaw[id] = af.raw_affiliation_string || '';
+      });
+    });
+
     const oaInsts = oaEntry?.institutions || [];
     const affiliations = oaInsts.map(inst => {
       const rorUri = inst.ror || '';
@@ -1636,6 +1692,16 @@ function buildAuthors(crAuthors, oaAuthorships, rorMap) {
       const dispName = rorInfo.rorDisplayName || inst.display_name || '';
       const isni     = rorInfo.isni || '';
       const rorId    = rorInfo.rorId || '';
+
+      // 同定元の Crossref 所属表記と機関名を突合し、誤同定を判定
+      const rawAff = instIdToRaw[inst.id] || '';
+      if (rawAff && isAffMisidentified(inst.display_name || dispName, rawAff)) {
+        // 誤同定の疑い: ROR/ISNI を設定せず、Crossref の所属表記を機関名に採用（要編集）
+        return {
+          affiliationNames: [{ affiliationName: rawAff, affiliationNameLang: 'en', _warnLang: true, _warnAffNameRaw: true }],
+          affiliationNameIdentifiers: [],
+        };
+      }
 
       const affiliationNameIdentifiers = [];
       if (isni) affiliationNameIdentifiers.push({
@@ -1647,6 +1713,7 @@ function buildAuthors(crAuthors, oaAuthorships, rorMap) {
         affiliationNameIdentifier:       rorId,
         affiliationNameIdentifierScheme: 'ROR',
         affiliationNameIdentifierURI:    `https://ror.org/${rorId}`,
+        _warnRor: true,
       });
 
       return {
@@ -3399,7 +3466,10 @@ function renderOneAffiliation(aff, ai, keys, sfx) {
   }, sfx ? JPCOAR_SUBFIELD_LINKS[sfx + '_aff_name'] : undefined);
   (aff[affNameKey] || []).forEach(an => {
     const { grp, delBtn } = createEntryGroup();
-    grp.appendChild(createFieldRow('所属機関名', an[affNameField] || '', 'text', null, { fieldKey: affNameField }));
+    grp.appendChild(createFieldRow('所属機関名', an[affNameField] || '', 'text', null, {
+      fieldKey: affNameField, warn: an._warnAffNameRaw,
+      warnTitle: 'OpenAlex が同定した機関が Crossref の所属表記と一致しないため ROR を設定していません。記入は機関名までです。部局名など下位階層がある場合は編集してください。'
+    }));
     grp.appendChild(createFieldRow('言語', an[affNameLangField] || '', 'select', 'language', {
       fieldKey: affNameLangField, warn: an._warnLang, warnTitle: '仮に英語として設定しています。正確か確認してください'
     }));
@@ -3469,7 +3539,10 @@ function renderOneAffiliation(aff, ai, keys, sfx) {
         fieldKey: affIdSchemeField,
         onChange: () => updateAffLookup(),
       }));
-    aidContent.appendChild(createFieldRow('URI', aid[affIdUriField] || '', 'text', null, { fieldKey: affIdUriField }));
+    aidContent.appendChild(createFieldRow('URI', aid[affIdUriField] || '', 'text', null, {
+      fieldKey: affIdUriField, warn: aid._warnRor,
+      warnTitle: 'OpenAlex が機械同定した ROR です。正確か確認してください'
+    }));
 
     // (3) Scheme select が DOM にある状態で attachLookupUi を呼ぶ
     const { updateVisibility } = attachLookupUi({
@@ -6096,7 +6169,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-19';
+  const LOCAL_VERSION = '2026-06-22';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
