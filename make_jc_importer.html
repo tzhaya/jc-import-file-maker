@@ -490,7 +490,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-06-22 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-06-27 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -502,6 +502,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-27</td>
+        <td style="padding:2px 0;">作業中データ（入力中のメタデータ）をブラウザに自動保存し、タブ／サイドパネルを閉じても次回起動時に復元できる機能を追加（#162）（Chrome拡張 ver. 1.13.0 と同期）</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-22</td>
         <td style="padding:2px 0;">OpenAlex由来で著者所属に付与したRORに「要確認」表示を追加。OpenAlexの機関同定がCrossrefの所属表記と一致しない誤同定の疑いを検出し、RORを設定せず注意喚起する対応（#165）（Chrome拡張 ver. 1.12.0 と同期）</td>
@@ -517,10 +521,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-06</td>
         <td style="padding:2px 0;">IndexID・公開日がTSVに出力されないバグ修正（#142）、管理フィールドのIndexID/POS_INDEX候補値ヒント誤りを修正（#143）（Chrome拡張 ver. 1.9.5 と同期）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-05-15</td>
-        <td style="padding:2px 0;">最終更新日・更新概要テーブルの表示情報を整理し、5月の実作業を反映（Chrome拡張 ver. 1.9.4 と同期）</td>
       </tr>
     </tbody>
   </table>
@@ -552,11 +552,24 @@
       title="TSV 1行目のスキーマURLに使用します（空欄の場合は https://localhost/ のまま出力）">
     <div style="font-size:0.82em; color:#666; margin-top:2px;">あなたの機関リポジトリのURLを入れてください。TSVファイルに使用します。入力がない場合は https://localhost/ が設定されます。</div>
   </div>
+  <!-- ===== 下書き復元バナー（#162） ===== -->
+  <div id="draft-restore-banner" style="display:none; margin:8px 0; padding:10px 14px; background:#fff8e1; border:1px solid #ffd54f; border-radius:6px; font-size:0.9em; color:#6d4c00;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span id="draft-restore-msg">前回の作業データがあります。</span>
+      <span style="white-space:nowrap;">
+        <button id="draft-restore-btn" style="font-size:0.82em; padding:2px 12px; border:1px solid #2e7d32; color:#2e7d32; background:white; border-radius:4px; cursor:pointer;">復元</button>
+        <button id="draft-discard-btn" style="font-size:0.82em; padding:2px 12px; border:1px solid #c62828; color:#c62828; background:white; border-radius:4px; cursor:pointer; margin-left:4px;">破棄</button>
+      </span>
+    </div>
+  </div>
   <!-- ===== バッチ管理パネル ===== -->
   <div id="batch-panel" style="display:none; margin:8px 0; padding:10px 14px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:6px; font-size:0.9em;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <strong>蓄積アイテム: <span id="batch-count">0</span>件</strong>
-      <button id="batch-clear-btn" style="font-size:0.82em; padding:2px 10px; border:1px solid #c62828; color:#c62828; background:white; border-radius:4px; cursor:pointer;">全件クリア</button>
+      <span style="white-space:nowrap;">
+        <button id="batch-draft-delete-btn" style="font-size:0.82em; padding:2px 10px; border:1px solid #888; color:#555; background:white; border-radius:4px; cursor:pointer; margin-right:4px;" title="ブラウザに自動保存された下書きデータを削除します（蓄積アイテムは保持されます）">下書き削除</button>
+        <button id="batch-clear-btn" style="font-size:0.82em; padding:2px 10px; border:1px solid #c62828; color:#c62828; background:white; border-radius:4px; cursor:pointer;">全件クリア</button>
+      </span>
     </div>
     <div id="batch-list" style="max-height:180px; overflow-y:auto;"></div>
   </div>
@@ -648,6 +661,9 @@ if (typeof CONFIG === 'undefined') {
   window.CONFIG = { OpenAlex_API_KEY: '', CiNii_API_KEY: '', OPF_API_KEY: '' };
   window.loadConfig = async function() {};
   window.extensionFetch = function(url, options) { return fetch(url, options); };
+  window.saveDraft = async function() {};
+  window.loadDraft = async function() { return null; };
+  window.clearDraft = async function() {};
   document.addEventListener('DOMContentLoaded', () => {
     const area = document.getElementById('input-area');
     if (area) area.insertAdjacentHTML('beforebegin',
@@ -2058,6 +2074,39 @@ function saveCurrent() {
   allMetadata[currentBatchIndex] = collectFromDOM();
 }
 
+// ===== 3.7b 作業中データの自動保存（#162） =====
+let draftSaveTimer = null;
+let draftSaveErrorShown = false;
+
+// 現在の状態を下書きへ即時保存する（バッチ操作後・visibilitychange 用）。
+// 蓄積アイテムが無ければ下書きを削除する。
+async function persistDraft() {
+  try {
+    if (allMetadata.length === 0) {
+      await clearDraft();
+      return;
+    }
+    const repoHost = document.getElementById('repo-host')?.value || '';
+    await saveDraft({ repoHost, currentBatchIndex, allMetadata });
+    draftSaveErrorShown = false;
+  } catch (e) {
+    console.warn('下書きの自動保存に失敗しました:', e);
+    if (!draftSaveErrorShown) {
+      showError('作業中データの自動保存に失敗しました（保存容量の上限に達した可能性があります）。');
+      draftSaveErrorShown = true;
+    }
+  }
+}
+
+// フォーム編集イベント用のデバウンス保存（約1秒）。DOM編集を allMetadata へ反映してから保存する。
+function scheduleDraftSave() {
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer = setTimeout(() => {
+    saveCurrent();
+    persistDraft();
+  }, 1000);
+}
+
 // ===== 3.8 メイン取得フロー =====
 async function fetchData() {
   showError('');
@@ -2093,6 +2142,7 @@ async function fetchData() {
     showError(`エラー: ${e.message}`);
   } finally {
     loading.style.display = 'none';
+    persistDraft();  // 取得結果を下書きに反映（#162）
   }
 }
 
@@ -5339,6 +5389,7 @@ function removeBatchItem(index) {
   } else if (wasCurrent) {
     renderAll(allMetadata[currentBatchIndex]);
   }
+  persistDraft();  // #162
 }
 
 function clearBatch() {
@@ -5351,6 +5402,7 @@ function clearBatch() {
   document.getElementById('preview-area').style.display = 'none';
   document.getElementById('preview-btn').style.display = 'none';
   document.getElementById('export-btn').style.display = 'none';
+  persistDraft();  // 全件クリアで下書きも削除（#162）
 }
 
 function navigateBatch(delta) {
@@ -5360,6 +5412,7 @@ function navigateBatch(delta) {
   currentBatchIndex = newIdx;
   renderAll(allMetadata[newIdx]);
   updateBatchPanel();
+  persistDraft();  // #162
 }
 
 // ===== 5.6a バッチ列展開用メタデータ統合 =====
@@ -6691,6 +6744,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
         currentBatchIndex = idx;
         renderAll(allMetadata[idx]);
         updateBatchPanel();
+        persistDraft();  // #162
       }
     }
   });
@@ -6698,11 +6752,78 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
   document.getElementById('opf-badge').addEventListener('click', openOpfModal);
   document.getElementById('opf-modal-close').addEventListener('click', closeOpfModal);
   document.querySelector('#preview-modal .modal-close').addEventListener('click', closePreview);
+
+  // ===== 作業中データ自動保存・復元（#162） =====
+  // フォーム編集のデバウンス自動保存（実際の編集フォームは #metadata-fields）
+  const metaFields = document.getElementById('metadata-fields');
+  if (metaFields) {
+    metaFields.addEventListener('input', scheduleDraftSave);
+    metaFields.addEventListener('change', scheduleDraftSave);
+  }
+  // タブ/パネルが隠れる際に確定保存（beforeunload は非同期保存が間に合わないため visibilitychange を使用）
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+      saveCurrent();
+      persistDraft();
+    }
+  });
+
+  // 「下書き削除」ボタン（蓄積アイテムは保持し、保存済み下書きのみ削除）
+  document.getElementById('batch-draft-delete-btn').addEventListener('click', async function() {
+    if (!confirm('ブラウザに自動保存された下書きデータを削除しますか？（現在の蓄積アイテムは保持されます）')) return;
+    await clearDraft();
+  });
+
+  // 復元バナーのボタン
+  document.getElementById('draft-restore-btn').addEventListener('click', restoreDraft);
+  document.getElementById('draft-discard-btn').addEventListener('click', async function() {
+    await clearDraft();
+    document.getElementById('draft-restore-banner').style.display = 'none';
+  });
+
+  // 起動時: 下書きがあれば復元バナーを表示（非ブロッキング）
+  await maybeShowDraftBanner();
 })();
+
+// ===== 下書き復元バナー制御（#162） =====
+let pendingDraft = null;
+
+async function maybeShowDraftBanner() {
+  const draft = await loadDraft();
+  if (!draft || !Array.isArray(draft.allMetadata) || draft.allMetadata.length === 0) return;
+  pendingDraft = draft;
+  const banner = document.getElementById('draft-restore-banner');
+  const msg = document.getElementById('draft-restore-msg');
+  let savedAtStr = '';
+  if (draft.savedAt) {
+    const d = new Date(draft.savedAt);
+    if (!isNaN(d)) savedAtStr = '（' + d.toLocaleString('ja-JP') + '）';
+  }
+  msg.textContent = '前回の作業データ ' + draft.allMetadata.length + '件' + savedAtStr + ' を復元できます。';
+  banner.style.display = 'block';
+}
+
+function restoreDraft() {
+  if (!pendingDraft) return;
+  allMetadata = pendingDraft.allMetadata;
+  currentBatchIndex =
+    (typeof pendingDraft.currentBatchIndex === 'number' &&
+     pendingDraft.currentBatchIndex >= 0 &&
+     pendingDraft.currentBatchIndex < allMetadata.length)
+      ? pendingDraft.currentBatchIndex
+      : 0;
+  const repoHostInput = document.getElementById('repo-host');
+  if (repoHostInput && pendingDraft.repoHost) repoHostInput.value = pendingDraft.repoHost;
+  showHints = false;
+  updateBatchPanel();
+  renderAll(allMetadata[currentBatchIndex]);
+  document.getElementById('draft-restore-banner').style.display = 'none';
+  pendingDraft = null;
+}
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-22';
+  const LOCAL_VERSION = '2026-06-27';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

@@ -221,6 +221,7 @@ make_jc_importer.html
     -   カスタムテンプレート完全パース（Phase 2-B）: ユーザが5行ヘッダー（ItemType行・キー行・ラベル行・System行・制約行）を貼り付けた場合、`TSV_HEADERS_TEMPLATE` を丸ごと上書きしてTSV出力に反映する。不足行はデフォルトから補完。`parseCustomTemplate()` がパースを担当し、`groupTsvColumns()` / `buildTsvColumnDefs()` に template 引数として渡す
     -   ItemType行の自動設定（Phase 2-D）: TSV 1行目のアイテムタイプ名・スキーマURLをデフォルト値（「デフォルトアイテムタイプ（フル）(30002)」/ `https://localhost/items/jsonschema/30002`）で自動設定。カスタムテンプレート使用時はその row0 をそのまま使用
     -   複数DOI一括TSV出力（Phase 2-C）: DOIを連続取得して `allMetadata[]` 配列に蓄積し、ヘッダー5行 + データN行の一括TSVを出力する。列数は全metadataの配列フィールド最大長で展開（`buildMaxSizeMetadata()`）。バッチ管理パネルで蓄積件数表示・個別削除・全クリア・アイテム切替が可能
+    -   作業中データの自動保存・復元（[issue #162](https://github.com/tzhaya/jc-import-file-maker/issues/162)）: 入力中・蓄積中のメタデータ（`allMetadata[]` と現在のフォーム編集）をブラウザのローカルストレージへ自動保存し、タブ／サイドパネルを閉じても次回起動時に復元できる。保存先は Chrome拡張版が `chrome.storage.local`、スタンドアロン版が `localStorage`（`shared.js` の `saveDraft`/`loadDraft`/`clearDraft`、キー `wipDraft`）。各バッチ操作後・フォーム編集のデバウンス（約1秒）・`visibilitychange`（タブ非表示）で自動保存する。起動時に下書きがあれば非ブロッキングのバナーで「復元／破棄」を提示し、バッチパネルの「下書き削除」で明示的に破棄できる。エクスポート後も下書きは保持する。下書きはローカルのみに保存し外部送信しない
     -   リポジトリURL入力: `#repo-host` 入力欄でスキーマURLの `https://localhost/` を実際のリポジトリホスト名に置換。初期値は設定で定義可能（[issue #148](https://github.com/tzhaya/jc-import-file-maker/issues/148)、後述「管理フィールド・リポジトリURLの初期値設定」）
     -   ファイル名: 単一DOIは `{DOI}.tsv`、複数DOIは `import_YYYYMMDD_HHMMSS.tsv`
     -   空フィールド省略: 値が存在しないフィールドの列群はTSVに出力しない

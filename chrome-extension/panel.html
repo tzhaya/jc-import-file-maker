@@ -500,7 +500,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-06-22 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-06-27 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -512,6 +512,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-27</td>
+        <td style="padding:2px 0;">Chrome拡張 ver. 1.13.0：作業中データ（入力中のメタデータ）をブラウザに自動保存し、サイドパネルを閉じても次回起動時に復元できる機能を追加（#162）</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-22</td>
         <td style="padding:2px 0;">Chrome拡張 ver. 1.12.0：OpenAlex由来で著者所属に付与したRORに「要確認」表示を追加。OpenAlexの機関同定がCrossrefの所属表記と一致しない誤同定の疑いを検出し、RORを設定せず注意喚起する対応（#165）</td>
@@ -527,10 +531,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-10</td>
         <td style="padding:2px 0;">Chrome拡張 ver. 1.10.0：電子ジャーナルページのmetaタグからDOIを自動取得するボタンを追加（#73）。助成情報検索タブにDOI入力欄とCrossref/OpenAlex経由の課題番号自動取得機能を追加</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-06</td>
-        <td style="padding:2px 0;">Chrome拡張 ver. 1.9.5：IndexID・公開日がTSVに出力されないバグ修正（#142）、管理フィールドのIndexID/POS_INDEX候補値ヒント誤りを修正（#143）</td>
       </tr>
     </tbody>
   </table>
@@ -563,11 +563,24 @@
       title="TSV 1行目のスキーマURLに使用します（空欄の場合は https://localhost/ のまま出力）">
     <div style="font-size:0.82em; color:#666; margin-top:2px;">あなたの機関リポジトリのURLを入れてください。TSVファイルに使用します。入力がない場合は https://localhost/ が設定されます。</div>
   </div>
+  <!-- ===== 下書き復元バナー（#162） ===== -->
+  <div id="draft-restore-banner" style="display:none; margin:8px 0; padding:10px 14px; background:#fff8e1; border:1px solid #ffd54f; border-radius:6px; font-size:0.9em; color:#6d4c00;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span id="draft-restore-msg">前回の作業データがあります。</span>
+      <span style="white-space:nowrap;">
+        <button id="draft-restore-btn" style="font-size:0.82em; padding:2px 12px; border:1px solid #2e7d32; color:#2e7d32; background:white; border-radius:4px; cursor:pointer;">復元</button>
+        <button id="draft-discard-btn" style="font-size:0.82em; padding:2px 12px; border:1px solid #c62828; color:#c62828; background:white; border-radius:4px; cursor:pointer; margin-left:4px;">破棄</button>
+      </span>
+    </div>
+  </div>
   <!-- ===== バッチ管理パネル ===== -->
   <div id="batch-panel" style="display:none; margin:8px 0; padding:10px 14px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:6px; font-size:0.9em;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <strong>蓄積アイテム: <span id="batch-count">0</span>件</strong>
-      <button id="batch-clear-btn" style="font-size:0.82em; padding:2px 10px; border:1px solid #c62828; color:#c62828; background:white; border-radius:4px; cursor:pointer;">全件クリア</button>
+      <span style="white-space:nowrap;">
+        <button id="batch-draft-delete-btn" style="font-size:0.82em; padding:2px 10px; border:1px solid #888; color:#555; background:white; border-radius:4px; cursor:pointer; margin-right:4px;" title="ブラウザに自動保存された下書きデータを削除します（蓄積アイテムは保持されます）">下書き削除</button>
+        <button id="batch-clear-btn" style="font-size:0.82em; padding:2px 10px; border:1px solid #c62828; color:#c62828; background:white; border-radius:4px; cursor:pointer;">全件クリア</button>
+      </span>
     </div>
     <div id="batch-list" style="max-height:180px; overflow-y:auto;"></div>
   </div>

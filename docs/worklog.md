@@ -1,6 +1,39 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-22（#165: OpenAlex由来RORの誤同定検出・注意喚起）
+最終更新: 2026-06-27（#162: 作業中データの自動保存・復元）
+
+## 作業中データの自動保存・復元（2026-06-27, #162）
+
+### 概要
+Chrome拡張のサイドパネルを閉じる／タブを閉じると、入力中・蓄積中のメタデータ（`allMetadata[]` と DOM 上の編集内容）が失われていた。作業中データをブラウザのローカルストレージへ自動保存し、次回起動時に復元できるようにした。HTML版・Chrome拡張版の両方に対応。
+
+### 設計
+- ストレージ抽象を `shared.js` に追加（#111 の共通化方針に準拠）
+  - Chrome拡張版: `chrome.storage.local`（`loadConfig()` と同基盤）
+  - スタンドアロンHTML版: `localStorage`
+  - API: `saveDraft(obj)` / `loadDraft()` / `clearDraft()`、キー `wipDraft`、保存形 `{ version, savedAt, repoHost, currentBatchIndex, allMetadata }`
+  - `DRAFT_VERSION` でスキーマ版を保持し、不一致・破損時は `loadDraft()` が `null`（破棄）
+- 保存トリガー（`make_jc_importer.html` / `chrome-extension/make_jc_importer.js`）
+  - `persistDraft()` — 即時保存。蓄積0件なら `clearDraft()`。`fetchData`（finally）・`removeBatchItem`・`clearBatch`・`navigateBatch`・バッチ一覧クリック切替から呼ぶ
+  - `scheduleDraftSave()` — フォーム編集の約1秒デバウンス保存。`#metadata-fields`（`renderAll()` が実際に描画する要素）の `input`/`change` を委譲
+  - `visibilitychange`(hidden) で `saveCurrent()` → `persistDraft()` の確定保存（`beforeunload` は非同期保存が間に合わないため不採用）
+  - quota 超過等の保存失敗は握り潰さず `showError()` で一度だけ通知（`draftSaveErrorShown`）
+- 復元トリガー
+  - `init()` 末尾で `maybeShowDraftBanner()` を呼び、下書きがあれば非ブロッキングのバナー（`#draft-restore-banner`）で件数・保存日時を表示し「復元／破棄」を提示
+  - `restoreDraft()` で `allMetadata`/`currentBatchIndex`/`repo-host` を戻し `updateBatchPanel()` ＋ `renderAll()`
+- 明示クリア: バッチパネルに「下書き削除」ボタン（`#batch-draft-delete-btn`）を追加（蓄積アイテムは保持し下書きのみ削除）。エクスポート後は自動削除しない方針
+
+### 変更ファイル
+- `shared.js` / `chrome-extension/shared.js` — `saveDraft`/`loadDraft`/`clearDraft`/`isExtensionStorage` 追加
+- `make_jc_importer.html` — フォールバックスタブ、`persistDraft`/`scheduleDraftSave`、各バッチ操作への保存呼出、`init()` の自動保存リスナー・復元フロー・バナーUI・「下書き削除」、復元バナーHTML、最終更新日・更新概要、`LOCAL_VERSION` `2026-06-22` → `2026-06-27`
+- `chrome-extension/make_jc_importer.js` — 同期（`addEventListener` で登録）、`LOCAL_VERSION` 同期
+- `chrome-extension/panel.html` — 復元バナーHTML・「下書き削除」ボタン・最終更新日・更新概要テーブル
+- `make_jc_importer_test.html` — 同期（E2E用、CONFIG APIキー保持・inlined shared.js に下書き関数追加）
+- `chrome-extension/manifest.json` — version `1.12.0` → `1.13.0`（feature/minor）
+
+### 注意事項
+- 容量: `localStorage` ~5MB／`chrome.storage.local` 既定 ~10MB。`allMetadata`(JSON) のみ保存。`unlimitedStorage` 権限は追加していない（ストア再審査回避）
+- プライバシー: 下書きはローカルのみに保存（外部送信なし）
 
 ## OpenAlex由来RORの誤同定への対応（2026-06-22, #165）
 

@@ -27,6 +27,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
   - 入力メタデータのプレビュー表示
   - [Open Policy Finder](https://openpolicyfinder.jisc.ac.uk/)へのリンク表示
   - インポート用TSVファイル生成
+  - 作業中データの自動保存・復元（タブ／サイドパネルを閉じても次回起動時に復元）
 
 - Chrome拡張機能版では、通常ブラウザ版に加えて以下の機能が利用できます。APIキーが必要ですが、こちらが高機能です。
   - 以下の3ツールのタブ切替
@@ -70,6 +71,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 | CiNii Research API による科研費課題名取得 | ✅ | ✅ |  |
 | KAKEN XML API による科研費課題検索 | ✅ | ❌ | CORS制約のためChrome拡張機能版のみ |
 | **設定・運用** | | | |
+| 作業中データの自動保存・復元 | ✅ | ✅ | タブ／サイドパネルを閉じても次回起動時に復元（ローカル保存のみ） |
 | 更新チェック | ✅ | ✅ | 更新がある場合はその旨表示されます |
 | APIキー設定（GUI） | ✅ | ❌ | Chrome拡張機能版は設定ページで管理 |
 | APIキー設定（ソースコード編集） | ❌ | ✅ | `shared.js` のCONFIG定数を編集 |
@@ -83,8 +85,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-06-22 | ver. 1.12.0 | OpenAlex由来で著者所属に付与したRORに「要確認」表示を追加。OpenAlexの機関同定がCrossrefの所属表記と一致しない誤同定の疑いを検出し、RORを設定せず注意喚起（[#165](https://github.com/tzhaya/jc-import-file-maker/issues/165)） |
-| インポート用TSV生成ツール | 2026-06-22 | — | OpenAlex由来で著者所属に付与したRORに「要確認」表示を追加。OpenAlexの機関同定がCrossrefの所属表記と一致しない誤同定の疑いを検出し、RORを設定せず注意喚起（[#165](https://github.com/tzhaya/jc-import-file-maker/issues/165)） |
+| Chrome拡張機能版 | 2026-06-27 | ver. 1.13.0 | 作業中データ（入力中のメタデータ）をブラウザに自動保存し、サイドパネルを閉じても次回起動時に復元できる機能を追加（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)） |
+| インポート用TSV生成ツール | 2026-06-27 | — | 作業中データ（入力中のメタデータ）をブラウザに自動保存し、タブを閉じても次回起動時に復元できる機能を追加（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)） |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 
 ## 導入方法
@@ -316,6 +318,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-27 | 作業中データ（入力中・蓄積中のメタデータ）を自動保存し、タブ／サイドパネルを閉じても次回起動時に復元できる機能を追加（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)）。Chrome拡張版は `chrome.storage.local`、スタンドアロン版は `localStorage` に保存（`shared.js` の `saveDraft`/`loadDraft`/`clearDraft`）。各バッチ操作後・フォーム編集のデバウンス（約1秒）・`visibilitychange`（タブ非表示）で自動保存し、起動時に下書きがあれば非ブロッキングのバナーで「復元／破棄」を提示。バッチパネルに「下書き削除」操作を追加。エクスポート後も下書きは保持。manifest version `1.12.0` → `1.13.0` |
 | 2026-06-22 | Crossref が著者所属に ROR を持たない場合に OpenAlex が機械同定した ROR を付与しているが、誤同定があるため対応（[#165](https://github.com/tzhaya/jc-import-file-maker/issues/165)）。(1) OpenAlex 由来の ROR の URI 欄に「⚠ 要確認」バッジを常時表示。(2) OpenAlex が同定した機関名と、同定元の Crossref 所属表記（`raw_affiliation_string`）を有意トークンで照合し（機関名トークンの過半数一致を主、最上位組織名照合を補助とする2段階判定）、誤同定の疑いがある場合は ROR を設定せず Crossref 所属表記を機関名として採用、機関名欄に注意喚起（部局名など下位階層は機関名まで編集する旨も表示）。manifest version `1.11.1` → `1.12.0` |
 | 2026-06-19 | GitHub Pages の紹介ページ（`docs/index.html`）を新規作成。空だった https://tzhaya.github.io/jc-import-file-maker/ に、概要・2つの利用方法・機能比較・3つのツール・導入方法・「作者から」を掲載（README をベースにした自己完結HTML） |
 | 2026-06-19 | 助成情報の「プログラム情報識別子タイプ」（`subitem_funding_stream_identifier_type`）の選択肢先頭に空の項目を追加し、識別子本体が空欄のときに既定値 `Crossref Funder` が自動選択されてTSVに誤出力される不具合を修正（[#161](https://github.com/tzhaya/jc-import-file-maker/issues/161)）。manifest version `1.11.0` → `1.11.1` |
