@@ -1511,6 +1511,39 @@ function saveCurrent() {
   allMetadata[currentBatchIndex] = collectFromDOM();
 }
 
+// ===== 3.7b 作業中データの自動保存（#162） =====
+let draftSaveTimer = null;
+let draftSaveErrorShown = false;
+
+// 現在の状態を下書きへ即時保存する（バッチ操作後・visibilitychange 用）。
+// 蓄積アイテムが無ければ下書きを削除する。
+async function persistDraft() {
+  try {
+    if (allMetadata.length === 0) {
+      await clearDraft();
+      return;
+    }
+    const repoHost = document.getElementById('repo-host')?.value || '';
+    await saveDraft({ repoHost, currentBatchIndex, allMetadata });
+    draftSaveErrorShown = false;
+  } catch (e) {
+    console.warn('下書きの自動保存に失敗しました:', e);
+    if (!draftSaveErrorShown) {
+      showError('作業中データの自動保存に失敗しました（保存容量の上限に達した可能性があります）。');
+      draftSaveErrorShown = true;
+    }
+  }
+}
+
+// フォーム編集イベント用のデバウンス保存（約1秒）。DOM編集を allMetadata へ反映してから保存する。
+function scheduleDraftSave() {
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer = setTimeout(() => {
+    saveCurrent();
+    persistDraft();
+  }, 1000);
+}
+
 // ===== 3.8 メイン取得フロー =====
 async function fetchData() {
   showError('');
@@ -1546,6 +1579,7 @@ async function fetchData() {
     showError(`エラー: ${e.message}`);
   } finally {
     loading.style.display = 'none';
+    persistDraft();  // 取得結果を下書きに反映（#162）
   }
 }
 
@@ -4792,6 +4826,7 @@ function removeBatchItem(index) {
   } else if (wasCurrent) {
     renderAll(allMetadata[currentBatchIndex]);
   }
+  persistDraft();  // #162
 }
 
 function clearBatch() {
@@ -4804,6 +4839,7 @@ function clearBatch() {
   document.getElementById('preview-area').style.display = 'none';
   document.getElementById('preview-btn').style.display = 'none';
   document.getElementById('export-btn').style.display = 'none';
+  persistDraft();  // 全件クリアで下書きも削除（#162）
 }
 
 function navigateBatch(delta) {
@@ -4813,6 +4849,7 @@ function navigateBatch(delta) {
   currentBatchIndex = newIdx;
   renderAll(allMetadata[newIdx]);
   updateBatchPanel();
+  persistDraft();  // #162
 }
 
 // ===== 5.6a バッチ列展開用メタデータ統合 =====
@@ -6158,6 +6195,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
         currentBatchIndex = idx;
         renderAll(allMetadata[idx]);
         updateBatchPanel();
+        persistDraft();  // #162
       }
     }
   });
@@ -6165,11 +6203,78 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
   document.getElementById('opf-badge').addEventListener('click', openOpfModal);
   document.getElementById('opf-modal-close').addEventListener('click', closeOpfModal);
   document.querySelector('#preview-modal .modal-close').addEventListener('click', closePreview);
+
+  // ===== 作業中データ自動保存・復元（#162） =====
+  // フォーム編集のデバウンス自動保存（実際の編集フォームは #metadata-fields）
+  const metaFields = document.getElementById('metadata-fields');
+  if (metaFields) {
+    metaFields.addEventListener('input', scheduleDraftSave);
+    metaFields.addEventListener('change', scheduleDraftSave);
+  }
+  // タブ/パネルが隠れる際に確定保存（beforeunload は非同期保存が間に合わないため visibilitychange を使用）
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+      saveCurrent();
+      persistDraft();
+    }
+  });
+
+  // 「下書き削除」ボタン（蓄積アイテムは保持し、保存済み下書きのみ削除）
+  document.getElementById('batch-draft-delete-btn').addEventListener('click', async function() {
+    if (!confirm('ブラウザに自動保存された下書きデータを削除しますか？（現在の蓄積アイテムは保持されます）')) return;
+    await clearDraft();
+  });
+
+  // 復元バナーのボタン
+  document.getElementById('draft-restore-btn').addEventListener('click', restoreDraft);
+  document.getElementById('draft-discard-btn').addEventListener('click', async function() {
+    await clearDraft();
+    document.getElementById('draft-restore-banner').style.display = 'none';
+  });
+
+  // 起動時: 下書きがあれば復元バナーを表示（非ブロッキング）
+  await maybeShowDraftBanner();
 })();
+
+// ===== 下書き復元バナー制御（#162） =====
+let pendingDraft = null;
+
+async function maybeShowDraftBanner() {
+  const draft = await loadDraft();
+  if (!draft || !Array.isArray(draft.allMetadata) || draft.allMetadata.length === 0) return;
+  pendingDraft = draft;
+  const banner = document.getElementById('draft-restore-banner');
+  const msg = document.getElementById('draft-restore-msg');
+  let savedAtStr = '';
+  if (draft.savedAt) {
+    const d = new Date(draft.savedAt);
+    if (!isNaN(d)) savedAtStr = '（' + d.toLocaleString('ja-JP') + '）';
+  }
+  msg.textContent = '前回の作業データ ' + draft.allMetadata.length + '件' + savedAtStr + ' を復元できます。';
+  banner.style.display = 'block';
+}
+
+function restoreDraft() {
+  if (!pendingDraft) return;
+  allMetadata = pendingDraft.allMetadata;
+  currentBatchIndex =
+    (typeof pendingDraft.currentBatchIndex === 'number' &&
+     pendingDraft.currentBatchIndex >= 0 &&
+     pendingDraft.currentBatchIndex < allMetadata.length)
+      ? pendingDraft.currentBatchIndex
+      : 0;
+  const repoHostInput = document.getElementById('repo-host');
+  if (repoHostInput && pendingDraft.repoHost) repoHostInput.value = pendingDraft.repoHost;
+  showHints = false;
+  updateBatchPanel();
+  renderAll(allMetadata[currentBatchIndex]);
+  document.getElementById('draft-restore-banner').style.display = 'none';
+  pendingDraft = null;
+}
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-22';
+  const LOCAL_VERSION = '2026-06-27';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
