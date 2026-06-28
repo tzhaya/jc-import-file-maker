@@ -1,6 +1,22 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-28（CI品質チェック・文字コード明文化 #174/#175）
+最終更新: 2026-06-28（Chrome拡張ホスト権限明文化 #176）
+
+## Chrome拡張ホスト権限の明文化（2026-06-28, #176）
+
+### 概要
+コードの挙動変更なし。コメント追記とドキュメント新規作成が中心。
+
+### 変更内容
+- `chrome-extension/background.js`: `ALLOWED_HOSTS` コメントを修正。proxy は CORS 非対応 API の3ホストのみ（WEKO3 等は side panel から直接 fetch）、ワイルドカード追加禁止ルールを明記。
+- `chrome-extension/make_jc_importer.js` / `funder_lookup.js`: `getDoiFromCurrentTab` 冒頭に広いホスト権限の理由・ユーザー操作起点・読み取り範囲・安全策を要約コメントで追記。
+- `docs/chrome_store_permissions.md`（新規）: Chrome Web Store 審査向けの権限正当化文書。各権限の理由・用途・安全策を整理。
+- `docs/privacy-policy.md`: 8章に広いホスト権限の必要理由と Service Worker proxy の制限を補強。最終更新日更新。
+- `README.md`: 「権限とセキュリティについて」セクション新設。`docs/chrome_store_permissions.md` リンク追加。変更履歴・最新の更新テーブル更新。
+- `chrome-extension/funder_lookup.js`: LOCAL_VERSION を 2026-06-15 → 2026-06-28 に更新。
+- `chrome-extension/manifest.json`: version 1.14.0 → 1.14.1（patch）。
+
+---
 
 ## CI品質チェック・文字コード明文化（2026-06-28, #174 / #175）
 

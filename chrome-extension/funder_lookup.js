@@ -21,6 +21,18 @@ function isValidDoi(doi) {
 
 // ===== 現在のタブのmetaタグからDOIを取得（Chrome拡張専用） =====
 // 戻り値: { doi } または { error: <ユーザー向けメッセージ> }
+//
+// 【広いホスト権限（https://*/*, http://*/*）が必要な理由】
+// 電子ジャーナルのドメインは出版社ごとに異なり事前列挙できないため、
+// optional_host_permissions として広いパターンを宣言している。
+// この権限はインストール時ではなく、ユーザーがボタンを押したときに
+// chrome.permissions.request() で実行時要求する（初回のみ確認ダイアログ）。
+//
+// 【安全策】
+// - ユーザー操作を起点とし、自動実行しない。
+// - executeScript で読み取るのは DOI を示す meta タグ・JSON-LD identifier のみ。
+//   ページ本文・フォーム値・閲覧履歴は読まず、外部へ送信しない。
+// - http:/https: 以外の特権ページ（chrome:// 等）では実行を拒否する。
 async function getDoiFromCurrentTab() {
   try {
     // ページのDOMを読み取るための権限を最初に要求（ユーザージェスチャー保持のため最初のawaitにする）。
@@ -802,7 +814,7 @@ async function copyTsvToClipboard(btn) {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-15';
+  const LOCAL_VERSION = '2026-06-28';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;

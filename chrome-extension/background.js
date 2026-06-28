@@ -4,7 +4,11 @@
 // サイドパネルをツールバーボタンクリックで開く設定
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
-// プロキシ許可ホスト（host_permissionsと一致させること）
+// fetch プロキシの許可ホスト（CORS 非対応 API のみ）
+// ここに列挙したホストだけを Service Worker 経由でプロキシする。
+// WEKO3 リポジトリ等の host_permissions 登録済みホストは、サイドパネル（extension page）が
+// 直接 fetch できるため、ここには含めない。
+// ワイルドカード追加禁止: 追加する場合は対象 API のドメインを個別に列挙すること。
 const ALLOWED_HOSTS = [
   'https://kaken.nii.ac.jp/',
   'https://api.japanlinkcenter.org/',

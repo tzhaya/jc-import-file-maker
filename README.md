@@ -96,7 +96,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-06-28 | ver. 1.14.0 | OpenAlex機関別著作検索タブを追加（自機関RORで候補論文を検索→登録済み照合バッジ→選択DOIをインポートタブへ受け渡し、検索結果を自動保存）（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)・[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）。DOIリストの一括取得を追加（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。タイトルのタグ片・改行を除去しTSVの行崩れを防止 |
+| Chrome拡張機能版 | 2026-06-28 | ver. 1.14.1 | 広いホスト権限の必要性と安全策を明文化（[#176](https://github.com/tzhaya/jc-import-file-maker/issues/176)）。background.js のproxyコメント修正・getDoiFromCurrentTab に権限理由コメント追記・README「権限とセキュリティ」セクション追加・docs/chrome_store_permissions.md 新規作成・プライバシーポリシー8章補強 |
 | インポート用TSV生成ツール | 2026-06-28 | — | DOIリストの一括取得を追加（複数DOIをまとめて取得→一括TSV出力）（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。OpenAlex機関別著作検索（`openalex_lookup.html`）を追加（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）。タイトルのタグ片・改行を除去しTSVの行崩れを防止 |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 
@@ -348,6 +348,22 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 - [プライバシーポリシー](docs/privacy-policy.md)をご参照ください。
 
+## 権限とセキュリティについて（Chrome拡張機能版）
+
+| 権限 | 理由 |
+|---|---|
+| `storage` | APIキー・設定をブラウザのローカルストレージに保存 |
+| `sidePanel` | サイドパネル UI の表示 |
+| `scripting` | 「ページから DOI 取得」でページの DOI meta タグを読み取る（ボタン押下時のみ実行） |
+| `optional_host_permissions`（`https://*/*`） | 電子ジャーナルのドメインは出版社ごとに異なり事前列挙不可のため、ユーザー操作時に実行時要求 |
+| `host_permissions`（学術 API・機関リポジトリ） | KAKEN・JaLC・OPF・WEKO3 リポジトリへの CORS 制約なしアクセス |
+
+**広いホスト権限（`https://*/*`）について**: 電子ジャーナルの掲載ページから DOI を抽出する機能のために必要です。インストール時には要求せず、「ページから DOI 取得」ボタンを押したときにのみ許可を求めます。読み取るのは DOI を示す meta タグ・JSON-LD の identifier のみで、ページ本文・閲覧履歴は読みません。ブラウザの設定からいつでも取り消せます。
+
+Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホスト）のみを対象とし、それ以外のホストへの proxy は拒否します。
+
+詳細は [プライバシーポリシー](docs/privacy-policy.md) および [Chrome Web Store 権限の正当化](docs/chrome_store_permissions.md) を参照してください。
+
 ## AIの利用
 
 このアプリケーションの作成は、生成AIによるコーディング支援を受けています。
@@ -356,6 +372,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-28 | Chrome拡張のホスト権限明文化（[#176](https://github.com/tzhaya/jc-import-file-maker/issues/176)）：広いホスト権限（`optional_host_permissions`）の必要性と安全策をコード・ドキュメントに明記。`background.js` のproxyコメント修正、`getDoiFromCurrentTab` に権限理由コメント追記、README「権限とセキュリティ」セクション追加、[`docs/chrome_store_permissions.md`](docs/chrome_store_permissions.md)（Web Store審査向け権限正当化文書）新規作成、プライバシーポリシー補強。manifest version `1.14.0` → `1.14.1` |
 | 2026-06-28 | CI品質チェック・文字コード明文化：`npm test` で JSON parse・JS構文・UTF-8妥当性を検証する `scripts/check.js` を追加。GitHub Actions の PR/push 時品質チェック（[`.github/workflows/ci.yml`](.github/workflows/ci.yml)）を追加。`.editorconfig`（`charset=utf-8`）・`.gitattributes` を追加。PowerShellでの文字化け確認手順・開発者向けドキュメント一覧（[`docs/developer_docs.md`](docs/developer_docs.md)）を整備（[#174](https://github.com/tzhaya/jc-import-file-maker/issues/174)・[#175](https://github.com/tzhaya/jc-import-file-maker/issues/175)） |
 | 2026-06-28 | ドキュメント整備：残存Issue一覧（[`docs/remaining_issues.md`](docs/remaining_issues.md)）を棚卸しし現状に同期（[#172](https://github.com/tzhaya/jc-import-file-maker/issues/172)）。完了済みIssue（#73/#112/#111/#116/#43/#4/#6 のほか #142/#143/#148/#159/#161/#165/#162、Phase 3 #157/#154/#155/#156）を「完了済みグループ」へ集約、OPEN節をGitHubの状態（#145/#169/#136/#123/#122/#95/#74/#8）に同期、概要・推奨実装順序・変更対象ファイル・実装時の参照ポイントを現構成に更新、OpenAlexパイプライン本格自動化（R2/R3/R4/R7）を「将来検討」として整理 |
 | 2026-06-28 | OpenAlex 起点 JAIRO Cloud 登録パイプラインの前段階（手動運用版・Phase 3）を実装（[#157](https://github.com/tzhaya/jc-import-file-maker/issues/157)）。(1) **DOIリスト一括取得**：複数DOIを改行/区切りで投入し順次取得→既存バッチに蓄積、失敗はスキップして集計表示（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。(2) **OpenAlex機関別著作検索**：自機関 ROR で Works API を cursor paging 取得し候補一覧（掲載誌・出版日・OAバッジ・チェックボックス）を表示、選択DOIをコピー／（拡張）インポートタブへ受け渡し、検索・照合結果を自動保存・次回既定表示。標準版 `openalex_lookup.html`／Chrome拡張タブ（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）。(3) **登録済み照合バッジ**：候補タイトルで OpenSearch 検索→返戻 JPCOAR 内の識別子で DOI 照合し ⚪登録済みの可能性大（グレー）／🟡要確認／🟢未登録の可能性 の3値表示（Chrome拡張限定）（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）。あわせてタイトルの出版社XMLタグ片・改行を除去し、TSV全セルの制御文字を空白化してインポート時の行崩れを防止。manifest version `1.13.0` → `1.14.0` |
