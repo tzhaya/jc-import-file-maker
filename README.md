@@ -354,7 +354,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 |---|---|
 | `storage` | APIキー・設定をブラウザのローカルストレージに保存 |
 | `sidePanel` | サイドパネル UI の表示 |
-| `scripting` | 「ページから DOI 取得」でページの DOI meta タグを読み取る（ボタン押下時のみ実行） |
+| `scripting` | 「ページから DOI 取得」でページの DOI meta タグ・JSON-LD identifier を読み取る（ボタン押下時のみ実行） |
 | `optional_host_permissions`（`https://*/*`, `http://*/*`） | 電子ジャーナルのドメインは出版社ごとに異なり事前列挙不可のため、ユーザー操作時に実行時要求 |
 | `host_permissions`（学術 API・機関リポジトリ） | KAKEN・JaLC・OPF・WEKO3 リポジトリへの CORS 制約なしアクセス |
 
