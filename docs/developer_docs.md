@@ -56,10 +56,13 @@ Get-Content -Encoding UTF8 README.md | Select-Object -First 20
 
 | ドキュメント | 内容 |
 |---|---|
+| [user_guide.md](user_guide.md) | 使い方ガイド（初心者向け：STEP 1〜4、バッチ処理、APIキー設定） |
+| [changelog.md](changelog.md) | 変更履歴（全量。READMEには最新5件のみ掲載） |
 | [requirements.md](requirements.md) | 要件定義 |
 | [fieldmapping.md](fieldmapping.md) | JPCOARフィールドマッピング |
 | [weko3_tsv_import_spec.md](weko3_tsv_import_spec.md) | WEKO3 TSVインポート仕様 |
 | [privacy-policy.md](privacy-policy.md) | プライバシーポリシー |
+| [chrome_store_permissions.md](chrome_store_permissions.md) | Chrome Web Store 権限の正当化 |
 | [release_procedure.md](release_procedure.md) | リリース手順 |
 | [remaining_issues.md](remaining_issues.md) | 残存Issue一覧 |
 | [worklog.md](worklog.md) | 実装作業ログ |
