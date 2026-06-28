@@ -37,6 +37,7 @@ const UTF8_FILES = [
   'README.md',
   'docs/privacy-policy.md',
   'docs/user_guide.md',
+  'docs/settings.md',
   'docs/developer_docs.md',
   // HTML (standalone)
   'make_jc_importer.html',

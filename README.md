@@ -97,8 +97,9 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
 | Chrome拡張機能版 | 2026-06-28 | ver. 1.14.1 | 広いホスト権限の必要性と安全策を明文化（[#176](https://github.com/tzhaya/jc-import-file-maker/issues/176)）。background.js のproxyコメント修正・getDoiFromCurrentTab に権限理由コメント追記・README「権限とセキュリティ」セクション追加・docs/chrome_store_permissions.md 新規作成・プライバシーポリシー8章補強 |
-| インポート用TSV生成ツール | 2026-06-28 | — | DOIリストの一括取得を追加（複数DOIをまとめて取得→一括TSV出力）（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。OpenAlex機関別著作検索（`openalex_lookup.html`）を追加（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）。タイトルのタグ片・改行を除去しTSVの行崩れを防止 |
+| インポート用TSV生成ツール | 2026-06-28 | — | DOIリストの一括取得を追加（複数DOIをまとめて取得→一括TSV出力）（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。タイトルのタグ片・改行を除去しTSVの行崩れを防止 |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
+| OpenAlex機関別著作検索 | 2026-06-28 | — | 自機関の ROR ID と検索対象期間（既定90日）で所属研究者の発表論文を検索する新ツール（`openalex_lookup.html`）を追加（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）。検索結果のDOIをインポート支援ツールの「DOIリスト一括取得」へ渡せる。Chrome拡張機能版では自機関リポジトリでの登録状況バッジを表示 |
 
 ## 導入方法
 
@@ -203,87 +204,14 @@ APIからのデータ取得・マッピング・編集UI・プレビュー・TSV
 
 ### 設定（APIキー・初期値）
 
-APIキーと、TSV出力時の管理（システム）フィールド・リポジトリURLの初期値は、いずれも **Chrome拡張機能版は設定ページ**、**通常ブラウザ版は `shared.js` の `CONFIG` 定数** で設定します。APIキー・初期値ともすべて任意です（未設定でも動作します）。
+APIキー（OpenAlex・CiNii・Open Policy Finder）と初期値（リポジトリURL・管理フィールド・自機関ROR・OpenAlex検索対象期間）は、いずれも **Chrome拡張機能版は設定ページ**、**通常ブラウザ版は `shared.js` の `CONFIG` 定数** で設定します。**APIキー・初期値ともすべて任意です**（未設定でも動作します。APIキー未設定時はレート制限が厳しくなる等の制約があります）。
 
-設定できる初期値（任意）:
+設定できる項目（すべて任意）:
 
-| 項目 | 説明 |
-|------|------|
-| `.IndexID[0]`（登録先インデックスID） | アイテムの登録先インデックスID（例: `1697430475875`） |
-| `.POS_INDEX[0]`（インデックス名パス） | 人間可読のインデックス名パス（例: `学術雑誌論文`） |
-| リポジトリURL | TSV出力時にスキーマURLの `https://localhost/` を置換するリポジトリのURL |
+- **APIキー**: `OpenAlex_API_KEY` ／ `CiNii_API_KEY`（KAKEN XML API利用時は必須）／ `OPF_API_KEY`（Chrome拡張機能版のみ）
+- **初期値**: リポジトリURL（`DEFAULT_REPOSITORY_URL`）／ 登録先インデックスID（`DEFAULT_INDEX_ID`）／ インデックス名パス（`DEFAULT_POS_INDEX`）／ 自機関ROR ID（`DEFAULT_ROR_ID`）／ OpenAlex検索対象期間（`DEFAULT_OPENALEX_DAYS`）
 
-#### Chrome拡張機能版（推奨）
-
-Chrome拡張機能版では設定ページでAPIキーをまとめて設定できます。設定値はブラウザのローカルストレージに保存され、ソースコードに書き込む必要がありません。
-
-1. 拡張機能の「JAIRO Cloud インポート支援ツール」の ︙ → オプション を開きます。
-
-   <img src="docs/images/config.png" alt="拡張機能の設定メニュー" width="300">
-
-2. APIキーを入力して「保存」を押してください。
-
-CORS非対応のAPI（KAKEN XML API・JaLC API・Open Policy Finder API）が Chrome拡張機能のService Worker経由で利用可能になります。
-
-管理フィールド・リポジトリURLの初期値も同じ設定ページで指定できます。`.IndexID[0]` と `.POS_INDEX[0]` は「TSV 管理フィールドの初期値」で設定し、リポジトリURLは「JAIRO Cloud OpenSearch」の「デフォルトリポジトリ URL」と共用されます（OpenSearch検索タブとTSV生成ツールの両方に反映されます）。
-
-#### 通常ブラウザ版
-
-`shared.js` をテキストエディタで開き、`CONFIG` 定数にAPIキーと初期値をまとめて設定してください。この設定は `make_jc_importer.html` と `funder_lookup.html` の両方に反映されます。初期値（`DEFAULT_*`）は空欄のままでも動作します。
-
-```js
-const CONFIG = {
-    // OpenAlex APIキー（任意）
-    // https://openalex.org/settings/api からご自身のキーを取得して貼り付けてください
-    OpenAlex_API_KEY: "YOUR_OpenAlex_API_KEY",
-
-    // CiNii APIキー（任意）
-    // CiNiiウェブAPI 利用登録 https://support.nii.ac.jp/ja/cinii/api/developer で取得したキーを貼り付けてください
-    CiNii_API_KEY: "YOUR_CiNii_API_KEY",
-
-    // Open Policy Finder APIキー（任意・Chrome拡張機能版のみ有効）
-    OPF_API_KEY: "YOUR_OPF_API_KEY",
-
-    // ===== システム（管理フィールド）・リポジトリURLの初期値（任意） =====
-    // よく使う登録先インデックスやリポジトリURLを設定すると、フォームに初期値として入力されます。
-
-    // リポジトリURL（repo-host）。TSVのスキーマURL置換に使用
-    DEFAULT_REPOSITORY_URL: "",
-
-    // .IndexID[0]（.metadata.path[0]）アイテムの登録先インデックスID  例: 1697430475875
-    DEFAULT_INDEX_ID: "",
-
-    // .POS_INDEX[0]（.pos_index[0]）インデックス名パス（人間可読）  例: 学術雑誌論文
-    DEFAULT_POS_INDEX: "",
-
-    // ===== OpenAlex 機関検索（#155 機能A）の初期値 =====
-    // 自機関の ROR ID（フルURL or ID）。OpenAlex機関別著作検索パネルの初期値に使用
-    // 例: https://ror.org/057zh3y96
-    DEFAULT_ROR_ID: "",
-
-    // OpenAlex機関別著作検索の対象期間（過去N日、from_publication_date ベース）。既定 90 日
-    DEFAULT_OPENALEX_DAYS: 90,
-};
-```
-
-`DEFAULT_*` に設定した値は、「データ取得」後や「空値で全フィールド表示」時に管理フィールドの初期値として入力され、リポジトリURLは入力欄が空のときに自動入力されます。
-
-#### OpenAlex API Key（推奨）
-
-OpenAlex APIは、APIキーなしでの利用回数に制限があります。継続的に利用する場合は、APIキーの設定を推奨します。
-
-- [OpenAlex API設定ページ](https://openalex.org/settings/api) からAPIキーを取得してください。
-- 未設定の場合、ページ上部に警告メッセージが表示されます。未設定でも利用可能ですが、利用回数の制限を超えるとデータ取得時にエラーが表示されます。
-
-#### CiNii API Key（KAKEN API利用時は必須）
-
-- KAKEN APIは利用にあたり CiNii API Key が必要です。
-- [CiNiiウェブAPI 利用登録](https://support.nii.ac.jp/ja/cinii/api/developer) からAPIキーを取得してください。
-
-CiNii APIキー未設定でも、以下の機能が動作します：
-
-- JSPS（日本学術振興会）が助成機関に含まれる場合に、CiNii Research Projects API を通じて科研費の課題名（日英）とKAKEN課題ページURLを自動取得
-- ISSNをもとにCiNii Research OpenSearch APIからNCID（NACSIS-CAT書誌ID）を自動取得
+各項目の詳細な説明・反映先・設定手順（拡張機能版の設定ページ／通常ブラウザ版の `CONFIG` コード例）は **[設定ガイド](docs/settings.md)** を参照してください。
 
 ## ディレクトリ構成
 
@@ -327,6 +255,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 - [要件定義](docs/requirements.md)
 - [使い方ガイド](docs/user_guide.md)
+- [設定ガイド](docs/settings.md) APIキー・初期値の一覧と設定手順。
 - [開発者向けドキュメント](docs/developer_docs.md) 品質チェック・文字コード確認・ドキュメント一覧。
 - [作業ログ](docs/worklog.md) 実装作業時のログです。
 - [APIフロー整理](api-flow.md) Crossref/OpenAlex等の取得順・JPCOARマッピングの概要です。
@@ -372,12 +301,11 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-28 | 設定（APIキー・初期値）を別ページに集約（[#181](https://github.com/tzhaya/jc-import-file-maker/issues/181)）：[`docs/settings.md`](docs/settings.md) 新規作成し全8項目（APIキー3＋初期値5）を一元化。READMEの設定セクションを要約＋リンクに縮約、`docs/user_guide.md` の設定関連記述を導線に整理、欠落していた `DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` を補完 |
 | 2026-06-28 | 初心者向けドキュメント整理（[#177](https://github.com/tzhaya/jc-import-file-maker/issues/177)）：`docs/changelog.md` 新規作成（変更履歴全量をREADMEから移設）、README変更履歴を最新5件に短縮、`docs/user_guide.md` を再構成（STEP 2の基本操作を前に・詳細を補足節へ）、`docs/index.html` 使い方ガイドへの導線追加・ドキュメントセクション整理 |
 | 2026-06-28 | Chrome拡張のホスト権限明文化（[#176](https://github.com/tzhaya/jc-import-file-maker/issues/176)）：広いホスト権限（`optional_host_permissions`）の必要性と安全策をコード・ドキュメントに明記。`background.js` のproxyコメント修正、`getDoiFromCurrentTab` に権限理由コメント追記、README「権限とセキュリティ」セクション追加、[`docs/chrome_store_permissions.md`](docs/chrome_store_permissions.md)（Web Store審査向け権限正当化文書）新規作成、プライバシーポリシー補強。manifest version `1.14.0` → `1.14.1` |
 | 2026-06-28 | CI品質チェック・文字コード明文化：`npm test` で JSON parse・JS構文・UTF-8妥当性を検証する `scripts/check.js` を追加。GitHub Actions の PR/push 時品質チェック（[`.github/workflows/ci.yml`](.github/workflows/ci.yml)）を追加。`.editorconfig`（`charset=utf-8`）・`.gitattributes` を追加。PowerShellでの文字化け確認手順・開発者向けドキュメント一覧（[`docs/developer_docs.md`](docs/developer_docs.md)）を整備（[#174](https://github.com/tzhaya/jc-import-file-maker/issues/174)・[#175](https://github.com/tzhaya/jc-import-file-maker/issues/175)） |
 | 2026-06-28 | ドキュメント整備：残存Issue一覧（[`docs/remaining_issues.md`](docs/remaining_issues.md)）を棚卸しし現状に同期（[#172](https://github.com/tzhaya/jc-import-file-maker/issues/172)） |
-| 2026-06-28 | OpenAlex 起点 JAIRO Cloud 登録パイプラインの前段階（手動運用版・Phase 3）を実装（[#157](https://github.com/tzhaya/jc-import-file-maker/issues/157)）。DOIリスト一括取得（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）・OpenAlex機関別著作検索（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）・登録済み照合バッジ（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）。manifest version `1.13.0` → `1.14.0` |
-| 2026-06-27 | 作業中データの自動保存・復元を追加（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)）。manifest version `1.12.0` → `1.13.0` |
 
 全履歴は [docs/changelog.md](docs/changelog.md) を参照してください。
 

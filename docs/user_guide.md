@@ -271,7 +271,7 @@ TSV出力時に、TSVヘッダー1行目のスキーマURLを機関リポジト�
 ### 検索する
 
 1. **ROR ID** を入力します（例: `https://ror.org/02956yf07`）。`https://ror.org/` 付きでも、ID部分のみでも入力できます。
-   - 設定ページ（Chrome拡張機能版）／`shared.js` の `DEFAULT_ROR_ID`（通常ブラウザ版）に登録しておくと、タブ／ページを開いたときに自動入力されます。
+   - 自機関の ROR ID を初期値として登録しておくと、タブ／ページを開いたときに自動入力されます（設定方法は [設定ガイド](settings.md) を参照）。
    - 自機関のROR IDは [ROR](https://ror.org/) で機関名から検索できます。
 2. **過去N日**（既定90日）を指定します。OpenAlex の `from_publication_date`（**出版日**）を基準に、「今日からN日前以降に出版された論文」を検索します。
 3. 必要に応じて **資源タイプ**（論文・図書・プレプリント等）で絞り込みます。
@@ -317,15 +317,11 @@ TSV出力時に、TSVヘッダー1行目のスキーマURLを機関リポジト�
 
 ---
 
-## APIキーの設定（任意）
+## 設定（APIキー・初期値）
 
-通常ブラウザ版では `shared.js` 内の `CONFIG` 定数を、Chrome拡張機能版では拡張機能のオプションページ（設定ページ）でAPIキーを設定できます。
+APIキー（OpenAlex・CiNii・Open Policy Finder）と初期値（リポジトリURL・管理フィールド・自機関ROR・OpenAlex検索対象期間）は、通常ブラウザ版では `shared.js` 内の `CONFIG` 定数で、Chrome拡張機能版では拡張機能のオプションページ（設定ページ）で設定できます。いずれもすべて任意で、未設定でも動作します。
 
-| キー | 用途 | 未設定時 |
-|------|------|---------|
-| `OpenAlex_API_KEY` | OpenAlex APIへのアクセス | 利用回数が制限されます（画面に警告表示） |
-| `CiNii_API_KEY` | CiNii Research API（KAKEN XML・NCID取得） | KAKEN XML APIが利用不可。CiNii Research APIはレート制限あり |
-| `OPF_API_KEY` | Open Policy Finder API（OAポリシー・エンバーゴ取得、Chrome拡張版のみ） | OAポリシー表示とエンバーゴ自動設定が利用不可 |
+各項目の説明・反映先・設定手順は **[設定ガイド](settings.md)** を参照してください。
 
 ---
 
