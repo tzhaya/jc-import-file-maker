@@ -1,0 +1,6 @@
+# テキストファイルの改行を LF に統一
+* text=auto eol=lf
+
+# バイナリファイルは変換しない
+*.png binary
+*.zip binary

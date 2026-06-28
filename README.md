@@ -327,6 +327,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 - [要件定義](docs/requirements.md)
 - [使い方ガイド](docs/user_guide.md)
+- [開発者向けドキュメント](docs/developer_docs.md) 品質チェック・文字コード確認・ドキュメント一覧。
 - [作業ログ](docs/worklog.md) 実装作業時のログです。
 - [APIフロー整理](api-flow.md) Crossref/OpenAlex等の取得順・JPCOARマッピングの概要です。
 - [機能と技術](function.md) 機能と技術、実装に関するドキュメントです。
@@ -355,6 +356,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-28 | CI品質チェック・文字コード明文化：`npm test` で JSON parse・JS構文・UTF-8妥当性を検証する `scripts/check.js` を追加。GitHub Actions の PR/push 時品質チェック（[`.github/workflows/ci.yml`](.github/workflows/ci.yml)）を追加。`.editorconfig`（`charset=utf-8`）・`.gitattributes` を追加。PowerShellでの文字化け確認手順・開発者向けドキュメント一覧（[`docs/developer_docs.md`](docs/developer_docs.md)）を整備（[#174](https://github.com/tzhaya/jc-import-file-maker/issues/174)・[#175](https://github.com/tzhaya/jc-import-file-maker/issues/175)） |
 | 2026-06-28 | ドキュメント整備：残存Issue一覧（[`docs/remaining_issues.md`](docs/remaining_issues.md)）を棚卸しし現状に同期（[#172](https://github.com/tzhaya/jc-import-file-maker/issues/172)）。完了済みIssue（#73/#112/#111/#116/#43/#4/#6 のほか #142/#143/#148/#159/#161/#165/#162、Phase 3 #157/#154/#155/#156）を「完了済みグループ」へ集約、OPEN節をGitHubの状態（#145/#169/#136/#123/#122/#95/#74/#8）に同期、概要・推奨実装順序・変更対象ファイル・実装時の参照ポイントを現構成に更新、OpenAlexパイプライン本格自動化（R2/R3/R4/R7）を「将来検討」として整理 |
 | 2026-06-28 | OpenAlex 起点 JAIRO Cloud 登録パイプラインの前段階（手動運用版・Phase 3）を実装（[#157](https://github.com/tzhaya/jc-import-file-maker/issues/157)）。(1) **DOIリスト一括取得**：複数DOIを改行/区切りで投入し順次取得→既存バッチに蓄積、失敗はスキップして集計表示（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。(2) **OpenAlex機関別著作検索**：自機関 ROR で Works API を cursor paging 取得し候補一覧（掲載誌・出版日・OAバッジ・チェックボックス）を表示、選択DOIをコピー／（拡張）インポートタブへ受け渡し、検索・照合結果を自動保存・次回既定表示。標準版 `openalex_lookup.html`／Chrome拡張タブ（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）。(3) **登録済み照合バッジ**：候補タイトルで OpenSearch 検索→返戻 JPCOAR 内の識別子で DOI 照合し ⚪登録済みの可能性大（グレー）／🟡要確認／🟢未登録の可能性 の3値表示（Chrome拡張限定）（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）。あわせてタイトルの出版社XMLタグ片・改行を除去し、TSV全セルの制御文字を空白化してインポート時の行崩れを防止。manifest version `1.13.0` → `1.14.0` |
 | 2026-06-27 | 作業中データ（入力中・蓄積中のメタデータ）を自動保存し、タブ／サイドパネルを閉じても次回起動時に復元できる機能を追加（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)）。Chrome拡張版は `chrome.storage.local`、スタンドアロン版は `localStorage` に保存（`shared.js` の `saveDraft`/`loadDraft`/`clearDraft`）。各バッチ操作後・フォーム編集のデバウンス（約1秒）・`visibilitychange`（タブ非表示）で自動保存し、起動時に下書きがあれば非ブロッキングのバナーで「復元／破棄」を提示。バッチパネルに「下書き削除」操作を追加。エクスポート後も下書きは保持。manifest version `1.12.0` → `1.13.0` |

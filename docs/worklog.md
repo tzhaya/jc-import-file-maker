@@ -1,6 +1,27 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-28（Phase 3 #157: OpenAlex起点パイプライン前段階）
+最終更新: 2026-06-28（CI品質チェック・文字コード明文化 #174/#175）
+
+## CI品質チェック・文字コード明文化（2026-06-28, #174 / #175）
+
+### 概要
+- `scripts/check.js` を新規追加。JSON parse・JS 構文（`node --check`）・UTF-8 妥当性の3種チェックを実行。外部 API・APIキー・ネットワーク不要。
+- `package.json` の `scripts.test` を `node scripts/check.js` に変更。
+- `.github/workflows/ci.yml` を追加。PR / push 時に `npm test` を自動実行。
+- `.editorconfig`（`charset=utf-8`）・`.gitattributes`（`text=auto eol=lf`）を新規追加。
+- `docs/developer_docs.md` を新規作成。品質チェック手順・PowerShell での UTF-8 確認手順・ドキュメント一覧を整備。
+- CLI/AI エージェントで日本語が文字化けして見える場合の確認手順を明文化（ファイル破損ではなく表示環境差）。
+
+### 変更ファイル
+- `scripts/check.js`（新規）
+- `package.json`（scripts.test 更新）
+- `.github/workflows/ci.yml`（新規）
+- `.editorconfig`（新規）
+- `.gitattributes`（新規）
+- `docs/developer_docs.md`（新規）
+- `README.md`（ドキュメントリンク追加・変更履歴追記）
+
+---
 
 ## OpenAlex起点パイプライン前段階・手動運用版（2026-06-28, Phase 3 #157 / #154 / #155 / #156）
 
