@@ -5,7 +5,7 @@
 ## 設定（APIキー・初期値）の別ページ集約（2026-06-28, #181）
 
 ### 概要
-ドキュメントのみの変更。HTML/JS・Chrome拡張への変更なし。READMEの「設定（APIキー・初期値）」セクションに全設定項目が網羅されておらず（`shared.js`/`options.html` の8項目中、初期値表に `DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` が欠落）、肥大化もしていたため別ページに集約。
+主にドキュメント変更。あわせて設定ページ文言（`chrome-extension/options.html`）とmanifest versionを更新。READMEの「設定（APIキー・初期値）」セクションに全設定項目が網羅されておらず（`shared.js`/`options.html` の8項目中、初期値表に `DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` が欠落）、肥大化もしていたため別ページに集約。
 
 ### 変更内容
 - `docs/settings.md`（新規）: APIキー3項目（OpenAlex/CiNii/OPF）＋初期値5項目（リポジトリURL/IndexID/POS_INDEX/ROR ID/検索対象期間）の全8項目を一元化。用途・必須任意・未設定時動作・取得先・反映先を表で整理。`DEFAULT_REPOSITORY_URL` の反映先にOpenAlex機関検索の登録状況照合（#156）を明記。拡張版設定ページ手順・通常版 `CONFIG` コード例を掲載。
