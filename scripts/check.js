@@ -33,9 +33,25 @@ const JS_FILES = [
 const UTF8_FILES = [
   ...JSON_FILES,
   ...JS_FILES,
+  // Markdown
   'README.md',
   'docs/privacy-policy.md',
   'docs/user_guide.md',
+  'docs/developer_docs.md',
+  // HTML (standalone)
+  'make_jc_importer.html',
+  'make_jc_importer_test.html',
+  'funder_lookup.html',
+  'funder_lookup_test.html',
+  'openalex_lookup.html',
+  // HTML (Chrome extension)
+  'chrome-extension/panel.html',
+  'chrome-extension/funder_panel.html',
+  'chrome-extension/openalex_panel.html',
+  'chrome-extension/opensearch_panel.html',
+  'chrome-extension/options.html',
+  // GitHub Pages
+  'docs/index.html',
 ];
 
 let errors = 0;

@@ -10,5 +10,9 @@ trim_trailing_whitespace = true
 [*.md]
 trim_trailing_whitespace = false
 
+# TSV/CSV: 末尾タブが空列を表す場合があるため削除しない
+[*.{tsv,csv}]
+trim_trailing_whitespace = false
+
 [Makefile]
 indent_style = tab

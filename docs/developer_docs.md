@@ -42,7 +42,7 @@ Get-Content -Encoding UTF8 README.md | Select-Object -First 20
 
 **VS Code での確認:** エディタ右下のステータスバーにエンコーディングが表示されます（`UTF-8` であれば正常）。
 
-`npm test` の UTF-8 妥当性チェックが pass であれば、配布物は健全です。CLI 表示だけを根拠に日本語本文の一括復旧作業は行わないでください（[#175](https://github.com/tzhaya/jc-import-file-maker/issues/175)）。
+`npm test` の UTF-8 妥当性チェックが pass であれば、チェック対象ファイルのエンコーディングは健全です。CLI 表示だけを根拠に日本語本文の一括復旧作業は行わないでください（[#175](https://github.com/tzhaya/jc-import-file-maker/issues/175)）。
 
 ## ブランチ・PRワークフロー
 
