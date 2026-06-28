@@ -1,6 +1,21 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-28（初心者向けドキュメント整理 #177）
+最終更新: 2026-06-28（設定ページ切り出し #181）
+
+## 設定（APIキー・初期値）の別ページ集約（2026-06-28, #181）
+
+### 概要
+主にドキュメント変更。あわせて設定ページ文言（`chrome-extension/options.html`）とmanifest versionを更新。READMEの「設定（APIキー・初期値）」セクションに全設定項目が網羅されておらず（`shared.js`/`options.html` の8項目中、初期値表に `DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` が欠落）、肥大化もしていたため別ページに集約。
+
+### 変更内容
+- `docs/settings.md`（新規）: APIキー3項目（OpenAlex/CiNii/OPF）＋初期値5項目（リポジトリURL/IndexID/POS_INDEX/ROR ID/検索対象期間）の全8項目を一元化。用途・必須任意・未設定時動作・取得先・反映先を表で整理。`DEFAULT_REPOSITORY_URL` の反映先にOpenAlex機関検索の登録状況照合（#156）を明記。拡張版設定ページ手順・通常版 `CONFIG` コード例を掲載。
+- `README.md`: 設定セクションを要約＋ `docs/settings.md` へのリンクに縮約。ドキュメント一覧に設定ガイドを追加。変更履歴に #181 を追加し最新5件に整理。
+- `docs/user_guide.md`: 「APIキーの設定」節を「設定（APIキー・初期値）」に変更し `settings.md` への導線へ整理。`DEFAULT_ROR_ID` の説明も導線化。
+- `docs/developer_docs.md`・`docs/index.html`: ドキュメント一覧に設定ガイドを追加。
+- `scripts/check.js`: UTF-8チェック対象に `docs/settings.md` を追加。
+- `chrome-extension/options.html`: 設定ページ冒頭のAPIキー保存説明「外部に送信されることはありません」を、APIキーの認証送信と整合させプライバシーポリシー §3 の表現「各API提供元への認証以外の目的で送信されることはありません」に統一。manifest version `1.14.1` → `1.14.2`。
+
+---
 
 ## 初心者向けドキュメント整理（2026-06-28, #177）
 

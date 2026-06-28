@@ -56,7 +56,8 @@ Get-Content -Encoding UTF8 README.md | Select-Object -First 20
 
 | ドキュメント | 内容 |
 |---|---|
-| [user_guide.md](user_guide.md) | 使い方ガイド（初心者向け：STEP 1〜4、バッチ処理、APIキー設定） |
+| [user_guide.md](user_guide.md) | 使い方ガイド（初心者向け：STEP 1〜4、バッチ処理） |
+| [settings.md](settings.md) | 設定ガイド（APIキー・初期値の一覧と設定手順） |
 | [changelog.md](changelog.md) | 変更履歴（全量。READMEには最新5件のみ掲載） |
 | [requirements.md](requirements.md) | 要件定義 |
 | [fieldmapping.md](fieldmapping.md) | JPCOARフィールドマッピング |
