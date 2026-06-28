@@ -40,9 +40,7 @@ const UTF8_FILES = [
   'docs/developer_docs.md',
   // HTML (standalone)
   'make_jc_importer.html',
-  'make_jc_importer_test.html',
   'funder_lookup.html',
-  'funder_lookup_test.html',
   'openalex_lookup.html',
   // HTML (Chrome extension)
   'chrome-extension/panel.html',
