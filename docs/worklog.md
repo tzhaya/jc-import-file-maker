@@ -13,6 +13,7 @@
 - `docs/user_guide.md`: 「APIキーの設定」節を「設定（APIキー・初期値）」に変更し `settings.md` への導線へ整理。`DEFAULT_ROR_ID` の説明も導線化。
 - `docs/developer_docs.md`・`docs/index.html`: ドキュメント一覧に設定ガイドを追加。
 - `scripts/check.js`: UTF-8チェック対象に `docs/settings.md` を追加。
+- `chrome-extension/options.html`: 設定ページ冒頭のAPIキー保存説明「外部に送信されることはありません」を、APIキーの認証送信と整合させプライバシーポリシー §3 の表現「各API提供元への認証以外の目的で送信されることはありません」に統一。manifest version `1.14.1` → `1.14.2`。
 
 ---
 

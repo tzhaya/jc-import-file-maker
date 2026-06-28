@@ -96,7 +96,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-06-28 | ver. 1.14.1 | 広いホスト権限の必要性と安全策を明文化（[#176](https://github.com/tzhaya/jc-import-file-maker/issues/176)）。background.js のproxyコメント修正・getDoiFromCurrentTab に権限理由コメント追記・README「権限とセキュリティ」セクション追加・docs/chrome_store_permissions.md 新規作成・プライバシーポリシー8章補強 |
+| Chrome拡張機能版 | 2026-06-28 | ver. 1.14.2 | 設定（APIキー・初期値）を [`docs/settings.md`](docs/settings.md) に集約（[#181](https://github.com/tzhaya/jc-import-file-maker/issues/181)）。設定ページ（options.html）のAPIキー保存説明をプライバシーポリシーの表現に統一（「各API提供元への認証以外の目的で送信されない」） |
 | インポート用TSV生成ツール | 2026-06-28 | — | DOIリストの一括取得を追加（複数DOIをまとめて取得→一括TSV出力）（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。タイトルのタグ片・改行を除去しTSVの行崩れを防止 |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 | OpenAlex機関別著作検索 | 2026-06-28 | — | 自機関の ROR ID と検索対象期間（既定90日）で所属研究者の発表論文を検索する新ツール（`openalex_lookup.html`）を追加（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）。検索結果のDOIをインポート支援ツールの「DOIリスト一括取得」へ渡せる。Chrome拡張機能版では自機関リポジトリでの登録状況バッジを表示 |
@@ -301,7 +301,7 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
-| 2026-06-28 | 設定（APIキー・初期値）を別ページに集約（[#181](https://github.com/tzhaya/jc-import-file-maker/issues/181)）：[`docs/settings.md`](docs/settings.md) 新規作成し全8項目（APIキー3＋初期値5）を一元化。READMEの設定セクションを要約＋リンクに縮約、`docs/user_guide.md` の設定関連記述を導線に整理、欠落していた `DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` を補完 |
+| 2026-06-28 | 設定（APIキー・初期値）を別ページに集約（[#181](https://github.com/tzhaya/jc-import-file-maker/issues/181)）：[`docs/settings.md`](docs/settings.md) 新規作成し全8項目（APIキー3＋初期値5）を一元化。READMEの設定セクションを要約＋リンクに縮約、`docs/user_guide.md` の設定関連記述を導線に整理、欠落していた `DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` を補完。設定ページ（options.html）のAPIキー保存説明をプライバシーポリシーの表現に統一。manifest version `1.14.1` → `1.14.2` |
 | 2026-06-28 | 初心者向けドキュメント整理（[#177](https://github.com/tzhaya/jc-import-file-maker/issues/177)）：`docs/changelog.md` 新規作成（変更履歴全量をREADMEから移設）、README変更履歴を最新5件に短縮、`docs/user_guide.md` を再構成（STEP 2の基本操作を前に・詳細を補足節へ）、`docs/index.html` 使い方ガイドへの導線追加・ドキュメントセクション整理 |
 | 2026-06-28 | Chrome拡張のホスト権限明文化（[#176](https://github.com/tzhaya/jc-import-file-maker/issues/176)）：広いホスト権限（`optional_host_permissions`）の必要性と安全策をコード・ドキュメントに明記。`background.js` のproxyコメント修正、`getDoiFromCurrentTab` に権限理由コメント追記、README「権限とセキュリティ」セクション追加、[`docs/chrome_store_permissions.md`](docs/chrome_store_permissions.md)（Web Store審査向け権限正当化文書）新規作成、プライバシーポリシー補強。manifest version `1.14.0` → `1.14.1` |
 | 2026-06-28 | CI品質チェック・文字コード明文化：`npm test` で JSON parse・JS構文・UTF-8妥当性を検証する `scripts/check.js` を追加。GitHub Actions の PR/push 時品質チェック（[`.github/workflows/ci.yml`](.github/workflows/ci.yml)）を追加。`.editorconfig`（`charset=utf-8`）・`.gitattributes` を追加。PowerShellでの文字化け確認手順・開発者向けドキュメント一覧（[`docs/developer_docs.md`](docs/developer_docs.md)）を整備（[#174](https://github.com/tzhaya/jc-import-file-maker/issues/174)・[#175](https://github.com/tzhaya/jc-import-file-maker/issues/175)） |
