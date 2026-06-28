@@ -33,6 +33,7 @@
 
   /* ===== 結果 ===== */
   #result-info { font-size: 12px; color: #555; margin: 10px 0; }
+  #result-criteria { font-size: 12px; color: #2c3e2c; background: #eef5ee; border: 1px solid #cfe3cf; border-radius: 4px; padding: 6px 10px; margin-bottom: 8px; word-break: break-all; line-height: 1.6; }
   .toolbar { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
   .toolbar button { background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px 12px; font-size:12px; cursor:pointer; }
   .toolbar button:hover { background:#e8f5e9; }
@@ -92,6 +93,7 @@
 
 <section id="results-section" class="hidden">
   <div id="result-info"></div>
+  <div id="result-criteria" class="hidden"></div>
   <div id="output-actions" class="toolbar hidden">
     <button id="btn-select-all">全選択</button>
     <button id="btn-select-none">全解除</button>
@@ -119,6 +121,642 @@
 </section>
 
 <script src="shared.js"></script>
-<script src="openalex_panel.js"></script>
+<script>
+// ============================================================
+// OpenAlex 機関検索パネル（#155 機能A）— 標準版インラインスクリプト
+// ※ Chrome拡張版は MV3 CSP のため chrome-extension/openalex_panel.js（外部ファイル）を使用。
+//    本インラインと chrome-extension/openalex_panel.js は同一ロジックを保つこと。
+// 自機関 ROR ID で OpenAlex Works API を cursor paging 検索し、
+// 候補一覧（チェックボックス＋OAバッジ）から DOI リストを出力する。
+// ============================================================
+
+// shared.js 未読込時のフォールバック（標準HTMLを単体配布した場合の保険）
+if (typeof CONFIG === 'undefined') {
+  console.warn('shared.js が読み込めませんでした。フォールバック設定で動作します。');
+  window.CONFIG = { OpenAlex_API_KEY: '', DEFAULT_ROR_ID: '', DEFAULT_OPENALEX_DAYS: 90 };
+  window.loadConfig = async function () {};
+}
+
+const IS_CHROME_EXTENSION = typeof chrome !== 'undefined' && !!chrome.runtime?.id;
+
+// OA ステータス → バッジ表示（make_jc_importer.js と同一定義）
+const OA_BADGE_MAP = {
+  diamond: { label: '💎 Diamond OA', bg: '#4caf50' },
+  gold:    { label: '🟡 Gold OA',    bg: '#4caf50' },
+  green:   { label: '🟢 Green OA',   bg: '#4caf50' },
+  hybrid:  { label: '🔵 Hybrid OA',  bg: '#4caf50' },
+  bronze:  { label: '🟤 Bronze OA',  bg: '#ff9800' },
+  closed:  { label: '🔴 Closed',     bg: '#999' },
+};
+
+// 資源タイプ（OpenAlex type フィルタ用・主要なもの）
+const OA_RESOURCE_TYPES = [
+  { value: 'article',         ja: '論文 (article)' },
+  { value: 'book-chapter',    ja: '図書（章） (book-chapter)' },
+  { value: 'book',            ja: '図書 (book)' },
+  { value: 'dataset',         ja: 'データセット (dataset)' },
+  { value: 'dissertation',    ja: '学位論文 (dissertation)' },
+  { value: 'preprint',        ja: 'プレプリント (preprint)' },
+  { value: 'review',          ja: 'レビュー (review)' },
+  { value: 'report',          ja: '報告書 (report)' },
+  { value: 'proceedings-article', ja: '会議論文 (proceedings-article)' },
+];
+
+const OA_MAX_PAGES = 50;      // 安全のための取得ページ上限（100件/ページ＝最大5000件）
+const OA_PAGE_DELAY_MS = 300; // ページ間の待機（レート配慮）
+
+let oaWorks = [];   // 直近の検索結果（OpenAlex work オブジェクト配列）
+let oaMatches = {};  // 直近の照合結果 { [doi]: { kind:'red'|'yellow'|'green', itemUrl } }（#156）
+let oaInstitution = { ja: '', en: '' };  // 直近の検索RORの機関名（検索条件サマリ用）
+let oaRor = '';       // 直近の検索ROR（フルURL）
+let oaFromDate = '';  // 取得対象期間の開始（YYYY-MM-DD）
+let oaToDate = '';    // 取得対象期間の終了（YYYY-MM-DD）
+
+// ---- ユーティリティ ----
+
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ROR を OpenAlex フィルタ用のフルURL（https://ror.org/xxxx）に正規化
+function normalizeRor(v) {
+  const s = (v || '').trim();
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) return s.replace(/\/+$/, '');
+  // "ror.org/xxxx" または素のID "xxxx"
+  const id = s.replace(/^ror\.org\//i, '').replace(/^\/+/, '');
+  return 'https://ror.org/' + id;
+}
+
+// DOI を素の形（小文字・プレフィックス除去）に
+function bareDoi(doi) {
+  return (doi || '')
+    .trim()
+    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
+    .replace(/^doi:/i, '')
+    .toLowerCase();
+}
+
+// 過去N日前の日付（YYYY-MM-DD）
+function isoNDaysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+// ---- URL 構築 ----
+
+function buildWorksUrl(ror, fromDate, type, cursor) {
+  const filters = [
+    'authorships.institutions.ror:' + ror,
+    'from_publication_date:' + fromDate,
+    'has_doi:true',
+  ];
+  if (type) filters.push('type:' + encodeURIComponent(type));
+  let url = 'https://api.openalex.org/works'
+    + '?filter=' + filters.join(',')
+    + '&select=' + encodeURIComponent('doi,title,publication_date,primary_location,open_access,authorships')
+    + '&per-page=100'
+    + '&cursor=' + encodeURIComponent(cursor);
+  if (CONFIG.OpenAlex_API_KEY && CONFIG.OpenAlex_API_KEY !== 'YOUR_OpenAlex_API_KEY') {
+    url += '&api_key=' + encodeURIComponent(CONFIG.OpenAlex_API_KEY);
+  }
+  return url;
+}
+
+// ---- 検索（cursor paging で全件取得） ----
+
+async function fetchAllWorks(ror, fromDate, type, onProgress) {
+  const out = [];
+  let cursor = '*';
+  let page = 0;
+  while (cursor && page < OA_MAX_PAGES) {
+    page++;
+    const res = await fetch(buildWorksUrl(ror, fromDate, type, cursor));
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        throw new Error('OpenAlex APIキーが必要、または無効です（' + res.status + '）。設定でAPIキーを確認してください。');
+      }
+      if (res.status === 429) {
+        throw new Error('OpenAlex のレート制限に達しました（429）。APIキー設定後、時間をおいて再試行してください。');
+      }
+      throw new Error('OpenAlex APIエラー: HTTP ' + res.status);
+    }
+    const json = await res.json();
+    const results = json.results || [];
+    out.push(...results);
+    if (onProgress) onProgress(out.length, json.meta && json.meta.count);
+    cursor = (json.meta && json.meta.next_cursor) || null;
+    if (!results.length) break;
+    if (cursor) await new Promise(r => setTimeout(r, OA_PAGE_DELAY_MS));
+  }
+  return out;
+}
+
+// ---- レンダリング ----
+
+function renderResults(works) {
+  const info = document.getElementById('result-info');
+  const tbody = document.getElementById('result-tbody');
+  const section = document.getElementById('results-section');
+  tbody.innerHTML = '';
+
+  if (!works.length) {
+    info.textContent = '該当する論文は見つかりませんでした。期間（過去N日）を広げるか、ROR ID を確認してください。';
+    document.getElementById('result-table-wrap').classList.add('hidden');
+    document.getElementById('output-actions').classList.add('hidden');
+    section.classList.remove('hidden');
+    return;
+  }
+
+  info.textContent = `${works.length.toLocaleString()} 件の候補が見つかりました。登録対象を選択してください。`;
+
+  works.forEach((w, i) => {
+    const doi = bareDoi(w.doi);
+    const title = w.title || w.display_name || '(タイトルなし)';
+    const journal = (w.primary_location && w.primary_location.source && w.primary_location.source.display_name) || '';
+    const date = w.publication_date || '';
+    const oaStatus = (w.open_access && w.open_access.oa_status) || '';
+    const badge = OA_BADGE_MAP[oaStatus] || { label: '⚪ Unknown', bg: '#999' };
+
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="col-check"><input type="checkbox" class="row-check" data-doi="' + escHtml(doi) + '" checked></td>' +
+      '<td class="col-oa"><span class="oa-badge" style="background:' + badge.bg + '">' + escHtml(badge.label) + '</span></td>' +
+      '<td class="col-title">' + escHtml(title) + '</td>' +
+      '<td class="col-journal">' + escHtml(journal) + '</td>' +
+      '<td class="col-date">' + escHtml(date) + '</td>' +
+      '<td class="col-doi"><a href="https://doi.org/' + escHtml(doi) + '" target="_blank" rel="noopener">' + escHtml(doi) + '</a></td>' +
+      // 登録済み照合バッジ（#156）の組み込みスロット。拡張版でのみ照合結果が入る。
+      '<td class="col-match" data-doi="' + escHtml(doi) + '" data-title="' + escHtml(title) + '"></td>';
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('result-table-wrap').classList.remove('hidden');
+  document.getElementById('output-actions').classList.remove('hidden');
+  section.classList.remove('hidden');
+}
+
+// 選択中（チェックON）の DOI を配列で返す
+function getSelectedDois() {
+  return Array.from(document.querySelectorAll('.row-check'))
+    .filter(cb => cb.checked)
+    .map(cb => cb.dataset.doi)
+    .filter(Boolean);
+}
+
+// ============================================================
+// 登録済み照合バッジ（#156）：タイトル検索 → JPCOAR内DOI照合
+// WEKO3 OpenSearch は DOI直接指定を持たないため、候補タイトルで検索し、
+// 返戻 JPCOAR XML 内の識別子から DOI を抽出して照合する。
+// OpenSearch は CORS 制約のため照合は Chrome拡張版限定（標準版では実行されない）。
+//   ⚪ 登録済みの可能性大 : タイトルヒット＋DOI一致（チェックOFF）
+//   🟡 要確認            : タイトルヒット＋DOI不一致（チェックOFF＋レコードリンク）
+//   🟢 未登録の可能性     : タイトルヒットなし（チェックON）
+// ============================================================
+
+const MATCH_TITLE_WORDS = 12;   // タイトル検索に使う先頭語数（再現率優先で切り詰め）
+const MATCH_DELAY_MS = 500;     // 候補間の照合クエリ間隔（自機関リポジトリへの配慮）
+const OPENSEARCH_SIZE = 20;     // タイトル検索の取得件数
+const NS_RDF_OA = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+
+// タイトルを検索用に正規化：HTMLタグ片除去＋エンティティ解除＋先頭N語に切り詰め。
+function normalizeTitleForSearch(title) {
+  let t = String(title || '');
+  t = t.replace(/<[^>]+>/g, ' ');                       // タグ片除去
+  t = t.replace(/&lt;/g, ' ').replace(/&gt;/g, ' ')
+       .replace(/&amp;/g, ' ').replace(/&quot;/g, ' ')
+       .replace(/&apos;|&#39;/g, ' ');                   // 主要エンティティ
+  t = t.replace(/[\s　]+/g, ' ').trim();            // 連続空白を統一
+  const words = t.split(' ').filter(Boolean);
+  return words.slice(0, MATCH_TITLE_WORDS).join(' ');
+}
+
+// OpenSearch（JPCOAR）応答をパースし、各レコードの itemUrl と DOI集合を返す。
+function parseRepoSearch(xmlText) {
+  const xml = new DOMParser().parseFromString(xmlText, 'application/xml');
+  if (xml.querySelector('parsererror')) throw new Error('リポジトリ応答のXML解析に失敗しました');
+  const descriptions = Array.from(xml.getElementsByTagNameNS(NS_RDF_OA, 'Description'));
+  return descriptions.map(desc => {
+    const itemUrl = desc.getAttributeNS(NS_RDF_OA, 'about') || desc.getAttribute('rdf:about') || '';
+    const dois = new Set();
+    // JPCOAR内の複数箇所（identifier / relatedIdentifier / identifierRegistration）を全走査
+    Array.from(desc.getElementsByTagName('*')).forEach(el => {
+      const ln = el.localName;
+      if (ln === 'identifier' || ln === 'relatedIdentifier' || ln === 'identifierRegistration') {
+        const v = bareDoi(el.textContent.trim());
+        if (/^10\.\d{4,9}\/\S+$/.test(v)) dois.add(v);
+      }
+    });
+    return { itemUrl, dois };
+  });
+}
+
+// 候補DOIをリポジトリ検索結果と突合して3値判定。
+function classifyMatch(items, candidateDoi) {
+  if (!items.length) return { kind: 'green' };
+  const cand = bareDoi(candidateDoi);
+  for (const it of items) {
+    if (cand && it.dois.has(cand)) return { kind: 'red', itemUrl: it.itemUrl };
+  }
+  return { kind: 'yellow', itemUrl: items[0].itemUrl };
+}
+
+// 1候補をリポジトリへタイトル検索して判定する。
+async function matchAgainstRepo(repoOrigin, title, candidateDoi) {
+  const q = normalizeTitleForSearch(title);
+  if (!q) return { kind: 'green' };  // タイトルが空なら検索不能 → 未登録扱い
+  const url = repoOrigin + 'api/opensearch/search?format=jpcoar&title=' + encodeURIComponent(q) + '&size=' + OPENSEARCH_SIZE;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('OpenSearch HTTP ' + res.status);
+  const items = parseRepoSearch(await res.text());
+  return classifyMatch(items, candidateDoi);
+}
+
+function matchBadgeHtml(label, color, url) {
+  const span = '<span class="match-badge" style="color:' + color + ';">' + label + '</span>';
+  if (url) return '<a href="' + escHtml(url) + '" target="_blank" rel="noopener" class="match-link" title="ヒットしたリポジトリレコードを開く">' + span + '</a>';
+  return span;
+}
+
+function renderMatchBadge(cell, result) {
+  const checkbox = cell.closest('tr').querySelector('.row-check');
+  if (result.kind === 'red') {
+    cell.innerHTML = matchBadgeHtml('⚪ 登録済みの可能性大', '#616161', result.itemUrl);
+    if (checkbox) checkbox.checked = false;
+  } else if (result.kind === 'yellow') {
+    cell.innerHTML = matchBadgeHtml('🟡 要確認', '#e69500', result.itemUrl);
+    if (checkbox) checkbox.checked = false;
+  } else {
+    cell.innerHTML = matchBadgeHtml('🟢 未登録の可能性', '#2e7d32', '');
+    if (checkbox) checkbox.checked = true;
+  }
+}
+
+// #155 renderResults から呼ばれるフック。拡張版でのみ照合を実行する。
+async function applyDuplicateBadges(works) {
+  if (!IS_CHROME_EXTENSION) return;
+  const cells = Array.from(document.querySelectorAll('.col-match'));
+  if (!cells.length) return;
+
+  const repoInput = document.getElementById('oa-repo-url');
+  const repoUrl = ((repoInput && repoInput.value) || CONFIG.DEFAULT_REPOSITORY_URL || '').trim();
+  if (!repoUrl) {
+    cells.forEach(c => { c.innerHTML = '<span class="match-na" title="リポジトリURLを入力すると登録済み照合を行います">—</span>'; });
+    return;
+  }
+  let origin;
+  try { origin = new URL(repoUrl).origin + '/'; }
+  catch {
+    cells.forEach(c => { c.innerHTML = '<span class="match-na" title="リポジトリURLが不正です">—</span>'; });
+    return;
+  }
+
+  cells.forEach(c => { c.innerHTML = '<span class="match-loading">⏳照合中…</span>'; });
+
+  // 候補1件＝OpenSearchクエリ1回。間隔を空けて順次実行。照合結果は oaMatches に記録（保存対象）。
+  for (let i = 0; i < cells.length; i++) {
+    const cell = cells[i];
+    try {
+      const result = await matchAgainstRepo(origin, cell.dataset.title, cell.dataset.doi);
+      oaMatches[cell.dataset.doi] = result;
+      renderMatchBadge(cell, result);
+    } catch (e) {
+      cell.innerHTML = '<span class="match-err" title="' + escHtml(e.message) + '">⚠ 照合不可</span>';
+    }
+    if (i < cells.length - 1) await new Promise(r => setTimeout(r, MATCH_DELAY_MS));
+  }
+}
+
+// 保存済みの照合結果（oaMatches）を再クエリせずに各行へ描画する（復元用）。
+function paintSavedMatches() {
+  document.querySelectorAll('.col-match').forEach(cell => {
+    const m = oaMatches[cell.dataset.doi];
+    if (m && (m.kind === 'red' || m.kind === 'yellow' || m.kind === 'green')) {
+      renderMatchBadge(cell, m);
+    } else if (IS_CHROME_EXTENSION) {
+      cell.innerHTML = '<span class="match-na">—</span>';
+    }
+  });
+}
+
+// ============================================================
+// 検索・照合結果の作業中データ保存／復元（#162 の保存対象に追加）
+// shared.js の saveOpenAlexSearch/loadOpenAlexSearch を使用。
+// 過去の検索結果があれば init で既定表示し、再検索（doSearch）で入れ替える。
+// ============================================================
+
+// 保存サイズを抑えるため、再描画に必要なフィールドのみに絞った work を作る。
+function slimWork(w) {
+  return {
+    doi: w.doi,
+    title: w.title || w.display_name || '',
+    publication_date: w.publication_date || '',
+    primary_location: { source: { display_name: (w.primary_location && w.primary_location.source && w.primary_location.source.display_name) || '' } },
+    open_access: { oa_status: (w.open_access && w.open_access.oa_status) || '' },
+  };
+}
+
+function buildOaState() {
+  const repoInput = document.getElementById('oa-repo-url');
+  return {
+    query: {
+      ror: document.getElementById('q-ror').value.trim(),
+      days: document.getElementById('q-days').value.trim(),
+      type: document.getElementById('q-type').value,
+      repoUrl: (repoInput && repoInput.value.trim()) || '',
+    },
+    works: oaWorks.map(slimWork),
+    matches: oaMatches,
+    selectedDois: getSelectedDois(),
+    criteria: { ror: oaRor, institution: oaInstitution, fromDate: oaFromDate, toDate: oaToDate },
+  };
+}
+
+let oaSaveErrorShown = false;
+async function persistOpenAlexSearch() {
+  if (!oaWorks.length) return;
+  if (typeof saveOpenAlexSearch !== 'function') return;  // shared.js 未読込時は保存をスキップ
+  try {
+    await saveOpenAlexSearch(buildOaState());
+  } catch (e) {
+    if (!oaSaveErrorShown) {
+      oaSaveErrorShown = true;
+      showError('検索結果の自動保存に失敗しました（保存容量を超えている可能性があります）。', 'warn');
+    }
+  }
+}
+
+let oaSaveTimer = null;
+function scheduleOaSave() {
+  clearTimeout(oaSaveTimer);
+  oaSaveTimer = setTimeout(persistOpenAlexSearch, 500);
+}
+
+// 照合をバックグラウンド実行し、完了後に照合結果込みで再保存する。
+async function runMatching(works) {
+  await applyDuplicateBadges(works);
+  await persistOpenAlexSearch();
+}
+
+// 保存済みの選択状態（チェックON DOI）を復元する。
+function applySelection(selectedDois) {
+  if (!Array.isArray(selectedDois)) return;
+  const set = new Set(selectedDois);
+  document.querySelectorAll('.row-check').forEach(cb => { cb.checked = set.has(cb.dataset.doi); });
+}
+
+// 前回の検索・照合結果があれば、再クエリせずに表示する。
+async function restoreOpenAlexSearch() {
+  if (typeof loadOpenAlexSearch !== 'function') return false;
+  const saved = await loadOpenAlexSearch();
+  if (!saved || !Array.isArray(saved.works) || !saved.works.length) return false;
+
+  if (saved.query) {
+    if (saved.query.ror)  document.getElementById('q-ror').value = saved.query.ror;
+    if (saved.query.days) document.getElementById('q-days').value = saved.query.days;
+    if (saved.query.type) document.getElementById('q-type').value = saved.query.type;
+    const repo = document.getElementById('oa-repo-url');
+    if (repo && saved.query.repoUrl) repo.value = saved.query.repoUrl;
+  }
+
+  oaWorks = saved.works;
+  oaMatches = saved.matches || {};
+  renderResults(oaWorks);
+  paintSavedMatches();
+  applySelection(saved.selectedDois);
+
+  // 検索条件サマリの復元（再取得せず保存値で表示）
+  if (saved.criteria) {
+    oaRor = saved.criteria.ror || '';
+    oaInstitution = saved.criteria.institution || { ja: '', en: '' };
+    oaFromDate = saved.criteria.fromDate || '';
+    oaToDate = saved.criteria.toDate || '';
+    renderCriteria();
+  }
+
+  const when = saved.savedAt ? new Date(saved.savedAt).toLocaleString('ja-JP') : '';
+  document.getElementById('result-info').textContent =
+    `前回の検索結果（${oaWorks.length.toLocaleString()} 件${when ? ' / ' + when : ''}）を表示しています。再検索すると入れ替わります。`;
+  return true;
+}
+
+// ---- 出力 ----
+
+function copySelectedDois() {
+  const dois = getSelectedDois();
+  if (!dois.length) { showError('選択された DOI がありません。', 'warn'); return; }
+  const text = dois.join('\n');
+  const ta = document.getElementById('doi-output');
+  ta.value = text;
+  ta.classList.remove('hidden');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(
+      () => flashStatus(`${dois.length} 件の DOI をコピーしました。`),
+      () => flashStatus(`${dois.length} 件の DOI を下のテキスト欄に出力しました（クリップボード不可）。`)
+    );
+  } else {
+    flashStatus(`${dois.length} 件の DOI を下のテキスト欄に出力しました。`);
+  }
+}
+
+// 拡張版: 選択 DOI をインポートタブ（panel.html）の一括取得欄へ受け渡す
+function sendToImportTab() {
+  const dois = getSelectedDois();
+  if (!dois.length) { showError('選択された DOI がありません。', 'warn'); return; }
+  if (!IS_CHROME_EXTENSION) { copySelectedDois(); return; }
+  chrome.storage.local.set({ openAlexDoiHandoff: dois }, () => {
+    location.href = 'panel.html';
+  });
+}
+
+// ---- メッセージ ----
+
+function showError(msg, type = 'warn') {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.className = type;
+  el.classList.remove('hidden');
+}
+
+function hideError() {
+  document.getElementById('error-msg').classList.add('hidden');
+}
+
+function setLoading(on, text) {
+  const el = document.getElementById('loading');
+  el.textContent = text || '検索中…';
+  el.classList.toggle('hidden', !on);
+  document.getElementById('btn-search').disabled = on;
+}
+
+function flashStatus(msg) {
+  const el = document.getElementById('copy-status');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ---- 検索条件サマリ（ROR・機関名・対象期間） ----
+
+// ROR v2 API から機関名（ja/en）を取得。失敗時は空（CORS対応・直接fetch）。
+async function fetchRorNames(ror) {
+  try {
+    const id = String(ror || '').split('/').filter(Boolean).pop();
+    if (!id) return { ja: '', en: '' };
+    const res = await fetch('https://api.ror.org/v2/organizations/' + encodeURIComponent(id));
+    if (!res.ok) return { ja: '', en: '' };
+    const json = await res.json();
+    const names = json.names || [];
+    const pick = pred => (names.find(pred) || {}).value || '';
+    const en = pick(n => (n.types || []).includes('ror_display') && n.lang === 'en')
+            || pick(n => n.lang === 'en' && (n.types || []).includes('label'))
+            || pick(n => (n.types || []).includes('ror_display'));
+    const ja = pick(n => n.lang === 'ja' && (n.types || []).includes('label'))
+            || pick(n => n.lang === 'ja');
+    return { ja, en };
+  } catch {
+    return { ja: '', en: '' };
+  }
+}
+
+function fmtSlashDate(iso) {
+  return (iso || '').replace(/-/g, '/');
+}
+
+// 結果テーブルの上に「RORID / 取得対象機関(ja/en) / 対象期間」を表示する。
+function renderCriteria() {
+  const el = document.getElementById('result-criteria');
+  if (!el) return;
+  if (!oaRor) { el.textContent = ''; el.classList.add('hidden'); return; }
+  let s = 'RORID: ' + oaRor;
+  const inst = [];
+  if (oaInstitution.ja) inst.push(oaInstitution.ja + '(ja)');
+  if (oaInstitution.en) inst.push(oaInstitution.en + ' (en)');
+  if (inst.length) s += '　取得対象機関: ' + inst.join(' ');
+  if (oaFromDate && oaToDate) s += '　対象期間: ' + fmtSlashDate(oaFromDate) + '-' + fmtSlashDate(oaToDate);
+  el.textContent = s;
+  el.classList.remove('hidden');
+}
+
+// ---- 検索実行 ----
+
+async function doSearch() {
+  await loadConfig();
+
+  const ror = normalizeRor(document.getElementById('q-ror').value);
+  const daysRaw = document.getElementById('q-days').value.trim();
+  const days = parseInt(daysRaw, 10);
+  const type = document.getElementById('q-type').value;
+
+  if (!ror) {
+    showError('ROR ID を入力してください。', 'warn');
+    document.getElementById('q-ror').focus();
+    return;
+  }
+  if (!days || days <= 0) {
+    showError('過去N日には 1 以上の数値を入力してください。', 'warn');
+    document.getElementById('q-days').focus();
+    return;
+  }
+
+  const fromDate = isoNDaysAgo(days);
+  hideError();
+  setLoading(true, '検索中…（OpenAlex を取得しています）');
+  document.getElementById('results-section').classList.add('hidden');
+  document.getElementById('doi-output').classList.add('hidden');
+
+  // 検索条件サマリ用の値を確定
+  oaRor = ror;
+  oaFromDate = fromDate;
+  oaToDate = isoNDaysAgo(0);
+
+  try {
+    oaWorks = await fetchAllWorks(ror, fromDate, type, (n, total) => {
+      setLoading(true, `取得中… ${n}${total ? ' / ' + total : ''} 件`);
+    });
+    oaMatches = {};               // 再検索で前回の照合結果を破棄（入れ替え）
+    renderResults(oaWorks);
+    oaInstitution = await fetchRorNames(ror);  // 機関名取得（失敗時は空）
+    renderCriteria();
+    await persistOpenAlexSearch(); // 照合前にまず検索結果＋条件を保存
+    runMatching(oaWorks);          // 照合はバックグラウンド実行→完了後に再保存
+  } catch (err) {
+    showError('エラー: ' + err.message, 'warn');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function toggleAll(checked) {
+  document.querySelectorAll('.row-check').forEach(cb => { cb.checked = checked; });
+}
+
+// ---- 初期化 ----
+
+async function init() {
+  await loadConfig();
+
+  // 既定値の流し込み（CONFIG / chrome.storage）
+  const rorInput = document.getElementById('q-ror');
+  const daysInput = document.getElementById('q-days');
+  if (CONFIG.DEFAULT_ROR_ID && !rorInput.value) rorInput.value = CONFIG.DEFAULT_ROR_ID;
+  if (!daysInput.value) daysInput.value = CONFIG.DEFAULT_OPENALEX_DAYS || 90;
+
+  // 資源タイプ select を構築
+  const select = document.getElementById('q-type');
+  OA_RESOURCE_TYPES.forEach(rt => {
+    const opt = document.createElement('option');
+    opt.value = rt.value;
+    opt.textContent = rt.ja;
+    select.appendChild(opt);
+  });
+
+  // APIキー未設定の注意
+  if (!CONFIG.OpenAlex_API_KEY || CONFIG.OpenAlex_API_KEY === 'YOUR_OpenAlex_API_KEY') {
+    const w = document.getElementById('apikey-warning');
+    if (w) w.classList.remove('hidden');
+  }
+
+  // 登録済み照合（#156）：拡張版のみ。リポジトリURL欄を既定値で初期化。
+  const repoInput = document.getElementById('oa-repo-url');
+  if (IS_CHROME_EXTENSION) {
+    if (repoInput && !repoInput.value && CONFIG.DEFAULT_REPOSITORY_URL) {
+      repoInput.value = CONFIG.DEFAULT_REPOSITORY_URL;
+    }
+  } else {
+    // 標準版は OpenSearch の CORS制約で照合不可 → 照合列を隠す
+    document.body.classList.add('no-match');
+  }
+
+  // 拡張版のみ「インポートタブへ送る」を有効化
+  const sendBtn = document.getElementById('btn-send-import');
+  if (sendBtn) {
+    if (IS_CHROME_EXTENSION) {
+      sendBtn.classList.remove('hidden');
+      sendBtn.addEventListener('click', sendToImportTab);
+    }
+  }
+
+  document.getElementById('btn-search').addEventListener('click', doSearch);
+  document.getElementById('q-ror').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  document.getElementById('q-days').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  document.getElementById('btn-copy-dois').addEventListener('click', copySelectedDois);
+  document.getElementById('btn-select-all').addEventListener('click', () => { toggleAll(true); scheduleOaSave(); });
+  document.getElementById('btn-select-none').addEventListener('click', () => { toggleAll(false); scheduleOaSave(); });
+
+  // チェックボックスの変更（確認結果＝選択状態）も保存対象に含める（#162）
+  document.getElementById('result-tbody').addEventListener('change', e => {
+    if (e.target && e.target.classList && e.target.classList.contains('row-check')) scheduleOaSave();
+  });
+
+  // 前回の検索・照合結果があれば既定で表示（#162の保存対象）
+  await restoreOpenAlexSearch();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>

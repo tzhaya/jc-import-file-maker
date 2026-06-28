@@ -69,6 +69,30 @@
 - Phase 2-D（実装完了）：ItemType行自動設定（[#101](https://github.com/tzhaya/jc-import-file-maker/issues/101)）
   - カスタムテンプレートのItemType行を自動検出・設定
 
+### Phase 2以降の機能強化
+
+- OpenAlex由来RORの誤同定検出・注意喚起（[#165](https://github.com/tzhaya/jc-import-file-maker/issues/165)）
+  - Crossrefが著者所属にRORを持たない場合に付与されるOpenAlex機械同定RORのURI欄に「⚠ 要確認」を常時表示
+  - OpenAlexの機関名と同定元のCrossref所属表記（`raw_affiliation_string`）を有意トークンで照合（機関名トークンの過半数一致を主・最上位組織名照合を補助とする2段階判定）。誤同定の疑いがある場合はROR/ISNIを設定せずCrossref所属表記を機関名として採用し注意喚起
+- 作業中データの自動保存・復元（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)）
+  - 入力中・蓄積中のメタデータ（`allMetadata[]`＋編集内容）をブラウザに自動保存し、タブ／サイドパネルを閉じても次回起動時に復元
+  - Chrome拡張版は `chrome.storage.local`、通常ブラウザ版は `localStorage`（`shared.js` の `saveDraft`/`loadDraft`/`clearDraft`、キー `wipDraft`）。各バッチ操作後・フォーム編集のデバウンス・`visibilitychange` で保存し、起動時は非ブロッキングバナーで「復元／破棄」を提示
+
+### Phase 3（OpenAlex起点パイプライン前段階・手動運用版・全完了）
+
+検討ドキュメント [`docs/openalex_harvest_feasibility.md`](docs/openalex_harvest_feasibility.md) §5。自機関所属研究者の発表論文を OpenAlex から捕捉し、本ツールへ流し込む手動運用版（[#157](https://github.com/tzhaya/jc-import-file-maker/issues/157)）。
+
+- 機能B：DOIリスト一括取得（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）
+  - 複数DOIを改行/カンマ/空白で投入→正規化・重複除去→順次取得して既存バッチに蓄積。失敗はスキップして継続し、完了後に成功/失敗件数＋失敗DOI一覧を表示
+  - `fetchData()` の取得中核を `fetchAndAccumulate()` に抽出し、単一取得と一括取得（`fetchDoiList()`）を同一コードパスに統一
+- 機能A：OpenAlex機関別著作検索（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）
+  - 自機関ROR・過去N日（出版日ベース・既定90日）・任意の資源タイプで OpenAlex Works API を cursor paging 全件取得し、OAバッジ・チェックボックス付き候補一覧を表示。一覧上部に検索条件（ROR・取得対象機関名・対象期間）を表示
+  - 選択DOIを改行区切りでコピー／（拡張版）`chrome.storage.local` 経由でインポートタブの一括取得欄へ受け渡し。検索条件・結果・照合・選択状態を自動保存し次回既定表示（キー `openAlexSearch`）
+  - 標準版 `openalex_lookup.html`（検索ロジックをHTMLに内蔵）／Chrome拡張タブ。CONFIG・設定ページに `DEFAULT_ROR_ID`／`DEFAULT_OPENALEX_DAYS` を追加
+- 登録済み照合バッジ（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)・Chrome拡張版限定）
+  - 候補タイトルを正規化して自機関リポジトリの OpenSearch を検索し、返戻 JPCOAR 内の識別子（`identifier`／`relatedIdentifier`／`identifierRegistration`）から DOI を抽出して照合。⚪ 登録済みの可能性大（タイトルヒット＋DOI一致）／🟡 要確認（ヒット＋DOI不一致）／🟢 未登録の可能性（ヒットなし）の3値表示
+- TSVフォーマット修正：タイトルの出版社XMLタグ片・改行を `cleanInlineText()` で除去し、`generateTsv()` で全セルの制御文字を空白化してインポート時の行崩れを防止
+
 ## 技術スタック
 
 - HTML5 / CSS3 / JavaScript（依存ライブラリなし、単一HTMLファイル）
@@ -87,6 +111,7 @@
 - [Issue #42 関連情報取得改善](docs/Implementation_issue42.md)
 - [ファイル情報UI](docs/Implementation_file35.md) ファイル情報（file35）入力UIの実装計画書です。
 - [助成情報検索ツール](docs/Implementation_funder_lookup.md) 助成情報検索ツールの実装記録です。
+- [OpenAlex起点パイプライン 実現可能性と前段階設計](docs/openalex_harvest_feasibility.md) Phase 3（DOIリスト一括取得・OpenAlex機関別著作検索・登録済み照合）の構想と実装設計です。
 - [残存Issues一覧](docs/remaining_issues.md) 未実装・実装中のIssue一覧と推奨実装順序です。
 
 ### フィールド・語彙リファレンス

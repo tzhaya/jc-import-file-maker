@@ -177,6 +177,7 @@
       <li>メタデータ入力のサンプルを提示します。</li>
       <li>オープンアクセスポリシー（Open Policy Finder）を容易に参照できます。</li>
       <li>JAIRO Cloud 用インポートファイル（import.zip）の作成を支援します。</li>
+      <li>自機関所属研究者が発表した論文を OpenAlex から捕捉し、登録候補のDOIリストを抽出します。</li>
     </ul>
   </section>
 
@@ -227,6 +228,8 @@
             <tr><td>OpenAlex による ORCID補完 / NCID自動取得</td><td class="c">✅</td><td class="c">✅</td><td></td></tr>
             <tr><td>KAKEN XML API による科研費課題検索</td><td class="c">✅</td><td class="c">—</td><td>CORS制約のため拡張機能版のみ</td></tr>
             <tr><td>OpenSearch リポジトリ検索ツール</td><td class="c">✅</td><td class="c">—</td><td>拡張機能版のみ</td></tr>
+            <tr><td>OpenAlex機関別著作検索（自機関研究者の著作の取得）</td><td class="c">✅</td><td class="c">✅</td><td>自機関RORで発表論文を検索</td></tr>
+            <tr><td>自機関リポジトリでの登録有無の確認</td><td class="c">✅</td><td class="c">—</td><td>CORS制約のため拡張機能版のみ（OpenSearchで照合）</td></tr>
             <tr><td>APIキー設定（GUI / ソースコード）</td><td class="c">GUI</td><td class="c">編集</td><td>拡張版は設定ページ、ブラウザ版は shared.js</td></tr>
           </tbody>
         </table>
@@ -237,7 +240,7 @@
 
   <!-- Tools -->
   <section id="tools">
-    <h2>3つのツール</h2>
+    <h2>4つのツール</h2>
 
     <div class="tool">
       <div class="txt">
@@ -259,6 +262,13 @@
       <div class="txt">
         <h3>③ OpenSearch検索ツール<span class="note">（拡張機能版のみ）</span></h3>
         <p>JAIRO Cloud 利用機関のリポジトリURL・タイトル・内容記述・資源タイプを条件に文献を検索し、書誌情報やファイルリンクとともに一覧表示します。</p>
+      </div>
+    </div>
+
+    <div class="tool">
+      <div class="txt">
+        <h3>④ OpenAlex機関別著作検索</h3>
+        <p>自機関の ROR ID を指定して、過去n日間（出版日ベース・既定90日）に発表された自機関所属研究者の論文を OpenAlex から検索します。登録対象として選んだDOIは「① インポート用TSV生成ツール」の一括取得へ受け渡せます。拡張機能版では各候補に自機関リポジトリでの登録状況バッジ（⚪登録済みの可能性大／🟡要確認／🟢未登録の可能性）を表示します。</p>
       </div>
     </div>
   </section>

@@ -44,6 +44,10 @@ const OA_PAGE_DELAY_MS = 300; // ページ間の待機（レート配慮）
 
 let oaWorks = [];   // 直近の検索結果（OpenAlex work オブジェクト配列）
 let oaMatches = {};  // 直近の照合結果 { [doi]: { kind:'red'|'yellow'|'green', itemUrl } }（#156）
+let oaInstitution = { ja: '', en: '' };  // 直近の検索RORの機関名（検索条件サマリ用）
+let oaRor = '';       // 直近の検索ROR（フルURL）
+let oaFromDate = '';  // 取得対象期間の開始（YYYY-MM-DD）
+let oaToDate = '';    // 取得対象期間の終了（YYYY-MM-DD）
 
 // ---- ユーティリティ ----
 
@@ -344,12 +348,14 @@ function buildOaState() {
     works: oaWorks.map(slimWork),
     matches: oaMatches,
     selectedDois: getSelectedDois(),
+    criteria: { ror: oaRor, institution: oaInstitution, fromDate: oaFromDate, toDate: oaToDate },
   };
 }
 
 let oaSaveErrorShown = false;
 async function persistOpenAlexSearch() {
   if (!oaWorks.length) return;
+  if (typeof saveOpenAlexSearch !== 'function') return;  // shared.js 未読込時は保存をスキップ
   try {
     await saveOpenAlexSearch(buildOaState());
   } catch (e) {
@@ -398,6 +404,15 @@ async function restoreOpenAlexSearch() {
   renderResults(oaWorks);
   paintSavedMatches();
   applySelection(saved.selectedDois);
+
+  // 検索条件サマリの復元（再取得せず保存値で表示）
+  if (saved.criteria) {
+    oaRor = saved.criteria.ror || '';
+    oaInstitution = saved.criteria.institution || { ja: '', en: '' };
+    oaFromDate = saved.criteria.fromDate || '';
+    oaToDate = saved.criteria.toDate || '';
+    renderCriteria();
+  }
 
   const when = saved.savedAt ? new Date(saved.savedAt).toLocaleString('ja-JP') : '';
   document.getElementById('result-info').textContent =
@@ -461,6 +476,48 @@ function flashStatus(msg) {
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 
+// ---- 検索条件サマリ（ROR・機関名・対象期間） ----
+
+// ROR v2 API から機関名（ja/en）を取得。失敗時は空（CORS対応・直接fetch）。
+async function fetchRorNames(ror) {
+  try {
+    const id = String(ror || '').split('/').filter(Boolean).pop();
+    if (!id) return { ja: '', en: '' };
+    const res = await fetch('https://api.ror.org/v2/organizations/' + encodeURIComponent(id));
+    if (!res.ok) return { ja: '', en: '' };
+    const json = await res.json();
+    const names = json.names || [];
+    const pick = pred => (names.find(pred) || {}).value || '';
+    const en = pick(n => (n.types || []).includes('ror_display') && n.lang === 'en')
+            || pick(n => n.lang === 'en' && (n.types || []).includes('label'))
+            || pick(n => (n.types || []).includes('ror_display'));
+    const ja = pick(n => n.lang === 'ja' && (n.types || []).includes('label'))
+            || pick(n => n.lang === 'ja');
+    return { ja, en };
+  } catch {
+    return { ja: '', en: '' };
+  }
+}
+
+function fmtSlashDate(iso) {
+  return (iso || '').replace(/-/g, '/');
+}
+
+// 結果テーブルの上に「RORID / 取得対象機関(ja/en) / 対象期間」を表示する。
+function renderCriteria() {
+  const el = document.getElementById('result-criteria');
+  if (!el) return;
+  if (!oaRor) { el.textContent = ''; el.classList.add('hidden'); return; }
+  let s = 'RORID: ' + oaRor;
+  const inst = [];
+  if (oaInstitution.ja) inst.push(oaInstitution.ja + '(ja)');
+  if (oaInstitution.en) inst.push(oaInstitution.en + ' (en)');
+  if (inst.length) s += '　取得対象機関: ' + inst.join(' ');
+  if (oaFromDate && oaToDate) s += '　対象期間: ' + fmtSlashDate(oaFromDate) + '-' + fmtSlashDate(oaToDate);
+  el.textContent = s;
+  el.classList.remove('hidden');
+}
+
 // ---- 検索実行 ----
 
 async function doSearch() {
@@ -488,13 +545,20 @@ async function doSearch() {
   document.getElementById('results-section').classList.add('hidden');
   document.getElementById('doi-output').classList.add('hidden');
 
+  // 検索条件サマリ用の値を確定
+  oaRor = ror;
+  oaFromDate = fromDate;
+  oaToDate = isoNDaysAgo(0);
+
   try {
     oaWorks = await fetchAllWorks(ror, fromDate, type, (n, total) => {
       setLoading(true, `取得中… ${n}${total ? ' / ' + total : ''} 件`);
     });
     oaMatches = {};               // 再検索で前回の照合結果を破棄（入れ替え）
     renderResults(oaWorks);
-    await persistOpenAlexSearch(); // 照合前にまず検索結果を保存
+    oaInstitution = await fetchRorNames(ror);  // 機関名取得（失敗時は空）
+    renderCriteria();
+    await persistOpenAlexSearch(); // 照合前にまず検索結果＋条件を保存
     runMatching(oaWorks);          // 照合はバックグラウンド実行→完了後に再保存
   } catch (err) {
     showError('エラー: ' + err.message, 'warn');

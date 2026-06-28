@@ -36,6 +36,7 @@
 
   /* ===== 結果 ===== */
   #result-info { font-size: 12px; color: #555; margin: 10px 0; }
+  #result-criteria { font-size: 12px; color: #2c3e2c; background: #eef5ee; border: 1px solid #cfe3cf; border-radius: 4px; padding: 6px 10px; margin-bottom: 8px; word-break: break-all; line-height: 1.6; }
   .toolbar { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
   .toolbar button { background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px 12px; font-size:12px; cursor:pointer; }
   .toolbar button:hover { background:#e8f5e9; }
@@ -110,6 +111,7 @@
 
 <section id="results-section" class="hidden">
   <div id="result-info"></div>
+  <div id="result-criteria" class="hidden"></div>
   <div id="output-actions" class="toolbar hidden">
     <button id="btn-select-all">全選択</button>
     <button id="btn-select-none">全解除</button>

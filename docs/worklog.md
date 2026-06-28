@@ -28,7 +28,7 @@ OpenAlex を起点に自機関の発表論文を捕捉し、`jc-import-file-make
 - `cleanInlineText()`（実体参照解除＋タグ除去＋空白正規化）をタイトルに適用。`generateTsv()` で全セルの `\t`/`\r`/`\n` を空白化する安全網を追加。
 
 ### 変更ファイル
-- 新規: `openalex_panel.js`・`chrome-extension/openalex_panel.js`・`chrome-extension/openalex_panel.html`・`openalex_lookup.html`
+- 新規: `chrome-extension/openalex_panel.js`・`chrome-extension/openalex_panel.html`・`openalex_lookup.html`（標準版は funder_lookup.html と同様に検索ロジックをHTMLへインライン埋め込み、`shared.js` のみ同梱。Chrome拡張版は MV3 CSP のため外部 `openalex_panel.js`。両者は同一ロジックを保つ）
 - 変更: `make_jc_importer.html`／`chrome-extension/make_jc_importer.js`（`fetchAndAccumulate`/`fetchDoiList`/受け渡し受信/`cleanInlineText`/`generateTsv`サニタイズ/UI・最終更新・`LOCAL_VERSION` `2026-06-27`→`2026-06-28`）、`shared.js`／`chrome-extension/shared.js`（CONFIG・OpenAlex検索の保存API）、`chrome-extension/panel.html`（一括取得UI・ext-navタブ・最終更新）、`chrome-extension/funder_panel.html`／`opensearch_panel.html`（ext-navタブ・OpenSearch検索タブ名を「リポジトリコンテンツ検索」に変更）、`chrome-extension/options.html`／`options.js`（ROR ID・期間設定）、`chrome-extension/manifest.json`（`1.13.0`→`1.14.0`）
 
 ### E2E
