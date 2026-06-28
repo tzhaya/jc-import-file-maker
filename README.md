@@ -372,6 +372,7 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-28 | 初心者向けドキュメント整理（[#177](https://github.com/tzhaya/jc-import-file-maker/issues/177)）：`docs/changelog.md` 新規作成（変更履歴全量をREADMEから移設）、README変更履歴を最新5件に短縮、`docs/user_guide.md` を再構成（STEP 2の基本操作を前に・詳細を補足節へ）、`docs/index.html` 使い方ガイドへの導線追加・ドキュメントセクション整理 |
 | 2026-06-28 | Chrome拡張のホスト権限明文化（[#176](https://github.com/tzhaya/jc-import-file-maker/issues/176)）：広いホスト権限（`optional_host_permissions`）の必要性と安全策をコード・ドキュメントに明記。`background.js` のproxyコメント修正、`getDoiFromCurrentTab` に権限理由コメント追記、README「権限とセキュリティ」セクション追加、[`docs/chrome_store_permissions.md`](docs/chrome_store_permissions.md)（Web Store審査向け権限正当化文書）新規作成、プライバシーポリシー補強。manifest version `1.14.0` → `1.14.1` |
 | 2026-06-28 | CI品質チェック・文字コード明文化：`npm test` で JSON parse・JS構文・UTF-8妥当性を検証する `scripts/check.js` を追加。GitHub Actions の PR/push 時品質チェック（[`.github/workflows/ci.yml`](.github/workflows/ci.yml)）を追加。`.editorconfig`（`charset=utf-8`）・`.gitattributes` を追加。PowerShellでの文字化け確認手順・開発者向けドキュメント一覧（[`docs/developer_docs.md`](docs/developer_docs.md)）を整備（[#174](https://github.com/tzhaya/jc-import-file-maker/issues/174)・[#175](https://github.com/tzhaya/jc-import-file-maker/issues/175)） |
 | 2026-06-28 | ドキュメント整備：残存Issue一覧（[`docs/remaining_issues.md`](docs/remaining_issues.md)）を棚卸しし現状に同期（[#172](https://github.com/tzhaya/jc-import-file-maker/issues/172)） |
