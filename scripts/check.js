@@ -1,0 +1,97 @@
+#!/usr/bin/env node
+// Quality checks: JSON parse + JS syntax + UTF-8 validity for self-authored files.
+// Run via: npm test
+// Does NOT require network, API keys, or a browser.
+
+'use strict';
+
+const { execFileSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = path.resolve(__dirname, '..');
+
+const JSON_FILES = [
+  'package.json',
+  'chrome-extension/manifest.json',
+];
+
+const JS_FILES = [
+  'shared.js',
+  'tsv_headers_template.js',
+  'chrome-extension/background.js',
+  'chrome-extension/funder_lookup.js',
+  'chrome-extension/make_jc_importer.js',
+  'chrome-extension/openalex_panel.js',
+  'chrome-extension/opensearch_panel.js',
+  'chrome-extension/options.js',
+  'chrome-extension/shared.js',
+  'chrome-extension/tsv_headers_template.js',
+];
+
+// Text files that may contain Japanese — verify no encoding corruption (#175)
+const UTF8_FILES = [
+  ...JSON_FILES,
+  ...JS_FILES,
+  // Markdown
+  'README.md',
+  'docs/privacy-policy.md',
+  'docs/user_guide.md',
+  'docs/developer_docs.md',
+  // HTML (standalone)
+  'make_jc_importer.html',
+  'funder_lookup.html',
+  'openalex_lookup.html',
+  // HTML (Chrome extension)
+  'chrome-extension/panel.html',
+  'chrome-extension/funder_panel.html',
+  'chrome-extension/openalex_panel.html',
+  'chrome-extension/opensearch_panel.html',
+  'chrome-extension/options.html',
+  // GitHub Pages
+  'docs/index.html',
+];
+
+let errors = 0;
+
+function check(label, fn) {
+  try {
+    fn();
+    process.stdout.write(`  ✓ ${label}\n`);
+  } catch (e) {
+    process.stderr.write(`  ✗ ${label}: ${e.message}\n`);
+    errors++;
+  }
+}
+
+console.log('--- JSON parse ---');
+for (const f of JSON_FILES) {
+  check(f, () => {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    JSON.parse(src);
+  });
+}
+
+console.log('--- JS syntax (node --check) ---');
+for (const f of JS_FILES) {
+  check(f, () => {
+    execFileSync(process.execPath, ['--check', path.join(ROOT, f)], { stdio: 'pipe' });
+  });
+}
+
+// TextDecoder with fatal:true throws on invalid byte sequences (#175)
+console.log('--- UTF-8 validity ---');
+const decoder = new TextDecoder('utf-8', { fatal: true });
+for (const f of UTF8_FILES) {
+  check(f, () => {
+    const buf = fs.readFileSync(path.join(ROOT, f));
+    decoder.decode(buf);
+  });
+}
+
+if (errors > 0) {
+  process.stderr.write(`\n${errors} check(s) failed.\n`);
+  process.exit(1);
+} else {
+  console.log('\nAll checks passed.');
+}
