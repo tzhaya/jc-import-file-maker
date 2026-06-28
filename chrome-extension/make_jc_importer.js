@@ -1545,6 +1545,26 @@ function scheduleDraftSave() {
 }
 
 // ===== 3.8 メイン取得フロー =====
+// 単一DOIの「RA判定 → 取得 → マッピング → バッチ蓄積」の中核。
+// 単一取得(fetchData)・一括取得(fetchDoiList)の双方から呼び出し、同一の処理経路を保証する。
+// loading表示・persistDraft・エラー表示などUI全体の制御は呼び出し側が行う。
+// 戻り値: { status:'ok' } | { status:'skipped', code, ra }
+async function fetchAndAccumulate(doi) {
+  const ra = await fetchDoiRA(doi);
+  if (ra === 'Crossref') {
+    await fetchCrossrefData(doi);
+    return { status: 'ok' };
+  }
+  if (ra === 'JaLC') {
+    if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
+      await fetchJaLCData(doi);
+      return { status: 'ok' };
+    }
+    return { status: 'skipped', code: 'jalc-standalone', ra };
+  }
+  return { status: 'skipped', code: 'unsupported-ra', ra };
+}
+
 async function fetchData() {
   showError('');
   // 現在の編集内容をバッチに保存してから次のDOIを取得
@@ -1561,19 +1581,13 @@ async function fetchData() {
   loading.style.display = 'block';
 
   try {
-    // RA判定
-    const ra = await fetchDoiRA(doi);
-
-    if (ra === 'Crossref') {
-      await fetchCrossrefData(doi);
-    } else if (ra === 'JaLC') {
-      if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
-        await fetchJaLCData(doi);
-      } else {
+    const res = await fetchAndAccumulate(doi);
+    if (res.status === 'skipped') {
+      if (res.code === 'jalc-standalone') {
         showError('JaLC DOI のインポートはChrome拡張版のみ対応しています。拡張をインストールしてご利用ください。');
+      } else {
+        showError(`この DOI の登録機関 (${res.ra}) は現在サポートされていません。`);
       }
-    } else {
-      showError(`この DOI の登録機関 (${ra}) は現在サポートされていません。`);
     }
   } catch (e) {
     showError(`エラー: ${e.message}`);
@@ -1581,6 +1595,82 @@ async function fetchData() {
     loading.style.display = 'none';
     persistDraft();  // 取得結果を下書きに反映（#162）
   }
+}
+
+// ===== 3.8b DOIリスト一括取得（#154 機能B） =====
+async function fetchDoiList() {
+  showError('');
+  // 現在の編集内容を保存してから一括取得を開始
+  saveCurrent();
+  await loadConfig();
+
+  const raw = document.getElementById('doi-list-input').value;
+  // 改行・カンマ・空白・タブで分割 → 正規化 → 空除去 → 重複除去
+  const seen = new Set();
+  const dois = [];
+  for (const tok of raw.split(/[\s,]+/)) {
+    const t = tok.trim();
+    if (!t) continue;
+    const d = normalizeDoi(t);
+    if (d && !seen.has(d)) { seen.add(d); dois.push(d); }
+  }
+  if (!dois.length) { showError('DOIリストを入力してください。'); return; }
+
+  const listBtn = document.getElementById('fetch-list-btn');
+  const fetchBtn = document.getElementById('fetch-btn');
+  const progress = document.getElementById('bulk-progress');
+  const summary = document.getElementById('bulk-summary');
+  listBtn.disabled = true;
+  fetchBtn.disabled = true;
+  summary.style.display = 'none';
+  // 単一取得用の表示を隠す
+  document.getElementById('info-bar').style.display = 'none';
+  document.getElementById('opf-link-row').style.display = 'none';
+  document.getElementById('preview-area').style.display = 'none';
+
+  let success = 0;
+  const failed = [];
+  const DELAY_MS = 1000;  // レート制御（OpenAlex/Crossref/RA判定への配慮）
+
+  try {
+    for (let i = 0; i < dois.length; i++) {
+      const doi = dois[i];
+      progress.style.display = 'block';
+      progress.textContent = `⏳ 取得中 ${i + 1}/${dois.length}: ${doi}`;
+      try {
+        const res = await fetchAndAccumulate(doi);
+        if (res.status === 'ok') {
+          success++;
+        } else if (res.code === 'jalc-standalone') {
+          failed.push({ doi, reason: 'JaLC DOI はChrome拡張版のみ対応' });
+        } else {
+          failed.push({ doi, reason: `登録機関 (${res.ra}) は未サポート` });
+        }
+      } catch (e) {
+        failed.push({ doi, reason: e.message });
+      }
+      // 次のDOIまで待機（最終要素では待たない）
+      if (i < dois.length - 1) {
+        await new Promise(r => setTimeout(r, DELAY_MS));
+      }
+    }
+  } finally {
+    progress.style.display = 'none';
+    listBtn.disabled = false;
+    fetchBtn.disabled = false;
+    persistDraft();      // 一括処理の完了後に1回だけ保存（#162）
+    updateBatchPanel();
+  }
+
+  // 結果サマリ
+  let html = `✅ 完了: 成功 ${success}件 / 失敗 ${failed.length}件`;
+  if (failed.length) {
+    html += '<ul style="margin:6px 0 0; padding-left:18px;">'
+      + failed.map(f => '<li>' + escHtml(f.doi) + ' — ' + escHtml(f.reason) + '</li>').join('')
+      + '</ul>';
+  }
+  summary.innerHTML = html;
+  summary.style.display = 'block';
 }
 
 // ===== 3.8 空値テスト表示 =====
@@ -1614,6 +1704,22 @@ function processAbstract(raw) {
   // 7. 連続スペースを1つに統一・trim
   text = text.replace(/ {2,}/g, ' ').trim();
   return text;
+}
+
+// ===== タイトル等のインラインテキスト整形 =====
+// Crossref/JaLC のタイトルには出版社XML由来のタグ片（<i>,<sub>,<sup>,<scp> 等）や
+// 改行・インデントが含まれることがある。タグ除去＋空白正規化してTSVの行崩れを防ぐ。
+function cleanInlineText(raw) {
+  if (!raw) return '';
+  let t = String(raw);
+  // 主要な実体参照を解除
+  t = t.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+       .replace(/&apos;/g, "'").replace(/&quot;/g, '"');
+  // 残存タグを除去
+  t = t.replace(/<[^>]+>/g, '');
+  // 改行・タブ・連続空白を1つの半角スペースに正規化
+  t = t.replace(/\s+/g, ' ').trim();
+  return t;
 }
 
 // ===== 日付パーツフォーマット =====
@@ -2135,7 +2241,7 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   const versionInfo = determineVersionInfo(oaStatus, oaJson);
 
   // ===== タイトル =====
-  const title = (crJson.title || [])[0] || '';
+  const title = cleanInlineText((crJson.title || [])[0] || '');
 
   // ===== 作成者 =====
   const creators = buildAuthors(crJson.author || [], oaJson.authorships || [], rorMap);
@@ -5721,7 +5827,9 @@ function generateTsv(metadataArray, templateText, repoHost) {
   for (const metadata of metadataArray) {
     rows.push(cols.map(c => getTsvValue(c, metadata)));
   }
-  return rows.map(r => r.join('\t')).join('\n') + '\n';
+  // 安全網: いずれのセルもタブ・改行を含めない（含むと行/列が崩れる）
+  const sanitizeCell = v => String(v == null ? '' : v).replace(/[\t\r\n]+/g, ' ');
+  return rows.map(r => r.map(sanitizeCell).join('\t')).join('\n') + '\n';
 }
 
 function downloadTsv(tsvString, filename) {
@@ -6156,6 +6264,23 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
     repoHostInput.value = CONFIG.DEFAULT_REPOSITORY_URL;
   }
 
+  // OpenAlex機関別著作検索（#155）からの DOI リスト受け渡し（拡張版のみ）。
+  // 受け取ったら #doi-list-input に流し込み、一括取得UIを展開してキーを削除する。
+  if (typeof chrome !== 'undefined' && chrome.runtime?.id && chrome.storage) {
+    chrome.storage.local.get('openAlexDoiHandoff', (stored) => {
+      const list = stored.openAlexDoiHandoff;
+      if (Array.isArray(list) && list.length) {
+        const ta = document.getElementById('doi-list-input');
+        if (ta) {
+          ta.value = list.join('\n');
+          const area = document.getElementById('doi-list-area');
+          if (area) area.open = true;
+        }
+        chrome.storage.local.remove('openAlexDoiHandoff');
+      }
+    });
+  }
+
   // ボタンイベント登録（MV3 CSP対応: inline onclick は使用不可）
   document.getElementById('get-doi-from-page').addEventListener('click', async (e) => {
     const btn = e.currentTarget;
@@ -6172,6 +6297,7 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
     }
   });
   document.getElementById('fetch-btn').addEventListener('click', fetchData);
+  document.getElementById('fetch-list-btn').addEventListener('click', fetchDoiList);
   document.getElementById('empty-btn').addEventListener('click', showEmptyFields);
   document.getElementById('preview-btn').addEventListener('click', showPreview);
   document.getElementById('export-btn').addEventListener('click', exportTsv);
@@ -6274,7 +6400,7 @@ function restoreDraft() {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-27';
+  const LOCAL_VERSION = '2026-06-28';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

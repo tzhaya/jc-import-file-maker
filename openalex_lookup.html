@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenAlex機関別著作検索 — JAIRO Cloud</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  /* ===== ベーススタイル ===== */
+  body { font-family: sans-serif; font-size: 14px; color: #333; background: #f5f5f5; margin: 20px; }
+  h1 { color: #2c5f2e; font-size: 1.4em; margin-bottom: 8px; }
+  .lead { font-size: 12px; color: #666; margin-bottom: 16px; }
+  .lead a { color: #1565c0; }
+
+  /* ===== 検索フォーム ===== */
+  #search-section { background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 12px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .form-row { display: flex; align-items: center; margin-bottom: 8px; }
+  .form-row label { width: 120px; flex-shrink: 0; color: #555; font-size: 12px; }
+  .form-row input[type="text"], .form-row input[type="number"], .form-row select { flex: 1; min-width: 0; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+  .form-row input:focus, .form-row select:focus { outline: none; border-color: #4caf50; box-shadow: 0 0 0 2px rgba(76,175,80,0.15); }
+  .form-hint { font-size: 11px; color: #888; margin: 0 0 8px 120px; }
+  .form-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+  #btn-search { background: #2c5f2e; color: #fff; border: none; border-radius: 4px; padding: 7px 24px; font-size: 13px; cursor: pointer; }
+  #btn-search:hover { background: #1e4020; }
+  #btn-search:disabled { background: #aaa; cursor: not-allowed; }
+
+  /* ===== メッセージ ===== */
+  #error-msg { border-radius: 4px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; line-height: 1.8; white-space: pre-wrap; }
+  #error-msg.warn { background: #fff3cd; border: 1px solid #ffc107; }
+  #apikey-warning { background:#fff8e1; border:1px solid #ffe082; color:#6d4c00; padding:8px 12px; border-radius:4px; margin-bottom:12px; font-size:12px; }
+  #loading { text-align: center; padding: 24px; color: #888; }
+  .hidden { display: none !important; }
+
+  /* ===== 結果 ===== */
+  #result-info { font-size: 12px; color: #555; margin: 10px 0; }
+  .toolbar { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+  .toolbar button { background:#fff; border:1px solid #ccc; border-radius:4px; padding:5px 12px; font-size:12px; cursor:pointer; }
+  .toolbar button:hover { background:#e8f5e9; }
+  #btn-copy-dois, #btn-send-import { background:#1565c0; color:#fff; border-color:#1565c0; }
+  #btn-copy-dois:hover, #btn-send-import:hover { background:#0d47a1; }
+  #copy-status { font-size:12px; color:#388e3c; opacity:0; transition:opacity .3s; }
+  #copy-status.show { opacity:1; }
+
+  #result-table-wrap { overflow-x:auto; background:#fff; border:1px solid #d0d7de; border-radius:6px; }
+  table.result-table { width:100%; border-collapse:collapse; font-size:12px; }
+  table.result-table th, table.result-table td { padding:6px 8px; border-bottom:1px solid #eee; text-align:left; vertical-align:top; }
+  table.result-table th { background:#f0f7f0; color:#555; font-weight:bold; position:sticky; top:0; }
+  .col-check { width:32px; text-align:center; }
+  .col-oa { white-space:nowrap; }
+  .col-title { min-width:240px; }
+  .col-journal { min-width:120px; color:#555; }
+  .col-date { white-space:nowrap; color:#555; }
+  .col-doi a { color:#1565c0; word-break:break-all; }
+  .oa-badge { display:inline-block; color:#fff; border-radius:10px; padding:1px 8px; font-size:11px; white-space:nowrap; }
+  .col-match { white-space:nowrap; font-size:11px; }
+  /* 登録済み照合（#156）は Chrome拡張版限定。標準版では JS が body.no-match を付与し照合列を隠す。 */
+  .no-match .col-match { display:none; }
+
+  #doi-output { width:100%; margin-top:10px; box-sizing:border-box; font-family:monospace; font-size:12px; }
+</style>
+</head>
+<body>
+<h1>🏛 OpenAlex機関別著作検索</h1>
+<p class="lead">自機関の ROR ID で OpenAlex を検索し、候補論文の DOI リストを出力します。出力した DOI は <a href="make_jc_importer.html">make_jc_importer</a> の「DOIリスト一括取得」に貼り付けて取り込めます。<br>※ 自機関リポジトリとの登録済み照合バッジは Chrome拡張版でのみ利用できます。</p>
+
+<div id="apikey-warning" class="hidden">⚠ OpenAlex API Keyが設定されていません。設定しない場合、利用回数が制限されます（shared.js で設定できます）。</div>
+
+<section id="search-section">
+  <div class="form-row">
+    <label for="q-ror">ROR ID</label>
+    <input type="text" id="q-ror" placeholder="例: https://ror.org/057zh3y96">
+  </div>
+  <p class="form-hint">自機関の ROR ID（フルURL または ID）。<a href="https://ror.org/" target="_blank" rel="noopener">ROR</a> で検索できます。</p>
+  <div class="form-row">
+    <label for="q-days">過去N日</label>
+    <input type="number" id="q-days" min="1" placeholder="90">
+  </div>
+  <p class="form-hint">出版日（from_publication_date）ベースで過去N日分を検索します。既定 90 日。</p>
+  <div class="form-row">
+    <label for="q-type">資源タイプ</label>
+    <select id="q-type">
+      <option value="">-- 指定なし --</option>
+    </select>
+  </div>
+  <div class="form-actions">
+    <button id="btn-search">検索</button>
+  </div>
+</section>
+
+<div id="error-msg" class="hidden"></div>
+<div id="loading" class="hidden">検索中…</div>
+
+<section id="results-section" class="hidden">
+  <div id="result-info"></div>
+  <div id="output-actions" class="toolbar hidden">
+    <button id="btn-select-all">全選択</button>
+    <button id="btn-select-none">全解除</button>
+    <button id="btn-copy-dois">選択DOIをコピー</button>
+    <button id="btn-send-import" class="hidden">インポートタブへ送る</button>
+    <span id="copy-status"></span>
+  </div>
+  <div id="result-table-wrap" class="hidden">
+    <table class="result-table">
+      <thead>
+        <tr>
+          <th class="col-check">☑</th>
+          <th class="col-oa">OA</th>
+          <th class="col-title">タイトル</th>
+          <th class="col-journal">掲載誌</th>
+          <th class="col-date">出版日</th>
+          <th class="col-doi">DOI</th>
+          <th class="col-match">照合</th>
+        </tr>
+      </thead>
+      <tbody id="result-tbody"></tbody>
+    </table>
+  </div>
+  <textarea id="doi-output" class="hidden" rows="6" readonly placeholder="選択した DOI がここに出力されます"></textarea>
+</section>
+
+<script src="shared.js"></script>
+<script src="openalex_panel.js"></script>
+</body>
+</html>

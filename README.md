@@ -85,8 +85,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-06-27 | ver. 1.13.0 | 作業中データ（入力中のメタデータ）をブラウザに自動保存し、サイドパネルを閉じても次回起動時に復元できる機能を追加（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)） |
-| インポート用TSV生成ツール | 2026-06-27 | — | 作業中データ（入力中のメタデータ）をブラウザに自動保存し、タブを閉じても次回起動時に復元できる機能を追加（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)） |
+| Chrome拡張機能版 | 2026-06-28 | ver. 1.14.0 | OpenAlex機関別著作検索タブを追加（自機関RORで候補論文を検索→登録済み照合バッジ→選択DOIをインポートタブへ受け渡し、検索結果を自動保存）（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)・[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）。DOIリストの一括取得を追加（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。タイトルのタグ片・改行を除去しTSVの行崩れを防止 |
+| インポート用TSV生成ツール | 2026-06-28 | — | DOIリストの一括取得を追加（複数DOIをまとめて取得→一括TSV出力）（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。OpenAlex機関別著作検索（`openalex_lookup.html`）を追加（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）。タイトルのタグ片・改行を除去しTSVの行崩れを防止 |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 
 ## 導入方法
@@ -318,6 +318,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-28 | OpenAlex 起点 JAIRO Cloud 登録パイプラインの前段階（手動運用版・Phase 3）を実装（[#157](https://github.com/tzhaya/jc-import-file-maker/issues/157)）。(1) **DOIリスト一括取得**：複数DOIを改行/区切りで投入し順次取得→既存バッチに蓄積、失敗はスキップして集計表示（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。(2) **OpenAlex機関別著作検索**：自機関 ROR で Works API を cursor paging 取得し候補一覧（掲載誌・出版日・OAバッジ・チェックボックス）を表示、選択DOIをコピー／（拡張）インポートタブへ受け渡し、検索・照合結果を自動保存・次回既定表示。標準版 `openalex_lookup.html`／Chrome拡張タブ（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）。(3) **登録済み照合バッジ**：候補タイトルで OpenSearch 検索→返戻 JPCOAR 内の識別子で DOI 照合し 🔴登録済みの可能性大／🟡要確認／🟢未登録の可能性 の3値表示（Chrome拡張限定）（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）。あわせてタイトルの出版社XMLタグ片・改行を除去し、TSV全セルの制御文字を空白化してインポート時の行崩れを防止。manifest version `1.13.0` → `1.14.0` |
 | 2026-06-27 | 作業中データ（入力中・蓄積中のメタデータ）を自動保存し、タブ／サイドパネルを閉じても次回起動時に復元できる機能を追加（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)）。Chrome拡張版は `chrome.storage.local`、スタンドアロン版は `localStorage` に保存（`shared.js` の `saveDraft`/`loadDraft`/`clearDraft`）。各バッチ操作後・フォーム編集のデバウンス（約1秒）・`visibilitychange`（タブ非表示）で自動保存し、起動時に下書きがあれば非ブロッキングのバナーで「復元／破棄」を提示。バッチパネルに「下書き削除」操作を追加。エクスポート後も下書きは保持。manifest version `1.12.0` → `1.13.0` |
 | 2026-06-22 | Crossref が著者所属に ROR を持たない場合に OpenAlex が機械同定した ROR を付与しているが、誤同定があるため対応（[#165](https://github.com/tzhaya/jc-import-file-maker/issues/165)）。(1) OpenAlex 由来の ROR の URI 欄に「⚠ 要確認」バッジを常時表示。(2) OpenAlex が同定した機関名と、同定元の Crossref 所属表記（`raw_affiliation_string`）を有意トークンで照合し（機関名トークンの過半数一致を主、最上位組織名照合を補助とする2段階判定）、誤同定の疑いがある場合は ROR を設定せず Crossref 所属表記を機関名として採用、機関名欄に注意喚起（部局名など下位階層は機関名まで編集する旨も表示）。manifest version `1.11.1` → `1.12.0` |
 | 2026-06-19 | GitHub Pages の紹介ページ（`docs/index.html`）を新規作成。空だった https://tzhaya.github.io/jc-import-file-maker/ に、概要・2つの利用方法・機能比較・3つのツール・導入方法・「作者から」を掲載（README をベースにした自己完結HTML） |

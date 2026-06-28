@@ -1,6 +1,38 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-27（#162: 作業中データの自動保存・復元）
+最終更新: 2026-06-28（Phase 3 #157: OpenAlex起点パイプライン前段階）
+
+## OpenAlex起点パイプライン前段階・手動運用版（2026-06-28, Phase 3 #157 / #154 / #155 / #156）
+
+### 概要
+OpenAlex を起点に自機関の発表論文を捕捉し、`jc-import-file-maker` 経由で JAIRO Cloud インポート用データを生成する手動運用版を実装。永続ストア・定期実行を持たず、既存のバッチ蓄積基盤・OAバッジ・`mapToItemType()` を再利用する。検討ドキュメント `docs/openalex_harvest_feasibility.md` §5 に対応。
+
+### 機能B: DOIリスト一括取得（#154）
+- `fetchData()` の取得中核を `fetchAndAccumulate(doi)`（戻り値 `{status:'ok'|'skipped', code, ra}`）に抽出し、単一取得と一括取得を同一コードパスに統一。
+- 新規 `fetchDoiList()`：テキストエリアを改行/カンマ/空白で分割→`normalizeDoi()`→重複除去→順次取得（`DELAY_MS=1000` のレート制御）。失敗はスキップ継続し、完了後に成功/失敗件数＋失敗DOI一覧を表示。`persistDraft()` は完了後に1回。
+- UI: `#input-area` に `<details id="doi-list-area">`（`#doi-list-input` / `#fetch-list-btn` / `#bulk-progress` / `#bulk-summary`）。
+
+### 機能A: OpenAlex機関別著作検索（#155）
+- 新規 `openalex_panel.js`（ルート＋chrome-extension の同一コピー、`shared.js` と同様の二重配置）。`IS_CHROME_EXTENSION` ガードで標準版・拡張版の両方で動作。
+- `fetchAllWorks()`：`works?filter=authorships.institutions.ror:{ROR},from_publication_date:{today-N},has_doi:true&select=...&per-page=100&cursor=*` を cursor paging（上限50ページ・300ms間隔）。APIキーは `&api_key=`。
+- 結果テーブル（チェックボックス＋OAバッジ＋タイトル＋掲載誌＋出版日＋DOI＋照合スロット）。出力：選択DOIをコピー／（拡張）`chrome.storage.local` 経由で `#doi-list-input` へ受け渡し→`panel.html` へ遷移。
+- 設定：`shared.js` CONFIG に `DEFAULT_ROR_ID` / `DEFAULT_OPENALEX_DAYS`（既定90）、`options.html`/`options.js` に入力欄。タブを全拡張ページの ext-nav に追加。
+- 永続化（#162の保存対象に追加）：`shared.js` に `saveOpenAlexSearch`/`loadOpenAlexSearch`/`clearOpenAlexSearch`（キー `openAlexSearch`）。検索直後・照合完了後・選択変更時（500msデバウンス）に保存し、init で前回結果を既定表示（再検索で入れ替え）。
+
+### 登録済み照合バッジ（#156・Chrome拡張限定）
+- 候補タイトルを正規化（タグ除去＋先頭12語）して OpenSearch 検索→返戻 JPCOAR の `identifier`/`relatedIdentifier`/`identifierRegistration` から DOI を抽出し照合。
+- 3値判定：🔴登録済みの可能性大（タイトルヒット＋DOI一致・チェックOFF、文字色グレー）／🟡要確認（ヒット＋DOI不一致・OFF＋レコードリンク）／🟢未登録の可能性（ヒットなし・ON）。候補間500ms間隔で順次実行。標準版は `body.no-match` で照合列を非表示。
+
+### TSVフォーマット修正
+- Crossref タイトルに含まれる出版社XMLタグ片（`<i>`/`<sub>`/`<scp>` 等）と改行・インデントが無加工で出力され、1レコードが複数物理行に割れて列ズレ→インポート破綻していた問題を修正。
+- `cleanInlineText()`（実体参照解除＋タグ除去＋空白正規化）をタイトルに適用。`generateTsv()` で全セルの `\t`/`\r`/`\n` を空白化する安全網を追加。
+
+### 変更ファイル
+- 新規: `openalex_panel.js`・`chrome-extension/openalex_panel.js`・`chrome-extension/openalex_panel.html`・`openalex_lookup.html`
+- 変更: `make_jc_importer.html`／`chrome-extension/make_jc_importer.js`（`fetchAndAccumulate`/`fetchDoiList`/受け渡し受信/`cleanInlineText`/`generateTsv`サニタイズ/UI・最終更新・`LOCAL_VERSION` `2026-06-27`→`2026-06-28`）、`shared.js`／`chrome-extension/shared.js`（CONFIG・OpenAlex検索の保存API）、`chrome-extension/panel.html`（一括取得UI・ext-navタブ・最終更新）、`chrome-extension/funder_panel.html`／`opensearch_panel.html`（ext-navタブ・OpenSearch検索タブ名を「リポジトリコンテンツ検索」に変更）、`chrome-extension/options.html`／`options.js`（ROR ID・期間設定）、`chrome-extension/manifest.json`（`1.13.0`→`1.14.0`）
+
+### E2E
+- 既存回帰（main＋funder）ALL PASSED。一括取得（有効＋無効DOIでスキップ継続・サマリ）ALL PASSED。OpenAlex検索の永続化（描画/保存/選択反映/リロード復元）ALL PASSED。タイトル整形・TSV行崩れ防止（DOI 10.1111/pbi.70653 で6行・列数一致・タグ/改行なし）ALL PASSED。
 
 ## 作業中データの自動保存・復元（2026-06-27, #162）
 
