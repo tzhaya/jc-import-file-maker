@@ -51,73 +51,11 @@ JAIRO Cloud (WEKO3) にメタデータをインポートするためのTSVファ
 
 <img src="images/04_metadata_sections.png" alt="メタデータ編集エリア" width="700">
 
-#### データ取り込みの詳細
-
-Crossrefから得られる情報を元に、OpenAlex、ROR、CiNii Research、KAKEN XML、JGN（Japan Grant Number）、Open Policy Finder（OPF）からの情報で補完しています。
-詳しくは [api-flow.md](../api-flow.md) を参照してください。
-
-1. 共通
-   - 「⚠ 要確認」と赤字で表示された場合は、OpenAlexから取り込んだ情報を示します。
-   - マウスオーバーで詳細が表示されます。適宜確認をお願いします。
-2. 作成者
-   - CrossrefからORCIDが得られた場合はそのまま、ない場合はOpenAlexから取得しています。
-   - OpenAlexからORCIDを取得した場合は「⚠ 要確認」と警告を表示します。
-   - **OpenAlex上のworkに付与されたORCIDは同姓同名などを誤判定していることがあります。必ず確認してください。**
-3. 作成者所属
-   - 所属機関名および所属機関識別子（ROR）は、OpenAlexから取得しています。
-   - Crossrefから得られる情報には住所などの情報が入っている場合があり、JPCOARスキーマの仕様と合致しない場合があるためです。
-   - RORからISNIを取得しています。
-   - JPCOARスキーマ1.xではRORを入力するとIRDBのエラーチェックでエラーとなります。必要に応じて削除してください。
-1. アクセス権
-   - OpenAlexのOAステータスが open 系（diamond/gold/hybrid/bronze/green）の場合は `open access` を設定します。
-   - Chrome拡張版では、OAステータスが closed または不明の場合、Open Policy Finder（OPF）APIからエンバーゴ情報を取得し、エンバーゴがある場合には `embargoed access` を自動設定します。
-2. 出版タイプ
-   - OpenAlexのOAステータスに基づいて自動判定されます。
-   - diamond/gold/hybrid/bronze → VoR（出版社版）
-   - green/closed → OpenAlexの locations[].version フィールドで判定（VoR/AM/SMUR）
-   - 実際に掲載する版に合わせて修正してください。
-3. 関連情報
-   - Crossrefから得られたDOIの属性は、OAステータスに基づき自動設定されます（出版社版なら isIdenticalTo、著者最終稿なら isVersionOf）。
-   - OpenAlexで他のリポジトリでの公開が確認された場合は、DOI/URI/Handleを取得して属性 isVersionOf として設定します。
-4. 日付
-   - 論文の出版日が設定されます。
-   - Chrome拡張版では、エンバーゴがある場合にはその期間と公開可能となる日付の候補を表示します。確認して、入力をお願いします。
-5. 収録物識別子
-   - Crossrefから得られたISSNでCiNii Researchを検索し、ヒットした場合はNCIDを設定します。
-   - Crossrefから得られたEISSNとPISSNを、いずれもない場合はISSNを設定します。
-6. 権利情報
-   - Crossrefから得られたライセンスのURLを設定します。
-   - Crossrefのフィールド `assertion` に label=Copyright がある場合は、その値を設定します。
-7. 助成情報
-   - 助成機関名はCrossrefから得られた情報を使用しています。
-   - 実際の機関名と一致しない場合があります（例: [逆引き結果の画像](#識別子の逆引き機能)）。「[識別子の逆引き機能](#識別子の逆引き機能)」を使って、Crossref Funder等から助成機関名を上書きできます。
-8. 研究課題名
-   - Chrome拡張版では、科研費課題の場合にKAKEN XML APIを最優先で使用して研究課題名・課題番号を取得します（補助金番号→研究課題番号の自動補正を含む）。
-   - KAKEN XML APIで取得できない場合は、JGN（Japan Grant Number）APIを試行し、さらに失敗した場合はCiNii Research KAKEN APIにフォールバックします。
-   - 通常ブラウザ版では、JGN API → CiNii Research KAKEN API の順で取得を試みます。
-   - JSTの研究課題は、JGN APIから研究課題名・プログラム情報を取得して設定しています。
-9. 出版者情報
-   - JPCOAR 2.0 の出版者情報フィールド（出版者名・出版地）を自動設定します。
-
 #### アコーディオン操作
 
 - 各セクションの青字タイトルをクリックすると、JPCOARスキーマの説明が開きます
 - 各セクション先頭の ▼ をクリックすると、そのセクションが **開閉** できます
 - ヘッダー右側にはデータの概要（タイトルや著者名など）がグレー文字で表示されます
-
-#### DOI必須項目バッジ
-
-- セクションヘッダーに色付きバッジが表示されることがあります。これはDOI登録時の必須項目を示します。
-- マウスオーバーすると詳細が表示されます。
-
-| バッジ | 意味 |
-|--------|------|
-| 赤・実線枠「Crossref 必須」 | Crossref DOI登録に必須 |
-| 赤・破線枠「Crossref 条件付」 | Crossref DOI登録で条件により必須 |
-| 青・実線枠「JaLC 必須」 | JaLC DOI登録に必須 |
-| 青・破線枠「JaLC 条件付」 | JaLC DOI登録で条件により必須 |
-
-<img src="images/05_doi_badges.png" alt="DOI必須項目バッジの例" width="500">
 
 #### データの編集
 
@@ -161,6 +99,74 @@ Crossrefから得られる情報を元に、OpenAlex、ROR、CiNii Research、KA
 - ファイルパスは手動で編集できます
 
 > **注意:** `data/` フォルダを上位ディレクトリとして持たないファイルは、WEKO3 インポート仕様に合致しません。ファイルは必ず `data/` 以下に配置してください。
+
+---
+
+### 各フィールドの詳細・補足
+
+> 初めての利用では読み飛ばして構いません。各フィールドの自動取得内容や識別子逆引き機能について知りたい場合に参照してください。
+
+#### データ取り込みの詳細
+
+Crossrefから得られる情報を元に、OpenAlex、ROR、CiNii Research、KAKEN XML、JGN（Japan Grant Number）、Open Policy Finder（OPF）からの情報で補完しています。
+詳しくは [api-flow.md](../api-flow.md) を参照してください。
+
+1. 共通
+   - 「⚠ 要確認」と赤字で表示された場合は、OpenAlexから取り込んだ情報を示します。
+   - マウスオーバーで詳細が表示されます。適宜確認をお願いします。
+2. 作成者
+   - CrossrefからORCIDが得られた場合はそのまま、ない場合はOpenAlexから取得しています。
+   - OpenAlexからORCIDを取得した場合は「⚠ 要確認」と警告を表示します。
+   - **OpenAlex上のworkに付与されたORCIDは同姓同名などを誤判定していることがあります。必ず確認してください。**
+3. 作成者所属
+   - 所属機関名および所属機関識別子（ROR）は、OpenAlexから取得しています。
+   - Crossrefから得られる情報には住所などの情報が入っている場合があり、JPCOARスキーマの仕様と合致しない場合があるためです。
+   - RORからISNIを取得しています。
+   - JPCOARスキーマ1.xではRORを入力するとIRDBのエラーチェックでエラーとなります。必要に応じて削除してください。
+4. アクセス権
+   - OpenAlexのOAステータスが open 系（diamond/gold/hybrid/bronze/green）の場合は `open access` を設定します。
+   - Chrome拡張版では、OAステータスが closed または不明の場合、Open Policy Finder（OPF）APIからエンバーゴ情報を取得し、エンバーゴがある場合には `embargoed access` を自動設定します。
+5. 出版タイプ
+   - OpenAlexのOAステータスに基づいて自動判定されます。
+   - diamond/gold/hybrid/bronze → VoR（出版社版）
+   - green/closed → OpenAlexの locations[].version フィールドで判定（VoR/AM/SMUR）
+   - 実際に掲載する版に合わせて修正してください。
+6. 関連情報
+   - Crossrefから得られたDOIの属性は、OAステータスに基づき自動設定されます（出版社版なら isIdenticalTo、著者最終稿なら isVersionOf）。
+   - OpenAlexで他のリポジトリでの公開が確認された場合は、DOI/URI/Handleを取得して属性 isVersionOf として設定します。
+7. 日付
+   - 論文の出版日が設定されます。
+   - Chrome拡張版では、エンバーゴがある場合にはその期間と公開可能となる日付の候補を表示します。確認して、入力をお願いします。
+8. 収録物識別子
+   - Crossrefから得られたISSNでCiNii Researchを検索し、ヒットした場合はNCIDを設定します。
+   - Crossrefから得られたEISSNとPISSNを、いずれもない場合はISSNを設定します。
+9. 権利情報
+   - Crossrefから得られたライセンスのURLを設定します。
+   - Crossrefのフィールド `assertion` に label=Copyright がある場合は、その値を設定します。
+10. 助成情報
+    - 助成機関名はCrossrefから得られた情報を使用しています。
+    - 実際の機関名と一致しない場合があります（例: [逆引き結果の画像](#識別子の逆引き機能)）。「[識別子の逆引き機能](#識別子の逆引き機能)」を使って、Crossref Funder等から助成機関名を上書きできます。
+11. 研究課題名
+    - Chrome拡張版では、科研費課題の場合にKAKEN XML APIを最優先で使用して研究課題名・課題番号を取得します（補助金番号→研究課題番号の自動補正を含む）。
+    - KAKEN XML APIで取得できない場合は、JGN（Japan Grant Number）APIを試行し、さらに失敗した場合はCiNii Research KAKEN APIにフォールバックします。
+    - 通常ブラウザ版では、JGN API → CiNii Research KAKEN API の順で取得を試みます。
+    - JSTの研究課題は、JGN APIから研究課題名・プログラム情報を取得して設定しています。
+12. 出版者情報
+    - JPCOAR 2.0 の出版者情報フィールド（出版者名・出版地）を自動設定します。
+
+#### DOI必須項目バッジ
+
+- セクションヘッダーに色付きバッジが表示されることがあります。これはDOI登録時の必須項目を示します。
+- マウスオーバーすると詳細が表示されます。
+
+| バッジ | 意味 |
+|--------|------|
+| 赤・実線枠「Crossref 必須」 | Crossref DOI登録に必須 |
+| 赤・破線枠「Crossref 条件付」 | Crossref DOI登録で条件により必須 |
+| 青・実線枠「JaLC 必須」 | JaLC DOI登録に必須 |
+| 青・破線枠「JaLC 条件付」 | JaLC DOI登録で条件により必須 |
+
+<img src="images/05_doi_badges.png" alt="DOI必須項目バッジの例" width="500">
 
 #### 識別子からの逆引き機能
 
