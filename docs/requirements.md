@@ -115,6 +115,13 @@ make_jc_importer.html
         -   登録機関が **JaLC** の場合：未対応メッセージを表示します（今後対応予定）。
         -   その他の登録機関（DataCite等）の場合：サポート外メッセージを表示します。
     -   Crossref APIで得られる内容（例：`j.advnut.2025.100480.json`）を`ItemType.json`の構造に変更します。マッピングの例は  `sample.json` です。
+-   **DOIリスト一括取得**（[issue #154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）:
+    -   複数のDOIを改行/カンマ/空白区切りでまとめて投入し、正規化・重複除去のうえ1件ずつ順次取得して既存のバッチに蓄積します。各取得間に待機を挟み（レート制御）、失敗したDOIはスキップして処理を継続し、完了後に成功/失敗件数と失敗DOI一覧を表示します。
+    -   各DOIのRA判定・取得・マッピングは単一DOI取得と同一の処理経路（`fetchAndAccumulate()`）を通ります。JaLC DOIはChrome拡張版のみ対応（標準版ではスキップ報告）。
+-   **OpenAlex機関別著作検索**（[issue #155](https://github.com/tzhaya/jc-import-file-maker/issues/155)・[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)・Phase 3 [#157](https://github.com/tzhaya/jc-import-file-maker/issues/157)）:
+    -   自機関の ROR ID と過去N日（出版日ベース、既定90日）を指定して OpenAlex Works API（`authorships.institutions.ror` フィルタ）を cursor paging で全件取得し、タイトル・掲載誌・出版日・OAステータスバッジ・DOI＋チェックボックスの候補一覧を表示します。OpenAlex は CORS 対応のため標準版（`openalex_lookup.html`）・Chrome拡張版（タブ）の両方で動作します。
+    -   選択したDOIを改行区切りでコピーでき、Chrome拡張版では `chrome.storage.local` 経由でインポートタブのDOIリスト一括取得欄へ直接受け渡します。検索条件・結果・照合結果・選択状態は作業中データとして自動保存し（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162) と同基盤、キー `openAlexSearch`）、次回起動時に既定表示、再検索で入れ替えます。
+    -   **登録済み照合バッジ**（Chrome拡張版限定）: 候補タイトルを正規化（タグ除去＋先頭N語）して自機関リポジトリの OpenSearch を検索し、返戻 JPCOAR 内の識別子（`identifier`/`relatedIdentifier`/`identifierRegistration`）から DOI を抽出して照合します。判定は3値で、🔴 登録済みの可能性大（タイトルヒット＋DOI一致・既定チェックOFF）／🟡 要確認（ヒット＋DOI不一致・OFF＋ヒットしたレコードへのリンク）／🟢 未登録の可能性（ヒットなし・ON）を表示します。最終判断はユーザーが行います。
 -   **ROR/ISNI情報との連携**
     -   OpenAlexから取得したROR IDを基に、ROR v2 APIを介してISNI情報を取得し、所属機関の識別子として活用します。
     -   所属機関名として、ROR v2 APIから得られる情報のうち "types" が ["ror_display"] に該当する要素のlabelを使用します。 

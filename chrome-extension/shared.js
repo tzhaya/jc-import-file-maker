@@ -27,6 +27,14 @@ const CONFIG = {
 
     // .POS_INDEX[0]（.pos_index[0]）インデックス名パス（人間可読）  例: 学術雑誌論文
     DEFAULT_POS_INDEX: "",
+
+    // ===== OpenAlex 機関検索（#155 機能A）の初期値 =====
+    // 自機関の ROR ID（フルURL or ID）。OpenAlex機関別著作検索パネルの初期値に使用
+    // 例: https://ror.org/057zh3y96
+    DEFAULT_ROR_ID: "",
+
+    // OpenAlex機関別著作検索の対象期間（過去N日、from_publication_date ベース）。既定 90 日
+    DEFAULT_OPENALEX_DAYS: 90,
 };
 
 // ===== Chrome拡張: chrome.storage.local からAPIキーを読み込む =====
@@ -36,6 +44,7 @@ async function loadConfig() {
     const stored = await chrome.storage.local.get([
       'OpenAlex_API_KEY', 'CiNii_API_KEY', 'OPF_API_KEY',
       'defaultRepositoryUrl', 'defaultIndexId', 'defaultPosIndex',
+      'defaultRorId', 'defaultOpenalexDays',
     ]);
     if (stored.OpenAlex_API_KEY) CONFIG.OpenAlex_API_KEY = stored.OpenAlex_API_KEY;
     if (stored.CiNii_API_KEY)    CONFIG.CiNii_API_KEY    = stored.CiNii_API_KEY;
@@ -44,6 +53,9 @@ async function loadConfig() {
     if (stored.defaultRepositoryUrl) CONFIG.DEFAULT_REPOSITORY_URL = stored.defaultRepositoryUrl;
     if (stored.defaultIndexId)       CONFIG.DEFAULT_INDEX_ID       = stored.defaultIndexId;
     if (stored.defaultPosIndex)      CONFIG.DEFAULT_POS_INDEX      = stored.defaultPosIndex;
+    // OpenAlex 機関検索（#155）の初期値
+    if (stored.defaultRorId)         CONFIG.DEFAULT_ROR_ID         = stored.defaultRorId;
+    if (stored.defaultOpenalexDays)  CONFIG.DEFAULT_OPENALEX_DAYS  = parseInt(stored.defaultOpenalexDays, 10) || CONFIG.DEFAULT_OPENALEX_DAYS;
   } catch { /* 拡張外環境では無視 */ }
 }
 
@@ -108,6 +120,48 @@ async function clearDraft() {
       await chrome.storage.local.remove([DRAFT_KEY]);
     } else {
       localStorage.removeItem(DRAFT_KEY);
+    }
+  } catch { /* 失敗しても致命的ではないため無視 */ }
+}
+
+// ===== OpenAlex機関別著作検索（#155/#156）の作業中データ保存/復元（#162の保存対象） =====
+// importer の下書き（wipDraft）とは別キーで独立管理する。
+// 保存形: { version, savedAt, query:{ror,days,type,repoUrl}, works[], matches{}, selectedDois[] }
+const OA_SEARCH_KEY = 'openAlexSearch';
+const OA_SEARCH_VERSION = 1;
+
+async function saveOpenAlexSearch(obj) {
+  const payload = { version: OA_SEARCH_VERSION, savedAt: new Date().toISOString(), ...obj };
+  if (isExtensionStorage()) {
+    await chrome.storage.local.set({ [OA_SEARCH_KEY]: payload });
+  } else {
+    localStorage.setItem(OA_SEARCH_KEY, JSON.stringify(payload));
+  }
+}
+
+async function loadOpenAlexSearch() {
+  try {
+    let d;
+    if (isExtensionStorage()) {
+      const r = await chrome.storage.local.get([OA_SEARCH_KEY]);
+      d = r[OA_SEARCH_KEY];
+    } else {
+      const json = localStorage.getItem(OA_SEARCH_KEY);
+      d = json ? JSON.parse(json) : null;
+    }
+    if (!d || d.version !== OA_SEARCH_VERSION) return null;
+    return d;
+  } catch {
+    return null;
+  }
+}
+
+async function clearOpenAlexSearch() {
+  try {
+    if (isExtensionStorage()) {
+      await chrome.storage.local.remove([OA_SEARCH_KEY]);
+    } else {
+      localStorage.removeItem(OA_SEARCH_KEY);
     }
   } catch { /* 失敗しても致命的ではないため無視 */ }
 }

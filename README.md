@@ -14,11 +14,13 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 2. メタデータ入力のサンプルの提示
 3. オープンアクセスポリシーの容易な参照
 4. [JAIRO Cloud](https://jpcoar.org/support/jairo-cloud/)用インポートファイル（import.zip）作成の支援
+5. 自機関所属の研究者が発表した論文メタデータの調査と取得
 
 通常ブラウザ版とChrome拡張機能版の2つの利用方法があります。
 
 - 通常ブラウザ版では、以下の機能が利用できます。
   - Crossref DOIからのメタデータ取り込みと以下のAPIによるデータ補完
+    - 複数のDOIを指定して一括してメタデータを取り込めます。
     - [Research Organization Registry (ROR)](https://ror.org/)(ISNI)
     - [OpenAlex](https://openalex.org/)(ORCID)
     - [CiNii Research](https://cir.nii.ac.jp/)(NCID、科研費課題名)
@@ -28,16 +30,23 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
   - [Open Policy Finder](https://openpolicyfinder.jisc.ac.uk/)へのリンク表示
   - インポート用TSVファイル生成
   - 作業中データの自動保存・復元（タブ／サイドパネルを閉じても次回起動時に復元）
+  - OpenAlexで自機関所属研究者の最新発表論文の検索と一覧表示
+    - 既定値では過去90日に発表された論文を検索します。
+    - DOIを出力し、[make_jc_importer.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/make_jc_importer.html)のインポート対象にできます
 
 - Chrome拡張機能版では、通常ブラウザ版に加えて以下の機能が利用できます。APIキーが必要ですが、こちらが高機能です。
-  - 以下の3ツールのタブ切替
+  - 以下の4ツールのタブ切替
     - JAIRO Cloud インポート用TSV生成ツール
     - 助成情報検索ツール
     - 機関リポジトリのメタデータ検索（OpenSearch）
+    - OpenAlex機関別著作検索
   - 閲覧中の電子ジャーナルページからのDOI自動取得（「ページからDOI取得」ボタン）
   - JaLC DOIからのメタデータ取り込み
   - KAKEN APIによる科研費課題番号の検索と取り込み
   - Open Policy Finderから取得したOAポリシーの表示とエンバーゴの設定
+  - OpenAlexで自機関所属研究者の最新発表論文の検索と一覧表示
+    - 通常ブラウザ版の機能に加え、自機関の機関リポジトリでの登録有無を確認できます
+    - 「インポートタブへ送る」ボタンから登録対象とするDOIを「JAIRO Cloud インポート用TSV生成ツール」に送信できます
 
 ### 機能比較
 
@@ -56,6 +65,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 | Crossref DOI からのメタデータ取得 | ✅ | ✅ | |
 | JaLC DOI からのメタデータ取得 | ✅ | ❌ | CORS制約のためChrome拡張機能のService Worker経由が必要 |
 | DataCite DOI からのメタデータ取得 | ❌ | ❌ | 未対応です |
+| 自機関研究者の著作の取得（OpenAlex機関別著作検索） | ✅ | ✅ | 自機関RORで発表論文を検索 |
+| 自機関リポジトリでの登録有無の確認 | ✅ | ❌ | CORS制約のためChrome拡張機能版のみ（OpenSearchで照合） |
 | **メタデータ編集・出力** | | | |
 | メタデータ確認・編集UI | ✅ | ✅ | JPCOARスキーマ2.0準拠 |
 | ファイル名、サイズの自動入力 | ✅ | ✅ | |
@@ -79,14 +90,14 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 | **関連ツール** | | | |
 | 助成情報検索ツール | ✅ | ✅ | Chrome拡張機能版はタブ切替、ブラウザ版は別HTMLファイル |
 | JAIRO Cloud リポジトリ検索ツール | ✅ | ❌ | Chrome拡張機能版のみ（OpenSearchで検索） |
-
+| OpenAlex機関別著作検索 | ✅ | ✅ |  |
 
 ## 最新の更新
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-06-27 | ver. 1.13.0 | 作業中データ（入力中のメタデータ）をブラウザに自動保存し、サイドパネルを閉じても次回起動時に復元できる機能を追加（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)） |
-| インポート用TSV生成ツール | 2026-06-27 | — | 作業中データ（入力中のメタデータ）をブラウザに自動保存し、タブを閉じても次回起動時に復元できる機能を追加（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)） |
+| Chrome拡張機能版 | 2026-06-28 | ver. 1.14.0 | OpenAlex機関別著作検索タブを追加（自機関RORで候補論文を検索→登録済み照合バッジ→選択DOIをインポートタブへ受け渡し、検索結果を自動保存）（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)・[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）。DOIリストの一括取得を追加（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。タイトルのタグ片・改行を除去しTSVの行崩れを防止 |
+| インポート用TSV生成ツール | 2026-06-28 | — | DOIリストの一括取得を追加（複数DOIをまとめて取得→一括TSV出力）（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。OpenAlex機関別著作検索（`openalex_lookup.html`）を追加（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）。タイトルのタグ片・改行を除去しTSVの行崩れを防止 |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 
 ## 導入方法
@@ -135,6 +146,7 @@ APIからのデータ取得・マッピング・編集UI・プレビュー・TSV
 
 1. DOIを「DOI」の入力欄に入力します。
    - （Chrome拡張機能版のみ）電子ジャーナルの論文ページを開いた状態で「ページからDOI取得」ボタンを押すと、ページのmetaタグからDOIを自動入力できます。
+   - 「DOIリスト一括取得」から、複数のDOIをまとめて入植して取得できます。
 2. 「データ取得」ボタンを押します
 3. Crossrefなどから必要なメタデータを取得して、「メタデータ確認・編集」として表示します。編集も可能です。
 4. 「プレビュー表示」ボタンでプレビューができます。
@@ -174,6 +186,20 @@ APIからのデータ取得・マッピング・編集UI・プレビュー・TSV
 - JAIRO Cloud利用機関のリポジトリURL・タイトル・内容記述・資源タイプを条件に文献を検索できます。
 - 検索結果はタイトル・著者・書誌情報・ファイルリンクとともに一覧表示され、クリックで詳細フィールドを展開できます。
 - 設定ページでデフォルトのリポジトリURLを登録しておくと、タブを開いた際に自動入力されます。
+
+### OpenAlex機関別著作検索
+
+- 付属ツールとして、OpenAlex機関別著作検索ツールを同梱しています。
+- 自機関の ROR ID と、検索対象期間（過去n日・**出版日ベース**、既定90日）、任意で資源タイプを指定して、自機関所属研究者が発表した論文のメタデータを検索します。
+- Chrome拡張機能版ではサイドパネルのタブから「OpenAlex機関別著作検索」に切り替えて利用できます。
+- 検索結果のうち登録対象とするDOIを選び、インポート支援ツールの「DOIリスト一括取得」へ渡せます。
+  - 「選択DOIをコピー」で改行区切りのDOIリストをコピーできます。
+  - Chrome拡張機能版では「インポートタブへ送る」ボタンから直接送信できます。
+- Chrome拡張機能版では、各候補に自機関リポジトリでの登録状況バッジ（⚪ 登録済みの可能性大／🟡 要確認／🟢 未登録の可能性）を表示します。
+- 通常ブラウザ版では [openalex_lookup.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/openalex_lookup.html) を右クリック→「名前をつけてリンク(先)を保存」で保存してご利用ください。
+  - 動作には [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js) も必要です。同じフォルダに保存してください（インポート用TSV生成ツールの導入時に保存済みであれば共用できます）。
+
+利用手順と「未登録かどうか」の判定ロジックは [使い方ガイド](docs/user_guide.md#openalex機関別著作検索からのインポート) を参照してください。
 
 ### 設定（APIキー・初期値）
 
@@ -229,6 +255,14 @@ const CONFIG = {
 
     // .POS_INDEX[0]（.pos_index[0]）インデックス名パス（人間可読）  例: 学術雑誌論文
     DEFAULT_POS_INDEX: "",
+
+    // ===== OpenAlex 機関検索（#155 機能A）の初期値 =====
+    // 自機関の ROR ID（フルURL or ID）。OpenAlex機関別著作検索パネルの初期値に使用
+    // 例: https://ror.org/057zh3y96
+    DEFAULT_ROR_ID: "",
+
+    // OpenAlex機関別著作検索の対象期間（過去N日、from_publication_date ベース）。既定 90 日
+    DEFAULT_OPENALEX_DAYS: 90,
 };
 ```
 
@@ -256,7 +290,8 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 ```
 ├── make_jc_importer.html      # メインツール（通常ブラウザ版）
 ├── funder_lookup.html         # 助成情報検索ツール（通常ブラウザ版）
-├── shared.js                  # 共通設定（CONFIG定数・APIキー）と通信処理（両HTML・Chrome拡張で共有）
+├── openalex_lookup.html       # OpenAlex機関別著作検索ツール（通常ブラウザ版・検索ロジックをHTMLに内蔵）
+├── shared.js                  # 共通設定（CONFIG定数・APIキー）と通信処理（各HTML・Chrome拡張で共有）
 ├── tsv_headers_template.js    # TSVヘッダーテンプレート定義（メインツールで使用）
 ├── chrome-extension/          # Chrome拡張機能版（このフォルダを読み込んで使用）
 │   ├── manifest.json          #   Manifest V3 定義
@@ -265,8 +300,10 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 │   ├── make_jc_importer.js    #   メインツール ロジック
 │   ├── funder_panel.html      #   サイドパネル（助成情報検索）
 │   ├── funder_lookup.js       #   助成情報検索 ロジック
-│   ├── opensearch_panel.html  #   サイドパネル（OpenSearch検索）
-│   ├── opensearch_panel.js    #   OpenSearch検索 ロジック
+│   ├── opensearch_panel.html  #   サイドパネル（リポジトリコンテンツ検索／OpenSearch）
+│   ├── opensearch_panel.js    #   リポジトリコンテンツ検索 ロジック
+│   ├── openalex_panel.html    #   サイドパネル（OpenAlex機関別著作検索）
+│   ├── openalex_panel.js      #   OpenAlex機関別著作検索 ロジック
 │   ├── options.html           #   設定ページ（APIキー管理 UI）
 │   ├── options.js             #   設定ページ ロジック
 │   ├── shared.js              #   ルートの shared.js の同期コピー
@@ -318,6 +355,7 @@ CiNii APIキー未設定でも、以下の機能が動作します：
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-28 | OpenAlex 起点 JAIRO Cloud 登録パイプラインの前段階（手動運用版・Phase 3）を実装（[#157](https://github.com/tzhaya/jc-import-file-maker/issues/157)）。(1) **DOIリスト一括取得**：複数DOIを改行/区切りで投入し順次取得→既存バッチに蓄積、失敗はスキップして集計表示（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。(2) **OpenAlex機関別著作検索**：自機関 ROR で Works API を cursor paging 取得し候補一覧（掲載誌・出版日・OAバッジ・チェックボックス）を表示、選択DOIをコピー／（拡張）インポートタブへ受け渡し、検索・照合結果を自動保存・次回既定表示。標準版 `openalex_lookup.html`／Chrome拡張タブ（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）。(3) **登録済み照合バッジ**：候補タイトルで OpenSearch 検索→返戻 JPCOAR 内の識別子で DOI 照合し ⚪登録済みの可能性大（グレー）／🟡要確認／🟢未登録の可能性 の3値表示（Chrome拡張限定）（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）。あわせてタイトルの出版社XMLタグ片・改行を除去し、TSV全セルの制御文字を空白化してインポート時の行崩れを防止。manifest version `1.13.0` → `1.14.0` |
 | 2026-06-27 | 作業中データ（入力中・蓄積中のメタデータ）を自動保存し、タブ／サイドパネルを閉じても次回起動時に復元できる機能を追加（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162)）。Chrome拡張版は `chrome.storage.local`、スタンドアロン版は `localStorage` に保存（`shared.js` の `saveDraft`/`loadDraft`/`clearDraft`）。各バッチ操作後・フォーム編集のデバウンス（約1秒）・`visibilitychange`（タブ非表示）で自動保存し、起動時に下書きがあれば非ブロッキングのバナーで「復元／破棄」を提示。バッチパネルに「下書き削除」操作を追加。エクスポート後も下書きは保持。manifest version `1.12.0` → `1.13.0` |
 | 2026-06-22 | Crossref が著者所属に ROR を持たない場合に OpenAlex が機械同定した ROR を付与しているが、誤同定があるため対応（[#165](https://github.com/tzhaya/jc-import-file-maker/issues/165)）。(1) OpenAlex 由来の ROR の URI 欄に「⚠ 要確認」バッジを常時表示。(2) OpenAlex が同定した機関名と、同定元の Crossref 所属表記（`raw_affiliation_string`）を有意トークンで照合し（機関名トークンの過半数一致を主、最上位組織名照合を補助とする2段階判定）、誤同定の疑いがある場合は ROR を設定せず Crossref 所属表記を機関名として採用、機関名欄に注意喚起（部局名など下位階層は機関名まで編集する旨も表示）。manifest version `1.11.1` → `1.12.0` |
 | 2026-06-19 | GitHub Pages の紹介ページ（`docs/index.html`）を新規作成。空だった https://tzhaya.github.io/jc-import-file-maker/ に、概要・2つの利用方法・機能比較・3つのツール・導入方法・「作者から」を掲載（README をベースにした自己完結HTML） |

@@ -103,8 +103,24 @@
     <div class="field">
       <label for="default-repo-url">デフォルトリポジトリ URL</label>
       <input type="text" id="default-repo-url" placeholder="https://example.repo.nii.ac.jp/">
-      <p class="hint">OpenSearch検索タブを開いたときに自動入力されるリポジトリのURLを設定します。
+      <p class="hint">リポジトリコンテンツ検索タブを開いたときに自動入力されるリポジトリのURLを設定します。
         TSV生成ツールの「リポジトリURL」初期値としても共用されます。</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>OpenAlex 機関検索</h2>
+    <div class="field">
+      <label for="default-ror-id">デフォルト ROR ID</label>
+      <input type="text" id="default-ror-id" placeholder="例: https://ror.org/057zh3y96">
+      <p class="hint">OpenAlex機関別著作検索タブを開いたときに自動入力される自機関の ROR ID（フルURL または ID）を設定します。
+        <a href="https://ror.org/" target="_blank" rel="noopener">ROR</a> で機関を検索できます。</p>
+    </div>
+    <div class="field">
+      <label for="default-openalex-days">検索対象期間（過去N日）</label>
+      <input type="text" id="default-openalex-days" placeholder="例: 90">
+      <p class="hint">過去N日間（出版日ベース）の論文を検索対象にします。既定: 90日。
+        出版日ベースのため、最近収録された旧出版論文を取りこぼす場合は大きめの値を指定してください。</p>
     </div>
   </div>
 

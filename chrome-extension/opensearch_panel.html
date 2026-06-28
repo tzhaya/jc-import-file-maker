@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OpenSearch検索 — JAIRO Cloud</title>
+<title>リポジトリコンテンツ検索 — JAIRO Cloud</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   /* ===== ナビゲーション ===== */
@@ -56,6 +56,11 @@
     outline: none;
     border-color: #4caf50;
     box-shadow: 0 0 0 2px rgba(76,175,80,0.15);
+  }
+  .form-hint {
+    font-size: 11px;
+    color: #888;
+    margin: -4px 0 8px 90px;
   }
   .form-actions {
     display: flex;
@@ -174,15 +179,17 @@
 <nav class="ext-nav">
   <a href="panel.html">DOIインポート</a>
   <a href="funder_panel.html">助成情報検索</a>
-  <a href="opensearch_panel.html" class="active">OpenSearch検索</a>
+  <a href="opensearch_panel.html" class="active">リポジトリコンテンツ検索</a>
+  <a href="openalex_panel.html">OpenAlex機関別著作検索</a>
 </nav>
-<h1>🔍 OpenSearch検索</h1>
+<h1>🔍 リポジトリコンテンツ検索</h1>
 
 <section id="search-section">
   <div class="form-row">
     <label for="repo-url">リポジトリ URL</label>
     <input type="url" id="repo-url" placeholder="https://example.repo.nii.ac.jp/">
   </div>
+  <p class="form-hint">検索対象とするリポジトリのURL</p>
   <div class="form-row">
     <label for="q-title">タイトル</label>
     <input type="text" id="q-title">
