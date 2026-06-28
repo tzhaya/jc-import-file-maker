@@ -9,7 +9,7 @@ Chrome Web Store 審査向けに、本拡張機能が要求する各権限の理
 
 **用途**: 利用者が設定画面（options.html）で入力した API キー（OpenAlex / CiNii / Open Policy Finder）をブラウザのローカルストレージ（`chrome.storage.local`）に保存するために使用します。
 
-**必要な理由**: API キーはセッションをまたいで保持する必要があり、ブラウザの `chrome.storage.local` が最適な手段です。外部サーバーには送信しません。
+**必要な理由**: API キーはセッションをまたいで保持する必要があり、ブラウザの `chrome.storage.local` が最適な手段です。キーの**保存先**は `chrome.storage.local` のみで、提供者のサーバーには送信しません。ただし各 API を呼び出す際には、対応する API 提供元（OpenAlex / CiNii / Open Policy Finder）へキーが送信されます。これは各 API の認証に必要な動作です。
 
 ---
 
