@@ -1,5 +1,7 @@
 # CORS回避：Chrome拡張化 引き継ぎメモ
 
+> **注記（履歴メモ）**: 本ドキュメントは CORS 回避のための Chrome 拡張化を検討していた当時の引き継ぎメモです。以降の本文に登場する manifest 例（`"version": "1.0"` / `"name": "JC Import File Maker"` / 入口 `funder_lookup.html` など）は当時の検討内容であり、**現行の実装とは異なります**。現行は manifest `version` が `1.14.2`、`name` が「JAIRO Cloud インポート支援ツール」、入口は `panel.html`（`funder_panel.html` / `openalex_panel.html` / `opensearch_panel.html` のタブ構成）です。最新の構成は `chrome-extension/manifest.json` を参照してください。
+
 ## 背景・目的
 
 `jc-import-file-maker` リポジトリの `funder_lookup.html`（単体HTMLファイル）から、以下の3つのAPIを呼び出す際にCORSエラーが発生している。Chrome拡張の `background.js`（Service Worker）経由でこれを回避することを検討している。

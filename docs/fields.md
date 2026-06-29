@@ -315,11 +315,11 @@
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_license.catalog_license_type | あり | ライセンスタイプ |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_license.catalog_license_rdf_resource | なし | RDFリソース |
 | &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_rights | なし |  |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_rights[].catalog_right | なし | アクセス権 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_rights[].catalog_rights_right | なし | アクセス権 |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_rights[].catalog_right_language | あり | 言語 |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_rights[].catalog_right_rdf_resource | なし | RDFリソース |
 | &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_access_rights | なし |  |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_access_rights[].catalog_access_right_access_rights | あり | アクセス権 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_access_rights[].catalog_access_right | あり | アクセス権 |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_access_rights[].catalog_access_right_rdf_resource | なし | RDFリソース |
 | &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_file | なし |  |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624004[].catalog_file.catalog_file_uri | なし | ファイルURI |
@@ -333,8 +333,10 @@
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624005[].publisher_descriptions[].publisher_description_language | あり | 言語 |
 | &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624005[].publisher_locations | なし | 出版地 |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624005[].publisher_locations[].publisher_location | なし | 出版地 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624005[].publisher_locations[].publisher_location_language | あり | 言語 |
 | &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624005[].publication_places | なし | 出版地（国名コード） |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624005[].publication_places[].publication_place | なし | 出版地（国名コード） |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624005[].publication_places[].publication_place_language | あり | 言語 |
 | item_1698624006 | なし | 版 |
 | &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624006[].edition | なし | 版 |
 | &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624006[].edition_language | あり | 言語 |
@@ -347,11 +349,11 @@
 | item_1698624009 | なし | 所蔵機関 |
 | &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624009[].holding_agent_names | なし | 所蔵機関 |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624009[].holding_agent_names[].holding_agent_name | なし | 所蔵機関名 |
-| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624009[].holding_agent_names[].holding_agent_names_language | あり | 言語 |
+| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624009[].holding_agent_names[].holding_agent_name_language | あり | 言語 |
 | &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624009[].holding_agent_name_identifier | なし | 所蔵機関識別子 |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624009[].holding_agent_name_identifier.holding_agent_name_identifier_value | なし | 所蔵機関識別子 |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624009[].holding_agent_name_identifier.holding_agent_name_identifier_scheme | あり | 所蔵機関識別子スキーマ |
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624009[].holding_agent_name_identifier.holding_agent_name_identifier_uri | なし | 所蔵機関識別子URI |
 | item_1698624010 | なし | 物理的形態 |
 | &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624010[].jpcoar_format | なし | 物理的形態 |
-| &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624010[].json_format_language | あり | 言語 |
+| &nbsp;&nbsp;&nbsp;&nbsp;└ item_1698624010[].jpcoar_format_language | あり | 言語 |

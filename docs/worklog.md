@@ -1,6 +1,22 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-28（設定ページ切り出し #181）
+最終更新: 2026-06-29（現行実装が未反映のドキュメント修正 #184）
+
+## 現行実装が未反映のドキュメント修正（2026-06-29, #184）
+
+### 概要
+ドキュメントのみの変更（＋`scripts/check.js` のチェック対象追加）。HTML/共有JS・Chrome拡張への変更なし。`docs/` および root 配置の開発者向けドキュメントを現行実装（`tsv_headers_template.js`/`data/tsv_headers.json`/`chrome-extension/make_jc_importer.js`）と突合し、陳腐化・不一致を修正。指摘は Issue 本文（A/B 分類）＋ レビューコメント（codex）の追加2件を含め、すべてコードと突合のうえ反映。
+
+### 変更内容
+- `docs/requirements.md`: L115 のJaLC「未対応（今後対応予定）」を実態（JaLC REST API からメタデータ取得・CORS非対応のためChrome拡張版のみ／標準版スキップ報告）に修正。同ファイルL120との自己矛盾を解消。
+- `docs/fields.md`: TSVヘッダー定義とのフィールドキー不一致6件を修正。`catalog_rights[].catalog_right`→`catalog_rights_right`／`holding_agent_names_language`→`holding_agent_name_language`／`catalog_access_right_access_rights`→`catalog_access_right`／`json_format_language`→`jpcoar_format_language`、`publisher_locations[].publisher_location_language`・`publication_places[].publication_place_language` の言語行を追記。
+- `function.md`: L131 の `docs/api-flow.md` リンク切れを `api-flow.md`（ルート配置・`function.md` と同階層）に修正。
+- `docs/developer_docs.md`: ドキュメント一覧テーブルに未掲載の `fields.md`・`pipeline_comparison.md`・`Implementation_funder_lookup.md`・`openalex_harvest_feasibility.md`・`handover_cors_extension.md` を追補。
+- `docs/handover_cors_extension.md`: 冒頭に「CORS回避のChrome拡張化を検討した当時の引き継ぎメモ」である旨の注記を追加し、旧manifest例（version 1.0／旧名称／入口 `funder_lookup.html`）が現行（1.14.2／「JAIRO Cloud インポート支援ツール」／`panel.html` タブ構成）と異なる旨を明記。
+- `docs/Implementation_JaLC.md`: 課題1（`keyword_list` vs `subject_list` 不一致）を「✅ 実装完了」に状態更新。`chrome-extension/make_jc_importer.js` で両フィールドをマージ済みであることを確認のうえ追記。
+- `scripts/check.js`: UTF-8チェック対象（`UTF8_FILES`）に `docs/requirements.md`・`docs/fields.md`・`docs/handover_cors_extension.md`・`docs/Implementation_JaLC.md`・`function.md` を追加し、今後の文字コード/追従漏れをCIで検知可能に。
+
+---
 
 ## 設定（APIキー・初期値）の別ページ集約（2026-06-28, #181）
 
