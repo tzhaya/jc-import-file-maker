@@ -69,3 +69,8 @@ Get-Content -Encoding UTF8 README.md | Select-Object -First 20
 | [worklog.md](worklog.md) | 実装作業ログ |
 | [api-flow.md](../api-flow.md) | Crossref/OpenAlex 取得フロー概要 |
 | [function.md](../function.md) | 機能と技術 |
+| [fields.md](fields.md) | TSVヘッダー全フィールドの定義一覧（`tsv_headers_template.js` と対応） |
+| [pipeline_comparison.md](pipeline_comparison.md) | TSVエクスポート パイプライン比較 |
+| [Implementation_funder_lookup.md](Implementation_funder_lookup.md) | 助成機関照合（funder lookup）の実装メモ |
+| [openalex_harvest_feasibility.md](openalex_harvest_feasibility.md) | OpenAlex ハーベスト実現性の検討 |
+| [handover_cors_extension.md](handover_cors_extension.md) | CORS 回避の Chrome 拡張化を検討した当時の引き継ぎメモ |

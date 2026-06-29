@@ -112,7 +112,7 @@ make_jc_importer.html
     -   入力されたDOIに基づき、まず `https://doi.org/doiRA/{DOI}` APIでDOIの登録機関（Registration Authority）を判定します。
         -   DOIが存在しない場合はエラーメッセージを表示し、処理を中断します。
         -   登録機関が **Crossref** の場合：Crossref および OpenAlex APIから論文のメタデータを取得します。
-        -   登録機関が **JaLC** の場合：未対応メッセージを表示します（今後対応予定）。
+        -   登録機関が **JaLC** の場合：JaLC REST API（`https://api.japanlinkcenter.org/v2/dois/`）からメタデータを取得します（CORS 非対応のため Chrome 拡張版のみ。標準版ではスキップ報告）。
         -   その他の登録機関（DataCite等）の場合：サポート外メッセージを表示します。
     -   Crossref APIで得られる内容（例：`j.advnut.2025.100480.json`）を`ItemType.json`の構造に変更します。マッピングの例は  `sample.json` です。
 -   **DOIリスト一括取得**（[issue #154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）:

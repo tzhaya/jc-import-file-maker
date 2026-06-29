@@ -128,4 +128,4 @@
 - [TSVエクスポート パイプライン比較](docs/pipeline_comparison.md)
 - [WEKO3 TSVインポート仕様](docs/weko3_tsv_import_spec.md)
 - [WEKO3 プロパティキー命名規則](docs/weko3_property_key_naming.md) TSVヘッダーのプロパティキー（item_30002_*・item_16986240*）の命名規則です。
-- [APIフロー](docs/api-flow.md) DOI入力からTSV出力までのデータフローです。
+- [APIフロー](api-flow.md) DOI入力からTSV出力までのデータフローです。

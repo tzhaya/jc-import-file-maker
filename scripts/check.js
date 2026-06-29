@@ -39,6 +39,11 @@ const UTF8_FILES = [
   'docs/user_guide.md',
   'docs/settings.md',
   'docs/developer_docs.md',
+  'docs/requirements.md',
+  'docs/fields.md',
+  'docs/handover_cors_extension.md',
+  'docs/Implementation_JaLC.md',
+  'function.md',
   // HTML (standalone)
   'make_jc_importer.html',
   'funder_lookup.html',

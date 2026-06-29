@@ -172,9 +172,11 @@ await fetchJaLCData(doi);
 
 ### 発見された課題
 
-#### 課題1: `keyword_list` vs `subject_list` フィールド名不一致（要修正）
+#### 課題1: `keyword_list` vs `subject_list` フィールド名不一致（✅ 実装完了）
 
-**現状**: 実装コード (L2122) は `subject_list` を参照:
+> **状態更新**: 本課題は対応済みです。`chrome-extension/make_jc_importer.js`（「主題（subject_list + keyword_list）」節）で `subject_list`（`s.subject`）と `keyword_list`（`k.keyword`）の両方を subjects にマージしています。以下は検討当時の記録です。
+
+**現状（当時）**: 実装コード (L2122) は `subject_list` を参照:
 ```js
 const subjects = (jalcJson.subject_list || []).map(s => ({
   subitem_subject: s.subject || '',
@@ -208,7 +210,7 @@ const subjects = [];
 });
 ```
 
-**TODO**: JaLC API仕様書で `subject_list` の存在・構造を確認する。
+**TODO（解決済み）**: 両フィールドをマージする方針で実装済み。
 
 #### 課題2: `creator_list` で組織名が `first_name` に入るケース（軽微）
 

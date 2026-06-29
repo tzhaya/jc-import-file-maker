@@ -301,11 +301,11 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-29 | 現行実装が未反映のドキュメントを修正（[#184](https://github.com/tzhaya/jc-import-file-maker/issues/184)）：`docs/requirements.md` のJaLC「未対応」記述を実態（Chrome拡張版でJaLC REST API取得・標準版スキップ）に修正、`docs/fields.md` のTSVヘッダーキー不一致6件を `tsv_headers_template.js`/`data/tsv_headers.json` に合わせて修正（言語行2件の追記含む）、`function.md` の `api-flow.md` リンク切れ修正、`docs/developer_docs.md` のドキュメント一覧追補、`docs/handover_cors_extension.md` に履歴メモ注記・`docs/Implementation_JaLC.md` の解決済み課題を状態更新、`scripts/check.js` のUTF-8チェック対象に該当docを追加 |
 | 2026-06-28 | 設定（APIキー・初期値）を別ページに集約（[#181](https://github.com/tzhaya/jc-import-file-maker/issues/181)）：[`docs/settings.md`](docs/settings.md) 新規作成し全8項目（APIキー3＋初期値5）を一元化。READMEの設定セクションを要約＋リンクに縮約、`docs/user_guide.md` の設定関連記述を導線に整理、欠落していた `DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` を補完。設定ページ（options.html）のAPIキー保存説明をプライバシーポリシーの表現に統一。manifest version `1.14.1` → `1.14.2` |
 | 2026-06-28 | 初心者向けドキュメント整理（[#177](https://github.com/tzhaya/jc-import-file-maker/issues/177)）：`docs/changelog.md` 新規作成（変更履歴全量をREADMEから移設）、README変更履歴を最新5件に短縮、`docs/user_guide.md` を再構成（STEP 2の基本操作を前に・詳細を補足節へ）、`docs/index.html` 使い方ガイドへの導線追加・ドキュメントセクション整理 |
 | 2026-06-28 | Chrome拡張のホスト権限明文化（[#176](https://github.com/tzhaya/jc-import-file-maker/issues/176)）：広いホスト権限（`optional_host_permissions`）の必要性と安全策をコード・ドキュメントに明記。`background.js` のproxyコメント修正、`getDoiFromCurrentTab` に権限理由コメント追記、README「権限とセキュリティ」セクション追加、[`docs/chrome_store_permissions.md`](docs/chrome_store_permissions.md)（Web Store審査向け権限正当化文書）新規作成、プライバシーポリシー補強。manifest version `1.14.0` → `1.14.1` |
 | 2026-06-28 | CI品質チェック・文字コード明文化：`npm test` で JSON parse・JS構文・UTF-8妥当性を検証する `scripts/check.js` を追加。GitHub Actions の PR/push 時品質チェック（[`.github/workflows/ci.yml`](.github/workflows/ci.yml)）を追加。`.editorconfig`（`charset=utf-8`）・`.gitattributes` を追加。PowerShellでの文字化け確認手順・開発者向けドキュメント一覧（[`docs/developer_docs.md`](docs/developer_docs.md)）を整備（[#174](https://github.com/tzhaya/jc-import-file-maker/issues/174)・[#175](https://github.com/tzhaya/jc-import-file-maker/issues/175)） |
-| 2026-06-28 | ドキュメント整備：残存Issue一覧（[`docs/remaining_issues.md`](docs/remaining_issues.md)）を棚卸しし現状に同期（[#172](https://github.com/tzhaya/jc-import-file-maker/issues/172)） |
 
 全履歴は [docs/changelog.md](docs/changelog.md) を参照してください。
 
