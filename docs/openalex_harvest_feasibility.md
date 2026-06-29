@@ -224,6 +224,7 @@ WEKO3 の OpenSearch は検索パラメータに DOI 直接指定を持たない
 - [JAIRO Cloud サポートポータル｜JPCOAR](https://jpcoar.org/support/jairo-cloud/portal/)
 
 ### 本リポジトリ内の関連ドキュメント
+- [CiNii Research API / JaLC API 活用の検討（#156 比較・JaLC DOI 捕捉）](cinii_research_api_feasibility.md)
 - [API フロー整理](../api-flow.md)
 - [WEKO3 TSV インポート仕様](weko3_tsv_import_spec.md)
 - [TSV エクスポート パイプライン比較](pipeline_comparison.md)
