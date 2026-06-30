@@ -65,6 +65,10 @@
   .match-loading, .match-na, .match-err { color:#999; }
   .no-match .col-match { display:none; }
 
+  /* 所属要確認（#186）。#156 照合列（.col-match）とは別の独立列に表示し、上書き競合を避ける。 */
+  .col-warn { width:90px; white-space:nowrap; font-size:11px; text-align:center; }
+  .warn-badge { display:inline-block; background:#fff3cd; border:1px solid #ffc107; color:#8a6d00; border-radius:10px; padding:1px 8px; font-size:11px; white-space:nowrap; cursor:help; }
+
   #doi-output { width:100%; margin-top:10px; box-sizing:border-box; font-family:monospace; font-size:12px; }
 </style>
 </head>
@@ -125,6 +129,7 @@
         <tr>
           <th class="col-check">☑</th>
           <th class="col-oa">OA</th>
+          <th class="col-warn">所属確認</th>
           <th class="col-title">タイトル</th>
           <th class="col-journal">掲載誌</th>
           <th class="col-date">出版日</th>

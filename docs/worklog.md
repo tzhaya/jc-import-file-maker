@@ -1,6 +1,32 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-29（現行実装が未反映のドキュメント修正 #184）
+最終更新: 2026-06-30（OpenAlex機関検索の所属誤判定の可視化 #186）
+
+## OpenAlex機関検索の所属誤判定の可視化（2026-06-30, #186）
+
+### 概要
+OpenAlex機関別著作検索（#155）で `authorships.institutions.ror` フィルタが返す論文に、OpenAlex 側の機関同定エラー（#165 と同型）で検索対象機関に実際は所属しない論文が混入する問題への対応。自動除外はせず、誤判定が疑われる候補を「⚠ 要確認」として可視化する（注意喚起のみ）。標準版 `openalex_lookup.html` とChrome拡張版 `chrome-extension/openalex_panel.js`／`openalex_panel.html` に同一ロジックを実装。
+
+### 実装の根拠（実例の調査）
+- 実例: ROR `005pdtr14`（JIRCAS）の90日検索で得た論文 `W7166339342`（`10.1016/j.onehlt.2026.101502`）は、Crossref に所属記載が無く、OpenAlex が著者 Toyotaka Sato の raw 表記「Veterinary Research Unit, International Institute for Zoonosis Control, Hokkaido University, Japan」を JIRCAS（`I4210089209`）に誤マッピングしていた（実体は Hokkaido University 系のみ）。
+- 当初は #165 の `isAffMisidentified()`（機関名トークンの過半数一致）流用を計画したが、実データ検証で本実例を取りこぼすことが判明（「Japan」「International」の偶然一致で過半数が成立）。機関単位の検証に最適化した専用判定へ差し替えた。
+
+### 変更内容
+- `openalex_lookup.html` / `chrome-extension/openalex_panel.js`:
+  - `AFF_GENERIC_WORDS`/`AFF_GEO_WORDS`/`affNameTokens` を移植し、`AFF_WEAK_WORDS`（`international`/`global` 等）・`distinctiveInstTokens`（汎用語・地名・弱語を除いた識別的トークン）・`AFF_ACRONYM_STOP`/`instAcronym`（機関名頭字語生成）・`affStringSupportsInst`（識別的トークンまたは頭字語が表記に現れれば「裏付けあり」）・`canonicalRor`（末尾スラッシュ・大小文字・bare ID 差を正規化）・`detectAffMisattribution`（論文単位の判定）・`warnTooltip` を追加。
+  - `renderResults(works, searchRor)` に `searchRor` 引数を追加し、行ごとに検出して独立列（`.col-warn`）に `⚠ 要確認` バッジ＋tooltip を描画、サマリに疑い件数を追記。検索時は `oaRor`、復元時は保存値（`criteria.ror`/`query.ror`）を明示的に渡す（復元パスは `oaRor` 設定前に描画されるため）。
+- `openalex_lookup.html`（インライン CSS）/ `chrome-extension/openalex_panel.html`: `.col-warn`／`.warn-badge` スタイルと「所属確認」列ヘッダーを追加。
+- 判定ロジック: 各 `authorships[]` の `institutions[]` から検索 ROR 一致機関を特定→その機関 ID にマップされた `affiliations[].raw_affiliation_string` を収集→1 つでも裏付ければ正常（null）。裏付ける著者が皆無の論文のみフラグ。これにより誤検出（false positive）を抑制。
+- `chrome-extension/manifest.json`: version `1.14.2` → `1.15.0`（機能追加・minor）。
+
+### 検証
+- 単体（実データ）: 真陽性（JIRCAS/W7166339342 を Sato・Horiuchi 込みで検出）、偽陽性なし（同論文を北大 ROR で検索すると整合著者ありで null）、ROR 正規化（bare ID／末尾スラッシュ／空）を確認。略称表記「JIRCAS, Tsukuba」は頭字語照合で誤検出回避。JIRCAS 100件バッチでフラグ率 1〜2%（残りも真の誤同定）。
+- E2E（Playwright・ブラウザ）: main・funder の回帰 ALL PASSED。openalex は ROR `005pdtr14`／400日検索で 253件取得・既知論文に ⚠ バッジ・列分離（`.col-match` 非混入）・サマリ表示を確認し ALL PASSED。
+
+### codex レビュー反映（改訂版 Plan）
+スコープ明確化（自動除外しない＝可視化）／#156 照合列との分離／affiliations 欠落の tooltip 区別／ROR 正規化／代表 raw＋件数／同期対象を実在ファイルに訂正（`openalex_lookup_test.html` は存在しない）。
+
+---
 
 ## 現行実装が未反映のドキュメント修正（2026-06-29, #184）
 

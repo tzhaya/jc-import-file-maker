@@ -132,9 +132,142 @@ async function fetchAllWorks(ror, fromDate, type, onProgress) {
   return out;
 }
 
+// ---- 所属誤判定の検出（#186） ----
+// OpenAlex 機関検索は authorships.institutions.ror:{ROR} で絞り込むが、OpenAlex 側の
+// 機関同定エラー（#165 と同型）で、検索対象機関に実際は所属しない論文が混入する。
+// 各論文の authorships[].affiliations[].institution_ids と raw_affiliation_string を突合し、
+// 検索機関に整合する所属表記を持つ著者が 1 人も居ない論文を「所属要確認」として可視化する。
+// ※ 本機能は自動除外せず注意喚起のみ（既定チェックは ON のまま）。検出は不完全。
+
+// 機関名照合で無視する汎用語（make_jc_importer.html と同一）
+const AFF_GENERIC_WORDS = new Set([
+  'of','the','and','for','de','des','du','la','le','el','et',
+  'university','universities','univ','college','faculty','department','dept',
+  'school','institute','institut','institution','center','centre','graduate',
+  'division','laboratory','lab','research','science','sciences','studies',
+  'national','state','co','corp','corporation','inc','ltd',
+]);
+// 末尾セグメント判定で除外する国・地域名
+const AFF_GEO_WORDS = new Set([
+  'japan','usa','us','uk','china','korea','france','germany','italy','spain',
+  'india','philippines','canada','australia','brazil','russia','taiwan',
+  'thailand','indonesia','malaysia','vietnam','singapore','netherlands',
+]);
+function affNameTokens(s) {
+  return (s || '').toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter(t => t.length >= 3 && !AFF_GENERIC_WORDS.has(t));
+}
+// 機関名に頻出し識別力が低い語（地名と併せて識別的トークンから除外）
+const AFF_WEAK_WORDS = new Set(['international','global','japanese','asian']);
+// 機関名の識別的トークン（汎用語・地名・弱語を除いた、その機関に固有性の高い語）
+function distinctiveInstTokens(instName) {
+  return affNameTokens(instName).filter(t => !AFF_GEO_WORDS.has(t) && !AFF_WEAK_WORDS.has(t));
+}
+// 頭字語（acronym）生成で読み飛ばす語（前置詞・冠詞など）
+const AFF_ACRONYM_STOP = new Set(['of','for','and','the','a','an','de','des','du','la','le','el','et','to','in','on']);
+// 機関名の頭字語（例: Japan International Research Center for Agricultural Sciences → jircas）。
+// 略称表記（"JIRCAS, Tsukuba" 等）を裏付けと認識して誤検出を防ぐため。3文字未満は無効。
+function instAcronym(instName) {
+  const words = String(instName || '').toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean)
+    .filter(w => !AFF_ACRONYM_STOP.has(w));
+  if (words.length < 3) return '';
+  return words.map(w => w[0]).join('');
+}
+// 所属表記が機関を裏付けるか判定する（#186 用、機関単位の同定検証）。
+// 機関名の識別的トークン、または頭字語が表記に現れれば「裏付けあり」とみなす。
+// ※ #165 の isAffMisidentified（著者所属の過半数一致）より厳格。本実例のように
+//   "Japan"・"International" 等の弱語だけが偶然一致するケースを誤同定として捕捉する。
+// 判定材料（識別的トークン）が無い機関は true（安全側＝警告しない）。
+function affStringSupportsInst(instName, rawAff) {
+  const rawSet = new Set(affNameTokens(rawAff));
+  const ac = instAcronym(instName);
+  if (ac.length >= 3 && rawSet.has(ac)) return true;
+  const inst = distinctiveInstTokens(instName);
+  if (!inst.length) return true;
+  return inst.some(t => rawSet.has(t));
+}
+
+// ROR を末尾スラッシュ・大小文字・bare ID 差を吸収した素のID（小文字）に正規化
+function canonicalRor(v) {
+  const s = String(v || '').trim().toLowerCase();
+  if (!s) return '';
+  return s.replace(/^https?:\/\//, '').replace(/^ror\.org\//, '')
+          .replace(/^\/+/, '').replace(/\/+$/, '');
+}
+
+// 検索対象 ROR に対し、論文が「所属要確認」かを判定。
+// 正常（整合著者あり）なら null、疑いありなら { instName, authors[], repRaw, rawCount, affMissing } を返す。
+function detectAffMisattribution(work, searchRor) {
+  const target = canonicalRor(searchRor);
+  if (!target) return null;
+  const auths = (work && work.authorships) || [];
+  let hadInstMatch = false;     // 検索機関がいずれかの著者の institutions に出現したか
+  let instName = '';            // 検索機関の OpenAlex 表示名
+  const suspects = [];          // 疑いのある著者名
+  let repRaw = '';              // 代表 raw 表記（不一致の最初のもの）
+  let rawCount = 0;             // 検索機関にマップされた不一致 raw の件数
+  let affMissing = false;       // affiliations 配列が空/欠落の著者を含むか
+
+  for (const a of auths) {
+    const hit = (a.institutions || []).find(i => canonicalRor(i.ror) === target);
+    if (!hit) continue;
+    hadInstMatch = true;
+    if (!instName) instName = hit.display_name || '';
+    const author = (a.author && a.author.display_name) || a.raw_author_name || '(著者名不明)';
+    const affs = a.affiliations || [];
+    // この著者の affiliations から、検索機関IDにマップされた raw 表記を収集
+    const rawsForInst = affs
+      .filter(af => (af.institution_ids || []).includes(hit.id))
+      .map(af => af.raw_affiliation_string || '')
+      .filter(Boolean);
+    if (!rawsForInst.length) {
+      // (a) この著者は検索機関に対応する所属表記を持たない
+      suspects.push(author);
+      if (!affs.length) affMissing = true;
+      continue;
+    }
+    // (b) raw はあるが整合を判定。1 つでも機関を裏付ければこの論文は正常
+    if (rawsForInst.some(raw => affStringSupportsInst(hit.display_name, raw))) {
+      return null;
+    }
+    suspects.push(author);
+    rawsForInst.forEach(r => { if (!repRaw) repRaw = r; rawCount++; });
+  }
+
+  if (!hadInstMatch) return null;  // 検索機関が出現しない（保険）→ 判定しない
+  return {
+    instName,
+    authors: Array.from(new Set(suspects)),
+    repRaw,
+    rawCount,
+    affMissing,
+  };
+}
+
+// detectAffMisattribution の結果から tooltip 文言を組み立てる。
+// 代表 raw＋件数＋疑い著者名を示し、「所属表記なし」と「affiliations 欠落」を区別する。
+function warnTooltip(warn) {
+  const inst = warn.instName || '検索対象機関';
+  const who = warn.authors.length ? '（' + warn.authors.join(', ') + '）' : '';
+  let t = '所属要確認: OpenAlex は「' + inst + '」をこの論文に付与していますが、所属表記と一致しません' + who + '。';
+  if (warn.repRaw) {
+    const more = warn.rawCount > 1 ? '（不一致 全' + warn.rawCount + '件中の代表）' : '';
+    t += '\n元の所属表記' + more + ': ' + warn.repRaw;
+  } else if (warn.affMissing) {
+    t += '\nこの論文には所属表記（affiliations）がありません。著者の既知所属由来の可能性があります。';
+  } else {
+    t += '\nこの論文の所属表記に検索対象機関が含まれていません。';
+  }
+  t += '\n※ 自動除外はしません。登録要否はご確認ください。';
+  return t;
+}
+
 // ---- レンダリング ----
 
-function renderResults(works) {
+function renderResults(works, searchRor) {
   const info = document.getElementById('result-info');
   const tbody = document.getElementById('result-tbody');
   const section = document.getElementById('results-section');
@@ -148,7 +281,8 @@ function renderResults(works) {
     return;
   }
 
-  info.textContent = `${works.length.toLocaleString()} 件の候補が見つかりました。登録対象を選択してください。`;
+  const ror = searchRor != null ? searchRor : oaRor;
+  let warnCount = 0;
 
   works.forEach((w, i) => {
     const doi = bareDoi(w.doi);
@@ -158,10 +292,18 @@ function renderResults(works) {
     const oaStatus = (w.open_access && w.open_access.oa_status) || '';
     const badge = OA_BADGE_MAP[oaStatus] || { label: '⚪ Unknown', bg: '#999' };
 
+    // 所属誤判定の検出（#186）。疑いがあれば ⚠ バッジ＋tooltip を独立列に表示。
+    const warn = detectAffMisattribution(w, ror);
+    if (warn) warnCount++;
+    const warnCell = warn
+      ? '<td class="col-warn"><span class="warn-badge" title="' + escHtml(warnTooltip(warn)) + '">⚠ 要確認</span></td>'
+      : '<td class="col-warn"></td>';
+
     const tr = document.createElement('tr');
     tr.innerHTML =
       '<td class="col-check"><input type="checkbox" class="row-check" data-doi="' + escHtml(doi) + '" checked></td>' +
       '<td class="col-oa"><span class="oa-badge" style="background:' + badge.bg + '">' + escHtml(badge.label) + '</span></td>' +
+      warnCell +
       '<td class="col-title">' + escHtml(title) + '</td>' +
       '<td class="col-journal">' + escHtml(journal) + '</td>' +
       '<td class="col-date">' + escHtml(date) + '</td>' +
@@ -170,6 +312,11 @@ function renderResults(works) {
       '<td class="col-match" data-doi="' + escHtml(doi) + '" data-title="' + escHtml(title) + '"></td>';
     tbody.appendChild(tr);
   });
+
+  info.textContent = `${works.length.toLocaleString()} 件の候補が見つかりました。登録対象を選択してください。`;
+  if (warnCount > 0) {
+    info.textContent += `（うち ${warnCount} 件は所属の誤判定が疑われます。⚠ 要確認の行を確認してください）`;
+  }
 
   document.getElementById('result-table-wrap').classList.remove('hidden');
   document.getElementById('output-actions').classList.remove('hidden');
@@ -401,7 +548,8 @@ async function restoreOpenAlexSearch() {
 
   oaWorks = saved.works;
   oaMatches = saved.matches || {};
-  renderResults(oaWorks);
+  // 復元時は oaRor が後段で設定されるため、保存値を直接渡して #186 検出を有効化
+  renderResults(oaWorks, (saved.criteria && saved.criteria.ror) || (saved.query && saved.query.ror) || '');
   paintSavedMatches();
   applySelection(saved.selectedDois);
 
@@ -555,7 +703,7 @@ async function doSearch() {
       setLoading(true, `取得中… ${n}${total ? ' / ' + total : ''} 件`);
     });
     oaMatches = {};               // 再検索で前回の照合結果を破棄（入れ替え）
-    renderResults(oaWorks);
+    renderResults(oaWorks, oaRor);
     oaInstitution = await fetchRorNames(ror);  // 機関名取得（失敗時は空）
     renderCriteria();
     await persistOpenAlexSearch(); // 照合前にまず検索結果＋条件を保存
