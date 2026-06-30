@@ -268,6 +268,17 @@ function warnTooltip(warn) {
 
 // ---- レンダリング ----
 
+// result-info を設定する。warnCount>0 の場合、所属要確認の注記を背景付きで強調表示し、
+// 淡色の地の文（#555）に埋もれて見落とされるのを防ぐ。
+function setResultInfo(baseText, warnCount) {
+  const info = document.getElementById('result-info');
+  let html = escHtml(baseText);
+  if (warnCount > 0) {
+    html += ' <span class="warn-note">⚠ うち ' + warnCount + ' 件は所属の誤判定が疑われます。要確認の行をご確認ください</span>';
+  }
+  info.innerHTML = html;
+}
+
 // 第3引数 warningsByDoi を渡すと所属誤判定の検出を再計算せずそれを使う（復元用）。
 // 省略時は work.authorships から detectAffMisattribution() で算出する（検索直後用）。
 // 算出/採用した警告は oaWarnings に保持し、保存（buildOaState）で復元できるようにする。
@@ -322,10 +333,7 @@ function renderResults(works, searchRor, warningsByDoi) {
 
   oaWarnings = warnings;   // 保存（復元）用に保持
 
-  info.textContent = `${works.length.toLocaleString()} 件の候補が見つかりました。登録対象を選択してください。`;
-  if (warnCount > 0) {
-    info.textContent += `（うち ${warnCount} 件は所属の誤判定が疑われます。⚠ 要確認の行を確認してください）`;
-  }
+  setResultInfo(`${works.length.toLocaleString()} 件の候補が見つかりました。登録対象を選択してください。`, warnCount);
 
   document.getElementById('result-table-wrap').classList.remove('hidden');
   document.getElementById('output-actions').classList.remove('hidden');
@@ -574,9 +582,9 @@ async function restoreOpenAlexSearch() {
   }
 
   const when = saved.savedAt ? new Date(saved.savedAt).toLocaleString('ja-JP') : '';
-  let msg = `前回の検索結果（${oaWorks.length.toLocaleString()} 件${when ? ' / ' + when : ''}）を表示しています。再検索すると入れ替わります。`;
-  if (warnCount > 0) msg += `（うち ${warnCount} 件は所属の誤判定が疑われます。⚠ 要確認の行を確認してください）`;
-  document.getElementById('result-info').textContent = msg;
+  setResultInfo(
+    `前回の検索結果（${oaWorks.length.toLocaleString()} 件${when ? ' / ' + when : ''}）を表示しています。再検索すると入れ替わります。`,
+    warnCount);
   return true;
 }
 

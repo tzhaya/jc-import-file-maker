@@ -16,6 +16,7 @@ OpenAlex機関別著作検索（#155）で `authorships.institutions.ror` フィ
   - `AFF_GENERIC_WORDS`/`AFF_GEO_WORDS`/`affNameTokens` を移植し、`AFF_WEAK_WORDS`（`international`/`global` 等）・`distinctiveInstTokens`（汎用語・地名・弱語を除いた識別的トークン）・`AFF_ACRONYM_STOP`/`instAcronym`（機関名頭字語生成）・`affStringSupportsInst`（識別的トークンまたは頭字語が表記に現れれば「裏付けあり」）・`canonicalRor`（末尾スラッシュ・大小文字・bare ID 差を正規化）・`detectAffMisattribution`（論文単位の判定）・`warnTooltip` を追加。
   - `renderResults(works, searchRor, warningsByDoi)`: 行ごとに検出して独立列（`.col-warn`）に `⚠ 要確認` バッジ＋tooltip を描画、サマリに疑い件数を追記し、検出件数を返す。
   - **復元経路の対応（レビュー指摘）**: 作業中データ保存の `slimWork()` は容量削減のため `authorships` を落とすため、復元時は `detectAffMisattribution()` を再計算できない。検索直後に DOI ごとの警告ペイロードを `oaWarnings` に保持して保存（`buildOaState` の `warnings`）し、復元時は `renderResults(works, '', saved.warnings)` でそれを再利用する。あわせて復元メッセージ（「前回の検索結果…」）にも疑い件数を追記（renderResults の戻り値を使用）。
+  - **サマリ注記の視認性（レビュー指摘）**: `result-info` の疑い件数注記が淡色の地の文（#555）に埋もれて見落とされやすいため、`setResultInfo()` ヘルパーで当該注記のみ `.warn-note`（背景 #fff3cd・文字 #7a4d00・太字・枠）で強調分離。検索直後・復元時の両メッセージで共通使用。
 - `openalex_lookup.html`（インライン CSS）/ `chrome-extension/openalex_panel.html`: `.col-warn`／`.warn-badge` スタイルと「所属確認」列ヘッダーを追加。
 - 判定ロジック: 各 `authorships[]` の `institutions[]` から検索 ROR 一致機関を特定→その機関 ID にマップされた `affiliations[].raw_affiliation_string` を収集→1 つでも裏付ければ正常（null）。裏付ける著者が皆無の論文のみフラグ。これにより誤検出（false positive）を抑制。
 - `chrome-extension/manifest.json`: version `1.14.2` → `1.15.0`（機能追加・minor）。
