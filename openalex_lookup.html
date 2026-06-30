@@ -171,6 +171,7 @@ const OA_PAGE_DELAY_MS = 300; // ページ間の待機（レート配慮）
 
 let oaWorks = [];   // 直近の検索結果（OpenAlex work オブジェクト配列）
 let oaMatches = {};  // 直近の照合結果 { [doi]: { kind:'red'|'yellow'|'green', itemUrl } }（#156）
+let oaWarnings = {};  // 所属誤判定の検出結果 { [doi]: warnペイロード }（#186・復元用に保存）
 let oaInstitution = { ja: '', en: '' };  // 直近の検索RORの機関名（検索条件サマリ用）
 let oaRor = '';       // 直近の検索ROR（フルURL）
 let oaFromDate = '';  // 取得対象期間の開始（YYYY-MM-DD）
@@ -394,7 +395,11 @@ function warnTooltip(warn) {
 
 // ---- レンダリング ----
 
-function renderResults(works, searchRor) {
+// 第3引数 warningsByDoi を渡すと所属誤判定の検出を再計算せずそれを使う（復元用）。
+// 省略時は work.authorships から detectAffMisattribution() で算出する（検索直後用）。
+// 算出/採用した警告は oaWarnings に保持し、保存（buildOaState）で復元できるようにする。
+// 検出件数を返す（復元メッセージへの反映に使用）。
+function renderResults(works, searchRor, warningsByDoi) {
   const info = document.getElementById('result-info');
   const tbody = document.getElementById('result-tbody');
   const section = document.getElementById('results-section');
@@ -405,10 +410,12 @@ function renderResults(works, searchRor) {
     document.getElementById('result-table-wrap').classList.add('hidden');
     document.getElementById('output-actions').classList.add('hidden');
     section.classList.remove('hidden');
-    return;
+    oaWarnings = {};
+    return 0;
   }
 
   const ror = searchRor != null ? searchRor : oaRor;
+  const warnings = {};   // この描画で確定した警告 { [doi]: payload }
   let warnCount = 0;
 
   works.forEach((w, i) => {
@@ -419,9 +426,9 @@ function renderResults(works, searchRor) {
     const oaStatus = (w.open_access && w.open_access.oa_status) || '';
     const badge = OA_BADGE_MAP[oaStatus] || { label: '⚪ Unknown', bg: '#999' };
 
-    // 所属誤判定の検出（#186）。疑いがあれば ⚠ バッジ＋tooltip を独立列に表示。
-    const warn = detectAffMisattribution(w, ror);
-    if (warn) warnCount++;
+    // 所属誤判定（#186）。復元時は保存済みペイロード、検索直後は authorships から算出。
+    const warn = warningsByDoi ? (warningsByDoi[doi] || null) : detectAffMisattribution(w, ror);
+    if (warn) { warnings[doi] = warn; warnCount++; }
     const warnCell = warn
       ? '<td class="col-warn"><span class="warn-badge" title="' + escHtml(warnTooltip(warn)) + '">⚠ 要確認</span></td>'
       : '<td class="col-warn"></td>';
@@ -440,6 +447,8 @@ function renderResults(works, searchRor) {
     tbody.appendChild(tr);
   });
 
+  oaWarnings = warnings;   // 保存（復元）用に保持
+
   info.textContent = `${works.length.toLocaleString()} 件の候補が見つかりました。登録対象を選択してください。`;
   if (warnCount > 0) {
     info.textContent += `（うち ${warnCount} 件は所属の誤判定が疑われます。⚠ 要確認の行を確認してください）`;
@@ -448,6 +457,7 @@ function renderResults(works, searchRor) {
   document.getElementById('result-table-wrap').classList.remove('hidden');
   document.getElementById('output-actions').classList.remove('hidden');
   section.classList.remove('hidden');
+  return warnCount;
 }
 
 // 選択中（チェックON）の DOI を配列で返す
@@ -621,6 +631,7 @@ function buildOaState() {
     },
     works: oaWorks.map(slimWork),
     matches: oaMatches,
+    warnings: oaWarnings,   // 所属誤判定の検出結果（#186）。slimWork で authorships を落とすため復元時に再計算できない
     selectedDois: getSelectedDois(),
     criteria: { ror: oaRor, institution: oaInstitution, fromDate: oaFromDate, toDate: oaToDate },
   };
@@ -675,8 +686,8 @@ async function restoreOpenAlexSearch() {
 
   oaWorks = saved.works;
   oaMatches = saved.matches || {};
-  // 復元時は oaRor が後段で設定されるため、保存値を直接渡して #186 検出を有効化
-  renderResults(oaWorks, (saved.criteria && saved.criteria.ror) || (saved.query && saved.query.ror) || '');
+  // slimWork で authorships を落とすため、復元時は保存済みの警告ペイロード（#186）を使用する
+  const warnCount = renderResults(oaWorks, '', saved.warnings || {});
   paintSavedMatches();
   applySelection(saved.selectedDois);
 
@@ -690,8 +701,9 @@ async function restoreOpenAlexSearch() {
   }
 
   const when = saved.savedAt ? new Date(saved.savedAt).toLocaleString('ja-JP') : '';
-  document.getElementById('result-info').textContent =
-    `前回の検索結果（${oaWorks.length.toLocaleString()} 件${when ? ' / ' + when : ''}）を表示しています。再検索すると入れ替わります。`;
+  let msg = `前回の検索結果（${oaWorks.length.toLocaleString()} 件${when ? ' / ' + when : ''}）を表示しています。再検索すると入れ替わります。`;
+  if (warnCount > 0) msg += `（うち ${warnCount} 件は所属の誤判定が疑われます。⚠ 要確認の行を確認してください）`;
+  document.getElementById('result-info').textContent = msg;
   return true;
 }
 
