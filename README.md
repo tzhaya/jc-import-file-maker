@@ -96,10 +96,10 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-06-28 | ver. 1.14.2 | 設定（APIキー・初期値）を [`docs/settings.md`](docs/settings.md) に集約（[#181](https://github.com/tzhaya/jc-import-file-maker/issues/181)）。設定ページ（options.html）のAPIキー保存説明をプライバシーポリシーの表現に統一（「各API提供元への認証以外の目的で送信されない」） |
+| Chrome拡張機能版 | 2026-06-30 | ver. 1.15.0 | OpenAlex機関検索で所属の誤判定が疑われる候補に「⚠ 要確認」を表示（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186)）。検索対象機関に整合する所属表記を持つ著者が居ない論文を独立列で可視化（自動除外はせず注意喚起のみ） |
 | インポート用TSV生成ツール | 2026-06-28 | — | DOIリストの一括取得を追加（複数DOIをまとめて取得→一括TSV出力）（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）。タイトルのタグ片・改行を除去しTSVの行崩れを防止 |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
-| OpenAlex機関別著作検索 | 2026-06-28 | — | 自機関の ROR ID と検索対象期間（既定90日）で所属研究者の発表論文を検索する新ツール（`openalex_lookup.html`）を追加（[#155](https://github.com/tzhaya/jc-import-file-maker/issues/155)）。検索結果のDOIをインポート支援ツールの「DOIリスト一括取得」へ渡せる。Chrome拡張機能版では自機関リポジトリでの登録状況バッジを表示 |
+| OpenAlex機関別著作検索 | 2026-06-30 | — | 所属の誤判定が疑われる候補に「⚠ 要確認」バッジを表示（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186)）。OpenAlex の `affiliations`／`raw_affiliation_string` を照合し、検索対象機関を裏付ける所属表記が無い論文を独立列で可視化（自動除外はせず注意喚起。略称は頭字語照合で誤検出を抑制） |
 
 ## 導入方法
 
@@ -301,11 +301,11 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-06-30 | OpenAlex機関検索で所属の誤判定が疑われる候補を可視化（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186)）：機関検索（`openalex_lookup.html`／Chrome拡張タブ）の結果に「所属確認」列を追加し、検索対象機関を裏付ける所属表記を持つ著者が居ない論文に「⚠ 要確認」バッジ＋詳細ツールチップ（疑い著者・元の所属表記）を表示。OpenAlex の `authorships[].affiliations[].institution_ids`／`raw_affiliation_string` を機関の識別的トークンと頭字語で照合（略称表記の誤検出を抑制）。自動除外はせず注意喚起のみ（既定チェックはON維持）。#156 照合列とは別列で描画し競合を回避。manifest version `1.14.2` → `1.15.0` |
 | 2026-06-29 | 現行実装が未反映のドキュメントを修正（[#184](https://github.com/tzhaya/jc-import-file-maker/issues/184)）：`docs/requirements.md` のJaLC「未対応」記述を実態（Chrome拡張版でJaLC REST API取得・標準版スキップ）に修正、`docs/fields.md` のTSVヘッダーキー不一致6件を `tsv_headers_template.js`/`data/tsv_headers.json` に合わせて修正（言語行2件の追記含む）、`function.md` の `api-flow.md` リンク切れ修正、`docs/developer_docs.md` のドキュメント一覧追補、`docs/handover_cors_extension.md` に履歴メモ注記・`docs/Implementation_JaLC.md` の解決済み課題を状態更新、`scripts/check.js` のUTF-8チェック対象に該当docを追加 |
 | 2026-06-28 | 設定（APIキー・初期値）を別ページに集約（[#181](https://github.com/tzhaya/jc-import-file-maker/issues/181)）：[`docs/settings.md`](docs/settings.md) 新規作成し全8項目（APIキー3＋初期値5）を一元化。READMEの設定セクションを要約＋リンクに縮約、`docs/user_guide.md` の設定関連記述を導線に整理、欠落していた `DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` を補完。設定ページ（options.html）のAPIキー保存説明をプライバシーポリシーの表現に統一。manifest version `1.14.1` → `1.14.2` |
 | 2026-06-28 | 初心者向けドキュメント整理（[#177](https://github.com/tzhaya/jc-import-file-maker/issues/177)）：`docs/changelog.md` 新規作成（変更履歴全量をREADMEから移設）、README変更履歴を最新5件に短縮、`docs/user_guide.md` を再構成（STEP 2の基本操作を前に・詳細を補足節へ）、`docs/index.html` 使い方ガイドへの導線追加・ドキュメントセクション整理 |
 | 2026-06-28 | Chrome拡張のホスト権限明文化（[#176](https://github.com/tzhaya/jc-import-file-maker/issues/176)）：広いホスト権限（`optional_host_permissions`）の必要性と安全策をコード・ドキュメントに明記。`background.js` のproxyコメント修正、`getDoiFromCurrentTab` に権限理由コメント追記、README「権限とセキュリティ」セクション追加、[`docs/chrome_store_permissions.md`](docs/chrome_store_permissions.md)（Web Store審査向け権限正当化文書）新規作成、プライバシーポリシー補強。manifest version `1.14.0` → `1.14.1` |
-| 2026-06-28 | CI品質チェック・文字コード明文化：`npm test` で JSON parse・JS構文・UTF-8妥当性を検証する `scripts/check.js` を追加。GitHub Actions の PR/push 時品質チェック（[`.github/workflows/ci.yml`](.github/workflows/ci.yml)）を追加。`.editorconfig`（`charset=utf-8`）・`.gitattributes` を追加。PowerShellでの文字化け確認手順・開発者向けドキュメント一覧（[`docs/developer_docs.md`](docs/developer_docs.md)）を整備（[#174](https://github.com/tzhaya/jc-import-file-maker/issues/174)・[#175](https://github.com/tzhaya/jc-import-file-maker/issues/175)） |
 
 全履歴は [docs/changelog.md](docs/changelog.md) を参照してください。
 

@@ -56,6 +56,11 @@
   .col-match { white-space:nowrap; font-size:11px; }
   /* 登録済み照合（#156）は Chrome拡張版限定。標準版では JS が body.no-match を付与し照合列を隠す。 */
   .no-match .col-match { display:none; }
+  /* 所属要確認（#186）。#156 照合列（.col-match）とは別の独立列に表示し、上書き競合を避ける。 */
+  .col-warn { width:90px; white-space:nowrap; font-size:11px; text-align:center; }
+  .warn-badge { display:inline-block; background:#fff3cd; border:1px solid #ffc107; color:#8a6d00; border-radius:10px; padding:1px 8px; font-size:11px; white-space:nowrap; cursor:help; }
+  /* サマリ内の所属要確認の注記（地の文に埋もれないよう背景＋濃色＋太字で分離）。 */
+  .warn-note { display:inline-block; background:#fff3cd; border:1px solid #ffc107; color:#7a4d00; border-radius:4px; padding:1px 8px; font-weight:bold; }
 
   #doi-output { width:100%; margin-top:10px; box-sizing:border-box; font-family:monospace; font-size:12px; }
 </style>
@@ -107,6 +112,7 @@
         <tr>
           <th class="col-check">☑</th>
           <th class="col-oa">OA</th>
+          <th class="col-warn">所属確認</th>
           <th class="col-title">タイトル</th>
           <th class="col-journal">掲載誌</th>
           <th class="col-date">出版日</th>
@@ -167,6 +173,7 @@ const OA_PAGE_DELAY_MS = 300; // ページ間の待機（レート配慮）
 
 let oaWorks = [];   // 直近の検索結果（OpenAlex work オブジェクト配列）
 let oaMatches = {};  // 直近の照合結果 { [doi]: { kind:'red'|'yellow'|'green', itemUrl } }（#156）
+let oaWarnings = {};  // 所属誤判定の検出結果 { [doi]: warnペイロード }（#186・復元用に保存）
 let oaInstitution = { ja: '', en: '' };  // 直近の検索RORの機関名（検索条件サマリ用）
 let oaRor = '';       // 直近の検索ROR（フルURL）
 let oaFromDate = '';  // 取得対象期間の開始（YYYY-MM-DD）
@@ -255,9 +262,157 @@ async function fetchAllWorks(ror, fromDate, type, onProgress) {
   return out;
 }
 
+// ---- 所属誤判定の検出（#186） ----
+// OpenAlex 機関検索は authorships.institutions.ror:{ROR} で絞り込むが、OpenAlex 側の
+// 機関同定エラー（#165 と同型）で、検索対象機関に実際は所属しない論文が混入する。
+// 各論文の authorships[].affiliations[].institution_ids と raw_affiliation_string を突合し、
+// 検索機関に整合する所属表記を持つ著者が 1 人も居ない論文を「所属要確認」として可視化する。
+// ※ 本機能は自動除外せず注意喚起のみ（既定チェックは ON のまま）。検出は不完全。
+
+// 機関名照合で無視する汎用語（make_jc_importer.html と同一）
+const AFF_GENERIC_WORDS = new Set([
+  'of','the','and','for','de','des','du','la','le','el','et',
+  'university','universities','univ','college','faculty','department','dept',
+  'school','institute','institut','institution','center','centre','graduate',
+  'division','laboratory','lab','research','science','sciences','studies',
+  'national','state','co','corp','corporation','inc','ltd',
+]);
+// 末尾セグメント判定で除外する国・地域名
+const AFF_GEO_WORDS = new Set([
+  'japan','usa','us','uk','china','korea','france','germany','italy','spain',
+  'india','philippines','canada','australia','brazil','russia','taiwan',
+  'thailand','indonesia','malaysia','vietnam','singapore','netherlands',
+]);
+function affNameTokens(s) {
+  return (s || '').toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter(t => t.length >= 3 && !AFF_GENERIC_WORDS.has(t));
+}
+// 機関名に頻出し識別力が低い語（地名と併せて識別的トークンから除外）
+const AFF_WEAK_WORDS = new Set(['international','global','japanese','asian']);
+// 機関名の識別的トークン（汎用語・地名・弱語を除いた、その機関に固有性の高い語）
+function distinctiveInstTokens(instName) {
+  return affNameTokens(instName).filter(t => !AFF_GEO_WORDS.has(t) && !AFF_WEAK_WORDS.has(t));
+}
+// 頭字語（acronym）生成で読み飛ばす語（前置詞・冠詞など）
+const AFF_ACRONYM_STOP = new Set(['of','for','and','the','a','an','de','des','du','la','le','el','et','to','in','on']);
+// 機関名の頭字語（例: Japan International Research Center for Agricultural Sciences → jircas）。
+// 略称表記（"JIRCAS, Tsukuba" 等）を裏付けと認識して誤検出を防ぐため。3文字未満は無効。
+function instAcronym(instName) {
+  const words = String(instName || '').toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean)
+    .filter(w => !AFF_ACRONYM_STOP.has(w));
+  if (words.length < 3) return '';
+  return words.map(w => w[0]).join('');
+}
+// 所属表記が機関を裏付けるか判定する（#186 用、機関単位の同定検証）。
+// 機関名の識別的トークン、または頭字語が表記に現れれば「裏付けあり」とみなす。
+// ※ #165 の isAffMisidentified（著者所属の過半数一致）より厳格。本実例のように
+//   "Japan"・"International" 等の弱語だけが偶然一致するケースを誤同定として捕捉する。
+// 判定材料（識別的トークン）が無い機関は true（安全側＝警告しない）。
+function affStringSupportsInst(instName, rawAff) {
+  const rawSet = new Set(affNameTokens(rawAff));
+  const ac = instAcronym(instName);
+  if (ac.length >= 3 && rawSet.has(ac)) return true;
+  const inst = distinctiveInstTokens(instName);
+  if (!inst.length) return true;
+  return inst.some(t => rawSet.has(t));
+}
+
+// ROR を末尾スラッシュ・大小文字・bare ID 差を吸収した素のID（小文字）に正規化
+function canonicalRor(v) {
+  const s = String(v || '').trim().toLowerCase();
+  if (!s) return '';
+  return s.replace(/^https?:\/\//, '').replace(/^ror\.org\//, '')
+          .replace(/^\/+/, '').replace(/\/+$/, '');
+}
+
+// 検索対象 ROR に対し、論文が「所属要確認」かを判定。
+// 正常（整合著者あり）なら null、疑いありなら { instName, authors[], repRaw, rawCount, affMissing } を返す。
+function detectAffMisattribution(work, searchRor) {
+  const target = canonicalRor(searchRor);
+  if (!target) return null;
+  const auths = (work && work.authorships) || [];
+  let hadInstMatch = false;     // 検索機関がいずれかの著者の institutions に出現したか
+  let instName = '';            // 検索機関の OpenAlex 表示名
+  const suspects = [];          // 疑いのある著者名
+  let repRaw = '';              // 代表 raw 表記（不一致の最初のもの）
+  let rawCount = 0;             // 検索機関にマップされた不一致 raw の件数
+  let affMissing = false;       // affiliations 配列が空/欠落の著者を含むか
+
+  for (const a of auths) {
+    const hit = (a.institutions || []).find(i => canonicalRor(i.ror) === target);
+    if (!hit) continue;
+    hadInstMatch = true;
+    if (!instName) instName = hit.display_name || '';
+    const author = (a.author && a.author.display_name) || a.raw_author_name || '(著者名不明)';
+    const affs = a.affiliations || [];
+    // この著者の affiliations から、検索機関IDにマップされた raw 表記を収集
+    const rawsForInst = affs
+      .filter(af => (af.institution_ids || []).includes(hit.id))
+      .map(af => af.raw_affiliation_string || '')
+      .filter(Boolean);
+    if (!rawsForInst.length) {
+      // (a) この著者は検索機関に対応する所属表記を持たない
+      suspects.push(author);
+      if (!affs.length) affMissing = true;
+      continue;
+    }
+    // (b) raw はあるが整合を判定。1 つでも機関を裏付ければこの論文は正常
+    if (rawsForInst.some(raw => affStringSupportsInst(hit.display_name, raw))) {
+      return null;
+    }
+    suspects.push(author);
+    rawsForInst.forEach(r => { if (!repRaw) repRaw = r; rawCount++; });
+  }
+
+  if (!hadInstMatch) return null;  // 検索機関が出現しない（保険）→ 判定しない
+  return {
+    instName,
+    authors: Array.from(new Set(suspects)),
+    repRaw,
+    rawCount,
+    affMissing,
+  };
+}
+
+// detectAffMisattribution の結果から tooltip 文言を組み立てる。
+// 代表 raw＋件数＋疑い著者名を示し、「所属表記なし」と「affiliations 欠落」を区別する。
+function warnTooltip(warn) {
+  const inst = warn.instName || '検索対象機関';
+  const who = warn.authors.length ? '（' + warn.authors.join(', ') + '）' : '';
+  let t = '所属要確認: OpenAlex は「' + inst + '」をこの論文に付与していますが、所属表記と一致しません' + who + '。';
+  if (warn.repRaw) {
+    const more = warn.rawCount > 1 ? '（不一致 全' + warn.rawCount + '件中の代表）' : '';
+    t += '\n元の所属表記' + more + ': ' + warn.repRaw;
+  } else if (warn.affMissing) {
+    t += '\nこの論文には所属表記（affiliations）がありません。著者の既知所属由来の可能性があります。';
+  } else {
+    t += '\nこの論文の所属表記に検索対象機関が含まれていません。';
+  }
+  t += '\n※ 自動除外はしません。登録要否はご確認ください。';
+  return t;
+}
+
 // ---- レンダリング ----
 
-function renderResults(works) {
+// result-info を設定する。warnCount>0 の場合、所属要確認の注記を背景付きで強調表示し、
+// 淡色の地の文（#555）に埋もれて見落とされるのを防ぐ。
+function setResultInfo(baseText, warnCount) {
+  const info = document.getElementById('result-info');
+  let html = escHtml(baseText);
+  if (warnCount > 0) {
+    html += ' <span class="warn-note">⚠ うち ' + warnCount + ' 件は所属の誤判定が疑われます。要確認の行をご確認ください</span>';
+  }
+  info.innerHTML = html;
+}
+
+// 第3引数 warningsByDoi を渡すと所属誤判定の検出を再計算せずそれを使う（復元用）。
+// 省略時は work.authorships から detectAffMisattribution() で算出する（検索直後用）。
+// 算出/採用した警告は oaWarnings に保持し、保存（buildOaState）で復元できるようにする。
+// 検出件数を返す（復元メッセージへの反映に使用）。
+function renderResults(works, searchRor, warningsByDoi) {
   const info = document.getElementById('result-info');
   const tbody = document.getElementById('result-tbody');
   const section = document.getElementById('results-section');
@@ -268,10 +423,13 @@ function renderResults(works) {
     document.getElementById('result-table-wrap').classList.add('hidden');
     document.getElementById('output-actions').classList.add('hidden');
     section.classList.remove('hidden');
-    return;
+    oaWarnings = {};
+    return 0;
   }
 
-  info.textContent = `${works.length.toLocaleString()} 件の候補が見つかりました。登録対象を選択してください。`;
+  const ror = searchRor != null ? searchRor : oaRor;
+  const warnings = {};   // この描画で確定した警告 { [doi]: payload }
+  let warnCount = 0;
 
   works.forEach((w, i) => {
     const doi = bareDoi(w.doi);
@@ -281,10 +439,18 @@ function renderResults(works) {
     const oaStatus = (w.open_access && w.open_access.oa_status) || '';
     const badge = OA_BADGE_MAP[oaStatus] || { label: '⚪ Unknown', bg: '#999' };
 
+    // 所属誤判定（#186）。復元時は保存済みペイロード、検索直後は authorships から算出。
+    const warn = warningsByDoi ? (warningsByDoi[doi] || null) : detectAffMisattribution(w, ror);
+    if (warn) { warnings[doi] = warn; warnCount++; }
+    const warnCell = warn
+      ? '<td class="col-warn"><span class="warn-badge" title="' + escHtml(warnTooltip(warn)) + '">⚠ 要確認</span></td>'
+      : '<td class="col-warn"></td>';
+
     const tr = document.createElement('tr');
     tr.innerHTML =
       '<td class="col-check"><input type="checkbox" class="row-check" data-doi="' + escHtml(doi) + '" checked></td>' +
       '<td class="col-oa"><span class="oa-badge" style="background:' + badge.bg + '">' + escHtml(badge.label) + '</span></td>' +
+      warnCell +
       '<td class="col-title">' + escHtml(title) + '</td>' +
       '<td class="col-journal">' + escHtml(journal) + '</td>' +
       '<td class="col-date">' + escHtml(date) + '</td>' +
@@ -294,9 +460,14 @@ function renderResults(works) {
     tbody.appendChild(tr);
   });
 
+  oaWarnings = warnings;   // 保存（復元）用に保持
+
+  setResultInfo(`${works.length.toLocaleString()} 件の候補が見つかりました。登録対象を選択してください。`, warnCount);
+
   document.getElementById('result-table-wrap').classList.remove('hidden');
   document.getElementById('output-actions').classList.remove('hidden');
   section.classList.remove('hidden');
+  return warnCount;
 }
 
 // 選択中（チェックON）の DOI を配列で返す
@@ -470,6 +641,7 @@ function buildOaState() {
     },
     works: oaWorks.map(slimWork),
     matches: oaMatches,
+    warnings: oaWarnings,   // 所属誤判定の検出結果（#186）。slimWork で authorships を落とすため復元時に再計算できない
     selectedDois: getSelectedDois(),
     criteria: { ror: oaRor, institution: oaInstitution, fromDate: oaFromDate, toDate: oaToDate },
   };
@@ -524,7 +696,8 @@ async function restoreOpenAlexSearch() {
 
   oaWorks = saved.works;
   oaMatches = saved.matches || {};
-  renderResults(oaWorks);
+  // slimWork で authorships を落とすため、復元時は保存済みの警告ペイロード（#186）を使用する
+  const warnCount = renderResults(oaWorks, '', saved.warnings || {});
   paintSavedMatches();
   applySelection(saved.selectedDois);
 
@@ -538,8 +711,9 @@ async function restoreOpenAlexSearch() {
   }
 
   const when = saved.savedAt ? new Date(saved.savedAt).toLocaleString('ja-JP') : '';
-  document.getElementById('result-info').textContent =
-    `前回の検索結果（${oaWorks.length.toLocaleString()} 件${when ? ' / ' + when : ''}）を表示しています。再検索すると入れ替わります。`;
+  setResultInfo(
+    `前回の検索結果（${oaWorks.length.toLocaleString()} 件${when ? ' / ' + when : ''}）を表示しています。再検索すると入れ替わります。`,
+    warnCount);
   return true;
 }
 
@@ -678,7 +852,7 @@ async function doSearch() {
       setLoading(true, `取得中… ${n}${total ? ' / ' + total : ''} 件`);
     });
     oaMatches = {};               // 再検索で前回の照合結果を破棄（入れ替え）
-    renderResults(oaWorks);
+    renderResults(oaWorks, oaRor);
     oaInstitution = await fetchRorNames(ror);  // 機関名取得（失敗時は空）
     renderCriteria();
     await persistOpenAlexSearch(); // 照合前にまず検索結果＋条件を保存
