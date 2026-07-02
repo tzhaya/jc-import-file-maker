@@ -19,6 +19,8 @@ argument-hint: "(任意のメモ)"
 | `make_jc_importer.html` | `make_jc_importer_test.html` |
 | `funder_lookup.html` | `funder_lookup_test.html` |
 
+> `openalex_lookup.html` にはテスト版が存在しない（単一ファイル運用）。変更した場合は `/e2e-test openalex` で本番HTMLを直接対象にテストする。
+
 同期後、ユーザーに `/e2e-test` の手動実行を依頼する（Claudeからは起動不可）。
 **ALL PASSED になるまでPR作成に進まない。**
 
@@ -36,6 +38,7 @@ argument-hint: "(任意のメモ)"
   - `chrome-extension/funder_lookup.js` に変更を反映（CONFIGのAPIキーは残す）
 - `shared.js` を変更した場合 → `chrome-extension/shared.js` に同一内容をコピー
 - `tsv_headers_template.js` を変更した場合 → `chrome-extension/tsv_headers_template.js` に同一内容をコピー
+- `openalex_lookup.html` を変更した場合 → `chrome-extension/openalex_panel.js` / `chrome-extension/openalex_panel.html` に同一ロジックを反映（CONFIGはshared.js経由のため個別のAPIキー置換は不要）。「最終更新」表記・LOCAL_VERSIONは無い
 
 > 本番HTML/共有JSを編集すると `sync-reminder` フックが同期先を即時リマインドする。
 
@@ -47,6 +50,7 @@ argument-hint: "(任意のメモ)"
 - `funder_lookup.html` → `chrome-extension/funder_lookup.js`
 
 未更新だと「新しいバージョンがあります」が誤表示される。
+（`openalex_lookup.html` は `checkForUpdate()` を持たないため対象外）
 
 ## 4. `chrome-extension/manifest.json` の `version` 更新
 
@@ -59,12 +63,18 @@ Chrome拡張配下（`make_jc_importer.js` / `funder_lookup.js` / `panel.html` /
 ## 5. ドキュメント更新
 
 - `README.md`:
-  - 「最新の更新」テーブル: 3ツール（Chrome拡張版 / インポート用TSV生成ツール / 助成情報検索ツール）の日付・バージョン・更新概要を更新。Chrome拡張版のみバージョン列に `ver. X.Y.Z`、他は `—`
+  - 「最新の更新」テーブル: 4ツール（Chrome拡張版 / インポート用TSV生成ツール / 助成情報検索ツール / OpenAlex機関別著作検索）の日付・バージョン・更新概要を更新。Chrome拡張版のみバージョン列に `ver. X.Y.Z`、他は `—`
   - 変更履歴テーブルに日付と内容を追記（新しい日付が上）
 - `docs/requirements.md`: 機能追加・変更があれば要件定義を更新
 - `docs/worklog.md`: 最終更新日・実装内容の詳細セクションを追記
 - `MEMORY.md`: 行番号目安・ファイル規模など該当箇所を更新
 
-## 6. PR作成
+## 6. 品質チェック（`npm test`）
+
+`npm test`（`scripts/check.js`: JSON parse + JS構文 + UTF-8妥当性 + 手動同期ファイルの一致チェック + TSVヘッダー構造チェック）を実行し、**ALL PASSしてからPR作成に進む**。
+
+特に `shared.js` / `tsv_headers_template.js` を編集した場合、`chrome-extension/` 側へのコピー忘れはここで検出される（#193）。
+
+## 7. PR作成
 
 ブランチ運用ルール（CLAUDE.md）に従い `gh pr create` でPRを作成する。
