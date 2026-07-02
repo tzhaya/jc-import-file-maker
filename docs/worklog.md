@@ -1,6 +1,22 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-06-30（OpenAlex機関検索の所属誤判定の可視化 #186）
+最終更新: 2026-07-02（package.json のメタデータ整備 #196）
+
+## package.json のメタデータ整備（2026-07-02, #196）
+
+### 概要
+ドキュメント・メタデータのみの変更。HTML/共有JS・Chrome拡張への変更なし。`package.json` の `license` がリポジトリの `LICENSE`（CC0 1.0 Universal）と矛盾（`ISC`）していた点を修正し、あわせて空欄だった `author`／`keywords`、実体のない `main` を整理した。
+
+### 変更内容
+- `package.json`: `license` を `ISC` → `CC0-1.0`（SPDX識別子）に修正。`author` に `Takanori Hayashi (https://github.com/tzhaya)`、`keywords` に `JAIRO Cloud`/`WEKO`/`JPCOAR`/`DOI`/`Crossref`/`OpenAlex`/`TSV`/`institutional-repository` を記入。実体のない `"main": "index.js"` を削除
+- `package-lock.json`: `npm install --package-lock-only` で root package の `license` を `package.json` と同期
+- `scripts/check.js`: `JSON_FILES` に `package-lock.json` を追加し、`npm test` のJSON妥当性チェック対象に含めた（従来は `package.json`/`chrome-extension/manifest.json`/`data/tsv_headers.json` のみ）
+- `docs/developer_docs.md`: `devDependencies` の `playwright` について、CIの `npm test` からは未使用で `/e2e-test` スキル（PR前必須のE2Eテスト）専用であること、ブラウザ本体は別途 `npx playwright install chromium` が必要であることを追記
+
+### 検証
+`npm test` で全チェック（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造）が PASS。`npm ls playwright --depth=0` で devDependency が引き続き解決できることを確認。
+
+---
 
 ## OpenAlex機関検索の所属誤判定の可視化（2026-06-30, #186）
 

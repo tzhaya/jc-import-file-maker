@@ -2,7 +2,6 @@
   "name": "jc-import-file-maker",
   "version": "1.0.0",
   "description": "DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO Cloud](https://jpcoar.org/support/jairo-cloud/)へのインポート用TSVファイルを生成するツールです。",
-  "main": "index.js",
   "directories": {
     "doc": "docs"
   },
@@ -13,9 +12,18 @@
     "type": "git",
     "url": "git+https://github.com/tzhaya/jc-import-file-maker.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "JAIRO Cloud",
+    "WEKO",
+    "JPCOAR",
+    "DOI",
+    "Crossref",
+    "OpenAlex",
+    "TSV",
+    "institutional-repository"
+  ],
+  "author": "Takanori Hayashi (https://github.com/tzhaya)",
+  "license": "CC0-1.0",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/tzhaya/jc-import-file-maker/issues"

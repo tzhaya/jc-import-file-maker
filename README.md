@@ -301,11 +301,11 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-07-02 | `package.json`／`package-lock.json` のメタデータ整備（[#196](https://github.com/tzhaya/jc-import-file-maker/issues/196)）：`license` を実態（`LICENSE`＝CC0 1.0 Universal）に合わせて `ISC` → `CC0-1.0` に修正、`author`／`keywords` を記入、実体のない `main: "index.js"` を削除。`devDependencies` の `playwright` はE2Eテスト（`.claude/skills/e2e-test`）用に維持し用途を `docs/developer_docs.md` に明記。`scripts/check.js` の `JSON_FILES` に `package-lock.json` を追加 |
 | 2026-06-30 | OpenAlex機関検索で所属の誤判定が疑われる候補を可視化（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186)）：機関検索（`openalex_lookup.html`／Chrome拡張タブ）の結果に「所属確認」列を追加し、検索対象機関を裏付ける所属表記を持つ著者が居ない論文に「⚠ 要確認」バッジ＋詳細ツールチップ（疑い著者・元の所属表記）を表示。OpenAlex の `authorships[].affiliations[].institution_ids`／`raw_affiliation_string` を機関の識別的トークンと頭字語で照合（略称表記の誤検出を抑制）。自動除外はせず注意喚起のみ（既定チェックはON維持）。#156 照合列とは別列で描画し競合を回避。manifest version `1.14.2` → `1.15.0` |
 | 2026-06-29 | 現行実装が未反映のドキュメントを修正（[#184](https://github.com/tzhaya/jc-import-file-maker/issues/184)）：`docs/requirements.md` のJaLC「未対応」記述を実態（Chrome拡張版でJaLC REST API取得・標準版スキップ）に修正、`docs/fields.md` のTSVヘッダーキー不一致6件を `tsv_headers_template.js`/`data/tsv_headers.json` に合わせて修正（言語行2件の追記含む）、`function.md` の `api-flow.md` リンク切れ修正、`docs/developer_docs.md` のドキュメント一覧追補、`docs/handover_cors_extension.md` に履歴メモ注記・`docs/Implementation_JaLC.md` の解決済み課題を状態更新、`scripts/check.js` のUTF-8チェック対象に該当docを追加 |
 | 2026-06-28 | 設定（APIキー・初期値）を別ページに集約（[#181](https://github.com/tzhaya/jc-import-file-maker/issues/181)）：[`docs/settings.md`](docs/settings.md) 新規作成し全8項目（APIキー3＋初期値5）を一元化。READMEの設定セクションを要約＋リンクに縮約、`docs/user_guide.md` の設定関連記述を導線に整理、欠落していた `DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` を補完。設定ページ（options.html）のAPIキー保存説明をプライバシーポリシーの表現に統一。manifest version `1.14.1` → `1.14.2` |
 | 2026-06-28 | 初心者向けドキュメント整理（[#177](https://github.com/tzhaya/jc-import-file-maker/issues/177)）：`docs/changelog.md` 新規作成（変更履歴全量をREADMEから移設）、README変更履歴を最新5件に短縮、`docs/user_guide.md` を再構成（STEP 2の基本操作を前に・詳細を補足節へ）、`docs/index.html` 使い方ガイドへの導線追加・ドキュメントセクション整理 |
-| 2026-06-28 | Chrome拡張のホスト権限明文化（[#176](https://github.com/tzhaya/jc-import-file-maker/issues/176)）：広いホスト権限（`optional_host_permissions`）の必要性と安全策をコード・ドキュメントに明記。`background.js` のproxyコメント修正、`getDoiFromCurrentTab` に権限理由コメント追記、README「権限とセキュリティ」セクション追加、[`docs/chrome_store_permissions.md`](docs/chrome_store_permissions.md)（Web Store審査向け権限正当化文書）新規作成、プライバシーポリシー補強。manifest version `1.14.0` → `1.14.1` |
 
 全履歴は [docs/changelog.md](docs/changelog.md) を参照してください。
 
