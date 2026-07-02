@@ -1,8 +1,8 @@
 ---
 name: e2e-test
-description: Playwrightを使ってmake_jc_importer_test.htmlまたはfunder_lookup_test.htmlのE2Eテストを実行する。DOIや課題番号を入力し、取得結果のフィールドを検証する。
+description: Playwrightを使ってmake_jc_importer_test.html・funder_lookup_test.html・openalex_lookup.htmlのE2Eテストを実行する。DOI・課題番号・ROR IDを入力し、取得結果のフィールドを検証する。
 disable-model-invocation: true
-argument-hint: "[main | funder] [DOI or award number]"
+argument-hint: "[main | funder | openalex] [DOI / award number / ROR ID]"
 allowed-tools:
   - Bash
   - Read
@@ -27,12 +27,15 @@ npx playwright install chromium
 
 ## 引数
 
-- 第1引数: `main`（make_jc_importer_test.html、デフォルト）または `funder`（funder_lookup_test.html）
-- 第2引数: テスト対象の DOI または課題番号（省略時はデフォルト値を使用）
+- 第1引数: `main`（make_jc_importer_test.html、デフォルト）・`funder`（funder_lookup_test.html）・`openalex`（openalex_lookup.html）
+- 第2引数: テスト対象の DOI・課題番号・ROR ID（省略時はデフォルト値を使用）
 
 デフォルト値:
 - main: `10.1016/j.advnut.2025.100480`
 - funder: `JPMJPR2125`
+- openalex: `005pdtr14`（JIRCAS、#186検証実績のROR ID）
+
+> `openalex` はテスト版HTMLが存在しないため、本番の `openalex_lookup.html` を直接対象にする（同一フォルダの `shared.js` が必要。リポジトリ直下で実行すれば満たされる）。
 
 ## 重要: DOM セレクタの注意点
 
@@ -44,6 +47,12 @@ make_jc_importer_test.html の DOM 構造:
 - **データ取得完了の検知**: `#metadata-fields` の子要素数が 0 より大きくなるのを `waitForFunction` で待機する（`.person-card` や `#error-msg` の visible 待ちは不可）
 - **追加待機**: 非同期処理（助成情報のKAKEN/JGN取得、ROR取得等）があるため、metadata-fields 描画後に `waitForTimeout(5000)` で追加待機する
 - **ブラウザ起動オプション**: `chromium.launch({ headless: true, args: ['--disable-web-security'] })` を使用する（file:// からのAPI呼び出し対応）
+
+openalex_lookup.html の DOM 構造:
+- **ROR入力**: `#q-ror`、**対象日数**: `#q-days`（テストでは `30` 等の短い値にして結果件数を抑制する）、**検索ボタン**: `#btn-search`
+- **結果**: `#result-tbody` の `tr` が検索結果行（OpenAlexのページング取得があるため待機は長め・`timeout: 60000` 目安）
+- **件数メッセージ**: `#result-info`、**エラー**: `#error-msg`
+- **所属確認列（#186）**: `.col-warn`（要確認バッジの列）が存在するかで機能有無を確認できる
 
 ## テスト手順
 
@@ -217,11 +226,79 @@ const filePath = process.argv[3];
 })();
 ```
 
+#### openalex（openalex_lookup.html）の場合
+
+```javascript
+import { chromium } from 'playwright';
+
+const ror = process.argv[2] || '005pdtr14';
+const filePath = process.argv[3]; // openalex_lookup.html の絶対パス（本番HTMLを直接使用）
+
+(async () => {
+  const browser = await chromium.launch({ headless: true, args: ['--disable-web-security'] });
+  const page = await browser.newPage();
+
+  page.on('pageerror', err => console.error('PAGE ERROR:', err.message));
+
+  await page.goto(`file:///${filePath.replace(/\\/g, '/')}`);
+
+  // ROR入力 → 対象日数を絞る（結果件数抑制） → 検索ボタンクリック
+  await page.fill('#q-ror', ror);
+  await page.fill('#q-days', '30');
+  await page.click('#btn-search');
+
+  // 結果テーブルに行が描画されるのを待つ（OpenAlexページング取得のため長め）
+  try {
+    await page.waitForFunction(
+      () => document.querySelectorAll('#result-tbody tr').length > 0,
+      { timeout: 60000 }
+    );
+  } catch {
+    const errMsg = await page.textContent('#error-msg').catch(() => '');
+    const info = await page.textContent('#result-info').catch(() => '');
+    console.error('TIMEOUT: result-tbody still empty after 60s', { errMsg, info });
+    await browser.close();
+    process.exit(1);
+  }
+
+  const results = await page.evaluate(() => {
+    const rows = document.querySelectorAll('#result-tbody tr');
+    const rowCount = rows.length;
+    const infoText = document.getElementById('result-info')?.textContent || '';
+    const firstRowDoiLink = rows[0]?.querySelector('a[href*="doi.org"]')?.href || '';
+    const hasWarnColumn = document.querySelectorAll('#result-tbody .col-warn').length > 0;
+    return { rowCount, infoText, firstRowDoiLink, hasWarnColumn };
+  });
+
+  const checks = [
+    { field: '結果行数', ok: results.rowCount > 0, value: `${results.rowCount}件` },
+    { field: '件数メッセージ', ok: results.infoText.length > 0, value: results.infoText.substring(0, 80) || '(空)' },
+    { field: '1行目DOIリンク', ok: results.firstRowDoiLink.includes('doi.org'), value: results.firstRowDoiLink || 'なし' },
+    { field: '所属確認列(#186)', ok: results.hasWarnColumn, value: results.hasWarnColumn ? 'あり' : 'なし' },
+  ];
+
+  console.log('\n=== E2E テスト結果 (openalex) ===');
+  console.log(`ROR: ${ror}\n`);
+  let allPassed = true;
+  for (const c of checks) {
+    const mark = c.ok ? 'PASS' : 'FAIL';
+    if (!c.ok) allPassed = false;
+    console.log(`[${mark}] ${c.field}: ${c.value}`);
+  }
+
+  console.log(`\n結果: ${allPassed ? 'ALL PASSED' : 'SOME FAILED'}`);
+  await browser.close();
+  process.exit(allPassed ? 0 : 1);
+})();
+```
+
 ### 2. テストの実行
 
 ```bash
-node _e2e_test.mjs <DOIまたは課題番号> <テスト用HTMLの絶対パス>
+node _e2e_test.mjs <DOI・課題番号・ROR ID> <対象HTMLの絶対パス>
 ```
+
+openalex の場合、`<対象HTMLの絶対パス>` は本番の `openalex_lookup.html`（テスト版なし）。
 
 ### 3. main テスト時の funder 連携テスト
 
@@ -252,7 +329,7 @@ node _e2e_test_funder.mjs "JP19KK0341" "/path/to/funder_lookup_test.html"
 
 ### 5. クリーンアップ
 
-テスト完了後、一時スクリプト `_e2e_test.mjs` および `_e2e_test_funder.mjs` を削除してください。
+テスト完了後、一時スクリプト `_e2e_test.mjs`・`_e2e_test_funder.mjs`・`_e2e_test_openalex.mjs` を削除してください。
 
 ### 6. 結果報告
 

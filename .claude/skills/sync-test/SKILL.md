@@ -23,6 +23,8 @@ allowed-tools:
 | `make_jc_importer.html` | `make_jc_importer_test.html` |
 | `funder_lookup.html` | `funder_lookup_test.html` |
 
+> `openalex_lookup.html` はテスト版が存在しないため本スキルの対象外。
+
 ## 引数
 
 - `all`（デフォルト、引数なし時も同様）: 両方を同期
