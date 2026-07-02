@@ -20,5 +20,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run quality checks (JSON parse + JS syntax + UTF-8)
+      - name: Run quality checks (JSON parse + JS syntax + UTF-8 + file sync + TSV headers)
         run: npm test
