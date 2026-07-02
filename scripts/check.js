@@ -13,6 +13,7 @@ const ROOT = path.resolve(__dirname, '..');
 
 const JSON_FILES = [
   'package.json',
+  'package-lock.json',
   'chrome-extension/manifest.json',
   'data/tsv_headers.json',
 ];
