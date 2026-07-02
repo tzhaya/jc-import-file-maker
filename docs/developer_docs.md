@@ -15,7 +15,7 @@ npm install
 
 `npm test` を実行すると `scripts/check.js` が走り、以下を検証します:
 
-- **JSON parse**: `package.json` / `package-lock.json` / `chrome-extension/manifest.json` が構文的に正しいか
+- **JSON parse**: `package.json` / `package-lock.json` / `chrome-extension/manifest.json` / `data/tsv_headers.json` が構文的に正しいか
 - **JS 構文チェック** (`node --check`): 自作 JS ファイル（`shared.js`、Chrome拡張の各 JS）に構文エラーがないか
 - **UTF-8 妥当性**: 上記ファイルおよび主要 Markdown が UTF-8 として正しく読めるか
 
