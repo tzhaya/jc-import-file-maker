@@ -14,6 +14,7 @@ const ROOT = path.resolve(__dirname, '..');
 const JSON_FILES = [
   'package.json',
   'chrome-extension/manifest.json',
+  'data/tsv_headers.json',
 ];
 
 const JS_FILES = [
@@ -94,6 +95,41 @@ for (const f of UTF8_FILES) {
     decoder.decode(buf);
   });
 }
+
+// File sync pairs (#193)
+console.log('--- File sync ---');
+const SYNC_PAIRS = [
+  ['shared.js', 'chrome-extension/shared.js'],
+  ['tsv_headers_template.js', 'chrome-extension/tsv_headers_template.js'],
+];
+for (const [a, b] of SYNC_PAIRS) {
+  check(`${a} ↔ ${b}`, () => {
+    const ca = fs.readFileSync(path.join(ROOT, a), 'utf8');
+    const cb = fs.readFileSync(path.join(ROOT, b), 'utf8');
+    if (ca !== cb) throw new Error(`Content mismatch`);
+  });
+}
+
+// TSV_HEADERS_TEMPLATE (JS) ↔ data/tsv_headers.json structure sync
+console.log('--- TSV headers structure ---');
+check('tsv_headers_template.js ↔ data/tsv_headers.json', () => {
+  const vm = require('vm');
+
+  // Read and evaluate template
+  const templateSrc = fs.readFileSync(path.join(ROOT, 'tsv_headers_template.js'), 'utf8');
+  const templateContext = {};
+  vm.runInNewContext(`${templateSrc}; this.template = TSV_HEADERS_TEMPLATE;`, templateContext, { timeout: 5000 });
+  const template = templateContext.template;
+
+  // Read JSON
+  const jsonSrc = fs.readFileSync(path.join(ROOT, 'data/tsv_headers.json'), 'utf8');
+  const jsonData = JSON.parse(jsonSrc);
+
+  // Deep compare (stringify for structure + order equality)
+  if (JSON.stringify(template) !== JSON.stringify(jsonData)) {
+    throw new Error(`Structure mismatch`);
+  }
+});
 
 if (errors > 0) {
   process.stderr.write(`\n${errors} check(s) failed.\n`);
