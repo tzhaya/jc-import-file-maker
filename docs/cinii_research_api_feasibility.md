@@ -28,9 +28,9 @@
   照合を標準ブラウザ版にも広げられる**点。ただし CiNii は IRDB ハーベストのため**鮮度に遅延**があり、
   #156 の核心的利点「リポジトリ現在状態への問い合わせで**状態の同期ずれが起きない**」が失われる。
   → **置換ではなく補完**（標準版向け／全国横断の重複アウェアネス）が妥当。
-- **問い B**：**CiNii Research 一択**。JaLC はデータに著者所属を持たず、所属機関での検索が原理的に
-  成立しない。ただし CiNii でも自由文 affiliation 検索は不確実なため、堅牢なのは
-  **researcher（NRID／KAKEN 研究者ID／researchmap）経由**。JaLC は捕捉エンジンではなく
+- **問い B**：**CiNii Research 一択**。JaLC は所属機関（affiliation）の検索機能を備えているが、
+  実データの affiliation 登録が任意（登録者依存）のため、検索効率では
+  **researcher（NRID／KAKEN 研究者ID／researchmap）経由が主軸**。JaLC は捕捉エンジンではなく
   **per-DOI のメタデータ源**として既存どおり残す。
 
 ---
@@ -127,9 +127,11 @@ publisher＝機関だが、**J-STAGE 和文誌は publisher＝学会**であり�
 
 ### API 能力
 
-- **JaLC REST API**：2026-03-25 に `/search` エンドポイントが追加され、**著者名・タイトル・PID**で
-  検索できる。しかし**所属機関（affiliation）は検索項目に無い**（そもそもデータに無い）。
-  本ツールは既に `v2/dois/{doi}` 単件取得を利用（`make_jc_importer.js:907`、CORS 制約で拡張版のみ）。
+- **JaLC REST API**：2026-03-25 に `/search` エンドポイントが追加され、**著者名・タイトル・PID**に加え
+  **所属機関（affiliation）での検索も可能**（フィールド検索 `query.affiliation` ・
+  ID フィルタ `filter=affiliation-identifier`）。ただし実データの affiliation 登録は任意のため、
+  実際の検索効率は affiliation 登録率に左右される。本ツールは既に `v2/dois/{doi}` 単件取得を利用
+  （`make_jc_importer.js:907`、CORS 制約で拡張版のみ）。
 - **CiNii Research OpenSearch**：`authorid`（NRID）パラメータ対応・`q` で Author ID 検索可。
   和文誌・紀要・IR（IRDB 経由）・CiNii Articles・KAKEN を集約＝**捕捉したい母集団そのもの**を含む。
   CORS 対応・JSON-LD・DOI フィールドあり（本ツールで既利用）。
@@ -138,7 +140,7 @@ publisher＝機関だが、**J-STAGE 和文誌は publisher＝学会**であり�
 
 | 観点 | (A) JaLC 所属機関検索 | (B) CiNii Research |
 |------|----------------------|--------------------|
-| 所属機関での検索 | **不可**（データに著者所属なし／検索項目にもなし） | researcher-ID(NRID) 経由で実質可。自由文 affiliation は弱い |
+| 所属機関での検索 | **可能**（`query.affiliation` / `filter=affiliation-identifier` ）。ただし affiliation 登録は任意 | researcher-ID(NRID) 経由で実質可。自由文 affiliation は弱い |
 | 対象コーパス | JaLC 登録分（登録元単位） | 和文誌・紀要・IR・CiNii Articles・KAKEN を**横断集約** |
 | 機関の手掛かり | publisher/site＝登録元（学会誌では著者所属と無関係） | 著者→研究者→機関のリンク（KAKEN/researchmap 連携） |
 | CORS / 実行環境 | 拡張版のみ（プロキシ経由） | **標準版でも可**（既実証） |
@@ -146,8 +148,8 @@ publisher＝機関だが、**J-STAGE 和文誌は publisher＝学会**であり�
 
 ### 結論・推奨
 
-1. **「所属機関で検索」する捕捉エンジンとしては CiNii Research 一択。** JaLC は著者所属を持たず、
-   `/search` も著者名・タイトル・PID 止まりで、所属機関検索は原理的に成立しない。
+1. **「所属機関で検索」する捕捉エンジンとしては CiNii Research が主軸。** JaLC も所属機関検索機能を備えるが、
+   実データの affiliation 登録率が低く（登録は任意）検索効率が限定的。堅牢な捕捉には researcher 経由が推奨。
 2. **ただし CiNii も自由文の affiliation 検索は不確実。** 和文メタデータは所属が疎なため、堅牢なのは
    **researcher 経由**：自機関の研究者リスト（NRID／KAKEN 研究者ID／researchmap）を起点に
    CiNii Research（`authorid`）や KAKEN で各研究者の業績 DOI を引く。

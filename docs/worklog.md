@@ -1,6 +1,30 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-03（OpenAlex機関別著作検索の外部リンクタブ復帰不具合を修正 #201）
+最終更新: 2026-07-03（JaLC所属機関検索に関するドキュメント訂正 #191）
+
+## JaLC所属機関検索に関するドキュメント訂正（2026-07-03, #191）
+
+### 概要
+`docs/cinii_research_api_feasibility.md` §B（JaLC DOI論文の捕捉）の記述が、JaLC REST APIの公式OpenAPI仕様（`https://api.japanlinkcenter.org/v3/api-docs`）および実クエリ検証結果と矛盾していた。「JaLCは所属機関検索が不可（原理的に成立しない）」という記述を、現行API仕様に整合させる訂正を実施した。
+
+### 検出理由
+Issue #190（JaLC起点パイプライン実装計画作成）の事前調査で、JaLC REST APIの `/search` エンドポイントが `query.affiliation`（フィールド検索）・`filter=affiliation-identifier`（ROR等によるIDフィルタ）を公式に提供していること、実クエリで実際にヒット件数が返されること（例: `filter=affiliation-identifier:005pdtr14` で JIRCAS対応の12件、`query.affiliation=Japan International Research Center...` で1,468件）を確認。同時に `v2/dois/{doi}` レスポンス実例で `creator_list[].affiliation_list[]` に ROR URI を含むデータが実在することを確認した。
+
+### 変更内容
+- **TL;DR（L31-34）**: 「所属機関検索が原理的に成立しない」を「検索機能を備えているが、実データの affiliation 登録が任意（登録者依存）のため、検索効率では researcher 経由が主軸」に訂正
+- **API能力セクション（L130-134）**: 「所属機関（affiliation）は検索項目に無い」を「所属機関での検索も可能（`query.affiliation` フィールド検索・`filter=affiliation-identifier` ID フィルタ）。ただし実データの affiliation 登録は任意のため、実際の検索効率は affiliation 登録率に左右される」に訂正
+- **評価表（L143）**: 「不可（データに著者所属なし／検索項目にもなし）」を「可能（`query.affiliation` / `filter=affiliation-identifier`）。ただし affiliation 登録は任意」に訂正
+- **結論・推奨（L151-152）**: 「JaLC は著者所属を持たず、所属機関検索は原理的に成立しない」を「JaLC も所属機関検索機能を備えるが、実データの affiliation 登録率が低く（登録は任意）検索効率が限定的。堅牢な捕捉には researcher 経由が推奨」に訂正
+
+### 注意事項
+- ドキュメント修正のみで、本番HTML・共有JS・Chrome拡張コードの変更は無い
+- #190（JaLC起点パイプライン実装計画）の設計根拠となるため、実装より先行して修正
+- `docs/Implementation_JaLC.md` の `buildJaLCAuthors`（実装コード L1932-1941）および affiliation 設計は実データで検証済みのため、修正不要
+
+### 検証
+`npm test` で全チェック（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造）がPASS。
+
+---
 
 ## OpenAlex機関別著作検索の外部リンクタブ復帰不具合を修正（2026-07-03, #201）
 
