@@ -21,7 +21,9 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
 
   // ホワイトリストチェック: 許可されたホストのみプロキシ
   if (!ALLOWED_HOSTS.some(host => req.url.startsWith(host))) {
-    sendResponse({ error: `Blocked: ${new URL(req.url).host} is not in the allowed hosts list` });
+    let host = req.url;
+    try { host = new URL(req.url).host; } catch { /* 不正なURL文字列はそのまま表示 */ }
+    sendResponse({ error: `Blocked: ${host} is not in the allowed hosts list` });
     return true;
   }
 
