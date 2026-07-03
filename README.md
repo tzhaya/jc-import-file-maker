@@ -96,10 +96,10 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-07-02 | ver. 1.16.0 | DOIリスト一括取得の実行中に「中断」ボタンを表示し、押下でループを安全に停止できるように（中断前までの成功分は蓄積アイテムに保持）（[#194](https://github.com/tzhaya/jc-import-file-maker/issues/194)） |
+| Chrome拡張機能版 | 2026-07-03 | ver. 1.16.1 | OpenAlex機関別著作検索の検索結果の外部リンクをクリックするとタブが「DOIインポート」に戻る不具合を修正（[#201](https://github.com/tzhaya/jc-import-file-maker/issues/201)） |
 | インポート用TSV生成ツール | 2026-07-02 | — | DOIリスト一括取得に「中断」ボタンを追加し、途中で処理を止められるように（[#194](https://github.com/tzhaya/jc-import-file-maker/issues/194)） |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
-| OpenAlex機関別著作検索 | 2026-06-30 | — | 所属の誤判定が疑われる候補に「⚠ 要確認」バッジを表示（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186)）。OpenAlex の `affiliations`／`raw_affiliation_string` を照合し、検索対象機関を裏付ける所属表記が無い論文を独立列で可視化（自動除外はせず注意喚起。略称は頭字語照合で誤検出を抑制） |
+| OpenAlex機関別著作検索 | 2026-07-03 | — | 検索結果の外部リンクをクリックするとタブが「DOIインポート」に戻る不具合を修正（[#201](https://github.com/tzhaya/jc-import-file-maker/issues/201)）。所属の誤判定が疑われる候補に「⚠ 要確認」バッジを表示（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186)） |
 
 ## 導入方法
 
@@ -301,6 +301,7 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-07-03 | OpenAlex機関別著作検索の検索結果外部リンクをクリックするとタブが「DOIインポート」に戻る不具合を修正（[#201](https://github.com/tzhaya/jc-import-file-maker/issues/201)）：`funder_lookup.js`（#150）と同じ委譲クリックハンドラを `openalex_panel.js`／`openalex_lookup.html` に追加し、`chrome.tabs.create` で外部リンクを新しいタブに開くよう修正。manifest version `1.16.0` → `1.16.1` |
 | 2026-07-02 | DOIリスト一括取得に「中断」ボタンを追加（[#194](https://github.com/tzhaya/jc-import-file-maker/issues/194)）：一括取得中に「中断」ボタンを表示し、押下で次のDOI着手前（またはfetch完了直後・レート待機に入る前）にループを停止。中断前までの成功分は蓄積アイテムに保持され下書き保存も維持。標準版（`make_jc_importer.html`）・Chrome拡張版（`chrome-extension/make_jc_importer.js`・`panel.html`）に同一実装。manifest version `1.15.0` → `1.16.0` |
 | 2026-07-02 | `package.json`／`package-lock.json` のメタデータ整備（[#196](https://github.com/tzhaya/jc-import-file-maker/issues/196)）：`license` を実態（`LICENSE`＝CC0 1.0 Universal）に合わせて `ISC` → `CC0-1.0` に修正、`author`／`keywords` を記入、実体のない `main: "index.js"` を削除。`devDependencies` の `playwright` はE2Eテスト（`.claude/skills/e2e-test`）用に維持し用途を `docs/developer_docs.md` に明記。`scripts/check.js` の `JSON_FILES` に `package-lock.json` を追加 |
 | 2026-06-30 | OpenAlex機関検索で所属の誤判定が疑われる候補を可視化（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186)）：機関検索（`openalex_lookup.html`／Chrome拡張タブ）の結果に「所属確認」列を追加し、検索対象機関を裏付ける所属表記を持つ著者が居ない論文に「⚠ 要確認」バッジ＋詳細ツールチップ（疑い著者・元の所属表記）を表示。OpenAlex の `authorships[].affiliations[].institution_ids`／`raw_affiliation_string` を機関の識別的トークンと頭字語で照合（略称表記の誤検出を抑制）。自動除外はせず注意喚起のみ（既定チェックはON維持）。#156 照合列とは別列で描画し競合を回避。manifest version `1.14.2` → `1.15.0` |

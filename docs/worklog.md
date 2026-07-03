@@ -1,6 +1,24 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-02（DOIリスト一括取得に中断ボタンを追加 #194）
+最終更新: 2026-07-03（OpenAlex機関別著作検索の外部リンクタブ復帰不具合を修正 #201）
+
+## OpenAlex機関別著作検索の外部リンクタブ復帰不具合を修正（2026-07-03, #201）
+
+### 概要
+Chrome拡張のサイドパネルで、OpenAlex機関別著作検索の検索結果内リンク（DOIリンク・OpenSearch照合リンク）をクリックするとパネルが既定ページ（`panel.html`＝DOIインポート）にリセットされ、検索結果が失われる不具合を修正した。同種の不具合は助成情報検索ツールで既に #150 として修正済みで、今回はその実装を `openalex_panel.js`／`openalex_lookup.html` に横展開した。
+
+### 原因
+`chrome-extension/openalex_panel.js` の検索結果生成箇所（DOIリンク・照合リンク）は `target="_blank"` で外部リンクを出力しているが、`funder_lookup.js` と異なりこのファイルには「サイドパネルで `target="_blank"` の外部リンクをクリックするとパネル自体がリセットされる」問題への対処（`chrome.tabs.create` への委譲）が実装されていなかった。
+
+### 変更内容
+- `chrome-extension/openalex_panel.js` の `init()` 末尾に、`document` レベルの委譲クリックハンドラを追加。`IS_CHROME_EXTENSION`（`chrome.runtime.id` の有無で判定）が真の場合のみ登録し、`http(s)://` で始まる `<a>` のクリックを捕捉して `e.preventDefault()` のうえ `chrome.tabs.create({ url })` で新しいタブを開く
+- `openalex_lookup.html`（標準版・同一ロジックを埋め込みで保持）にも同一の変更を反映
+- `chrome-extension/manifest.json`: version `1.16.0` → `1.16.1`（バグ修正・patch）
+
+### 検証
+`npm test` で全チェック（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造）がPASS。
+
+---
 
 ## DOIリスト一括取得に中断ボタンを追加（2026-07-02, #194）
 

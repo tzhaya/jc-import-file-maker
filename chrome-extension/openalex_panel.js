@@ -801,4 +801,21 @@ async function init() {
   await restoreOpenAlexSearch();
 }
 
+// 検索結果内の外部リンクは新しいタブで開く（#150と同型・#201）
+// Chrome拡張のサイドパネルでは target="_blank" の外部リンクをクリックすると
+// パネル自体が既定ページ（panel.html）にリセットされてしまうため、
+// chrome.tabs.create で明示的に新しいタブを開く。標準版（IS_CHROME_EXTENSION が false）では
+// target="_blank" がそのまま機能するためこのハンドラは登録しない。
+if (IS_CHROME_EXTENSION) {
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    if (/^https?:\/\//i.test(href)) {
+      e.preventDefault();
+      chrome.tabs.create({ url: href });
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', init);
