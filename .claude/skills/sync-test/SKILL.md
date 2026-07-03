@@ -52,6 +52,8 @@ diff funder_lookup.html funder_lookup_test.html
 
 同期前にテスト用ファイルの CONFIG セクションの値を控えておき、同期後に復元してください。
 
+**あわせて確認**: APIキーだけでなく、`shared.js` 側で新たに追加された初期値項目（`DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` など）がテスト用ファイルの CONFIG ブロックと `loadConfig()` に存在するか確認してください。`shared.js` 分離（#111）以降に追加された項目が反映漏れになりやすいため（#203）、`shared.js` の `CONFIG` 定数のキー一覧とテスト用ファイルのインライン CONFIG ブロックを突き合わせること。
+
 ### 3. 同期の実行
 
 本番ファイルの内容をテスト用ファイルにコピーし、CONFIG セクションの API キーのみテスト用の値に戻してください。
