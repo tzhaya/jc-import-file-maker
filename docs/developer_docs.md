@@ -69,6 +69,7 @@ Get-Content -Encoding UTF8 README.md | Select-Object -First 20
 | [changelog.md](changelog.md) | 変更履歴（全量。READMEには最新5件のみ掲載） |
 | [requirements.md](requirements.md) | 要件定義 |
 | [fieldmapping.md](fieldmapping.md) | JPCOARフィールドマッピング |
+| [datacite_jpcoar_mapping.md](datacite_jpcoar_mapping.md) | DataCite → JPCOAR マッピング表（#197。実装 #208 の仕様書） |
 | [weko3_tsv_import_spec.md](weko3_tsv_import_spec.md) | WEKO3 TSVインポート仕様 |
 | [privacy-policy.md](privacy-policy.md) | プライバシーポリシー |
 | [chrome_store_permissions.md](chrome_store_permissions.md) | Chrome Web Store 権限の正当化 |
