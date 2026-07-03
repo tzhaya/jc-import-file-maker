@@ -19,6 +19,11 @@ const ALLOWED_HOSTS = [
 chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
   if (req.type !== 'FETCH') return false;
 
+  if (typeof req.url !== 'string') {
+    sendResponse({ error: 'Blocked: request url must be a string' });
+    return true;
+  }
+
   // ホワイトリストチェック: 許可されたホストのみプロキシ
   if (!ALLOWED_HOSTS.some(host => req.url.startsWith(host))) {
     let host = req.url;
