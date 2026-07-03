@@ -117,6 +117,7 @@ make_jc_importer.html
     -   Crossref APIで得られる内容（例：`j.advnut.2025.100480.json`）を`ItemType.json`の構造に変更します。マッピングの例は  `sample.json` です。
 -   **DOIリスト一括取得**（[issue #154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）:
     -   複数のDOIを改行/カンマ/空白区切りでまとめて投入し、正規化・重複除去のうえ1件ずつ順次取得して既存のバッチに蓄積します。各取得間に待機を挟み（レート制御）、失敗したDOIはスキップして処理を継続し、完了後に成功/失敗件数と失敗DOI一覧を表示します。
+    -   取得中は「中断」ボタンを表示し（[issue #194](https://github.com/tzhaya/jc-import-file-maker/issues/194)）、押下するとループを安全に停止します。中断前までに成功したDOIは蓄積バッチと作業中データ（下書き）に保持され、サマリには処理済み件数から算出した残り件数を表示します。
     -   各DOIのRA判定・取得・マッピングは単一DOI取得と同一の処理経路（`fetchAndAccumulate()`）を通ります。JaLC DOIはChrome拡張版のみ対応（標準版ではスキップ報告）。
 -   **OpenAlex機関別著作検索**（[issue #155](https://github.com/tzhaya/jc-import-file-maker/issues/155)・[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)・Phase 3 [#157](https://github.com/tzhaya/jc-import-file-maker/issues/157)）:
     -   自機関の ROR ID と過去N日（出版日ベース、既定90日）を指定して OpenAlex Works API（`authorships.institutions.ror` フィルタ）を cursor paging で全件取得し、タイトル・掲載誌・出版日・OAステータスバッジ・DOI＋チェックボックスの候補一覧を表示します。OpenAlex は CORS 対応のため標準版（`openalex_lookup.html`）・Chrome拡張版（タブ）の両方で動作します。
