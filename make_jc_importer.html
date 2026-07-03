@@ -490,7 +490,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-06-28 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-07-02 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -502,6 +502,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-02</td>
+        <td style="padding:2px 0;">DOIリスト一括取得の実行中に「中断」ボタンを表示し、押下でループを安全に停止できるように（中断前までの成功分は蓄積アイテムに保持）（#194）（Chrome拡張 ver. 1.16.0 と同期）</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-28</td>
         <td style="padding:2px 0;">DOIリストの一括取得を追加（複数DOIをまとめて取得→バッチ蓄積）（#154）。OpenAlex機関別著作検索（自機関RORで候補論文を検索しDOIリストを出力、標準版は openalex_lookup.html）を追加（#155）。タイトルのタグ片・改行を除去しTSVの行崩れを防止（#154/#155/#156）（Chrome拡張 ver. 1.14.0 と同期）</td>
@@ -517,10 +521,6 @@
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-19</td>
         <td style="padding:2px 0;">助成情報「プログラム情報識別子タイプ」が、識別子本体が空欄のときに既定値（Crossref Funder）を誤ってTSV出力する不具合を修正（#161）（Chrome拡張 ver. 1.11.1 と同期）</td>
-      </tr>
-      <tr>
-        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-06-15</td>
-        <td style="padding:2px 0;">TSV管理フィールド（.IndexID[0]/.POS_INDEX[0]）とリポジトリURLの初期値を shared.js／設定画面で定義可能に（#148）。電子ジャーナルページからのDOI自動取得をJSON-LD（schema.org）対応に拡張（#159、Chrome拡張版）（Chrome拡張 ver. 1.11.0 と同期）</td>
       </tr>
     </tbody>
   </table>
@@ -543,6 +543,7 @@
       <textarea id="doi-list-input" rows="5" style="width:100%; box-sizing:border-box; font-size:0.85em; font-family:monospace;" placeholder="DOIを改行区切りで貼り付けてください（カンマ・空白区切りも可）。&#10;例:&#10;10.1016/j.advnut.2025.100480&#10;10.1234/example.doi"></textarea>
       <div style="margin-top:6px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <button id="fetch-list-btn" style="background:#1565c0; color:white;">リスト一括取得</button>
+        <button id="fetch-list-abort-btn" style="display:none; background:#d32f2f; color:white;">中断</button>
         <span id="bulk-progress" style="display:none; font-size:0.88em; color:#555;"></span>
       </div>
       <div id="bulk-summary" style="display:none; margin-top:8px; padding:8px 10px; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:4px; font-size:0.88em; color:#33691e;"></div>
@@ -711,6 +712,9 @@ const OA_BADGE_MAP = {
 // ===== バッチ蓄積（Phase 2-C） =====
 let allMetadata = [];       // 蓄積された metadata の配列
 let currentBatchIndex = -1; // 現在表示中のアイテムのインデックス
+
+// ===== DOIリスト一括取得の中断（#194） =====
+let bulkAborted = false;
 
 // ===== 除外フィールドリスト =====
 const EXCLUDED_KEYS = new Set([
@@ -2194,6 +2198,7 @@ async function fetchDoiList() {
 
   const listBtn = document.getElementById('fetch-list-btn');
   const fetchBtn = document.getElementById('fetch-btn');
+  const abortBtn = document.getElementById('fetch-list-abort-btn');
   const progress = document.getElementById('bulk-progress');
   const summary = document.getElementById('bulk-summary');
   listBtn.disabled = true;
@@ -2204,12 +2209,17 @@ async function fetchDoiList() {
   document.getElementById('opf-link-row').style.display = 'none';
   document.getElementById('preview-area').style.display = 'none';
 
+  bulkAborted = false;
+  abortBtn.disabled = false;
+  abortBtn.style.display = 'inline-block';
+
   let success = 0;
   const failed = [];
   const DELAY_MS = 1000;  // レート制御（OpenAlex/Crossref/RA判定への配慮）
 
   try {
     for (let i = 0; i < dois.length; i++) {
+      if (bulkAborted) break;  // 次のDOI着手前に停止
       const doi = dois[i];
       progress.style.display = 'block';
       progress.textContent = `⏳ 取得中 ${i + 1}/${dois.length}: ${doi}`;
@@ -2225,6 +2235,7 @@ async function fetchDoiList() {
       } catch (e) {
         failed.push({ doi, reason: e.message });
       }
+      if (bulkAborted) break;  // fetch完了直後、レート待機に入る前に停止
       // 次のDOIまで待機（最終要素では待たない）
       if (i < dois.length - 1) {
         await new Promise(r => setTimeout(r, DELAY_MS));
@@ -2234,12 +2245,17 @@ async function fetchDoiList() {
     progress.style.display = 'none';
     listBtn.disabled = false;
     fetchBtn.disabled = false;
+    abortBtn.style.display = 'none';
     persistDraft();      // 一括処理の完了後に1回だけ保存（#162）
     updateBatchPanel();
   }
 
   // 結果サマリ
-  let html = `✅ 完了: 成功 ${success}件 / 失敗 ${failed.length}件`;
+  const processed = success + failed.length;
+  const remaining = dois.length - processed;
+  let html = bulkAborted
+    ? `⛔ 中断: 残り ${remaining}件（処理済み ${processed}件中 成功 ${success}件 / 失敗 ${failed.length}件）`
+    : `✅ 完了: 成功 ${success}件 / 失敗 ${failed.length}件`;
   if (failed.length) {
     html += '<ul style="margin:6px 0 0; padding-left:18px;">'
       + failed.map(f => '<li>' + escHtml(f.doi) + ' — ' + escHtml(f.reason) + '</li>').join('')
@@ -6860,6 +6876,11 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
   // ボタンイベント登録（MV3 CSP対応: inline onclick は使用不可）
   document.getElementById('fetch-btn').addEventListener('click', fetchData);
   document.getElementById('fetch-list-btn').addEventListener('click', fetchDoiList);
+  document.getElementById('fetch-list-abort-btn').addEventListener('click', function() {
+    bulkAborted = true;
+    this.disabled = true;
+    document.getElementById('bulk-progress').textContent = '⏸ 中断中…（現在のDOIの処理完了後に停止します）';
+  });
   document.getElementById('empty-btn').addEventListener('click', showEmptyFields);
   document.getElementById('preview-btn').addEventListener('click', showPreview);
   document.getElementById('export-btn').addEventListener('click', exportTsv);
@@ -6962,7 +6983,7 @@ function restoreDraft() {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-28';
+  const LOCAL_VERSION = '2026-07-02';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

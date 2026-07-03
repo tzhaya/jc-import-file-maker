@@ -34,6 +34,9 @@ const OA_BADGE_MAP = {
 let allMetadata = [];       // 蓄積された metadata の配列
 let currentBatchIndex = -1; // 現在表示中のアイテムのインデックス
 
+// ===== DOIリスト一括取得の中断（#194） =====
+let bulkAborted = false;
+
 // ===== 除外フィールドリスト =====
 const EXCLUDED_KEYS = new Set([
   'item_30002_apc5',                // APC
@@ -1630,6 +1633,7 @@ async function fetchDoiList() {
 
   const listBtn = document.getElementById('fetch-list-btn');
   const fetchBtn = document.getElementById('fetch-btn');
+  const abortBtn = document.getElementById('fetch-list-abort-btn');
   const progress = document.getElementById('bulk-progress');
   const summary = document.getElementById('bulk-summary');
   listBtn.disabled = true;
@@ -1640,12 +1644,17 @@ async function fetchDoiList() {
   document.getElementById('opf-link-row').style.display = 'none';
   document.getElementById('preview-area').style.display = 'none';
 
+  bulkAborted = false;
+  abortBtn.disabled = false;
+  abortBtn.style.display = 'inline-block';
+
   let success = 0;
   const failed = [];
   const DELAY_MS = 1000;  // レート制御（OpenAlex/Crossref/RA判定への配慮）
 
   try {
     for (let i = 0; i < dois.length; i++) {
+      if (bulkAborted) break;  // 次のDOI着手前に停止
       const doi = dois[i];
       progress.style.display = 'block';
       progress.textContent = `⏳ 取得中 ${i + 1}/${dois.length}: ${doi}`;
@@ -1661,6 +1670,7 @@ async function fetchDoiList() {
       } catch (e) {
         failed.push({ doi, reason: e.message });
       }
+      if (bulkAborted) break;  // fetch完了直後、レート待機に入る前に停止
       // 次のDOIまで待機（最終要素では待たない）
       if (i < dois.length - 1) {
         await new Promise(r => setTimeout(r, DELAY_MS));
@@ -1670,12 +1680,17 @@ async function fetchDoiList() {
     progress.style.display = 'none';
     listBtn.disabled = false;
     fetchBtn.disabled = false;
+    abortBtn.style.display = 'none';
     persistDraft();      // 一括処理の完了後に1回だけ保存（#162）
     updateBatchPanel();
   }
 
   // 結果サマリ
-  let html = `✅ 完了: 成功 ${success}件 / 失敗 ${failed.length}件`;
+  const processed = success + failed.length;
+  const remaining = dois.length - processed;
+  let html = bulkAborted
+    ? `⛔ 中断: 残り ${remaining}件（処理済み ${processed}件中 成功 ${success}件 / 失敗 ${failed.length}件）`
+    : `✅ 完了: 成功 ${success}件 / 失敗 ${failed.length}件`;
   if (failed.length) {
     html += '<ul style="margin:6px 0 0; padding-left:18px;">'
       + failed.map(f => '<li>' + escHtml(f.doi) + ' — ' + escHtml(f.reason) + '</li>').join('')
@@ -6310,6 +6325,11 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
   });
   document.getElementById('fetch-btn').addEventListener('click', fetchData);
   document.getElementById('fetch-list-btn').addEventListener('click', fetchDoiList);
+  document.getElementById('fetch-list-abort-btn').addEventListener('click', function() {
+    bulkAborted = true;
+    this.disabled = true;
+    document.getElementById('bulk-progress').textContent = '⏸ 中断中…（現在のDOIの処理完了後に停止します）';
+  });
   document.getElementById('empty-btn').addEventListener('click', showEmptyFields);
   document.getElementById('preview-btn').addEventListener('click', showPreview);
   document.getElementById('export-btn').addEventListener('click', exportTsv);
@@ -6412,7 +6432,7 @@ function restoreDraft() {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-28';
+  const LOCAL_VERSION = '2026-07-02';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

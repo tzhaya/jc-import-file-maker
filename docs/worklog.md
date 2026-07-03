@@ -1,6 +1,29 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-02（package.json のメタデータ整備 #196）
+最終更新: 2026-07-02（DOIリスト一括取得に中断ボタンを追加 #194）
+
+## DOIリスト一括取得に中断ボタンを追加（2026-07-02, #194）
+
+### 概要
+DOIリスト一括取得はレート制御（1秒間隔）込みで直列実行されるため、100件規模のリストでは完走に5分以上かかるが、途中で止める手段がなかった。「中断」ボタンを追加し、押下でループを安全に停止できるようにした。標準版 `make_jc_importer.html` とChrome拡張版 `chrome-extension/make_jc_importer.js`／`panel.html` に同一実装。
+
+### 変更内容
+- `fetch-list-btn` の隣に `fetch-list-abort-btn`（既定 `display:none`、背景 `#d32f2f`）を追加
+- モジュールスコープに `let bulkAborted = false;` を追加。`fetchDoiList()` 開始時にリセットし、中断ボタンを表示・有効化
+- ループ内の中断判定は2箇所: ①次のDOI着手前（ループ先頭）、②fetch完了直後・レート待機（`DELAY_MS`=1000ms）に入る前。②により、fetch完了とほぼ同時に中断した場合の無駄な待機を避ける（ただし既に待機に入ってしまった場合、`setTimeout` 自体はキャンセルしないため、その待機が終わるまでは停止しない）
+- 中断ボタンのクリックハンドラ: `bulkAborted = true` を設定し自身を `disabled` にして連打を防止、進捗表示を「⏸ 中断中…（現在のDOIの処理完了後に停止します）」に変更
+- `finally` 節で中断ボタンを非表示に戻す（既存の `listBtn`/`fetchBtn` 再有効化と同じタイミング）。既存の `persistDraft()` はそのまま動作するため、中断前までの成功分は蓄積アイテムに保持される
+- サマリ生成を分岐: 中断時は処理済み件数（`success + failed.length`）から算出した残り件数を「⛔ 中断: 残りN件（処理済みM件中 成功X件 / 失敗Y件）」で表示。通常完了時は従来の「✅ 完了」表示を維持
+- `chrome-extension/make_jc_importer.js` の `init()` に中断ボタンの `addEventListener` 登録を追加（MV3 CSP対応のためinline onclick不可）
+- `chrome-extension/manifest.json`: version `1.15.0` → `1.16.0`（機能追加・minor）
+
+### 設計判断の経緯（planレビューでの指摘を反映）
+初版の実装計画では中断判定をループ先頭の1箇所のみとしていたが、レビューで「中断ボタン押下がレート待機中に発生した場合、待機が終わるまで停止せず体感で最大1秒の遅延が生じる」と指摘され、fetch完了直後・待機に入る前にも判定を追加した（`setTimeout` のキャンセルは行わず、判定箇所を増やすのみで対応）。また、残り件数の算出をループ変数 `i`（break位置に依存しoff-by-oneを起こしやすい）ではなく、処理済み件数（`success + failed.length`）からの逆算に変更した。
+
+### 検証
+Playwrightで `make_jc_importer.html` を直接開き、①中断ボタンが取得開始まで非表示であること、②取得開始で表示・クリックで即座に `disabled` になり進捗表示が更新されること、③ループが停止し `finally` 節でボタンが非表示に戻ること、④サマリに正しい残り件数（`dois.length - 処理済み件数`）が表示されることを確認。`npm test` で全チェック（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造）が PASS。
+
+---
 
 ## package.json のメタデータ整備（2026-07-02, #196）
 
