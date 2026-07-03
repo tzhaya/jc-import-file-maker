@@ -20,6 +20,21 @@ Chrome拡張のサイドパネルで、OpenAlex機関別著作検索の検索結
 
 ---
 
+## make_jc_importer_test.htmlのCONFIG未更新を修正（2026-07-03, #203）
+
+### 概要
+`make_jc_importer_test.html`（`.gitignore` 対象・ローカル専用ファイル）は、本番の `make_jc_importer.html` が `shared.js` を分離利用する構成になった（#111）以前の構造のまま、CONFIG関連コードをインラインで直接保持している（実APIキーで動作確認するための意図的な構成）。そのため `shared.js` 側にその後追加された設定項目が反映されておらず、`shared.js` の `CONFIG` には #156 で追加済みの `DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` が、テスト用ファイルのインラインCONFIGブロックには存在していなかった。
+
+### 変更内容
+- `make_jc_importer_test.html` のインラインCONFIGブロック（1行目付近）に `DEFAULT_ROR_ID: "https://ror.org/005pdtr14"`（JIRCASのROR。既存の `DEFAULT_REPOSITORY_URL`/`DEFAULT_INDEX_ID` 等と同様、ローカル動作確認用の実値）・`DEFAULT_OPENALEX_DAYS: 90` を追加
+- `loadConfig()` の `chrome.storage.local.get()` 対象キー一覧と代入処理にも同2項目を追加し、`shared.js` の実装と揃えた
+- `.claude/skills/sync-test/SKILL.md` の「2. CONFIG セクションの保護」に、APIキーだけでなく `shared.js` 側で追加された初期値項目の有無も確認する旨を追記（再発防止）
+
+### 注意事項
+`make_jc_importer_test.html` は `.gitignore` 対象のためこの変更はコミットされない。ローカル環境ごとに反映が必要。
+
+---
+
 ## DOIリスト一括取得に中断ボタンを追加（2026-07-02, #194）
 
 ### 概要
