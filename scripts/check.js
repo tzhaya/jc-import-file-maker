@@ -46,6 +46,7 @@ const UTF8_FILES = [
   'docs/handover_cors_extension.md',
   'docs/Implementation_JaLC.md',
   'docs/datacite_jpcoar_mapping.md',
+  'docs/current_review_2026-07-05.md',
   'function.md',
   // HTML (standalone)
   'make_jc_importer.html',
