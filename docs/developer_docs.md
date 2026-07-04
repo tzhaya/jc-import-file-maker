@@ -110,6 +110,7 @@ E2E・回帰テストで使う代表的な DOI と、それぞれが検証でき
 | [requirements.md](requirements.md) | 要件定義 |
 | [fieldmapping.md](fieldmapping.md) | JPCOARフィールドマッピング |
 | [datacite_jpcoar_mapping.md](datacite_jpcoar_mapping.md) | DataCite → JPCOAR マッピング表（#197。実装 #208 の仕様書） |
+| [current_review_2026-07-05.md](current_review_2026-07-05.md) | 2026-07-05 時点の進捗・実用性・将来拡張課題のレビュー |
 | [weko3_tsv_import_spec.md](weko3_tsv_import_spec.md) | WEKO3 TSVインポート仕様 |
 | [privacy-policy.md](privacy-policy.md) | プライバシーポリシー |
 | [chrome_store_permissions.md](chrome_store_permissions.md) | Chrome Web Store 権限の正当化 |

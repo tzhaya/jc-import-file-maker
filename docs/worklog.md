@@ -1,6 +1,31 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-05（開発者向けドキュメントにテスト教訓・DOIカタログを追加）
+最終更新: 2026-07-05（Codexによる現状レビューを docs に保存）
+
+## Codexによる現状レビューの保存（2026-07-05）
+
+### 概要
+ユーザー依頼により、プロジェクトの進捗・実用性・将来拡張可能性・課題を Codex の現状レビューとして `docs/current_review_2026-07-05.md` に保存した。
+
+### 評価の要点
+- メタデータ作成・確認・TSV生成の業務支援ツールとしては実用域。
+- Chrome拡張版は APIキー管理、CORS回避、JaLC/OPF/KAKEN対応、サイドパネル統合により通常ブラウザ版より業務投入しやすい。
+- 本番登録フローへの組み込みには、JAIRO Cloud テスト環境での TSV 実インポート検証が最大の前提条件。
+- 将来拡張として、SCPJ連携、リポジトリJSON再インポート、異種アイテムタイプテンプレート、OpenAlex定期ハーベスタ、SWORD v3連携を整理。
+
+### 変更ファイル
+- `docs/current_review_2026-07-05.md`（新規）
+- `scripts/check.js`（新規ドキュメントを UTF-8 チェック対象へ追加）
+- `docs/developer_docs.md`（ドキュメント一覧に追加）
+- `README.md` 変更履歴・`docs/changelog.md`
+- `docs/worklog.md`
+
+### 注意事項
+- 本番HTML・共有JS・Chrome拡張コードの変更は無い（E2E対象外・manifest更新不要・LOCAL_VERSION更新不要）。
+- `MEMORY.md` は存在しないため更新対象なし。
+
+### 検証
+`npm test`（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造）が ALL PASS。
 
 ## 開発者向けドキュメントにテストの限界と教訓・テスト用DOIカタログを追加（2026-07-05）
 
