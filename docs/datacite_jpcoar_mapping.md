@@ -190,7 +190,7 @@ JaLC 準会員（NII/IRDB 経由）・JaLC コンソーシアム（`jalcco`）�
 - `dateType` がツールの日付タイプ select（Accepted / Available / Collected / Copyrighted / Created / Issued / Submitted / Updated / Valid の9値）に含まれるものはそのまま登録
 - **`Coverage` は日付フィールドでなく時間的範囲（`item_30002_temporal19`）へ展開**する。DataCite の定義は「内容が適用・記述・カバーする日付/範囲」であり JPCOAR の時間的範囲に相当。値（範囲文字列を含む）をそのまま `subitem_temporal_text` に設定（言語は空）
 - **`Withdrawn` / `Other` は破棄**（対応する日付タイプなし）
-- 値の正規化:
+- 値の正規化（**日付フィールドへ登録する dateType のみが対象。`Coverage` は対象外**で、範囲文字列を丸めずそのまま時間的範囲へ入れる）:
   - タイムスタンプ（`2022-12-06T18:46:04Z`）→ 日付部分 `2022-12-06` を採用（実測: arXiv）
   - 範囲（RKMS-ISO8601 `start/end`）→ **開始側**を採用。開始が空（`/end`）の場合は終了側
   - `YYYY` / `YYYY-MM` の部分日付はそのまま許容（実測: 阪大 Issued "2026"）
