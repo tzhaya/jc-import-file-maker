@@ -3959,11 +3959,14 @@ async function mapToItemTypeDataCite(attrs) {
   const creators = buildDataCiteAuthors(attrs.creators);
 
   // ===== 権利情報 =====
-  const rights = (attrs.rightsList || []).map(r => ({
-    subitem_rights: r.rights || '',
-    subitem_rights_language: '',
-    subitem_rights_resource: r.rightsUri || '',
-  }));
+  // info:eu-repo/semantics/* は権利情報でなくアクセス権の示唆（OA表明）のため取り込まない（§9）
+  const rights = (attrs.rightsList || [])
+    .filter(r => !/^info:eu-repo\/semantics\//i.test(r.rightsUri || ''))
+    .map(r => ({
+      subitem_rights: r.rights || '',
+      subitem_rights_language: '',
+      subitem_rights_resource: r.rightsUri || '',
+    }));
 
   // ===== 主題 =====
   const subjects = (attrs.subjects || []).map(s => ({
