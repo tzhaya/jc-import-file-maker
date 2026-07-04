@@ -113,7 +113,7 @@ make_jc_importer.html
         -   DOIが存在しない場合はエラーメッセージを表示し、処理を中断します。
         -   登録機関が **Crossref** の場合：Crossref および OpenAlex APIから論文のメタデータを取得します。
         -   登録機関が **JaLC** の場合：JaLC REST API（`https://api.japanlinkcenter.org/v2/dois/`）からメタデータを取得します（CORS 非対応のため Chrome 拡張版のみ。標準版ではスキップ報告）。
-        -   登録機関が **DataCite** の場合：DataCite REST API（`https://api.datacite.org/dois/`）からメタデータを取得します（CORS 対応・認証不要のため標準版・Chrome 拡張版とも動作。マッピング仕様は [docs/datacite_jpcoar_mapping.md](datacite_jpcoar_mapping.md) を参照）。あわせて OpenAlex API から補完取得を試み（[issue #212](https://github.com/tzhaya/jc-import-file-maker/issues/212)）、DOI が収録されている場合は OA ステータスに基づき OA バッジを表示し、資源タイプが「論文相当」（journal article/article/conference paper 等）のときのみ出版タイプ・関連情報（`isIdenticalTo`/`isVersionOf`）を判定します。データセット・ソフトウェア等の資源タイプ、および OpenAlex 未収録の場合は既定値（`open access` 固定・出版タイプ空欄）のままです。
+        -   登録機関が **DataCite** の場合：DataCite REST API（`https://api.datacite.org/dois/`）からメタデータを取得します（CORS 対応・認証不要のため標準版・Chrome 拡張版とも動作。マッピング仕様は [docs/datacite_jpcoar_mapping.md](datacite_jpcoar_mapping.md) を参照）。あわせて OpenAlex API から補完取得を試み（[issue #212](https://github.com/tzhaya/jc-import-file-maker/issues/212)）、DOI が収録されている場合は OA ステータスに基づき OA バッジを表示し、資源タイプが「論文相当」（journal article/article/conference paper 等）のときのみ出版タイプ・関連情報（`isIdenticalTo`/`isVersionOf`）を判定します。データセット・ソフトウェア等の資源タイプ、および OpenAlex 未収録の場合は出版タイプは空欄のままです。アクセス権は Crossref/JaLC パスと同様に `determineAccessRights()` で OA ステータス + OPF エンバーゴ情報に基づき動的に設定されます（[issue #214](https://github.com/tzhaya/jc-import-file-maker/issues/214)。OPF照会が有効な Chrome 拡張版のみ実効、標準版は常に `open access`）。
         -   その他の登録機関の場合：サポート外メッセージを表示します。
     -   Crossref APIで得られる内容（例：`j.advnut.2025.100480.json`）を`ItemType.json`の構造に変更します。マッピングの例は  `sample.json` です。
 -   **DOIリスト一括取得**（[issue #154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）:
@@ -184,7 +184,7 @@ make_jc_importer.html
         -   open access: diamond/gold/hybrid/bronze/green（OA系ステータス）
         -   embargoed access: closed/unknown かつ OPFにエンバーゴ情報がある場合
         -   open access（デフォルト）: closed/unknown でエンバーゴなし（機関リポジトリ登録用途を想定）
-        -   OPFデータはmapToItemType/mapToItemTypeJaLCの前に取得される（ISSN早期抽出による）
+        -   OPFデータはmapToItemType/mapToItemTypeJaLC/mapToItemTypeDataCiteの前に取得される（ISSN早期抽出による。DataCiteパスは[#214](https://github.com/tzhaya/jc-import-file-maker/issues/214)で対応）
     -   **OpenAlexリポジトリ情報の関連情報追加**:
         -   OpenAlex の `any_repository_has_fulltext` が true の場合、`locations[]` からリポジトリ（source.type = "repository"）の landing_page_url を抽出し、関連情報（relationType: isIdenticalTo, identifierType: URI）として追加する
     -   **OPFモーダルのOAステータス連動**:

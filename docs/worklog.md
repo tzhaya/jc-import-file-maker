@@ -1,6 +1,44 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-04（DataCite DOIパスへのOpenAlex補完 #212）
+最終更新: 2026-07-04（DataCite DOIパスへのOPF連動 #214）
+
+## DataCite DOIパスへのOPF連動（アクセス権エンバーゴ判定）の追加（2026-07-04, #214）
+
+### 概要
+#212（DataCite DOIパスへのOpenAlex補完）はOPF連動によるアクセス権エンバーゴ判定を見送っていた。本Issueでその実装方針を実施し、Crossref/JaLCパスと同様に `determineAccessRights(oaStatus, opfData)` をDataCiteパスでも機能させた。
+
+### 処理順の変更
+`fetchDataCiteData()` は従来「マッピング → メタデータからISSN抽出 → `updateOpfStatus()`」の順だったため、マッピング時点で `lastOpfData` が未確定で `determineAccessRights()` を呼んでも意味がなかった。Crossref/JaLCパスに倣い「生レスポンスからISSN早期抽出 → `updateOpfStatus()` → マッピング」の順に変更した。
+
+### 実装したもの
+- **`findDataCiteSourceIdentifier(relatedItems, container)`**（新設）: `extractDataCiteBibliographicInfo()` が内包していたISSN抽出ロジック（journalItem選定→`relatedItemIdentifier`優先→`container`フォールバック）を共通ヘルパーとして切り出し。抽出優先順位を分岐させるとOPF照会対象とメタデータ出力のISSNがズレるため、両者から同一ロジックを参照する構成にした。
+- **`extractDataCiteIssnsFromRaw(relatedItems, container)`**（新設）: `findDataCiteSourceIdentifier()` を使い、生レスポンス（`attrs.relatedItems`/`attrs.container`）からOPF取得用のISSNを早期抽出する。Crossref/JaLCパスの `extractIssnsFromRaw()` に相当。
+- **`fetchDataCiteData()`**: `extractDataCiteIssnsFromRaw()` → `updateOpfStatus()` → `mapToItemTypeDataCite()` の順に変更。
+- **`mapToItemTypeDataCite()`**: `accessRight` の固定値 `'open access'` を `determineAccessRights(oaStatus, lastOpfData)` に変更（`determineAccessRights()` 自体は無変更・再利用のみ）。`accessRightUri` のフォールバックもCrossref/JaLCパスに合わせ `ACCESS_RIGHTS_MAP['open access']` に統一。
+
+### 実効範囲
+OPF照会は拡張版のみ有効（`updateOpfStatus()` が標準版では `lastOpfData=null` を設定）。したがって本変更の実効はChrome拡張版のみで、標準版は `determineAccessRights(oaStatus, null)` が常に `open access` を返すため無回帰。DataCiteレコードはOpenAlex未収録（`oaStatus=''`）が多く、その場合にOPFエンバーゴがあれば `embargoed access` に変わるのが本Issueで最も高頻度に発生するケース。
+
+### 検証
+Node サンドボックスで `findDataCiteSourceIdentifier`/`extractDataCiteIssnsFromRaw`/`extractDataCiteBibliographicInfo`/`determineAccessRights` を抽出評価し、以下7ケースを検証、全てPASS。
+1. journalItemに直接ISSNがある場合、早期抽出とbiblio抽出が同一値で一致
+2. journalItemにISSNが無くcontainerにある場合、フォールバックが両関数で一致
+3. ISSNが全く無い場合は空配列
+4. **oaStatus=''（OpenAlex未収録）+ OPFエンバーゴあり → `embargoed access`**（本Issueの主眼）
+5. oaStatus=''（未収録）+ エンバーゴなし → `open access`
+6. oaStatus='green'（早期リターン）→ `open access`（OPFに関わらず不変）
+7. `lastOpfData=null`（標準版相当）→ 常に `open access`（無回帰）
+
+### 変更ファイル
+- `make_jc_importer.html` / `chrome-extension/make_jc_importer.js`（同一実装をミラー）
+- `make_jc_importer_test.html`（gitignore対象・ローカル再構築）
+- `chrome-extension/manifest.json`（`1.18.0` → `1.19.0`）・`chrome-extension/panel.html`（更新概要）
+- `docs/requirements.md`・`README.md`
+
+### 未確認事項・次段
+- ブラウザ実機でのE2Eテスト（`/e2e-test`、ユーザーによる手動実行が必要）。特にOPFエンバーゴ経路は拡張版でのみ確認可能
+- `samples/DataCite/` にclosed OA + OPFエンバーゴありの実例が無いため、当該経路は合成データでの確認に留まる
+- `Promise.all` によるDataCite/OpenAlex並列化は本Issueのスコープ外とし見送り（別Issueで検討）
 
 ## DataCite DOIパスへのOpenAlex補完（2026-07-04, #212）
 
