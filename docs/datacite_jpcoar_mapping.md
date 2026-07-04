@@ -62,7 +62,7 @@ JaLC 準会員（NII/IRDB 経由）・JaLC コンソーシアム（`jalcco`）�
 | 1 | **タイトル** (title) | `titles[]`（`titleType` なしの要素） | `lang` 付き多言語（JaLC 同様）。`lang` なしは 'en' 既定＋要確認フラグ（Crossref 同様） |
 | 2 | **その他のタイトル** (alternative_title) | `titles[]`（`titleType` あり: AlternativeTitle / Subtitle / TranslatedTitle / Other） | Crossref/JaLC パスでは未実装。DataCite パスで新規に対応 |
 | 3 | **作成者** (creator) | `creators[]` | 詳細は §5。`nameType: "Organizational"` は `creatorNameType` の 'Organizational' へ（姓名分離せず） |
-| 4 | 寄与者 (contributor) | — `contributors[]` | **対象外**。ツール UI が寄与者未実装のため。DataCite では HostingInstitution 等が埋まる例があり、将来拡張時は contributorType 22値中 RegistrationAgency / RegistrationAuthority / RightsHolder / Translator の4値がツール select に無い点に注意 |
+| 4 | 寄与者 (contributor) | — `contributors[]` | **自動マッピング対象外**（初期実装のスコープ限定）。ツール UI には寄与者フィールドの定義・レンダラーが存在する（make_jc_importer.html L3473 付近。fieldmapping.md #4 の「空（未実装）」は「API からの自動設定が無い」の意）。DataCite では HostingInstitution 等が埋まる例があり拡張は可能。その際 contributorType 22値中 RegistrationAgency / RegistrationAuthority / RightsHolder / Translator の4値がツール select に無い点に注意 |
 | 5 | アクセス権 (access_rights) | —（既定値） | OpenAlex 連携なしのため自動判定しない（JaLC パス同様）。`open access` を既定とし手動修正 |
 | 6 | **権利情報** (rights) | `rightsList[]` | 詳細は §9。`rightsUri` → 既存 `detectLicenseType()` を再利用（CC の deed.ja / legalcode 付き URI も前方一致で判定可能なことを実データで確認） |
 | 8 | **主題** (subject) | `subjects[]` | `subject` + `lang`。`subjectScheme` はツール上 'Other' 扱い（arXiv 等の独自 scheme があるため） |
@@ -81,7 +81,7 @@ JaLC 準会員（NII/IRDB 経由）・JaLC コンソーシアム（`jalcco`）�
 | 26-30 | **巻・号・開始/終了ページ** | `relatedItems[]`（volume / issue / firstPage / lastPage）→ フォールバック `container` | 詳細は §12 |
 | 31 | **書誌情報** (bibliographic_info) | relatedItems / container から生成 | 収録物名が取れた場合のみ生成（Crossref パス同様） |
 | — | 識別子 (identifier) | — `url` | **対象外**。`url` はランディングページ（hdl.handle.net 等）で DOI リンクと重複。手動入力に委ねる |
-| — | 位置情報 (geolocation) | — `geoLocations[]` | **対象外**。ツール UI 未実装（fieldmapping.md #22 参照）。JAMSTEC 等で値あり、将来拡張候補 |
+| — | 位置情報 (geolocation) | — `geoLocations[]` | **自動マッピング対象外**（初期実装のスコープ限定）。ツール UI には位置情報フィールドの定義・レンダラーが存在する（make_jc_importer.html L3564 付近。fieldmapping.md #22 の「空（未実装）」は「API からの自動設定が無い」の意）。JAMSTEC 等で値あり、将来拡張候補 |
 | — | （その他） | — `alternateIdentifiers[]` / `identifiers[]` | **対象外**。実データは OAIPMH（IRDB 内部ID）・oai（Zenodo）等の内部識別子が主。arXiv ID が入る例（arXiv preprint）は将来の関連情報取り込み候補として注記のみ |
 | — | （その他） | — `sizes[]` / `formats[]` | **対象外**。対応する JPCOAR 自動設定先なし（ファイル情報はファイル実体を伴うため対象外） |
 | — | （その他） | — `container.type` 等の書誌以外 / `relatedItems` の Journal 以外 | **対象外**。§12 の書誌情報生成にのみ使用 |
@@ -201,14 +201,27 @@ JaLC 準会員（NII/IRDB 経由）・JaLC コンソーシアム（`jalcco`）�
 
 ## 10. 言語（language）の設計判断
 
+ツール側の言語 select は **2系統ある**点に注意（取り違えると選択肢外の値になる）:
+
+| 対象 | ツール側 select | 形式 |
+|---|---|---|
+| 本文言語（`item_30002_language12`） | `TITLE_MAPS.subitem_language` | **639-2/T**（`jpn`, `eng`, `fra`, `deu`, `zho`…） |
+| サブフィールド言語（`subitem_title_language` / `subitem_subject_language` 等） | `TITLE_MAPS.language` | **639-1 系**（`ja`, `en`, `fr`, `de`, `es`, `it`, `ru`, `ar`, `el`, `ko`, `la`, `ms`, `eo`, `zh-cn`, `zh-tw`, `ja-Kana`, `ja-Latn`） |
+
+### 本文言語（attributes.language → item_30002_language12）
+
 DataCite の `language` は xs:language（BCP 47。`en`, `fr`, `de` のほか `cmn` など3文字・地域タグもあり得る。`null` も頻出）。
 
 1. 値の `-` 以降（地域タグ）を除去し主言語部を取り出す
-2. 2文字 → ISO 639-1 → 639-2/T 変換（ツールの言語 select は 639-2/T: `jpn`, `eng`, `fra`, `deu`, `zho`…）
-3. 3文字 → 639-2/B の場合は /T へ変換（`fre`→`fra`, `ger`→`deu`, `chi`→`zho` 等）し、ツールの言語 select 照合
+2. 2文字 → ISO 639-1 → 639-2/T 変換
+3. 3文字 → 639-2/B の場合は /T へ変換（`fre`→`fra`, `ger`→`deu`, `chi`→`zho` 等）し、`TITLE_MAPS.subitem_language` 照合
 4. 未収載・`null` → 空（既定 'eng' にはしない。実測で `fr` / `de` / `null` を確認しており誤設定リスクが高いため）
 
-タイトル・主題等の `lang` 属性（639-1 形）も同じ正規化を通す（JaLC パスの `'ja'`→`'jpn'` 変換と同型）。
+JaLC パスの `content_language` → 639-2 変換（`'ja'`→`'jpn'`）と同型。
+
+### サブフィールド言語（titles[].lang / subjects[].lang / descriptions[].lang 等）
+
+**639-2/T へ変換しない**。DataCite の `lang` 属性値（`en`, `fr` など 639-1 系）を、`TITLE_MAPS.language` に含まれる場合は**そのまま**設定し、含まれない場合（`zh` 単独・3文字コード等）は空にして手動選択に委ねる。JaLC パスの `subitem_title_language: t.lang || ''`（make_jc_importer.html L3220）と同型。
 
 ## 11. 助成情報（fundingReferences[]）の詳細マッピング
 
@@ -242,8 +255,9 @@ ISSN が取れた場合は既存 `fetchNcid()`（NCID 取得）・OPF 照会の�
 3. resourceTypeGeneral の正規化は「大文字境界分割→小文字化→§6 の個別マップ」の順で実装（個別マップに無く正規化一致もしない場合は空文字）
 4. 語彙対応表（§6・§7）は定数オブジェクトとして実装し、本ドキュメントと同期を保つ
 5. ORCID の URL 形/bare 形正規化を忘れない（§5）
-6. `dates` 空配列時の `publicationYear` フォールバック（§8）はテスト用 DOI `10.17596/0004197` で必ず検証
-7. スキーマ混在: `schemaVersion` は `kernel-4` 表記で細番号が取れないため、バージョン判定はせず未知値フォールバックで吸収する
+6. 言語は2系統を取り違えない（§10）: 本文言語のみ 639-2/T 変換、タイトル・主題等のサブフィールド言語は `TITLE_MAPS.language`（639-1系）にそのまま照合
+7. `dates` 空配列時の `publicationYear` フォールバック（§8）はテスト用 DOI `10.17596/0004197` で必ず検証
+8. スキーマ混在: `schemaVersion` は `kernel-4` 表記で細番号が取れないため、バージョン判定はせず未知値フォールバックで吸収する
 
 ## 14. 出典（一次情報）
 
