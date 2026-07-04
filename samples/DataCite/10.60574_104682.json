@@ -1,0 +1,183 @@
+{
+  "id": "10.60574/104682",
+  "type": "dois",
+  "attributes": {
+    "doi": "10.60574/104682",
+    "prefix": "10.60574",
+    "suffix": "104682",
+    "identifiers": [
+      {
+        "identifier": "oai:irdb.nii.ac.jp:01056:0007375524",
+        "identifierType": "OAIPMH"
+      }
+    ],
+    "alternateIdentifiers": [
+      {
+        "alternateIdentifierType": "OAIPMH",
+        "alternateIdentifier": "oai:irdb.nii.ac.jp:01056:0007375524"
+      }
+    ],
+    "creators": [
+      {
+        "name": "Ochi, Masayuki",
+        "nameType": "Personal",
+        "givenName": "Masayuki",
+        "familyName": "Ochi",
+        "nameIdentifiers": [
+          {
+            "nameIdentifier": "1000010734353",
+            "nameIdentifierScheme": "NRID"
+          },
+          {
+            "schemeUri": "https://orcid.org",
+            "nameIdentifier": "https://orcid.org/0000-0001-7438-4797",
+            "nameIdentifierScheme": "ORCID"
+          }
+        ],
+        "affiliation": []
+      }
+    ],
+    "titles": [
+      {
+        "lang": "en",
+        "title": "Data for \"Valley-dependent electron-phonon scattering in thermoelectric semimetal Ta₂PdSe₆\""
+      }
+    ],
+    "publisher": {
+      "lang": "en",
+      "name": "Ochi, Masayuki"
+    },
+    "container": {},
+    "publicationYear": 2026,
+    "subjects": [],
+    "contributors": [],
+    "dates": [
+      {
+        "date": "2026-05-08",
+        "dateType": "Available"
+      },
+      {
+        "date": "2026",
+        "dateType": "Issued"
+      }
+    ],
+    "language": "en",
+    "types": {
+      "ris": "DATA",
+      "bibtex": "misc",
+      "citeproc": "dataset",
+      "schemaOrg": "Dataset",
+      "resourceType": "dataset",
+      "resourceTypeGeneral": "Dataset"
+    },
+    "relatedIdentifiers": [
+      {
+        "relationType": "IsSupplementTo",
+        "relatedIdentifier": "10.1103/ln4p-846x",
+        "relatedIdentifierType": "DOI"
+      }
+    ],
+    "relatedItems": [],
+    "sizes": [
+      "14.5KB"
+    ],
+    "formats": [
+      "application/zip"
+    ],
+    "version": null,
+    "rightsList": [
+      {
+        "rights": "You are, in principle, free to use this data."
+      },
+      {
+        "rights": "本データの利用に当たり、原則として、何らの制約はありません。"
+      }
+    ],
+    "descriptions": [
+      {
+        "lang": "en",
+        "description": "Representative input files for the calculations presented in the paper.",
+        "descriptionType": "Other"
+      },
+      {
+        "lang": "en",
+        "description": "Data for Ochi Masayuki, Mori Hitoshi, Nakano Akitoshi. Valley-dependent electron-phonon scattering in thermoelectric semimetal Ta₂PdSe₆. Physical Review B 113, 245112 (2026); https://doi.org/10.1103/ln4p-846x.",
+        "descriptionType": "Other"
+      }
+    ],
+    "geoLocations": [],
+    "fundingReferences": [],
+    "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8cmVzb3VyY2UgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeG1sbnM9Imh0dHA6Ly9kYXRhY2l0ZS5vcmcvc2NoZW1hL2tlcm5lbC00IiB4c2k6c2NoZW1hTG9jYXRpb249Imh0dHA6Ly9kYXRhY2l0ZS5vcmcvc2NoZW1hL2tlcm5lbC00IGh0dHBzOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00LjYvbWV0YWRhdGEueHNkIj4KICA8aWRlbnRpZmllciBpZGVudGlmaWVyVHlwZT0iRE9JIj4xMC42MDU3NC8xMDQ2ODI8L2lkZW50aWZpZXI+CiAgPGNyZWF0b3JzPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSB4bWw6bGFuZz0iZW4iIG5hbWVUeXBlPSJQZXJzb25hbCI+T2NoaSBNYXNheXVraTwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+TWFzYXl1a2k8L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+T2NoaTwvZmFtaWx5TmFtZT4KICAgICAgPG5hbWVJZGVudGlmaWVyIG5hbWVJZGVudGlmaWVyU2NoZW1lPSJOUklEIj4xMDAwMDEwNzM0MzUzPC9uYW1lSWRlbnRpZmllcj4KICAgICAgPG5hbWVJZGVudGlmaWVyIG5hbWVJZGVudGlmaWVyU2NoZW1lPSJPUkNJRCI+MDAwMC0wMDAxLTc0MzgtNDc5NzwvbmFtZUlkZW50aWZpZXI+CiAgICA8L2NyZWF0b3I+CiAgPC9jcmVhdG9ycz4KICA8dGl0bGVzPgogICAgPHRpdGxlIHhtbDpsYW5nPSJlbiI+RGF0YSBmb3IgIlZhbGxleS1kZXBlbmRlbnQgZWxlY3Ryb24tcGhvbm9uIHNjYXR0ZXJpbmcgaW4gdGhlcm1vZWxlY3RyaWMgc2VtaW1ldGFsIFRh4oKCUGRTZeKChiI8L3RpdGxlPgogIDwvdGl0bGVzPgogIDxwdWJsaXNoZXIgeG1sOmxhbmc9ImVuIj5PY2hpLCBNYXNheXVraTwvcHVibGlzaGVyPgogIDxwdWJsaWNhdGlvblllYXI+MjAyNjwvcHVibGljYXRpb25ZZWFyPgogIDxzdWJqZWN0cy8+CiAgPGNvbnRyaWJ1dG9ycy8+CiAgPGRhdGVzPgogICAgPGRhdGUgZGF0ZVR5cGU9IkF2YWlsYWJsZSI+MjAyNi0wNS0wODwvZGF0ZT4KICA8L2RhdGVzPgogIDxsYW5ndWFnZT5lbjwvbGFuZ3VhZ2U+CiAgPHJlc291cmNlVHlwZSByZXNvdXJjZVR5cGVHZW5lcmFsPSJEYXRhc2V0Ij5kYXRhc2V0PC9yZXNvdXJjZVR5cGU+CiAgPGFsdGVybmF0ZUlkZW50aWZpZXJzPgogICAgPGFsdGVybmF0ZUlkZW50aWZpZXIgYWx0ZXJuYXRlSWRlbnRpZmllclR5cGU9Ik9BSVBNSCI+b2FpOmlyZGIubmlpLmFjLmpwOjAxMDU2OjAwMDczNzU1MjQ8L2FsdGVybmF0ZUlkZW50aWZpZXI+CiAgPC9hbHRlcm5hdGVJZGVudGlmaWVycz4KICA8cmVsYXRlZElkZW50aWZpZXJzPgogICAgPHJlbGF0ZWRJZGVudGlmaWVyIHJlbGF0ZWRJZGVudGlmaWVyVHlwZT0iRE9JIiByZWxhdGlvblR5cGU9IklzU3VwcGxlbWVudFRvIj5odHRwczovL2RvaS5vcmcvMTAuMTEwMy9sbjRwLTg0Nng8L3JlbGF0ZWRJZGVudGlmaWVyPgogIDwvcmVsYXRlZElkZW50aWZpZXJzPgogIDxzaXplcz4KICAgIDxzaXplPjE0LjVLQjwvc2l6ZT4KICA8L3NpemVzPgogIDxmb3JtYXRzPgogICAgPGZvcm1hdD5hcHBsaWNhdGlvbi96aXA8L2Zvcm1hdD4KICA8L2Zvcm1hdHM+CiAgPHJpZ2h0c0xpc3Q+CiAgICA8cmlnaHRzPllvdSBhcmUsIGluIHByaW5jaXBsZSwgZnJlZSB0byB1c2UgdGhpcyBkYXRhLjwvcmlnaHRzPgogICAgPHJpZ2h0cz7mnKzjg4fjg7zjgr/jga7liKnnlKjjgavlvZPjgZ/jgorjgIHljp/liYfjgajjgZfjgabjgIHkvZXjgonjga7liLbntITjga/jgYLjgorjgb7jgZvjgpPjgII8L3JpZ2h0cz4KICA8L3JpZ2h0c0xpc3Q+CiAgPGRlc2NyaXB0aW9ucz4KICAgIDxkZXNjcmlwdGlvbiBkZXNjcmlwdGlvblR5cGU9Ik90aGVyIiB4bWw6bGFuZz0iZW4iPlJlcHJlc2VudGF0aXZlIGlucHV0IGZpbGVzIGZvciB0aGUgY2FsY3VsYXRpb25zIHByZXNlbnRlZCBpbiB0aGUgcGFwZXIuPC9kZXNjcmlwdGlvbj4KICAgIDxkZXNjcmlwdGlvbiBkZXNjcmlwdGlvblR5cGU9Ik90aGVyIiB4bWw6bGFuZz0iZW4iPkRhdGEgZm9yIE9jaGkgTWFzYXl1a2ksIE1vcmkgSGl0b3NoaSwgTmFrYW5vIEFraXRvc2hpLiBWYWxsZXktZGVwZW5kZW50IGVsZWN0cm9uLXBob25vbiBzY2F0dGVyaW5nIGluIHRoZXJtb2VsZWN0cmljIHNlbWltZXRhbCBUYeKCglBkU2XigoYuIFBoeXNpY2FsIFJldmlldyBCIDExMywgMjQ1MTEyICgyMDI2KTsgaHR0cHM6Ly9kb2kub3JnLzEwLjExMDMvbG40cC04NDZ4LjwvZGVzY3JpcHRpb24+CiAgPC9kZXNjcmlwdGlvbnM+CiAgPGdlb0xvY2F0aW9ucy8+CiAgPGZ1bmRpbmdSZWZlcmVuY2VzLz4KPC9yZXNvdXJjZT4=",
+    "url": "https://hdl.handle.net/11094/104682",
+    "contentUrl": null,
+    "metadataVersion": 1,
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "source": "mds",
+    "isActive": true,
+    "state": "findable",
+    "reason": null,
+    "viewCount": 0,
+    "viewsOverTime": [],
+    "downloadCount": 0,
+    "downloadsOverTime": [],
+    "referenceCount": 0,
+    "citationCount": 1,
+    "citationsOverTime": [
+      {
+        "year": "2026",
+        "total": 1
+      }
+    ],
+    "partCount": 0,
+    "partOfCount": 0,
+    "versionCount": 0,
+    "versionOfCount": 0,
+    "created": "2026-05-09T22:26:45.000Z",
+    "registered": "2026-05-09T22:33:40.000Z",
+    "published": "2026",
+    "updated": "2026-06-07T22:28:06.000Z"
+  },
+  "relationships": {
+    "client": {
+      "data": {
+        "id": "osakau.osakau",
+        "type": "clients"
+      }
+    },
+    "provider": {
+      "data": {
+        "id": "osakau",
+        "type": "providers"
+      }
+    },
+    "media": {
+      "data": {
+        "id": "10.60574/104682",
+        "type": "media"
+      }
+    },
+    "references": {
+      "data": []
+    },
+    "citations": {
+      "data": [
+        {
+          "id": "10.1103/ln4p-846x",
+          "type": "dois"
+        }
+      ]
+    },
+    "parts": {
+      "data": []
+    },
+    "partOf": {
+      "data": []
+    },
+    "versions": {
+      "data": []
+    },
+    "versionOf": {
+      "data": []
+    }
+  }
+}

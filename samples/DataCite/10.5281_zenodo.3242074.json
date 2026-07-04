@@ -1,0 +1,156 @@
+{
+  "id": "10.5281/zenodo.3242074",
+  "type": "dois",
+  "attributes": {
+    "doi": "10.5281/zenodo.3242074",
+    "prefix": "10.5281",
+    "suffix": "zenodo.3242074",
+    "identifiers": [],
+    "alternateIdentifiers": [],
+    "creators": [
+      {
+        "name": "Binder, Project",
+        "givenName": "Project",
+        "familyName": "Binder",
+        "affiliation": [
+          {
+            "name": "Project Jupyter"
+          }
+        ],
+        "nameIdentifiers": []
+      }
+    ],
+    "titles": [
+      {
+        "title": "Simple requirements.txt based example for repo2docker"
+      }
+    ],
+    "publisher": {
+      "name": "Zenodo"
+    },
+    "container": {},
+    "publicationYear": 2019,
+    "subjects": [],
+    "contributors": [],
+    "dates": [
+      {
+        "date": "2019-06-09",
+        "dateType": "Issued"
+      }
+    ],
+    "language": null,
+    "types": {
+      "ris": "COMP",
+      "bibtex": "misc",
+      "citeproc": "article",
+      "schemaOrg": "SoftwareSourceCode",
+      "resourceTypeGeneral": "Software"
+    },
+    "relatedIdentifiers": [
+      {
+        "relationType": "IsSourceOf",
+        "relatedIdentifier": "https://mybinder.org/v2/zenodo/10.5281/zenodo.3242074",
+        "relatedIdentifierType": "URL"
+      },
+      {
+        "relationType": "IsVersionOf",
+        "relatedIdentifier": "10.5281/zenodo.3242073",
+        "relatedIdentifierType": "DOI"
+      }
+    ],
+    "relatedItems": [],
+    "sizes": [],
+    "formats": [],
+    "version": null,
+    "rightsList": [
+      {
+        "rights": "BSD 3-Clause \"New\" or \"Revised\" License",
+        "rightsUri": "http://www.opensource.org/licenses/BSD-3-Clause"
+      },
+      {
+        "rights": "Open Access",
+        "rightsUri": "info:eu-repo/semantics/openAccess"
+      }
+    ],
+    "descriptions": [
+      {
+        "description": "Simple requirements.txt based example",
+        "descriptionType": "Abstract"
+      }
+    ],
+    "geoLocations": [],
+    "fundingReferences": [],
+    "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHJlc291cmNlIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiIHhtbG5zPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCIgeHNpOnNjaGVtYUxvY2F0aW9uPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCBodHRwOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00LjEvbWV0YWRhdGEueHNkIj4KICA8aWRlbnRpZmllciBpZGVudGlmaWVyVHlwZT0iRE9JIj4xMC41MjgxL1pFTk9ETy4zMjQyMDc0PC9pZGVudGlmaWVyPgogIDxjcmVhdG9ycz4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWU+QmluZGVyLCBQcm9qZWN0PC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5Qcm9qZWN0PC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPkJpbmRlcjwvZmFtaWx5TmFtZT4KICAgICAgPGFmZmlsaWF0aW9uPlByb2plY3QgSnVweXRlcjwvYWZmaWxpYXRpb24+CiAgICA8L2NyZWF0b3I+CiAgPC9jcmVhdG9ycz4KICA8dGl0bGVzPgogICAgPHRpdGxlPlNpbXBsZSByZXF1aXJlbWVudHMudHh0IGJhc2VkIGV4YW1wbGUgZm9yIHJlcG8yZG9ja2VyPC90aXRsZT4KICA8L3RpdGxlcz4KICA8cHVibGlzaGVyPlplbm9kbzwvcHVibGlzaGVyPgogIDxwdWJsaWNhdGlvblllYXI+MjAxOTwvcHVibGljYXRpb25ZZWFyPgogIDxkYXRlcz4KICAgIDxkYXRlIGRhdGVUeXBlPSJJc3N1ZWQiPjIwMTktMDYtMDk8L2RhdGU+CiAgPC9kYXRlcz4KICA8cmVzb3VyY2VUeXBlIHJlc291cmNlVHlwZUdlbmVyYWw9IlNvZnR3YXJlIi8+CiAgPGFsdGVybmF0ZUlkZW50aWZpZXJzPgogICAgPGFsdGVybmF0ZUlkZW50aWZpZXIgYWx0ZXJuYXRlSWRlbnRpZmllclR5cGU9InVybCI+aHR0cHM6Ly96ZW5vZG8ub3JnL3JlY29yZC8zMjQyMDc0PC9hbHRlcm5hdGVJZGVudGlmaWVyPgogIDwvYWx0ZXJuYXRlSWRlbnRpZmllcnM+CiAgPHJlbGF0ZWRJZGVudGlmaWVycz4KICAgIDxyZWxhdGVkSWRlbnRpZmllciByZWxhdGVkSWRlbnRpZmllclR5cGU9IlVSTCIgcmVsYXRpb25UeXBlPSJJc1NvdXJjZU9mIj5odHRwczovL215YmluZGVyLm9yZy92Mi96ZW5vZG8vMTAuNTI4MS96ZW5vZG8uMzI0MjA3NDwvcmVsYXRlZElkZW50aWZpZXI+CiAgICA8cmVsYXRlZElkZW50aWZpZXIgcmVsYXRlZElkZW50aWZpZXJUeXBlPSJET0kiIHJlbGF0aW9uVHlwZT0iSXNWZXJzaW9uT2YiPjEwLjUyODEvemVub2RvLjMyNDIwNzM8L3JlbGF0ZWRJZGVudGlmaWVyPgogIDwvcmVsYXRlZElkZW50aWZpZXJzPgogIDxyaWdodHNMaXN0PgogICAgPHJpZ2h0cyByaWdodHNVUkk9Imh0dHA6Ly93d3cub3BlbnNvdXJjZS5vcmcvbGljZW5zZXMvQlNELTMtQ2xhdXNlIj5CU0QgMy1DbGF1c2UgIk5ldyIgb3IgIlJldmlzZWQiIExpY2Vuc2U8L3JpZ2h0cz4KICAgIDxyaWdodHMgcmlnaHRzVVJJPSJpbmZvOmV1LXJlcG8vc2VtYW50aWNzL29wZW5BY2Nlc3MiPk9wZW4gQWNjZXNzPC9yaWdodHM+CiAgPC9yaWdodHNMaXN0PgogIDxkZXNjcmlwdGlvbnM+CiAgICA8ZGVzY3JpcHRpb24gZGVzY3JpcHRpb25UeXBlPSJBYnN0cmFjdCI+Jmx0O3AmZ3Q7U2ltcGxlIHJlcXVpcmVtZW50cy50eHQgYmFzZWQgZXhhbXBsZSZsdDsvcCZndDs8L2Rlc2NyaXB0aW9uPgogIDwvZGVzY3JpcHRpb25zPgo8L3Jlc291cmNlPg==",
+    "url": "https://zenodo.org/record/3242074",
+    "contentUrl": null,
+    "metadataVersion": 1,
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "source": "mds",
+    "isActive": true,
+    "state": "findable",
+    "reason": null,
+    "viewCount": 131,
+    "viewsOverTime": [
+      {
+        "yearMonth": "2020-06",
+        "total": 131
+      }
+    ],
+    "downloadCount": 0,
+    "downloadsOverTime": [
+      {
+        "yearMonth": "2020-06",
+        "total": 0
+      }
+    ],
+    "referenceCount": 0,
+    "citationCount": 0,
+    "citationsOverTime": [],
+    "partCount": 0,
+    "partOfCount": 0,
+    "versionCount": 0,
+    "versionOfCount": 0,
+    "created": "2019-06-09T16:03:24.000Z",
+    "registered": "2019-06-09T16:03:25.000Z",
+    "published": "2019",
+    "updated": "2020-06-17T20:21:14.000Z"
+  },
+  "relationships": {
+    "client": {
+      "data": {
+        "id": "cern.zenodo",
+        "type": "clients"
+      }
+    },
+    "provider": {
+      "data": {
+        "id": "cern",
+        "type": "providers"
+      }
+    },
+    "media": {
+      "data": {
+        "id": "10.5281/zenodo.3242074",
+        "type": "media"
+      }
+    },
+    "references": {
+      "data": []
+    },
+    "citations": {
+      "data": []
+    },
+    "parts": {
+      "data": []
+    },
+    "partOf": {
+      "data": []
+    },
+    "versions": {
+      "data": []
+    },
+    "versionOf": {
+      "data": []
+    }
+  }
+}

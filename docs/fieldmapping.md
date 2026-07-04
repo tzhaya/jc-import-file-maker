@@ -1,8 +1,8 @@
 # フィールドマッピング一覧
 
-Crossref / JaLC / OpenAlex / ROR API から取得したデータを、JPCOARスキーマの各フィールドにどのようにマッピングしているかの一覧です。Crossrefパス（`mapToItemType`）とJaLCパス（`mapToItemTypeJaLC`）の2系統があり、DOIのRA（Registration Agency）に応じて自動分岐します。
+Crossref / JaLC / DataCite / OpenAlex / ROR API から取得したデータを、JPCOARスキーマの各フィールドにどのようにマッピングしているかの一覧です。Crossrefパス（`mapToItemType`）・JaLCパス（`mapToItemTypeJaLC`）・DataCiteパス（`mapToItemTypeDataCite`）の3系統があり、DOIのRA（Registration Agency）に応じて自動分岐します。
 
-本ドキュメントではCrossrefパスを中心に記載し、JaLCパス固有の差異は「JaLCパスの差異」セクションにまとめています。
+本ドキュメントではCrossrefパスを中心に記載し、JaLCパス固有の差異は「JaLCパスの差異」、DataCiteパス固有の差異は「DataCiteパスの差異」セクションにまとめています。DataCiteパスの完全なフィールド対応表（資源タイプ34値・関連タイプ39値等）は仕様書 [datacite_jpcoar_mapping.md](datacite_jpcoar_mapping.md) を参照してください。
 
 ## メインデータソース
 
@@ -275,6 +275,7 @@ Crossrefの `date-parts` 配列をISO 8601形式に変換します。取得優�
 | **OpenAlex** | `https://api.openalex.org/works/doi:{DOI}` | 著者所属・OA情報の補完 | なし |
 | **ROR v2** | `https://api.ror.org/v2/organizations/{ror_id}` | 機関名・ISNI情報の取得（並列フェッチ） | なし |
 | **JaLC** | `https://api.japanlinkcenter.org/v2/dois/{DOI}` | JaLC DOIの書誌データ取得 | あり（拡張のみ） |
+| **DataCite** | `https://api.datacite.org/dois/{DOI}?publisher=true&affiliation=true` | DataCite DOIの書誌データ取得 | なし（標準版・拡張版とも利用可） |
 | **KAKEN XML** | `https://kaken.nii.ac.jp/opensearch/` | 科研費情報取得（補助金番号→正規番号解決） | あり（拡張のみ） |
 | **CiNii Research** | `https://cir.nii.ac.jp/opensearch/v2/projects` | KAKEN情報フォールバック・NCID取得 | なし |
 | **Crossref JGN** | `https://api.crossref.org/works/10.52926/{award}` | Japan Grant Number連携（課題名・URI・プログラム情報） | なし |
@@ -304,6 +305,39 @@ RA判定でJaLCと判定されたDOIは、`mapToItemTypeJaLC()` / `buildJaLCAuth
 | **助成機関名** | 単一言語（'en'） | 多言語（`funder_name[]` の `lang` を使用） |
 | **助成機関識別子** | `funder[].DOI` から直接取得 | `funder_identifier_list` から FundRef タイプのDOIを正規表現抽出 |
 | **研究課題番号** | 各awardを個別処理 | カンマ区切り（`,` / `、`）を分割して個別処理 |
+
+## DataCiteパスの差異
+
+RA判定でDataCiteと判定されたDOIは、`mapToItemTypeDataCite()` / `buildDataCiteAuthors()` / `buildDataCiteFunders()` で処理されます。完全なフィールド対応表は仕様書 [datacite_jpcoar_mapping.md](datacite_jpcoar_mapping.md) を参照してください。ここではCrossref/JaLCパスとの主な差異のみ記載します。
+
+### 作成者 (buildDataCiteAuthors)
+
+| 観点 | JaLCパス | DataCiteパス |
+|---|---|---|
+| **組織作成者** | 対応なし（常に個人名として処理） | `nameType: "Organizational"` は姓名分離せず `name` をそのまま使用（`creatorNameType: 'Organizational'`） |
+| **所属識別子** | `affiliation_identifier_list` から ROR/ISNI/GRID/WIKIDATA を判別 | `affiliationIdentifierScheme` から ROR/ISNI/Ringgold/GRID を判別（WIKIDATAは対象外） |
+| **識別子** | ORCID + e-Rad（researcher ID） | ORCID + e-Rad_Researcher + NRID（`nameIdentifierScheme` から判別） |
+
+### 助成情報 (buildDataCiteFunders)
+
+buildJaLCFunders・buildFunders とは独立した関数として実装されており、JaLC/Crossrefパスのロジックには影響しません。
+
+| 観点 | JaLCパス | DataCiteパス |
+|---|---|---|
+| **助成機関識別子タイプ** | FundRefタイプのDOIのみ | `funderIdentifierType`（Crossref Funder ID/ROR/ISNI/GRID/Other）から変換 |
+| **研究課題番号のグルーピング** | カンマ区切りの `award_number_group_list` を分割して複数エントリ生成 | `fundingReferences[]` エントリごとに `awardNumber` 最大1件（グルーピング構造を持たない） |
+| **研究課題名のフォールバック** | KAKEN/JGN連携の結果のみ | KAKEN/JGN連携の結果を優先し、無ければ `awardTitle`（DataCiteのみ持つ利点）を使用 |
+
+### 資源タイプ・関連情報・アクセス権
+
+| 観点 | JaLCパス | DataCiteパス |
+|---|---|---|
+| **資源タイプ** | `JALC_CONTENT_TYPE_MAP`（5値） | `normalizeDataCiteResourceType()`：PascalCase正規化 → `TITLE_MAPS.resourcetype` 一致判定 → `DATACITE_RESOURCE_TYPE_MAP`（20値）の順（未知値は空文字） |
+| **関連情報のタイプ変換** | `relation_list[].relation` をそのまま使用 | `DATACITE_RELATION_TYPE_MAP`（39値→22値）で変換。対応なしのエントリは破棄 |
+| **アクセス権・出版タイプ** | OPFエンバーゴで動的判定 | **既定値固定**（`open access`、出版タイプ空欄）。OPF照会は参照リンク・ヒント表示にのみ使用 |
+| **その他のタイトル・時間的範囲・位置情報** | 未実装 | `titles[].titleType`・`dates[].dateType: Coverage`・`geoLocations[]` にそれぞれ対応 |
+
+対象外の項目（寄与者・ファイル情報・その他識別子・位置情報のpolygon等）は [datacite_jpcoar_mapping.md §15](datacite_jpcoar_mapping.md#15-datacite-doi-対応の制限事項一覧) を参照してください。
 
 ## TSVプロパティキーの命名規則
 

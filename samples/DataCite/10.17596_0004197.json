@@ -1,0 +1,155 @@
+{
+  "id": "10.17596/0004197",
+  "type": "dois",
+  "attributes": {
+    "doi": "10.17596/0004197",
+    "prefix": "10.17596",
+    "suffix": "0004197",
+    "identifiers": [],
+    "alternateIdentifiers": [],
+    "creators": [
+      {
+        "name": "Kawamura Noriko",
+        "nameType": "Personal",
+        "givenName": "Noriko",
+        "familyName": "Kawamura",
+        "affiliation": [
+          {
+            "name": "JCG"
+          }
+        ],
+        "nameIdentifiers": []
+      }
+    ],
+    "titles": [
+      {
+        "lang": "en",
+        "title": "S/V YOKOSUKA Cruise report YK26-06S"
+      }
+    ],
+    "publisher": {
+      "lang": "en",
+      "name": "JAMSTEC"
+    },
+    "container": {},
+    "publicationYear": 2026,
+    "subjects": [
+      {
+        "lang": "en",
+        "subject": "Cruise report"
+      },
+      {
+        "lang": "en",
+        "subject": "S/V YOKOSUKA"
+      },
+      {
+        "lang": "en",
+        "subject": "oceans",
+        "subjectScheme": "ISO 19115 Topic Category"
+      }
+    ],
+    "contributors": [],
+    "dates": [],
+    "language": "en",
+    "types": {
+      "ris": "RPRT",
+      "bibtex": "article",
+      "citeproc": "article-journal",
+      "schemaOrg": "ScholarlyArticle",
+      "resourceType": "Cruise report",
+      "resourceTypeGeneral": "Text"
+    },
+    "relatedIdentifiers": [
+      {
+        "relationType": "IsPartOf",
+        "relatedIdentifier": "10.17596/0004196",
+        "relatedIdentifierType": "DOI"
+      }
+    ],
+    "relatedItems": [],
+    "sizes": [],
+    "formats": [],
+    "version": null,
+    "rightsList": [],
+    "descriptions": [
+      {
+        "lang": "en",
+        "description": "[CRUISE REPORT]\nThis document is a preliminary report of YK26-06S on S/V YOKOSUKA from 2026-05-31 to 2026-06-12.",
+        "descriptionType": "Abstract"
+      }
+    ],
+    "geoLocations": [
+      {
+        "geoLocationPlace": "The Toyama Bay"
+      }
+    ],
+    "fundingReferences": [],
+    "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8cmVzb3VyY2UgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeG1sbnM9Imh0dHA6Ly9kYXRhY2l0ZS5vcmcvc2NoZW1hL2tlcm5lbC00IiB4c2k6c2NoZW1hTG9jYXRpb249Imh0dHA6Ly9kYXRhY2l0ZS5vcmcvc2NoZW1hL2tlcm5lbC00IGh0dHBzOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00LjcvbWV0YWRhdGEueHNkIj4KICA8aWRlbnRpZmllciBpZGVudGlmaWVyVHlwZT0iRE9JIj4xMC4xNzU5Ni8wMDA0MTk3PC9pZGVudGlmaWVyPgogIDxjcmVhdG9ycz4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgeG1sOmxhbmc9ImVuIiBuYW1lVHlwZT0iUGVyc29uYWwiPkthd2FtdXJhIE5vcmlrbzwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+Tm9yaWtvPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPkthd2FtdXJhPC9mYW1pbHlOYW1lPgogICAgICA8YWZmaWxpYXRpb24+SkNHPC9hZmZpbGlhdGlvbj4KICAgIDwvY3JlYXRvcj4KICA8L2NyZWF0b3JzPgogIDx0aXRsZXM+CiAgICA8dGl0bGUgeG1sOmxhbmc9ImVuIj5TL1YgWU9LT1NVS0EgQ3J1aXNlIHJlcG9ydCBZSzI2LTA2UzwvdGl0bGU+CiAgPC90aXRsZXM+CiAgPHB1Ymxpc2hlciB4bWw6bGFuZz0iZW4iPkpBTVNURUM8L3B1Ymxpc2hlcj4KICA8cHVibGljYXRpb25ZZWFyPjIwMjY8L3B1YmxpY2F0aW9uWWVhcj4KICA8c3ViamVjdHM+CiAgICA8c3ViamVjdCB4bWw6bGFuZz0iZW4iPkNydWlzZSByZXBvcnQ8L3N1YmplY3Q+CiAgICA8c3ViamVjdCB4bWw6bGFuZz0iZW4iPlMvViBZT0tPU1VLQTwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHN1YmplY3RTY2hlbWU9IklTTyAxOTExNSBUb3BpYyBDYXRlZ29yeSIgeG1sOmxhbmc9ImVuIj5vY2VhbnM8L3N1YmplY3Q+CiAgPC9zdWJqZWN0cz4KICA8Y29udHJpYnV0b3JzLz4KICA8ZGF0ZXMvPgogIDxsYW5ndWFnZT5lbjwvbGFuZ3VhZ2U+CiAgPHJlc291cmNlVHlwZSByZXNvdXJjZVR5cGVHZW5lcmFsPSJUZXh0Ij5DcnVpc2UgcmVwb3J0PC9yZXNvdXJjZVR5cGU+CiAgPGFsdGVybmF0ZUlkZW50aWZpZXJzLz4KICA8cmVsYXRlZElkZW50aWZpZXJzPgogICAgPHJlbGF0ZWRJZGVudGlmaWVyIHJlbGF0ZWRJZGVudGlmaWVyVHlwZT0iRE9JIiByZWxhdGlvblR5cGU9IklzUGFydE9mIj4xMC4xNzU5Ni8wMDA0MTk2PC9yZWxhdGVkSWRlbnRpZmllcj4KICA8L3JlbGF0ZWRJZGVudGlmaWVycz4KICA8c2l6ZXMvPgogIDxmb3JtYXRzLz4KICA8cmlnaHRzTGlzdC8+CiAgPGRlc2NyaXB0aW9ucz4KICAgIDxkZXNjcmlwdGlvbiBkZXNjcmlwdGlvblR5cGU9IkFic3RyYWN0IiB4bWw6bGFuZz0iZW4iPltDUlVJU0UgUkVQT1JUXQpUaGlzIGRvY3VtZW50IGlzIGEgcHJlbGltaW5hcnkgcmVwb3J0IG9mIFlLMjYtMDZTIG9uIFMvViBZT0tPU1VLQSBmcm9tIDIwMjYtMDUtMzEgdG8gMjAyNi0wNi0xMi48L2Rlc2NyaXB0aW9uPgogIDwvZGVzY3JpcHRpb25zPgogIDxnZW9Mb2NhdGlvbnM+CiAgICA8Z2VvTG9jYXRpb24+CiAgICAgIDxnZW9Mb2NhdGlvblBsYWNlPlRoZSBUb3lhbWEgQmF5PC9nZW9Mb2NhdGlvblBsYWNlPgogICAgPC9nZW9Mb2NhdGlvbj4KICA8L2dlb0xvY2F0aW9ucz4KICA8ZnVuZGluZ1JlZmVyZW5jZXMvPgo8L3Jlc291cmNlPg==",
+    "url": "https://www.jamstec.go.jp/datadoi/doi/10.17596/0004197.html",
+    "contentUrl": null,
+    "metadataVersion": 0,
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "source": "mds",
+    "isActive": true,
+    "state": "findable",
+    "reason": null,
+    "viewCount": 0,
+    "viewsOverTime": [],
+    "downloadCount": 0,
+    "downloadsOverTime": [],
+    "referenceCount": 0,
+    "citationCount": 0,
+    "citationsOverTime": [],
+    "partCount": 0,
+    "partOfCount": 1,
+    "versionCount": 0,
+    "versionOfCount": 0,
+    "created": "2026-07-02T22:27:21.000Z",
+    "registered": "2026-07-02T22:34:11.000Z",
+    "published": "2026",
+    "updated": "2026-07-02T22:34:11.000Z"
+  },
+  "relationships": {
+    "client": {
+      "data": {
+        "id": "jamstec.jamstec",
+        "type": "clients"
+      }
+    },
+    "provider": {
+      "data": {
+        "id": "jamstec",
+        "type": "providers"
+      }
+    },
+    "media": {
+      "data": {
+        "id": "10.17596/0004197",
+        "type": "media"
+      }
+    },
+    "references": {
+      "data": []
+    },
+    "citations": {
+      "data": []
+    },
+    "parts": {
+      "data": []
+    },
+    "partOf": {
+      "data": [
+        {
+          "id": "10.17596/0004196",
+          "type": "dois"
+        }
+      ]
+    },
+    "versions": {
+      "data": []
+    },
+    "versionOf": {
+      "data": []
+    }
+  }
+}
