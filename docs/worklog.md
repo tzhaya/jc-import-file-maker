@@ -1,6 +1,41 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-04（DataCite DOI メタデータ取得・マッピングの実装 #208）
+最終更新: 2026-07-04（DataCite DOIパスへのOpenAlex補完 #212）
+
+## DataCite DOIパスへのOpenAlex補完（2026-07-04, #212）
+
+### 概要
+#208（DataCite DOI マッピング実装）はスコープ外としていた OpenAlex 連携を追加した。DOI が OpenAlex に収録されている場合、OA ステータスに基づき OA バッジ・出版タイプ・関連情報（`isIdenticalTo`/`isVersionOf`）を補完する。事前の実測調査（Issue #212 本文・コメント参照）で「収録率は40〜100%とばらつく」「収録分はほぼ green」「green の dataset に版フォールバックで AM が誤混入する」ことを確認し、スコープを次の3点に確定した。
+
+### 実装したもの
+- **404 正常系フォールバック**: `fetchOpenAlex()` の例外に `err.status` を付与し、新設の `fetchOpenAlexOrNull(doi)` が 404 のみ `null` を返す。409（レート制限）・ネットワーク断・その他障害は握りつぶさず例外として伝播する。
+- **`fetchDataCiteData()`**: `fetchOpenAlexOrNull(doi)` を呼び出し、結果を `mapToItemTypeDataCite(attrs, oaJson)` に明示引数として渡す（グローバル状態に依存しない設計。バッチ一括取得時の前DOI状態の残留を回避）。OA バッジは `oaJson` の有無・`oa_status` から `OA_BADGE_MAP` で表示（未収録時は従来どおり Unknown 固定）。
+- **`mapToItemTypeDataCite()`**: 資源タイプの許可リスト `DATACITE_VERSION_TYPE_ELIGIBLE_RESOURCETYPES`（journal article/article/conference paper/review article/data paper/software paper/departmental bulletin paper/editorial/other periodical/newspaper）を新設。`oaJson` があり、かつ資源タイプがこの許可リストに含まれる場合のみ既存の `determineVersionInfo(oaStatus, oaJson)` を呼び、出版タイプ（`item_30002_version_type15`）と自DOI関連情報の `relationType` を設定する。それ以外（dataset/software/other等、または OpenAlex 未収録）は従来どおり出版タイプ空欄・`isIdenticalTo` 固定。
+- **アクセス権は既定値のまま**: `determineAccessRights()` は OPF データが無いと常に `open access` を返すため、OPF 連動（エンバーゴ判定）を伴わない限り呼び出しても無意味と判断し、`open access` 固定を維持した。OPF 連動は別Issueへ分離（後述）。
+
+### あわせて修正した既存バグ（`buildSelect()`）
+ブラウザE2Eテストで、出版タイプが空文字（`''`）のDataCite dataset/softwareレコードを開くと、`<select>` の表示値が意図しない `AO`（Author's Original、options配列の先頭要素）になっていることが判明した。原因は `buildSelect()` が選択値に一致する `<option>` を持たない場合に空の `<option>` を補わないため、ブラウザがフォールバックで先頭要素を選択してしまうこと。`collectFromDOM()` はDOMの `<select>.value` から値を収集するため、修正しないとTSVエクスポート時に誤った出版タイプ（`AO`）が出力される実害があった。この不整合は#208で出版タイプが常に空文字だった全DataCiteレコードに潜在していたが、当時のE2Eは出版タイプの値を検証しておらず未発見だった。`buildSelect()` に「選択値がoptions一覧に無い場合は空の`<option>`を先頭に補う」処理を追加し解消（標準版・拡張版とも同一修正）。
+
+### 変更ファイル
+- `make_jc_importer.html` / `chrome-extension/make_jc_importer.js`（同一実装をミラー）
+- `make_jc_importer_test.html`（gitignore対象・ローカル再構築）
+- `chrome-extension/manifest.json`（`1.17.0` → `1.18.0`）・`chrome-extension/panel.html`（更新概要）
+- `docs/datacite_jpcoar_mapping.md`（§4 アクセス権・出版タイプ行、§15 制限事項一覧を更新）・`docs/user_guide.md`（DataCite DOI の制限事項節）・`docs/fieldmapping.md`（DataCiteパスの差異節）・`docs/requirements.md`・`README.md`・`docs/changelog.md`
+
+### 検証
+Node サンドボックスで `make_jc_importer.html` の `<script>` を vm コンテキストへロードし、実データ（`samples/DataCite/`）＋実際の OpenAlex API 呼び出しで以下6ケースを検証、全てPASS（標準版・Chrome拡張版の両ファイルで同一結果）。
+1. OpenAlex収録あり・green の Dataset（`10.57723/kds622523`）→ 出版タイプが空のまま（許可リスト外のため補完されない）
+2. OpenAlex収録あり・green の Preprint（`10.48550/arxiv.2212.04356`、資源タイプ `article`）→ 出版タイプ・relationType が判定される（実測: SMUR/isVersionOf）
+3. `oaJson=null` を明示的に渡した場合 → #208 時点の既定値挙動を維持
+4. 404はnullにフォールバック（モックfetchで決定的に検証。実データDOIは調査時点で404だったがOpenAlex側のインデックス更新により検証時点で収録済みに変わっていたため、モックに切替）
+5. 409エラーのモック → `fetchOpenAlexOrNull` が握りつぶさず例外を伝播することを確認
+6. Crossrefパス回帰（`10.1016/j.advnut.2025.100480`）→ `fetchOpenAlex()` への `err.status` 付与が既存挙動に影響しないことを確認
+
+続けてブラウザE2E（`/e2e-test`、Playwright）を実施。main（Crossref回帰、課題番号 `JP19KK0341` 検出→funder連携も確認）・DataCite green Preprint（出版タイプ補完される）・DataCite green Dataset（出版タイプ補完されない）の3ケースでOAバッジ・出版タイプ・アクセス権・自DOI関連情報のrelationTypeをDOM上で確認、ALL PASSED。このブラウザE2Eの過程で上記の`buildSelect()`バグを発見・修正した（Node サンドボックス検証はオブジェクトのプロパティ値のみ確認しておりDOM描画までは検証していなかったため未検出だった）。
+
+### 未確認事項・次段
+- ブラウザ実機でのE2Eテスト（`/e2e-test`、ユーザーによる手動実行が必要）
+- **ROR自動補完・OPF連動**は本Issueのスコープ外とし、フォローアップIssueへ分離した（実測でDataCite creatorsのraw所属文字列が0〜1件と乏しく、#165型の誤同定検出照合が成立しないこと、および現行DataCiteパスの処理順（マッピング後にOPF取得）がOPF連動には不向きであることを確認したため）
 
 ## DataCite DOI メタデータ取得・マッピングの実装（2026-07-04, #208）
 

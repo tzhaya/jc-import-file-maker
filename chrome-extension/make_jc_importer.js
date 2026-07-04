@@ -256,6 +256,16 @@ function normalizeDataCiteResourceType(resourceTypeGeneral) {
   return DATACITE_RESOURCE_TYPE_MAP[raw] || '';
 }
 
+// ===== OpenAlex補完対象資源タイプ（出版タイプ/relation、#212） =====
+// 「論文相当」のみに限定し、データセット・ソフトウェア等はOAステータスに紐づく版の概念が薄いため対象外とする。
+// 実測（2026-07-04）: OpenAlex収録済みのgreen判定Datasetにdetermineの版フォールバックでAMが混入することを確認したため、
+// 明示的にこの許可リストに無い資源タイプ（dataset/software/other等）は出版タイプ/relationを補完しない。
+const DATACITE_VERSION_TYPE_ELIGIBLE_RESOURCETYPES = new Set([
+  'journal article', 'article', 'conference paper', 'review article',
+  'data paper', 'software paper', 'departmental bulletin paper',
+  'editorial', 'other periodical', 'newspaper',
+]);
+
 // ===== DataCite relationType → ツール関連タイプマッピング（docs/datacite_jpcoar_mapping.md §7-1） =====
 // 未対応17値（Describes等）は意図的に未収載＝該当エントリは破棄する
 const DATACITE_RELATION_TYPE_MAP = {
@@ -706,6 +716,16 @@ function todayStr() {
 // onChange: 値変化時コールバック(value)
 function buildSelect(values, selected, onChange) {
   const sel = document.createElement('select');
+  // 選択値がoptions一覧に無い場合、空の<option>を補って先頭選択にフォールバックしないようにする
+  // （補わないと未設定<select>の.valueが先頭要素に化けてcollectFromDOM()で誤った値が収集される、#212で発覚）
+  const hasMatch = values.some(v => (typeof v === 'object' ? v.value : v) === selected);
+  if (!hasMatch) {
+    const blank = document.createElement('option');
+    blank.value = '';
+    blank.textContent = '';
+    blank.selected = true;
+    sel.appendChild(blank);
+  }
   for (const v of values) {
     const name  = (typeof v === 'object') ? v.name  : v;
     const value = (typeof v === 'object') ? v.value : v;
@@ -981,11 +1001,25 @@ async function fetchOpenAlex(doi) {
   }
   const resp = await fetch(url);
   if (!resp.ok) {
-    if (resp.status === 404) throw new Error('DOIがOpenAlexに見つかりません');
-    if (resp.status === 409) throw new Error('OpenAlex API Keyなしでの利用回数の制限を超えました。https://openalex.org/pricing でAPI Keyを取得し、設定してください。');
-    throw new Error(`OpenAlex APIエラー: ${resp.status}`);
+    let err;
+    if (resp.status === 404) err = new Error('DOIがOpenAlexに見つかりません');
+    else if (resp.status === 409) err = new Error('OpenAlex API Keyなしでの利用回数の制限を超えました。https://openalex.org/pricing でAPI Keyを取得し、設定してください。');
+    else err = new Error(`OpenAlex APIエラー: ${resp.status}`);
+    err.status = resp.status;
+    throw err;
   }
   return await resp.json();
+}
+
+// DataCite パス専用: OpenAlex 未収録(404)のみ null にフォールバックする補完取得。
+// 409（レート制限）・ネットワーク断・その他障害は握りつぶさず呼び出し元に伝播させる（#212）。
+async function fetchOpenAlexOrNull(doi) {
+  try {
+    return await fetchOpenAlex(doi);
+  } catch (e) {
+    if (e.status === 404) return null;
+    throw e;
+  }
 }
 
 // ===== 3.2b JaLC REST API =====
@@ -1623,19 +1657,25 @@ async function fetchJaLCData(doi) {
 async function fetchDataCiteData(doi) {
   const attrs = await fetchDataCite(doi);
 
-  // 情報バー表示（OAバッジなし。DataCiteはOpenAlex連携なしのためJaLCパスと同様にUnknown固定表示）
+  // OpenAlex補完（#212）: 404（未収録）のみ null にフォールバックし、既定値挙動を維持する。
+  // 409/429等の障害は fetchOpenAlexOrNull 内で握りつぶさず例外として伝播する。
+  const oaJson = await fetchOpenAlexOrNull(doi);
+
+  // 情報バー表示（OpenAlex収録時はOAバッジを表示。未収録時は従来どおりUnknown固定表示）
   const doiUrl = `https://doi.org/${doi}`;
   const doiLink = document.getElementById('doi-link');
   doiLink.href = doiUrl;
   doiLink.textContent = doiUrl;
+  const oaStatus = oaJson?.open_access?.oa_status || '';
+  const badgeInfo = OA_BADGE_MAP[oaStatus] || { label: '⚪ Unknown', bg: '#999' };
   const badge = document.getElementById('oa-badge');
-  badge.textContent = '⚪ Unknown';
-  badge.style.background = '#999';
-  lastOaStatus = '';
+  badge.textContent = badgeInfo.label;
+  badge.style.background = badgeInfo.bg;
+  lastOaStatus = oaStatus;
   document.getElementById('info-bar').style.display = 'flex';
 
   // マッピング（access_rightsは既定値固定でOPFに依存しないため、OPF取得より先に実行できる）
-  const metadata = await mapToItemTypeDataCite(attrs);
+  const metadata = await mapToItemTypeDataCite(attrs, oaJson);
 
   // OPF照会は参照リンク・ヒント表示のみに使用し、アクセス権の自動判定には使わない
   const issns = metadata.item_30002_source_identifier22
@@ -3373,7 +3413,7 @@ function buildDataCiteGeolocations(geoLocations) {
 
 // ===== 4.5g DataCite メインマッピング関数 =====
 // access_rights・version_type は OpenAlex連携なしのため既定値固定（JaLCパス同様、OPFはfetchDataCiteData側の表示のみに使用）
-async function mapToItemTypeDataCite(attrs) {
+async function mapToItemTypeDataCite(attrs, oaJson) {
   const doi = attrs.doi || '';
 
   // ===== タイトル・その他のタイトル =====
@@ -3453,11 +3493,21 @@ async function mapToItemTypeDataCite(attrs) {
     }
   }
 
+  // ===== OpenAlex補完（#212）: 論文相当の資源タイプのみ出版タイプ/relationTypeをOAステータスから判定 =====
+  // データセット・ソフトウェア等（許可リスト外）はOAステータスに紐づく版の概念が薄く誤った版（AM等）が
+  // 混入し得るため対象外とし、常に isIdenticalTo・出版タイプ空欄のまま据え置く。
+  const oaStatus = oaJson?.open_access?.oa_status || '';
+  const isVersionEligible = !!oaJson && DATACITE_VERSION_TYPE_ELIGIBLE_RESOURCETYPES.has(resourcetype);
+  const versionInfo     = isVersionEligible ? determineVersionInfo(oaStatus, oaJson) : null;
+  const versionType      = versionInfo?.versionType || '';
+  const versionResource  = versionType ? (VERSION_TYPE_MAP[versionType] || '') : '';
+  const selfRelationType = versionInfo?.relationType || 'isIdenticalTo';
+
   // ===== 関連情報（自DOI + relatedIdentifiers） =====
   const relations = [];
   if (doi) {
     relations.push({
-      subitem_relation_type: 'isIdenticalTo',
+      subitem_relation_type: selfRelationType,
       subitem_relation_type_id: { subitem_relation_type_id_text: `https://doi.org/${doi}`, subitem_relation_type_select: 'DOI' },
       subitem_relation_name: [],
     });
@@ -3467,7 +3517,9 @@ async function mapToItemTypeDataCite(attrs) {
   // ===== 位置情報 =====
   const geolocations = buildDataCiteGeolocations(attrs.geoLocations);
 
-  // ===== アクセス権・出版タイプ（OpenAlex連携なしのため既定値固定。JaLCパスのようなOPF連動判定は行わない） =====
+  // ===== アクセス権（OPF連動は見送り。determineAccessRightsはOPFデータ無しでは常にopen accessを
+  // 返すため呼び出しても無意味であり、既定値のまま固定する。エンバーゴ判定込みのOPF連動は将来の
+  // フォローアップIssueで検討） =====
   const accessRight    = 'open access';
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || '';
 
@@ -3506,7 +3558,7 @@ async function mapToItemTypeDataCite(attrs) {
     item_30002_language12: lang639_2 ? [{ subitem_language: lang639_2 }] : [],
     item_30002_resource_type13: { resourcetype, resourceuri },
     item_30002_version14: { subitem_version: attrs.version || '' },
-    item_30002_version_type15: { subitem_version_resource: '', subitem_version_type: '', subitem_peer_reviewed: '' },
+    item_30002_version_type15: { subitem_version_resource: versionResource, subitem_version_type: versionType, subitem_peer_reviewed: '' },
     item_30002_identifier16: [],
     item_30002_identifier_registration17: { subitem_identifier_reg_text: '', subitem_identifier_reg_type: '' },
     item_30002_relation18: relations,

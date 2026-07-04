@@ -334,7 +334,8 @@ buildJaLCFunders・buildFunders とは独立した関数として実装されて
 |---|---|---|
 | **資源タイプ** | `JALC_CONTENT_TYPE_MAP`（5値） | `normalizeDataCiteResourceType()`：PascalCase正規化 → `TITLE_MAPS.resourcetype` 一致判定 → `DATACITE_RESOURCE_TYPE_MAP`（20値）の順（未知値は空文字） |
 | **関連情報のタイプ変換** | `relation_list[].relation` をそのまま使用 | `DATACITE_RELATION_TYPE_MAP`（39値→22値）で変換。対応なしのエントリは破棄 |
-| **アクセス権・出版タイプ** | OPFエンバーゴで動的判定 | **既定値固定**（`open access`、出版タイプ空欄）。OPF照会は参照リンク・ヒント表示にのみ使用 |
+| **アクセス権** | OPFエンバーゴで動的判定 | **既定値固定**（`open access`）。#212でOpenAlex補完（OAバッジ・出版タイプ）を追加したがOPF連動は無いため実質不変。OPF照会は参照リンク・ヒント表示にのみ使用 |
+| **出版タイプ・relation** | article_typeから判定（AO/VoR） | DOIがOpenAlexに収録され、かつ資源タイプが「論文相当」の許可リスト（`DATACITE_VERSION_TYPE_ELIGIBLE_RESOURCETYPES`）に含まれる場合のみ`determineVersionInfo()`でOAステータスから判定（#212）。Dataset/Software等は対象外（既定値のまま）。未収録DOIも従来どおり既定値 |
 | **その他のタイトル・時間的範囲・位置情報** | 未実装 | `titles[].titleType`・`dates[].dateType: Coverage`・`geoLocations[]` にそれぞれ対応 |
 
 対象外の項目（寄与者・ファイル情報・その他識別子・位置情報のpolygon等）は [datacite_jpcoar_mapping.md §15](datacite_jpcoar_mapping.md#15-datacite-doi-対応の制限事項一覧) を参照してください。
