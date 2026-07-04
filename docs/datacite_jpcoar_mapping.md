@@ -62,7 +62,7 @@ JaLC 準会員（NII/IRDB 経由）・JaLC コンソーシアム（`jalcco`）�
 | 1 | **タイトル** (title) | `titles[]`（`titleType` なしの要素） | `lang` 付き多言語（JaLC 同様）。`lang` なしは 'en' 既定＋要確認フラグ（Crossref 同様） |
 | 2 | **その他のタイトル** (alternative_title) | `titles[]`（`titleType` あり: AlternativeTitle / Subtitle / TranslatedTitle / Other） | Crossref/JaLC パスでは未実装。DataCite パスで新規に対応 |
 | 3 | **作成者** (creator) | `creators[]` | 詳細は §5。`nameType: "Organizational"` は `creatorNameType` の 'Organizational' へ（姓名分離せず） |
-| 4 | 寄与者 (contributor) | — `contributors[]` | **自動マッピング対象外**（初期実装のスコープ限定）。ツール UI には寄与者フィールドの定義・レンダラーが存在する（make_jc_importer.html L3473 付近。fieldmapping.md #4 の「空（未実装）」は「API からの自動設定が無い」の意）。DataCite では HostingInstitution 等が埋まる例があり拡張は可能。その際 contributorType 22値中 RegistrationAgency / RegistrationAuthority / RightsHolder / Translator の4値がツール select に無い点に注意 |
+| 4 | 寄与者 (contributor) | — `contributors[]` | **自動マッピング対象外**（初期実装のスコープ限定）。ツール UI には寄与者フィールドの定義・レンダラーが存在する（make_jc_importer.html L3473 付近。fieldmapping.md #4 の「空（未実装）」は「API からの自動設定が無い」の意）。DataCite では HostingInstitution 等が埋まる例があり拡張は可能。その際 contributorType 22値中 RegistrationAgency / RegistrationAuthority / RightsHolder / Translator の4値がツール select に無い点に注意（うち **RightsHolder は既存の権利者情報（rights_holder）フィールドへ逃がせる**ため、将来拡張候補として他と分けて扱う） |
 | 5 | アクセス権 (access_rights) | —（既定値） | OpenAlex 連携なしのため自動判定しない（JaLC パス同様）。`open access` を既定とし手動修正 |
 | 6 | **権利情報** (rights) | `rightsList[]` | 詳細は §9。`rightsUri` → 既存 `detectLicenseType()` を再利用（CC の deed.ja / legalcode 付き URI も前方一致で判定可能なことを実データで確認） |
 | 8 | **主題** (subject) | `subjects[]` | `subject` + `lang`。`subjectScheme` はツール上 'Other' 扱い（arXiv 等の独自 scheme があるため） |
@@ -75,15 +75,16 @@ JaLC 準会員（NII/IRDB 経由）・JaLC コンソーシアム（`jalcco`）�
 | 16 | **バージョン情報** (version) | `version` | Crossref/JaLC パスは未実装だが DataCite では頻出（実測: Zenodo "v1.0.0"）。文字列をそのまま設定 |
 | 17 | 出版タイプ (version_type) | —（既定値） | OpenAlex 連携なしのため自動判定しない（JaLC パス同様） |
 | 20 | **関連情報** (relation) | 自DOI + `relatedIdentifiers[]` | 自DOI は isIdenticalTo で登録（既存パス同様）。`relationType` 対応は §7-1、`relatedIdentifierType` 対応は §7-2 |
+| 21 | **時間的範囲** (temporal) | `dates[]`（`dateType: "Coverage"`） | Crossref/JaLC パスでは未使用。Coverage は日付でなく時間的範囲へ（§8） |
+| 22 | **位置情報** (geolocation) | `geoLocations[]` | **#208 初期実装に含める**。point / box / place が UI 構造とほぼ1:1（§13）。JAMSTEC 系 DOI が検証ポイント |
 | 23 | **助成情報** (funding_reference) | `fundingReferences[]` | 詳細は §11。JGN/KAKEN 連携を再利用 |
 | 24 | **収録物識別子** (source_identifier) | `relatedItems[].relatedItemIdentifier`（ISSN/EISSN/PISSN）、補助的に `container.identifier` | 詳細は §12 |
 | 25 | **収録物名** (source_title) | `relatedItems[].titles.title` | **container.title は実データでほぼ空**（§12）。relatedItems を主ソースとする |
 | 26-30 | **巻・号・開始/終了ページ** | `relatedItems[]`（volume / issue / firstPage / lastPage）→ フォールバック `container` | 詳細は §12 |
 | 31 | **書誌情報** (bibliographic_info) | relatedItems / container から生成 | 収録物名が取れた場合のみ生成（Crossref パス同様） |
 | — | 識別子 (identifier) | — `url` | **対象外**。`url` はランディングページ（hdl.handle.net 等）で DOI リンクと重複。手動入力に委ねる |
-| — | 位置情報 (geolocation) | — `geoLocations[]` | **自動マッピング対象外**（初期実装のスコープ限定）。ツール UI には位置情報フィールドの定義・レンダラーが存在する（make_jc_importer.html L3564 付近。fieldmapping.md #22 の「空（未実装）」は「API からの自動設定が無い」の意）。JAMSTEC 等で値あり、将来拡張候補 |
-| — | （その他） | — `alternateIdentifiers[]` / `identifiers[]` | **対象外**。実データは OAIPMH（IRDB 内部ID）・oai（Zenodo）等の内部識別子が主。arXiv ID が入る例（arXiv preprint）は将来の関連情報取り込み候補として注記のみ |
-| — | （その他） | — `sizes[]` / `formats[]` | **対象外**。対応する JPCOAR 自動設定先なし（ファイル情報はファイル実体を伴うため対象外） |
+| — | （その他） | — `alternateIdentifiers[]` / `identifiers[]` | **対象外**。実データは OAIPMH（IRDB 内部ID）・oai（Zenodo）等の内部識別子が主。将来対応する場合は**許可リスト方式**（`arXiv` 等、関連情報へ展開して安全なタイプのみ通す）が適する |
+| — | （その他） | — `sizes[]` / `formats[]` | **対象外**。ファイル情報（format / filesize / 本文URL）の UI 自体は存在するが、DataCite の `sizes[]` / `formats[]` は平坦な配列で**個別ファイルとの対応・filename・contentUrl が安定して揃わない**ため、初期実装では自動ファイル行を生成しない。`contentUrl` が取れるレコードのみ将来対応候補 |
 | — | （その他） | — `container.type` 等の書誌以外 / `relatedItems` の Journal 以外 | **対象外**。§12 の書誌情報生成にのみ使用 |
 
 ## 5. 作成者 (creators[]) の詳細マッピング
@@ -151,9 +152,11 @@ JaLC 準会員（NII/IRDB 経由）・JaLC コンソーシアム（`jalcco`）�
 
 ### 7-1. relationType（DataCite 全39値 → ツール select 20値）
 
-そのまま対応（先頭小文字化のみ・15値）:
+**変換は定数表（明示マップ）で行い、機械的な lower-camel 化はしない**こと。ツールの select（`TITLE_MAPS.subitem_relation_type`）は JPCOAR 語彙に合わせ **`Cites` のみ先頭大文字**という例外を含むため、一律の先頭小文字化では `Cites`→`cites` となり select 外の値になる。
 
-`IsCitedBy`→isCitedBy, `Cites`→Cites, `IsSupplementTo`→isSupplementTo, `IsSupplementedBy`→isSupplementedBy, `HasVersion`→hasVersion, `IsVersionOf`→isVersionOf, `IsPartOf`→isPartOf, `HasPart`→hasPart, `IsReferencedBy`→isReferencedBy, `References`→references, `IsIdenticalTo`→isIdenticalTo, `IsDerivedFrom`→isDerivedFrom, `IsSourceOf`→isSourceOf, `IsRequiredBy`→isRequiredBy, `Requires`→requires
+直接対応（15値）:
+
+`IsCitedBy`→isCitedBy, `Cites`→**Cites（大文字のまま・例外）**, `IsSupplementTo`→isSupplementTo, `IsSupplementedBy`→isSupplementedBy, `HasVersion`→hasVersion, `IsVersionOf`→isVersionOf, `IsPartOf`→isPartOf, `HasPart`→hasPart, `IsReferencedBy`→isReferencedBy, `References`→references, `IsIdenticalTo`→isIdenticalTo, `IsDerivedFrom`→isDerivedFrom, `IsSourceOf`→isSourceOf, `IsRequiredBy`→isRequiredBy, `Requires`→requires
 
 意味変換（7値）:
 
@@ -184,7 +187,9 @@ JaLC 準会員（NII/IRDB 経由）・JaLC コンソーシアム（`jalcco`）�
 ## 8. 日付（dates[]）の設計判断
 
 - **複数エントリを保持**する（単一優先順に潰さない）。既存 Crossref パスが Issued / Accepted / Submitted を別エントリで保持するのと同型
-- `dateType` がツールの日付タイプ select（Accepted / Available / Collected / Copyrighted / Created / Issued / Submitted / Updated / Valid の9値）に含まれるものはそのまま登録。**DataCite 側にのみ存在する `Coverage` / `Withdrawn` / `Other` は破棄**（12値中3値）
+- `dateType` がツールの日付タイプ select（Accepted / Available / Collected / Copyrighted / Created / Issued / Submitted / Updated / Valid の9値）に含まれるものはそのまま登録
+- **`Coverage` は日付フィールドでなく時間的範囲（`item_30002_temporal19`）へ展開**する。DataCite の定義は「内容が適用・記述・カバーする日付/範囲」であり JPCOAR の時間的範囲に相当。値（範囲文字列を含む）をそのまま `subitem_temporal_text` に設定（言語は空）
+- **`Withdrawn` / `Other` は破棄**（対応する日付タイプなし）
 - 値の正規化:
   - タイムスタンプ（`2022-12-06T18:46:04Z`）→ 日付部分 `2022-12-06` を採用（実測: arXiv）
   - 範囲（RKMS-ISO8601 `start/end`）→ **開始側**を採用。開始が空（`/end`）の場合は終了側
@@ -248,7 +253,20 @@ JaLC パスの `content_language` → 639-2 変換（`'ja'`→`'jpn'`）と同�
 
 ISSN が取れた場合は既存 `fetchNcid()`（NCID 取得）・OPF 照会の再利用可否を #208 で判断する。
 
-## 13. #208（実装）への引き継ぎ事項
+## 13. 位置情報（geoLocations[]）の詳細マッピング
+
+UI（`item_30002_geolocation20`、専用レンダラーあり）と DataCite の構造がほぼ1:1のため **#208 初期実装に含める**。JAMSTEC 系 DOI（`10.17596/0004197` 等）が検証ポイント。
+
+| DataCite | ツール側（item_30002_geolocation20） |
+|---|---|
+| `geoLocationPlace` | `subitem_geolocation_place[].subitem_geolocation_place_text` |
+| `geoLocationPoint.pointLatitude` / `pointLongitude` | `subitem_geolocation_point.subitem_point_latitude` / `subitem_point_longitude` |
+| `geoLocationBox.westBoundLongitude` / `eastBoundLongitude` / `southBoundLatitude` / `northBoundLatitude` | `subitem_geolocation_box.subitem_west_longitude` / `subitem_east_longitude` / `subitem_south_latitude` / `subitem_north_latitude` |
+| `geoLocationPolygon` | **対象外**（ツール UI に対応フィールドなし） |
+
+数値は文字列化してそのまま設定（座標系変換なし）。
+
+## 14. #208（実装）への引き継ぎ事項
 
 1. fetch URL は `?publisher=true&affiliation=true` を必須とする（付け忘れると所属・出版者の識別子情報が落ちる）
 2. `Accept: application/vnd.api+json`（`application/json` でも動作するが公式推奨に合わせる）
@@ -256,10 +274,10 @@ ISSN が取れた場合は既存 `fetchNcid()`（NCID 取得）・OPF 照会の�
 4. 語彙対応表（§6・§7）は定数オブジェクトとして実装し、本ドキュメントと同期を保つ
 5. ORCID の URL 形/bare 形正規化を忘れない（§5）
 6. 言語は2系統を取り違えない（§10）: 本文言語のみ 639-2/T 変換、タイトル・主題等のサブフィールド言語は `TITLE_MAPS.language`（639-1系）にそのまま照合
-7. `dates` 空配列時の `publicationYear` フォールバック（§8）はテスト用 DOI `10.17596/0004197` で必ず検証
+7. `dates` 空配列時の `publicationYear` フォールバック（§8）はテスト用 DOI `10.17596/0004197` で必ず検証（同 DOI は geoLocations（§13）の検証も兼ねる）
 8. スキーマ混在: `schemaVersion` は `kernel-4` 表記で細番号が取れないため、バージョン判定はせず未知値フォールバックで吸収する
 
-## 14. 出典（一次情報）
+## 15. 出典（一次情報）
 
 - DataCite REST API: https://support.datacite.org/docs/api / https://support.datacite.org/docs/api-get-doi
 - affiliation 詳細取得: https://support.datacite.org/docs/can-i-see-more-detailed-affiliation-information-in-the-rest-api

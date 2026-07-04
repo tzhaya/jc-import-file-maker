@@ -18,9 +18,9 @@ DataCite DOI 対応（#197 検討 → 実装は #208 に分割）の設計フェ
 - resourceTypeGeneral は PascalCase→小文字スペース区切り正規化＋個別マップ（正規化一致14値・個別20値、未知値は空文字フォールバック）
 - relationType はそのまま15値・意味変換7値（IsNewVersionOf→isVersionOf 等）・破棄17値
 - relatedIdentifierType はそのまま8値・変換2値（Handle→HDL・URL→URI）・「http(s) URL形なら URI に丸め、以外は破棄」13値
-- dates は複数エントリ保持（Coverage/Withdrawn/Other は破棄）、範囲値は開始側、`dates` 空なら `publicationYear` から Issued 生成
+- dates は複数エントリ保持（Coverage は時間的範囲 `item_30002_temporal19` へ展開、Withdrawn/Other は破棄）、範囲値は開始側、`dates` 空なら `publicationYear` から Issued 生成
 - language は xs:language → 639-2/T 正規化（null 頻出のため既定 'eng' にしない）
-- contributors・geoLocations・sizes/formats・url・alternateIdentifiers は理由付きで対象外宣言
+- geoLocations は UI 構造（point/box/place）とほぼ1:1のため #208 初期実装に含める。contributors・sizes/formats・url・alternateIdentifiers は理由付きで自動マッピング対象外（レビュー指摘を反映し、UI 実在の事実と「API からの自動設定なし」を区別して記載）
 
 ### 変更ファイル
 - `docs/datacite_jpcoar_mapping.md`（新規・本体）
