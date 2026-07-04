@@ -60,6 +60,46 @@ Get-Content -Encoding UTF8 README.md | Select-Object -First 20
 
 [docs/release_procedure.md](release_procedure.md) を参照してください。
 
+## テストの限界と教訓
+
+このツールは「標準版 HTML」と「Chrome 拡張版」の二系統を同一ロジックでミラーしており、検証は **Node サンドボックス（`vm` でマッピング関数を直接実行）** と **ブラウザ E2E（`/e2e-test`、Playwright）** を併用します。過去の実装で「片方の検証層だけでは取りこぼす」バグを繰り返し踏んでいるため、実装・レビュー時のチェックポイントとして以下を残します。
+
+### 1. Node サンドボックス検証は DOM 描画を見ない
+
+Node 上でマッピング関数の戻り値（オブジェクトのプロパティ値）だけを検証すると、**`<select>` 等の DOM 側の暗黙フォールバック挙動**を見逃します。
+
+- 実例（[#212](https://github.com/tzhaya/jc-import-file-maker/issues/212)）: `buildSelect()` は選択値に一致する `<option>` が無い場合に空の `<option>` を補わないため、出版タイプが空文字（`''`）のレコードで `<select>` の表示値がブラウザのフォールバックにより先頭要素（`AO`）になっていた。`collectFromDOM()` は `<select>.value` から値を収集するため、そのまま TSV エクスポートすると誤った出版タイプが出力される実害があった。
+- 教訓: マッピング結果が正しくても、その値が **DOM に描画され `collectFromDOM()` で回収されるところまで** をブラウザ E2E で確認する。特に「空文字・未知値」を取りうるフィールドは `<select>` のフォールバックを疑う。
+
+### 2. 標準版 E2E では拡張版限定機能を検出できない
+
+OPF 照会のように **Chrome 拡張版でのみ有効な機能**（`extensionFetch()` 経由・`host_permissions` 必須）は、標準版の Node/ブラウザ E2E をいくら通しても実バグが表面化しません。
+
+- 実例（[#214](https://github.com/tzhaya/jc-import-file-maker/issues/214)）: DataCite パスの ISSN フォールバックが値ベースの `||`（`relatedItemIdentifier || container.identifier`）だったため、`relatedItemIdentifier` に非 ISSN 型（DOI 等）の値が入っていると `container` の ISSN が無視され、OPF エンバーゴ判定が機能しないケースがあった。標準版の検証はすべて通っていたが、ユーザーが Chrome 拡張の実機で `10.1002/pssb.202500291` をテストして発見した。
+- 教訓: 拡張版限定機能に触れる変更は、**ユーザーによる Chrome 拡張実機レビューを最終防衛線**として明示的に依頼する。標準版の ALL PASSED を「拡張版も安全」の根拠にしない。
+
+### 3. 仕様書の除外規則は実装チェックリスト化する
+
+マッピング仕様書（例: [datacite_jpcoar_mapping.md](datacite_jpcoar_mapping.md)）に書かれた「〜は取り込まない／除外する」といった **除外規則の実装漏れ**は、テストではなくコードレビューでしか拾えないことが多いです（除外漏れは「余計な値が出る」だけで、正常系テストは pass してしまうため）。
+
+- 実例（[#208](https://github.com/tzhaya/jc-import-file-maker/issues/208)）: `rightsList` の `info:eu-repo/semantics/*`（OA 表明エントリ）を権利情報から除外するフィルタが、仕様書には正しく書かれていたが実装から漏れていた。
+- 教訓: 仕様書内の「除外・スキップ」規則を実装前にチェックリスト化し、レビュー時に一つずつ実コードと突き合わせる。
+
+## テスト用 DOI カタログ
+
+E2E・回帰テストで使う代表的な DOI と、それぞれが検証できる観点。サンプルレスポンスは `samples/`（`Crossref/`・`DataCite/` 等）に保存されています。
+
+| DOI | RA | 検証できる観点 |
+|---|---|---|
+| `10.1016/j.advnut.2025.100480` | Crossref | 複数著者・所属・助成情報を含む Crossref 回帰の基本ケース（課題番号 `JP19KK0341` 検出 → funder 連携も確認可能） |
+| `10.48550/arxiv.2212.04356` | DataCite | OpenAlex 収録あり・green の Preprint（資源タイプ `article`）。出版タイプ・relationType が補完される（実測: SMUR/isVersionOf） |
+| `10.57723/kds622523` | DataCite | OpenAlex 収録あり・green の Dataset。資源タイプが版判定の許可リスト外のため出版タイプが**補完されない**ことの確認 |
+| `10.25656/01:35728` | DataCite | DataCite 実データのマッピング全般（ブラウザ E2E 用） |
+| `10.17596/0004197` | DataCite | `dates` 空配列レコード（JAMSTEC）→ `publicationYear` フォールバックの確認 |
+| `10.1002/pssb.202500291` | DataCite | `relatedItemIdentifier` が非 ISSN 型（DOI）＋ `container` に ISSN。ISSN フォールバックの型判定（[#214](https://github.com/tzhaya/jc-import-file-maker/issues/214) のバグ再現）。拡張版実機での OPF 照会確認にも使用 |
+
+> DataCite の助成情報パス（`fundingReferences`）は、テスト用実データ7件がいずれも空だったため合成データで検証しています。`fundingReferences` を持つ実 DOI が見つかれば実データでの再確認が望ましいです。
+
 ## ドキュメント一覧（保守者向け）
 
 | ドキュメント | 内容 |
