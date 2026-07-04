@@ -96,8 +96,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-07-04 | ver. 1.17.0 | DataCite DOI のメタデータ取得・マッピングに対応（[#208](https://github.com/tzhaya/jc-import-file-maker/issues/208)） |
-| インポート用TSV生成ツール | 2026-07-04 | — | DataCite DOI のメタデータ取得・マッピングに対応。CORS対応・認証不要のため通常ブラウザ版でも動作（[#208](https://github.com/tzhaya/jc-import-file-maker/issues/208)） |
+| Chrome拡張機能版 | 2026-07-04 | ver. 1.18.0 | DataCite DOIパスにOpenAlex補完を追加。論文相当の資源タイプのみOAステータスから出版タイプ・OAバッジを判定（[#212](https://github.com/tzhaya/jc-import-file-maker/issues/212)） |
+| インポート用TSV生成ツール | 2026-07-04 | — | DataCite DOIパスにOpenAlex補完を追加。論文相当の資源タイプのみOAステータスから出版タイプ・OAバッジを判定（データセット・ソフトウェア等は既定値のまま）（[#212](https://github.com/tzhaya/jc-import-file-maker/issues/212)） |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 | OpenAlex機関別著作検索 | 2026-07-03 | — | 検索結果の外部リンクをクリックするとタブが「DOIインポート」に戻る不具合を修正（[#201](https://github.com/tzhaya/jc-import-file-maker/issues/201)）。所属の誤判定が疑われる候補に「⚠ 要確認」バッジを表示（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186)） |
 
@@ -301,6 +301,7 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-07-04 | DataCite DOIパスにOpenAlex補完を追加（[#212](https://github.com/tzhaya/jc-import-file-maker/issues/212)）：DOIがOpenAlexに収録されている場合、OAステータスに基づきOAバッジを表示し、資源タイプが「論文相当」（journal article/article/conference paper 等の許可リスト）のときのみ出版タイプ・関連情報（`isIdenticalTo`/`isVersionOf`）を判定。データセット・ソフトウェア等は対象外とし既定値のまま（green判定時に版フォールバックでAMが誤混入することを実測で確認したため）。アクセス権はOPF連動が無いため引き続き `open access` 固定（実質不変）。OpenAlex未収録（404）は既定値挙動を維持、409等の障害はエラーとして伝播（黙って既定値で通さない）。あわせて、ブラウザE2Eで発見した既存バグ（`<select>`未設定時に表示値が先頭要素にフォールバックしTSVエクスポートに誤値が出る問題、#208から潜在）を修正。標準版・Chrome拡張版に同一実装。manifest version `1.17.0` → `1.18.0` |
 | 2026-07-04 | DataCite DOI メタデータ取得・マッピングを実装（[#208](https://github.com/tzhaya/jc-import-file-maker/issues/208)）：[`docs/datacite_jpcoar_mapping.md`](docs/datacite_jpcoar_mapping.md)（#197）を仕様書として標準版・Chrome拡張版の両方に実装。CORS対応・認証不要のため環境分岐なしで両版とも直接fetchで動作。アクセス権・出版タイプはOpenAlex連携なしのため既定値固定。詳細は [変更履歴](docs/changelog.md) 参照。manifest version `1.16.1` → `1.17.0` |
 | 2026-07-03 | DataCite → JPCOAR マッピング表を作成（[#197](https://github.com/tzhaya/jc-import-file-maker/issues/197)）：DataCite DOI 対応の実装（[#208](https://github.com/tzhaya/jc-import-file-maker/issues/208)）に先立つ設計文書 [`docs/datacite_jpcoar_mapping.md`](docs/datacite_jpcoar_mapping.md) を新規作成。API仕様（CORS対応・`?publisher=true&affiliation=true`）の実測確認、国内機関リポジトリ由来DOI（NII準会員・jalccoコンソーシアム、いずれも doiRA=DataCite）の切り分け調査、resourceTypeGeneral 全34値（Schema 4.7）／relationType 全39値／relatedIdentifierType 全23値の対応表、E2E用テストDOI 7件を収載。ドキュメントのみの変更（本番HTML・拡張コードの変更なし） |
 | 2026-07-03 | OpenAlex機関別著作検索の検索結果外部リンクをクリックするとタブが「DOIインポート」に戻る不具合を修正（[#201](https://github.com/tzhaya/jc-import-file-maker/issues/201)）：`funder_lookup.js`（#150）と同じ委譲クリックハンドラを `openalex_panel.js`／`openalex_lookup.html` に追加し、`chrome.tabs.create` で外部リンクを新しいタブに開くよう修正。manifest version `1.16.0` → `1.16.1` |
