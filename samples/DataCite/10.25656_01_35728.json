@@ -1,0 +1,276 @@
+{
+  "id": "10.25656/01:35728",
+  "type": "dois",
+  "attributes": {
+    "doi": "10.25656/01:35728",
+    "prefix": "10.25656",
+    "suffix": "01:35728",
+    "identifiers": [
+      {
+        "identifier": "https://nbn-resolving.org/urn:nbn:de:0111-pedocs-357282",
+        "identifierType": "URN"
+      }
+    ],
+    "alternateIdentifiers": [
+      {
+        "alternateIdentifierType": "URN",
+        "alternateIdentifier": "https://nbn-resolving.org/urn:nbn:de:0111-pedocs-357282"
+      }
+    ],
+    "creators": [
+      {
+        "name": "Koç, Ozan",
+        "givenName": "Ozan",
+        "familyName": "Koç",
+        "nameIdentifiers": [
+          {
+            "schemeUri": "https://orcid.org",
+            "nameIdentifier": "0009-0009-8096-4128",
+            "nameIdentifierScheme": "ORCID"
+          }
+        ],
+        "affiliation": []
+      },
+      {
+        "name": "Akin, Gülden",
+        "givenName": "Gülden",
+        "familyName": "Akin",
+        "nameIdentifiers": [
+          {
+            "schemeUri": "https://orcid.org",
+            "nameIdentifier": "0000-0002-7875-5898",
+            "nameIdentifierScheme": "ORCID"
+          }
+        ],
+        "affiliation": []
+      }
+    ],
+    "titles": [
+      {
+        "lang": "en",
+        "title": "Vocational education and training for adults in UNESCO's CONFINTEA. A critical analysis of seven decades of policy discourse and governance (1949-2022)"
+      }
+    ],
+    "publisher": {
+      "name": "Linkoping University Electronic Press : Linköping"
+    },
+    "container": {
+      "type": "Series",
+      "identifier": "2000-7426",
+      "identifierType": "ISSN",
+      "volume": "17",
+      "issue": "2",
+      "firstPage": "375",
+      "lastPage": "396"
+    },
+    "publicationYear": 2026,
+    "subjects": [
+      {
+        "lang": "en",
+        "subject": "370 Education",
+        "subjectScheme": "DDC",
+        "classificationCode": "370"
+      },
+      {
+        "lang": "de",
+        "subject": "370 Erziehung, Schul- und Bildungswesen",
+        "subjectScheme": "DDC",
+        "classificationCode": "370"
+      },
+      {
+        "lang": "de",
+        "subject": "Erwachsenenbildung"
+      },
+      {
+        "lang": "de",
+        "subject": "Berufsbildung"
+      },
+      {
+        "lang": "de",
+        "subject": "Weiterbildung"
+      },
+      {
+        "lang": "de",
+        "subject": "UNESCO"
+      },
+      {
+        "lang": "de",
+        "subject": "Dokumentenanalyse"
+      },
+      {
+        "lang": "en",
+        "subject": "Adult education"
+      },
+      {
+        "lang": "en",
+        "subject": "Adult training"
+      },
+      {
+        "lang": "en",
+        "subject": "Vocational Education"
+      },
+      {
+        "lang": "en",
+        "subject": "Continuing education"
+      },
+      {
+        "lang": "en",
+        "subject": "Further education"
+      },
+      {
+        "lang": "en",
+        "subject": "Politics"
+      }
+    ],
+    "contributors": [
+      {
+        "name": "DIPF | Leibniz-Institut für Bildungsforschung und Bildungsinformation",
+        "nameType": "Organizational",
+        "contributorType": "HostingInstitution",
+        "nameIdentifiers": [
+          {
+            "schemeUri": "https://ror.org",
+            "nameIdentifier": "https://ror.org/0327sr118",
+            "nameIdentifierScheme": "ROR"
+          }
+        ],
+        "affiliation": []
+      }
+    ],
+    "dates": [
+      {
+        "date": "2026",
+        "dateType": "Issued"
+      },
+      {
+        "date": "2026-07-03",
+        "dateType": "Updated"
+      }
+    ],
+    "language": "en",
+    "types": {
+      "ris": "JOUR",
+      "bibtex": "article",
+      "citeproc": "article-journal",
+      "schemaOrg": "ScholarlyArticle",
+      "resourceTypeGeneral": "JournalArticle"
+    },
+    "relatedIdentifiers": [
+      {
+        "relationType": "IsVariantFormOf",
+        "relatedIdentifier": "https://doi.org/10.3384/rela.2000-7426.6271",
+        "resourceTypeGeneral": "Text",
+        "relatedIdentifierType": "DOI"
+      },
+      {
+        "relationType": "IsPublishedIn",
+        "relatedIdentifier": "2000-7426",
+        "relatedIdentifierType": "ISSN"
+      }
+    ],
+    "relatedItems": [
+      {
+        "issue": "2",
+        "titles": {
+          "title": "European journal for Research on the Education and Learning of Adults"
+        },
+        "volume": "17",
+        "lastPage": "396",
+        "firstPage": "375",
+        "publisher": "Linkoping University Electronic Press : Linköping",
+        "relationType": "IsPublishedIn",
+        "publicationYear": "2026",
+        "relatedItemType": "Journal",
+        "relatedItemIdentifier": {
+          "relatedItemIdentifier": "2000-7426",
+          "relatedItemIdentifierType": "ISSN"
+        }
+      }
+    ],
+    "sizes": [],
+    "formats": [],
+    "version": null,
+    "rightsList": [
+      {
+        "rights": "Creative Commons Namensnennung 4.0 International",
+        "rightsUri": "http://creativecommons.org/licenses/by/4.0/deed.de",
+        "rightsIdentifier": "cc by 4.0 international"
+      }
+    ],
+    "descriptions": [
+      {
+        "description": "European journal for Research on the Education and Learning of Adults 17 (2026) 2, S. 375-396",
+        "descriptionType": "SeriesInformation"
+      },
+      {
+        "lang": "en",
+        "description": "How should Continuing Vocational Education and Training (CVET) serve society – as a tool for economic adaptation or as a site of transformative adult learning and democratic participation? This article critically examines CVET discourse across seven UNESCO International Conferences on Adult Education (CONFINTEA) (1949-2022). Based on critical analysis of seventeen key texts and informed by Freirean pedagogy, Lima and Guimarães’ policy framework, and Biesta’s critique of ‘learnification’, three patterns are identified. First, economic priorities consistently overshadow humanistic aims despite periodic rhetorical reaffirmations. Second, the shift from ‘adult education’ to ‘adult learning’ individualises responsibility, transferring costs from states and employers to learners while obscuring structural inequalities. Third, comprehensive policy frameworks coexist with implementation gaps, exposing CONFINTEA’s limited capacity to counter neoliberal restructuring. Governance has shifted from public responsibility (1949-1960) to normalised public-private partnerships (2022). Realising CVET’s transformative potential requires binding mechanisms, political-economic engagement, and democratic mobilisation beyond declaratory commitments. (DIPF/Orig.)",
+        "descriptionType": "Abstract"
+      }
+    ],
+    "geoLocations": [],
+    "fundingReferences": [],
+    "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHJlc291cmNlIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiIHhtbG5zPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCIgeHNpOnNjaGVtYUxvY2F0aW9uPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCBodHRwOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00L21ldGFkYXRhLnhzZCI+CiAgPGlkZW50aWZpZXIgaWRlbnRpZmllclR5cGU9IkRPSSI+MTAuMjU2NTYvMDE6MzU3Mjg8L2lkZW50aWZpZXI+CiAgPGNyZWF0b3JzPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZT5Lb8OnLCBPemFuPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5PemFuPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPktvw6c8L2ZhbWlseU5hbWU+CiAgICAgIDxuYW1lSWRlbnRpZmllciBuYW1lSWRlbnRpZmllclNjaGVtZT0iT1JDSUQiIHNjaGVtZVVSST0iaHR0cHM6Ly9vcmNpZC5vcmciPjAwMDktMDAwOS04MDk2LTQxMjg8L25hbWVJZGVudGlmaWVyPgogICAgPC9jcmVhdG9yPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZT5Ba2luLCBHw7xsZGVuPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5Hw7xsZGVuPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPkFraW48L2ZhbWlseU5hbWU+CiAgICAgIDxuYW1lSWRlbnRpZmllciBuYW1lSWRlbnRpZmllclNjaGVtZT0iT1JDSUQiIHNjaGVtZVVSST0iaHR0cHM6Ly9vcmNpZC5vcmciPjAwMDAtMDAwMi03ODc1LTU4OTg8L25hbWVJZGVudGlmaWVyPgogICAgPC9jcmVhdG9yPgogIDwvY3JlYXRvcnM+CiAgPHRpdGxlcz4KICAgIDx0aXRsZSB4bWw6bGFuZz0iZW4iPlZvY2F0aW9uYWwgZWR1Y2F0aW9uIGFuZCB0cmFpbmluZyBmb3IgYWR1bHRzIGluIFVORVNDTydzIENPTkZJTlRFQS4gQSBjcml0aWNhbCBhbmFseXNpcyBvZiBzZXZlbiBkZWNhZGVzIG9mIHBvbGljeSBkaXNjb3Vyc2UgYW5kIGdvdmVybmFuY2UgKDE5NDktMjAyMik8L3RpdGxlPgogIDwvdGl0bGVzPgogIDxwdWJsaXNoZXI+TGlua29waW5nIFVuaXZlcnNpdHkgRWxlY3Ryb25pYyBQcmVzcyA6IExpbmvDtnBpbmc8L3B1Ymxpc2hlcj4KICA8cHVibGljYXRpb25ZZWFyPjIwMjY8L3B1YmxpY2F0aW9uWWVhcj4KICA8cmVzb3VyY2VUeXBlIHJlc291cmNlVHlwZUdlbmVyYWw9IkpvdXJuYWxBcnRpY2xlIi8+CiAgPHN1YmplY3RzPgogICAgPHN1YmplY3Qgc3ViamVjdFNjaGVtZT0iRERDIiBjbGFzc2lmaWNhdGlvbkNvZGU9IjM3MCIgeG1sOmxhbmc9ImVuIj4zNzAgRWR1Y2F0aW9uPC9zdWJqZWN0PgogICAgPHN1YmplY3Qgc3ViamVjdFNjaGVtZT0iRERDIiBjbGFzc2lmaWNhdGlvbkNvZGU9IjM3MCIgeG1sOmxhbmc9ImRlIj4zNzAgRXJ6aWVodW5nLCBTY2h1bC0gdW5kIEJpbGR1bmdzd2VzZW48L3N1YmplY3Q+CiAgICA8c3ViamVjdCB4bWw6bGFuZz0iZGUiPkVyd2FjaHNlbmVuYmlsZHVuZzwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHhtbDpsYW5nPSJkZSI+QmVydWZzYmlsZHVuZzwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHhtbDpsYW5nPSJkZSI+V2VpdGVyYmlsZHVuZzwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHhtbDpsYW5nPSJkZSI+VU5FU0NPICZsdDtPcmdhbmlzYXRpb24gZGVyIFZlcmVpbnRlbiBOYXRpb25lbiBmw7xyIEJpbGR1bmcsIFdpc3NlbnNjaGFmdCB1bmQgS3VsdHVyJmd0Ozwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHhtbDpsYW5nPSJkZSI+RG9rdW1lbnRlbmFuYWx5c2U8L3N1YmplY3Q+CiAgICA8c3ViamVjdCB4bWw6bGFuZz0iZW4iPkFkdWx0IGVkdWNhdGlvbjwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHhtbDpsYW5nPSJlbiI+QWR1bHQgdHJhaW5pbmc8L3N1YmplY3Q+CiAgICA8c3ViamVjdCB4bWw6bGFuZz0iZW4iPlZvY2F0aW9uYWwgRWR1Y2F0aW9uPC9zdWJqZWN0PgogICAgPHN1YmplY3QgeG1sOmxhbmc9ImVuIj5Db250aW51aW5nIGVkdWNhdGlvbjwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHhtbDpsYW5nPSJlbiI+RnVydGhlciBlZHVjYXRpb248L3N1YmplY3Q+CiAgICA8c3ViamVjdCB4bWw6bGFuZz0iZW4iPlBvbGl0aWNzPC9zdWJqZWN0PgogIDwvc3ViamVjdHM+CiAgPGNvbnRyaWJ1dG9ycz4KICAgIDxjb250cmlidXRvciBjb250cmlidXRvclR5cGU9Ikhvc3RpbmdJbnN0aXR1dGlvbiI+CiAgICAgIDxjb250cmlidXRvck5hbWUgbmFtZVR5cGU9Ik9yZ2FuaXphdGlvbmFsIj5ESVBGIHwgTGVpYm5pei1JbnN0aXR1dCBmw7xyIEJpbGR1bmdzZm9yc2NodW5nIHVuZCBCaWxkdW5nc2luZm9ybWF0aW9uPC9jb250cmlidXRvck5hbWU+CiAgICAgIDxuYW1lSWRlbnRpZmllciBuYW1lSWRlbnRpZmllclNjaGVtZT0iUk9SIiBzY2hlbWVVUkk9Imh0dHBzOi8vcm9yLm9yZyI+aHR0cHM6Ly9yb3Iub3JnLzAzMjdzcjExODwvbmFtZUlkZW50aWZpZXI+CiAgICA8L2NvbnRyaWJ1dG9yPgogIDwvY29udHJpYnV0b3JzPgogIDxkYXRlcz4KICAgIDxkYXRlIGRhdGVUeXBlPSJJc3N1ZWQiPjIwMjY8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iVXBkYXRlZCI+MjAyNi0wNy0wMzwvZGF0ZT4KICA8L2RhdGVzPgogIDxsYW5ndWFnZT5lbjwvbGFuZ3VhZ2U+CiAgPGFsdGVybmF0ZUlkZW50aWZpZXJzPgogICAgPGFsdGVybmF0ZUlkZW50aWZpZXIgYWx0ZXJuYXRlSWRlbnRpZmllclR5cGU9IlVSTiI+aHR0cHM6Ly9uYm4tcmVzb2x2aW5nLm9yZy91cm46bmJuOmRlOjAxMTEtcGVkb2NzLTM1NzI4MjwvYWx0ZXJuYXRlSWRlbnRpZmllcj4KICA8L2FsdGVybmF0ZUlkZW50aWZpZXJzPgogIDxyZWxhdGVkSWRlbnRpZmllcnM+CiAgICA8cmVsYXRlZElkZW50aWZpZXIgcmVsYXRlZElkZW50aWZpZXJUeXBlPSJET0kiIHJlbGF0aW9uVHlwZT0iSXNWYXJpYW50Rm9ybU9mIiByZXNvdXJjZVR5cGVHZW5lcmFsPSJUZXh0Ij5odHRwczovL2RvaS5vcmcvMTAuMzM4NC9yZWxhLjIwMDAtNzQyNi42MjcxPC9yZWxhdGVkSWRlbnRpZmllcj4KICAgIDxyZWxhdGVkSWRlbnRpZmllciByZWxhdGVkSWRlbnRpZmllclR5cGU9IklTU04iIHJlbGF0aW9uVHlwZT0iSXNQdWJsaXNoZWRJbiI+MjAwMC03NDI2PC9yZWxhdGVkSWRlbnRpZmllcj4KICA8L3JlbGF0ZWRJZGVudGlmaWVycz4KICA8cmVsYXRlZEl0ZW1zPgogICAgPHJlbGF0ZWRJdGVtIHJlbGF0ZWRJdGVtVHlwZT0iSm91cm5hbCIgcmVsYXRpb25UeXBlPSJJc1B1Ymxpc2hlZEluIj4KICAgICAgPHJlbGF0ZWRJdGVtSWRlbnRpZmllciByZWxhdGVkSXRlbUlkZW50aWZpZXJUeXBlPSJJU1NOIj4yMDAwLTc0MjY8L3JlbGF0ZWRJdGVtSWRlbnRpZmllcj4KICAgICAgPHRpdGxlcz4KICAgICAgICA8dGl0bGU+RXVyb3BlYW4gam91cm5hbCBmb3IgUmVzZWFyY2ggb24gdGhlIEVkdWNhdGlvbiBhbmQgTGVhcm5pbmcgb2YgQWR1bHRzPC90aXRsZT4KICAgICAgPC90aXRsZXM+CiAgICAgIDxwdWJsaWNhdGlvblllYXI+MjAyNjwvcHVibGljYXRpb25ZZWFyPgogICAgICA8dm9sdW1lPjE3PC92b2x1bWU+CiAgICAgIDxpc3N1ZT4yPC9pc3N1ZT4KICAgICAgPGZpcnN0UGFnZT4zNzU8L2ZpcnN0UGFnZT4KICAgICAgPGxhc3RQYWdlPjM5NjwvbGFzdFBhZ2U+CiAgICAgIDxwdWJsaXNoZXI+TGlua29waW5nIFVuaXZlcnNpdHkgRWxlY3Ryb25pYyBQcmVzcyA6IExpbmvDtnBpbmc8L3B1Ymxpc2hlcj4KICAgIDwvcmVsYXRlZEl0ZW0+CiAgPC9yZWxhdGVkSXRlbXM+CiAgPHNpemVzLz4KICA8Zm9ybWF0cy8+CiAgPHZlcnNpb24vPgogIDxyaWdodHNMaXN0PgogICAgPHJpZ2h0cyByaWdodHNVUkk9Imh0dHA6Ly9jcmVhdGl2ZWNvbW1vbnMub3JnL2xpY2Vuc2VzL2J5LzQuMC9kZWVkLmRlIiByaWdodHNJZGVudGlmaWVyPSJDQyBCWSA0LjAgSW50ZXJuYXRpb25hbCI+Q3JlYXRpdmUgQ29tbW9ucyBOYW1lbnNuZW5udW5nIDQuMCBJbnRlcm5hdGlvbmFsPC9yaWdodHM+CiAgPC9yaWdodHNMaXN0PgogIDxkZXNjcmlwdGlvbnM+CiAgICA8ZGVzY3JpcHRpb24gZGVzY3JpcHRpb25UeXBlPSJTZXJpZXNJbmZvcm1hdGlvbiI+RXVyb3BlYW4gam91cm5hbCBmb3IgUmVzZWFyY2ggb24gdGhlIEVkdWNhdGlvbiBhbmQgTGVhcm5pbmcgb2YgQWR1bHRzIDE3ICgyMDI2KSAyLCBTLiAzNzUtMzk2PC9kZXNjcmlwdGlvbj4KICAgIDxkZXNjcmlwdGlvbiB4bWw6bGFuZz0iZW4iIGRlc2NyaXB0aW9uVHlwZT0iQWJzdHJhY3QiPkhvdyBzaG91bGQgQ29udGludWluZyBWb2NhdGlvbmFsIEVkdWNhdGlvbiBhbmQgVHJhaW5pbmcgKENWRVQpIHNlcnZlIHNvY2lldHkg4oCTIGFzIGEgdG9vbCBmb3IgZWNvbm9taWMgYWRhcHRhdGlvbiBvciBhcyBhIHNpdGUgb2YgdHJhbnNmb3JtYXRpdmUgYWR1bHQgbGVhcm5pbmcgYW5kIGRlbW9jcmF0aWMgcGFydGljaXBhdGlvbj8gVGhpcyBhcnRpY2xlIGNyaXRpY2FsbHkgZXhhbWluZXMgQ1ZFVCBkaXNjb3Vyc2UgYWNyb3NzIHNldmVuIFVORVNDTyBJbnRlcm5hdGlvbmFsIENvbmZlcmVuY2VzIG9uIEFkdWx0IEVkdWNhdGlvbiAoQ09ORklOVEVBKSAoMTk0OS0yMDIyKS4gQmFzZWQgb24gY3JpdGljYWwgYW5hbHlzaXMgb2Ygc2V2ZW50ZWVuIGtleSB0ZXh0cyBhbmQgaW5mb3JtZWQgYnkgRnJlaXJlYW4gcGVkYWdvZ3ksIExpbWEgYW5kIEd1aW1hcsOjZXPigJkgcG9saWN5IGZyYW1ld29yaywgYW5kIEJpZXN0YeKAmXMgY3JpdGlxdWUgb2Yg4oCYbGVhcm5pZmljYXRpb27igJksIHRocmVlIHBhdHRlcm5zIGFyZSBpZGVudGlmaWVkLiBGaXJzdCwgZWNvbm9taWMgcHJpb3JpdGllcyBjb25zaXN0ZW50bHkgb3ZlcnNoYWRvdyBodW1hbmlzdGljIGFpbXMgZGVzcGl0ZSBwZXJpb2RpYyByaGV0b3JpY2FsIHJlYWZmaXJtYXRpb25zLiBTZWNvbmQsIHRoZSBzaGlmdCBmcm9tIOKAmGFkdWx0IGVkdWNhdGlvbuKAmSB0byDigJhhZHVsdCBsZWFybmluZ+KAmSBpbmRpdmlkdWFsaXNlcyByZXNwb25zaWJpbGl0eSwgdHJhbnNmZXJyaW5nIGNvc3RzIGZyb20gc3RhdGVzIGFuZCBlbXBsb3llcnMgdG8gbGVhcm5lcnMgd2hpbGUgb2JzY3VyaW5nIHN0cnVjdHVyYWwgaW5lcXVhbGl0aWVzLiBUaGlyZCwgY29tcHJlaGVuc2l2ZSBwb2xpY3kgZnJhbWV3b3JrcyBjb2V4aXN0IHdpdGggaW1wbGVtZW50YXRpb24gZ2FwcywgZXhwb3NpbmcgQ09ORklOVEVB4oCZcyBsaW1pdGVkIGNhcGFjaXR5IHRvIGNvdW50ZXIgbmVvbGliZXJhbCByZXN0cnVjdHVyaW5nLiBHb3Zlcm5hbmNlIGhhcyBzaGlmdGVkIGZyb20gcHVibGljIHJlc3BvbnNpYmlsaXR5ICgxOTQ5LTE5NjApIHRvIG5vcm1hbGlzZWQgcHVibGljLXByaXZhdGUgcGFydG5lcnNoaXBzICgyMDIyKS4gUmVhbGlzaW5nIENWRVTigJlzIHRyYW5zZm9ybWF0aXZlIHBvdGVudGlhbCByZXF1aXJlcyBiaW5kaW5nIG1lY2hhbmlzbXMsIHBvbGl0aWNhbC1lY29ub21pYyBlbmdhZ2VtZW50LCBhbmQgZGVtb2NyYXRpYyBtb2JpbGlzYXRpb24gYmV5b25kIGRlY2xhcmF0b3J5IGNvbW1pdG1lbnRzLiAoRElQRi9PcmlnLik8L2Rlc2NyaXB0aW9uPgogIDwvZGVzY3JpcHRpb25zPgo8L3Jlc291cmNlPgo=",
+    "url": "https://www.pedocs.de/frontdoor.php?source_opus=35728",
+    "contentUrl": null,
+    "metadataVersion": 0,
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "source": "api",
+    "isActive": true,
+    "state": "findable",
+    "reason": null,
+    "viewCount": 0,
+    "viewsOverTime": [],
+    "downloadCount": 0,
+    "downloadsOverTime": [],
+    "referenceCount": 0,
+    "citationCount": 0,
+    "citationsOverTime": [],
+    "partCount": 0,
+    "partOfCount": 0,
+    "versionCount": 0,
+    "versionOfCount": 0,
+    "created": "2026-07-01T14:38:20.000Z",
+    "registered": "2026-07-03T13:53:32.000Z",
+    "published": "2026",
+    "updated": "2026-07-03T13:53:32.000Z"
+  },
+  "relationships": {
+    "client": {
+      "data": {
+        "id": "mjvh.pedocs",
+        "type": "clients"
+      }
+    },
+    "provider": {
+      "data": {
+        "id": "mjvh",
+        "type": "providers"
+      }
+    },
+    "media": {
+      "data": {
+        "id": "10.25656/01:35728",
+        "type": "media"
+      }
+    },
+    "references": {
+      "data": []
+    },
+    "citations": {
+      "data": []
+    },
+    "parts": {
+      "data": []
+    },
+    "partOf": {
+      "data": []
+    },
+    "versions": {
+      "data": []
+    },
+    "versionOf": {
+      "data": []
+    }
+  }
+}

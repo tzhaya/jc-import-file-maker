@@ -1,6 +1,39 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-03（JaLC所属機関検索に関するドキュメント訂正 #191）
+最終更新: 2026-07-03（DataCite→JPCOARマッピング表の作成 #197）
+
+## DataCite→JPCOARマッピング表の作成（2026-07-03, #197）
+
+### 概要
+DataCite DOI 対応（#197 検討 → 実装は #208 に分割）の設計フェーズとして、DataCite REST API のメタデータを JPCOAR / 本ツールのフィールドへ対応付けるマッピング表 `docs/datacite_jpcoar_mapping.md` を新規作成した。実装 #208 の仕様書として機能する。実装計画は #197 のコメント（v2、クロスレビュー済み）を参照。
+
+### 調査で確定した主要事実（すべて実測・一次情報）
+- **API**: CORS対応（`Access-Control-Allow-Origin` が Origin をエコーバック）・認証不要。取得URL基本形は `https://api.datacite.org/dois/{DOI}?publisher=true&affiliation=true`（パラメータなしでは publisher が文字列・affiliation が文字列配列に縮退し識別子が取れない）
+- **国内経路**: NII準会員（IRDB経由）プレフィックス `10.57723`（京大97件）・`10.48708`（九大240件）・`10.60574`（阪大105件）、および jalcco コンソーシアム10機関（JAXA 1,259件・JAMSTEC 4,238件等）の DOI が DataCite に実在。いずれも doiRA は "DataCite" → 本ツールでは DataCite 分岐でカバーでき JaLC 分岐と競合しない
+- **書誌情報**: JournalArticle 50件サンプルで `container.title` 充足は0件。`relatedItems`（IsPublishedIn/Journal、約22.7万件）に誌名・ISSN・巻号頁が構造化されて入るため、relatedItems を主ソース・container を補完とする
+- **国内レコードの特徴**: `nameIdentifiers` に `e-Rad_Researcher`・`NRID` が入り、ツールの `nameIdentifierScheme` select と表記一致。所属識別子（ROR等）の充足率は低い（ランダム40件中8件）
+- **語彙（Schema 4.7）**: resourceTypeGeneral 34値（4.7 で Poster/Presentation 追加）・relationType 39値・relatedIdentifierType 23値・dateType 12値・contributorType 22値
+
+### 主要な設計判断
+- resourceTypeGeneral は PascalCase→小文字スペース区切り正規化＋個別マップ（正規化一致14値・個別20値、未知値は空文字フォールバック）
+- relationType はそのまま15値・意味変換7値（IsNewVersionOf→isVersionOf 等）・破棄17値
+- relatedIdentifierType はそのまま8値・変換2値（Handle→HDL・URL→URI）・「http(s) URL形なら URI に丸め、以外は破棄」13値
+- dates は複数エントリ保持（Coverage は時間的範囲 `item_30002_temporal19` へ展開、Withdrawn/Other は破棄）、範囲値は開始側、`dates` 空なら `publicationYear` から Issued 生成
+- language は xs:language → 639-2/T 正規化（null 頻出のため既定 'eng' にしない）
+- geoLocations は UI 構造（point/box/place）とほぼ1:1のため #208 初期実装に含める。contributors・sizes/formats・url・alternateIdentifiers は理由付きで自動マッピング対象外（レビュー指摘を反映し、UI 実在の事実と「API からの自動設定なし」を区別して記載）
+
+### 変更ファイル
+- `docs/datacite_jpcoar_mapping.md`（新規・本体）
+- `samples/DataCite/10.57723_kds622523.json`・`10.25656_01_35728.json`（実レスポンス保存）
+- `scripts/check.js`（UTF8_FILES に新doc追加）・`docs/developer_docs.md`（一覧追記）
+- `README.md` 変更履歴・`docs/changelog.md` 追記
+
+### 注意事項
+- ドキュメントのみの変更で、本番HTML・共有JS・Chrome拡張コードの変更は無い（E2E対象外・manifest更新不要、#184/#181 と同型）
+- テスト用DOI 7件（国内4・海外3）を doc §3 に収載。#208 の E2E はこれを使用する
+
+### 検証
+`npm test` で全チェック（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造）がPASS。
 
 ## JaLC所属機関検索に関するドキュメント訂正（2026-07-03, #191）
 

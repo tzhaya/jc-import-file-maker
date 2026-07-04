@@ -1,0 +1,250 @@
+{
+  "id": "10.57723/kds622523",
+  "type": "dois",
+  "attributes": {
+    "doi": "10.57723/kds622523",
+    "prefix": "10.57723",
+    "suffix": "kds622523",
+    "identifiers": [
+      {
+        "identifier": "oai:irdb.nii.ac.jp:01221:0007419783",
+        "identifierType": "OAIPMH"
+      }
+    ],
+    "alternateIdentifiers": [
+      {
+        "alternateIdentifierType": "OAIPMH",
+        "alternateIdentifier": "oai:irdb.nii.ac.jp:01221:0007419783"
+      }
+    ],
+    "creators": [
+      {
+        "name": "Hirose Masakazu",
+        "nameType": "Personal",
+        "givenName": "Masakazu",
+        "familyName": "Hirose",
+        "affiliation": [
+          {
+            "name": "Department of Integrated Neuroanatomy and Neuroimaging, Kyoto University Graduate School of Medicine"
+          }
+        ],
+        "nameIdentifiers": [
+          {
+            "schemeUri": "https://orcid.org",
+            "nameIdentifier": "https://orcid.org/0000-0002-0479-7841",
+            "nameIdentifierScheme": "ORCID"
+          }
+        ]
+      }
+    ],
+    "titles": [
+      {
+        "lang": "en",
+        "title": "Histologically validated probabilistic atlas of REM-related tegmental nuclei in the human brainstem"
+      }
+    ],
+    "publisher": {
+      "lang": "en",
+      "name": "Kyoto University"
+    },
+    "container": {},
+    "publicationYear": 2026,
+    "subjects": [
+      {
+        "lang": "en",
+        "subject": "brainstem atlas",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "en",
+        "subject": "probabilistic atlas",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "en",
+        "subject": "locus coeruleus",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "en",
+        "subject": "pedunculopontine tegmental nucleus",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "en",
+        "subject": "laterodorsal tegmental nucleus",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "en",
+        "subject": "subcoeruleus",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "en",
+        "subject": "ex vivo MRI",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "en",
+        "subject": "7 tesla",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "en",
+        "subject": "MNI152",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "en",
+        "subject": "isolated REM sleep behaviour disorder",
+        "subjectScheme": "Other"
+      }
+    ],
+    "contributors": [],
+    "dates": [
+      {
+        "date": "2026-06-08",
+        "dateType": "Issued"
+      },
+      {
+        "date": "2026-06-06",
+        "dateType": "Submitted"
+      }
+    ],
+    "language": "en",
+    "types": {
+      "ris": "DATA",
+      "bibtex": "misc",
+      "citeproc": "dataset",
+      "schemaOrg": "Dataset",
+      "resourceType": "dataset",
+      "resourceTypeGeneral": "Dataset"
+    },
+    "relatedIdentifiers": [],
+    "relatedItems": [],
+    "sizes": [],
+    "formats": [
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "application/gzip",
+      "text/markdown",
+      "text/plain",
+      "text/plain"
+    ],
+    "version": null,
+    "rightsList": [
+      {
+        "rights": "京都大学研究データ管理・公開ポリシーに基づき、研究データ管理と公開を行う権利は研究者・作成者・研究データ管理責任者にあります。",
+        "rightsUri": "https://www.kyoto-u.ac.jp/ja/research/research-policy/kanrikoukai"
+      },
+      {
+        "rights": "本公開研究データの利用条件ライセンスはCC BY-NC-ND 4.0（表示-非営利-改変禁止 4.0 国際）。",
+        "rightsUri": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja"
+      },
+      {
+        "rights": "In accordance with the Kyoto University Policy on Research Data Management and Sharing, the rights to manage and publish research data reside with the researchers, creators, and research data managers.",
+        "rightsUri": "https://www.kyoto-u.ac.jp/en/research/research-policy/rdm"
+      },
+      {
+        "rights": "Creative Commons Attribution Non Commercial No Derivatives 4.0 International",
+        "rightsUri": "https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode",
+        "schemeUri": "https://spdx.org/licenses/",
+        "rightsIdentifier": "cc-by-nc-nd-4.0",
+        "rightsIdentifierScheme": "SPDX"
+      }
+    ],
+    "descriptions": [
+      {
+        "lang": "en",
+        "description": "A histologically validated probabilistic atlas of seven REM-related nuclei in the human brainstem, in MNI152 space (0.5 mm isotropic), built from 10 ex vivo 7-tesla MRI specimens (78.1 micron isotropic). Each nucleus was manually delineated on high-resolution ex vivo MRI, spatially normalised to MNI152 space, averaged voxel-wise across specimens to give a probabilistic map, and thresholded at probability &gt;= 0.3 to give a binary atlas. For 12 ROIs (DR, PAG, and right/left PTg, LDTg, LDTgV, LC, SubC), both probabilistic (_prob, voxel values 0-1) and binary (_bin_thr30, threshold 0.3) NIfTI files are provided, together with README and LICENSE. Licensed under CC BY-NC-ND 4.0.",
+        "descriptionType": "Abstract"
+      }
+    ],
+    "geoLocations": [],
+    "fundingReferences": [],
+    "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8cmVzb3VyY2UgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeG1sbnM9Imh0dHA6Ly9kYXRhY2l0ZS5vcmcvc2NoZW1hL2tlcm5lbC00IiB4c2k6c2NoZW1hTG9jYXRpb249Imh0dHA6Ly9kYXRhY2l0ZS5vcmcvc2NoZW1hL2tlcm5lbC00IGh0dHBzOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00LjcvbWV0YWRhdGEueHNkIj4KICA8aWRlbnRpZmllciBpZGVudGlmaWVyVHlwZT0iRE9JIj4xMC41NzcyMy9LRFM2MjI1MjM8L2lkZW50aWZpZXI+CiAgPGNyZWF0b3JzPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSB4bWw6bGFuZz0iZW4iIG5hbWVUeXBlPSJQZXJzb25hbCI+SGlyb3NlIE1hc2FrYXp1PC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5NYXNha2F6dTwvZ2l2ZW5OYW1lPgogICAgICA8ZmFtaWx5TmFtZT5IaXJvc2U8L2ZhbWlseU5hbWU+CiAgICAgIDxuYW1lSWRlbnRpZmllciBuYW1lSWRlbnRpZmllclNjaGVtZT0iT1JDSUQiPjAwMDAtMDAwMi0wNDc5LTc4NDE8L25hbWVJZGVudGlmaWVyPgogICAgICA8YWZmaWxpYXRpb24+RGVwYXJ0bWVudCBvZiBJbnRlZ3JhdGVkIE5ldXJvYW5hdG9teSBhbmQgTmV1cm9pbWFnaW5nLCBLeW90byBVbml2ZXJzaXR5IEdyYWR1YXRlIFNjaG9vbCBvZiBNZWRpY2luZTwvYWZmaWxpYXRpb24+CiAgICA8L2NyZWF0b3I+CiAgPC9jcmVhdG9ycz4KICA8dGl0bGVzPgogICAgPHRpdGxlIHhtbDpsYW5nPSJlbiI+SGlzdG9sb2dpY2FsbHkgdmFsaWRhdGVkIHByb2JhYmlsaXN0aWMgYXRsYXMgb2YgUkVNLXJlbGF0ZWQgdGVnbWVudGFsIG51Y2xlaSBpbiB0aGUgaHVtYW4gYnJhaW5zdGVtPC90aXRsZT4KICA8L3RpdGxlcz4KICA8cHVibGlzaGVyIHhtbDpsYW5nPSJlbiI+S3lvdG8gVW5pdmVyc2l0eTwvcHVibGlzaGVyPgogIDxwdWJsaWNhdGlvblllYXI+MjAyNjwvcHVibGljYXRpb25ZZWFyPgogIDxzdWJqZWN0cz4KICAgIDxzdWJqZWN0IHN1YmplY3RTY2hlbWU9Ik90aGVyIiB4bWw6bGFuZz0iZW4iPmJyYWluc3RlbSBhdGxhczwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHN1YmplY3RTY2hlbWU9Ik90aGVyIiB4bWw6bGFuZz0iZW4iPnByb2JhYmlsaXN0aWMgYXRsYXM8L3N1YmplY3Q+CiAgICA8c3ViamVjdCBzdWJqZWN0U2NoZW1lPSJPdGhlciIgeG1sOmxhbmc9ImVuIj5sb2N1cyBjb2VydWxldXM8L3N1YmplY3Q+CiAgICA8c3ViamVjdCBzdWJqZWN0U2NoZW1lPSJPdGhlciIgeG1sOmxhbmc9ImVuIj5wZWR1bmN1bG9wb250aW5lIHRlZ21lbnRhbCBudWNsZXVzPC9zdWJqZWN0PgogICAgPHN1YmplY3Qgc3ViamVjdFNjaGVtZT0iT3RoZXIiIHhtbDpsYW5nPSJlbiI+bGF0ZXJvZG9yc2FsIHRlZ21lbnRhbCBudWNsZXVzPC9zdWJqZWN0PgogICAgPHN1YmplY3Qgc3ViamVjdFNjaGVtZT0iT3RoZXIiIHhtbDpsYW5nPSJlbiI+c3ViY29lcnVsZXVzPC9zdWJqZWN0PgogICAgPHN1YmplY3Qgc3ViamVjdFNjaGVtZT0iT3RoZXIiIHhtbDpsYW5nPSJlbiI+ZXggdml2byBNUkk8L3N1YmplY3Q+CiAgICA8c3ViamVjdCBzdWJqZWN0U2NoZW1lPSJPdGhlciIgeG1sOmxhbmc9ImVuIj43IHRlc2xhPC9zdWJqZWN0PgogICAgPHN1YmplY3Qgc3ViamVjdFNjaGVtZT0iT3RoZXIiIHhtbDpsYW5nPSJlbiI+TU5JMTUyPC9zdWJqZWN0PgogICAgPHN1YmplY3Qgc3ViamVjdFNjaGVtZT0iT3RoZXIiIHhtbDpsYW5nPSJlbiI+aXNvbGF0ZWQgUkVNIHNsZWVwIGJlaGF2aW91ciBkaXNvcmRlcjwvc3ViamVjdD4KICA8L3N1YmplY3RzPgogIDxjb250cmlidXRvcnMvPgogIDxkYXRlcz4KICAgIDxkYXRlIGRhdGVUeXBlPSJJc3N1ZWQiPjIwMjYtMDYtMDg8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iU3VibWl0dGVkIj4yMDI2LTA2LTA2PC9kYXRlPgogIDwvZGF0ZXM+CiAgPGxhbmd1YWdlPmVuPC9sYW5ndWFnZT4KICA8cmVzb3VyY2VUeXBlIHJlc291cmNlVHlwZUdlbmVyYWw9IkRhdGFzZXQiPmRhdGFzZXQ8L3Jlc291cmNlVHlwZT4KICA8YWx0ZXJuYXRlSWRlbnRpZmllcnM+CiAgICA8YWx0ZXJuYXRlSWRlbnRpZmllciBhbHRlcm5hdGVJZGVudGlmaWVyVHlwZT0iT0FJUE1IIj5vYWk6aXJkYi5uaWkuYWMuanA6MDEyMjE6MDAwNzQxOTc4MzwvYWx0ZXJuYXRlSWRlbnRpZmllcj4KICA8L2FsdGVybmF0ZUlkZW50aWZpZXJzPgogIDxyZWxhdGVkSWRlbnRpZmllcnMvPgogIDxzaXplcy8+CiAgPGZvcm1hdHM+CiAgICA8Zm9ybWF0PmFwcGxpY2F0aW9uL2d6aXA8L2Zvcm1hdD4KICAgIDxmb3JtYXQ+YXBwbGljYXRpb24vZ3ppcDwvZm9ybWF0PgogICAgPGZvcm1hdD5hcHBsaWNhdGlvbi9nemlwPC9mb3JtYXQ+CiAgICA8Zm9ybWF0PmFwcGxpY2F0aW9uL2d6aXA8L2Zvcm1hdD4KICAgIDxmb3JtYXQ+YXBwbGljYXRpb24vZ3ppcDwvZm9ybWF0PgogICAgPGZvcm1hdD5hcHBsaWNhdGlvbi9nemlwPC9mb3JtYXQ+CiAgICA8Zm9ybWF0PmFwcGxpY2F0aW9uL2d6aXA8L2Zvcm1hdD4KICAgIDxmb3JtYXQ+YXBwbGljYXRpb24vZ3ppcDwvZm9ybWF0PgogICAgPGZvcm1hdD5hcHBsaWNhdGlvbi9nemlwPC9mb3JtYXQ+CiAgICA8Zm9ybWF0PmFwcGxpY2F0aW9uL2d6aXA8L2Zvcm1hdD4KICAgIDxmb3JtYXQ+YXBwbGljYXRpb24vZ3ppcDwvZm9ybWF0PgogICAgPGZvcm1hdD5hcHBsaWNhdGlvbi9nemlwPC9mb3JtYXQ+CiAgICA8Zm9ybWF0PmFwcGxpY2F0aW9uL2d6aXA8L2Zvcm1hdD4KICAgIDxmb3JtYXQ+YXBwbGljYXRpb24vZ3ppcDwvZm9ybWF0PgogICAgPGZvcm1hdD5hcHBsaWNhdGlvbi9nemlwPC9mb3JtYXQ+CiAgICA8Zm9ybWF0PmFwcGxpY2F0aW9uL2d6aXA8L2Zvcm1hdD4KICAgIDxmb3JtYXQ+YXBwbGljYXRpb24vZ3ppcDwvZm9ybWF0PgogICAgPGZvcm1hdD5hcHBsaWNhdGlvbi9nemlwPC9mb3JtYXQ+CiAgICA8Zm9ybWF0PmFwcGxpY2F0aW9uL2d6aXA8L2Zvcm1hdD4KICAgIDxmb3JtYXQ+YXBwbGljYXRpb24vZ3ppcDwvZm9ybWF0PgogICAgPGZvcm1hdD5hcHBsaWNhdGlvbi9nemlwPC9mb3JtYXQ+CiAgICA8Zm9ybWF0PmFwcGxpY2F0aW9uL2d6aXA8L2Zvcm1hdD4KICAgIDxmb3JtYXQ+YXBwbGljYXRpb24vZ3ppcDwvZm9ybWF0PgogICAgPGZvcm1hdD5hcHBsaWNhdGlvbi9nemlwPC9mb3JtYXQ+CiAgICA8Zm9ybWF0PnRleHQvbWFya2Rvd248L2Zvcm1hdD4KICAgIDxmb3JtYXQ+dGV4dC9wbGFpbjwvZm9ybWF0PgogICAgPGZvcm1hdD50ZXh0L3BsYWluPC9mb3JtYXQ+CiAgPC9mb3JtYXRzPgogIDxyaWdodHNMaXN0PgogICAgPHJpZ2h0cyByaWdodHNVUkk9Imh0dHBzOi8vd3d3Lmt5b3RvLXUuYWMuanAvamEvcmVzZWFyY2gvcmVzZWFyY2gtcG9saWN5L2thbnJpa291a2FpIj7kuqzpg73lpKflrabnoJTnqbbjg4fjg7zjgr/nrqHnkIbjg7vlhazplovjg53jg6rjgrfjg7zjgavln7rjgaXjgY3jgIHnoJTnqbbjg4fjg7zjgr/nrqHnkIbjgajlhazplovjgpLooYzjgYbmqKnliKnjga/noJTnqbbogIXjg7vkvZzmiJDogIXjg7vnoJTnqbbjg4fjg7zjgr/nrqHnkIbosqzku7vogIXjgavjgYLjgorjgb7jgZnjgII8L3JpZ2h0cz4KICAgIDxyaWdodHMgcmlnaHRzVVJJPSJodHRwczovL2NyZWF0aXZlY29tbW9ucy5vcmcvbGljZW5zZXMvYnktbmMtbmQvNC4wL2RlZWQuamEiPuacrOWFrOmWi+eglOeptuODh+ODvOOCv+OBruWIqeeUqOadoeS7tuODqeOCpOOCu+ODs+OCueOBr0NDIEJZLU5DLU5EIDQuMO+8iOihqOekui3pnZ7llrbliKkt5pS55aSJ56aB5q2iIDQuMCDlm73pmpvvvInjgII8L3JpZ2h0cz4KICAgIDxyaWdodHMgcmlnaHRzVVJJPSJodHRwczovL3d3dy5reW90by11LmFjLmpwL2VuL3Jlc2VhcmNoL3Jlc2VhcmNoLXBvbGljeS9yZG0iPkluIGFjY29yZGFuY2Ugd2l0aCB0aGUgS3lvdG8gVW5pdmVyc2l0eSBQb2xpY3kgb24gUmVzZWFyY2ggRGF0YSBNYW5hZ2VtZW50IGFuZCBTaGFyaW5nLCB0aGUgcmlnaHRzIHRvIG1hbmFnZSBhbmQgcHVibGlzaCByZXNlYXJjaCBkYXRhIHJlc2lkZSB3aXRoIHRoZSByZXNlYXJjaGVycywgY3JlYXRvcnMsIGFuZCByZXNlYXJjaCBkYXRhIG1hbmFnZXJzLjwvcmlnaHRzPgogICAgPHJpZ2h0cyByaWdodHNVUkk9Imh0dHBzOi8vY3JlYXRpdmVjb21tb25zLm9yZy9saWNlbnNlcy9ieS1uYy1uZC80LjAvIj5UaGlzIHdvcmsgaXMgbGljZW5zZWQgdW5kZXIgYSBDcmVhdGl2ZSBDb21tb25zIEF0dHJpYnV0aW9uLU5vbkNvbW1lcmNpYWwtTm9EZXJpdmF0aXZlcyA0LjAgSW50ZXJuYXRpb25hbCBMaWNlbnNlLjwvcmlnaHRzPgogIDwvcmlnaHRzTGlzdD4KICA8ZGVzY3JpcHRpb25zPgogICAgPGRlc2NyaXB0aW9uIGRlc2NyaXB0aW9uVHlwZT0iQWJzdHJhY3QiIHhtbDpsYW5nPSJlbiI+QSBoaXN0b2xvZ2ljYWxseSB2YWxpZGF0ZWQgcHJvYmFiaWxpc3RpYyBhdGxhcyBvZiBzZXZlbiBSRU0tcmVsYXRlZCBudWNsZWkgaW4gdGhlIGh1bWFuIGJyYWluc3RlbSwgaW4gTU5JMTUyIHNwYWNlICgwLjUgbW0gaXNvdHJvcGljKSwgYnVpbHQgZnJvbSAxMCBleCB2aXZvIDctdGVzbGEgTVJJIHNwZWNpbWVucyAoNzguMSBtaWNyb24gaXNvdHJvcGljKS4gRWFjaCBudWNsZXVzIHdhcyBtYW51YWxseSBkZWxpbmVhdGVkIG9uIGhpZ2gtcmVzb2x1dGlvbiBleCB2aXZvIE1SSSwgc3BhdGlhbGx5IG5vcm1hbGlzZWQgdG8gTU5JMTUyIHNwYWNlLCBhdmVyYWdlZCB2b3hlbC13aXNlIGFjcm9zcyBzcGVjaW1lbnMgdG8gZ2l2ZSBhIHByb2JhYmlsaXN0aWMgbWFwLCBhbmQgdGhyZXNob2xkZWQgYXQgcHJvYmFiaWxpdHkgJmd0Oz0gMC4zIHRvIGdpdmUgYSBiaW5hcnkgYXRsYXMuIEZvciAxMiBST0lzIChEUiwgUEFHLCBhbmQgcmlnaHQvbGVmdCBQVGcsIExEVGcsIExEVGdWLCBMQywgU3ViQyksIGJvdGggcHJvYmFiaWxpc3RpYyAoX3Byb2IsIHZveGVsIHZhbHVlcyAwLTEpIGFuZCBiaW5hcnkgKF9iaW5fdGhyMzAsIHRocmVzaG9sZCAwLjMpIE5JZlRJIGZpbGVzIGFyZSBwcm92aWRlZCwgdG9nZXRoZXIgd2l0aCBSRUFETUUgYW5kIExJQ0VOU0UuIExpY2Vuc2VkIHVuZGVyIENDIEJZLU5DLU5EIDQuMC48L2Rlc2NyaXB0aW9uPgogIDwvZGVzY3JpcHRpb25zPgogIDxnZW9Mb2NhdGlvbnMvPgogIDxmdW5kaW5nUmVmZXJlbmNlcy8+CjwvcmVzb3VyY2U+",
+    "url": "http://hdl.handle.net/2433/301268",
+    "contentUrl": null,
+    "metadataVersion": 1,
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "source": "mds",
+    "isActive": true,
+    "state": "findable",
+    "reason": null,
+    "viewCount": 0,
+    "viewsOverTime": [],
+    "downloadCount": 0,
+    "downloadsOverTime": [],
+    "referenceCount": 0,
+    "citationCount": 0,
+    "citationsOverTime": [],
+    "partCount": 0,
+    "partOfCount": 0,
+    "versionCount": 0,
+    "versionOfCount": 0,
+    "created": "2026-06-16T22:25:03.000Z",
+    "registered": "2026-06-16T22:32:07.000Z",
+    "published": "2026",
+    "updated": "2026-06-30T22:47:43.000Z"
+  },
+  "relationships": {
+    "client": {
+      "data": {
+        "id": "kyotou.kyotou",
+        "type": "clients"
+      }
+    },
+    "provider": {
+      "data": {
+        "id": "kyotou",
+        "type": "providers"
+      }
+    },
+    "media": {
+      "data": {
+        "id": "10.57723/kds622523",
+        "type": "media"
+      }
+    },
+    "references": {
+      "data": []
+    },
+    "citations": {
+      "data": []
+    },
+    "parts": {
+      "data": []
+    },
+    "partOf": {
+      "data": []
+    },
+    "versions": {
+      "data": []
+    },
+    "versionOf": {
+      "data": []
+    }
+  }
+}
