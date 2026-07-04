@@ -277,7 +277,25 @@ UI（`item_30002_geolocation20`、専用レンダラーあり）と DataCite の
 7. `dates` 空配列時の `publicationYear` フォールバック（§8）はテスト用 DOI `10.17596/0004197` で必ず検証（同 DOI は geoLocations（§13）の検証も兼ねる）
 8. スキーマ混在: `schemaVersion` は `kernel-4` 表記で細番号が取れないため、バージョン判定はせず未知値フォールバックで吸収する
 
-## 15. 出典（一次情報）
+## 15. DataCite DOI 対応の制限事項一覧
+
+本文に散在する「対象外」「将来候補」を利用者視点で集約した一覧。**#208 リリース時には本節を元に `docs/user_guide.md` へ利用者向け「DataCite DOI の制限事項」節を追加し、README 対応表からリンクする**（#208 の作業項目）。
+
+| 項目 | 初期実装（#208）での動作 | 将来候補 |
+|---|---|---|
+| 寄与者（contributors） | 自動設定されない（手動入力は可能） | contributorType の対応表実装。RightsHolder は権利者情報フィールドへの展開が有力（§4 #4） |
+| ファイル情報（sizes / formats / url） | 自動生成されない | `contentUrl` が取れるレコードのみファイル行の自動生成を検討（§4） |
+| その他識別子（alternateIdentifiers） | 取り込まれない | 許可リスト方式（arXiv 等の安全なタイプのみ関連情報へ展開）（§4） |
+| 位置情報の polygon | 対象外（point / box / place は対応） | ツール UI の拡張が前提（§13） |
+| 関連情報の一部 | relationType 17値（Describes / HasMetadata 等）は破棄。relatedIdentifierType の bibcode 等は URL 形でなければ破棄 | 破棄語彙の対応追加は JPCOAR 語彙の拡張待ち（§7） |
+| 日付の一部 | Withdrawn / Other は破棄（Coverage は時間的範囲へ） | — |
+| 所属機関の識別子（ROR 等） | 元データの充足率が低く空になりやすい（ランダム40件中8件。国内機関はさらに低い） | データ起因のためツール側では解消不可。手動補完を推奨 |
+| 資源タイプの一部 | Text / Model / Instrument 等は「other」になる → 手動修正を推奨 | `types.resourceType`（自由記述）を参照した判定の精緻化（§6） |
+| 書誌情報（雑誌名・巻号頁） | relatedItems / container の両方が無いレコードでは生成されない（DataCite では雑誌書誌が疎） | — |
+| アクセス権・出版タイプ | 自動判定されない（既定値。OpenAlex 連携なし） | DataCite DOI の OpenAlex 収録を活かした連携は将来検討 |
+| 本文言語 | `language` が null のレコードでは空（既定 'eng' を入れない） | — |
+
+## 16. 出典（一次情報）
 
 - DataCite REST API: https://support.datacite.org/docs/api / https://support.datacite.org/docs/api-get-doi
 - affiliation 詳細取得: https://support.datacite.org/docs/can-i-see-more-detailed-affiliation-information-in-the-rest-api
