@@ -113,7 +113,8 @@ make_jc_importer.html
         -   DOIが存在しない場合はエラーメッセージを表示し、処理を中断します。
         -   登録機関が **Crossref** の場合：Crossref および OpenAlex APIから論文のメタデータを取得します。
         -   登録機関が **JaLC** の場合：JaLC REST API（`https://api.japanlinkcenter.org/v2/dois/`）からメタデータを取得します（CORS 非対応のため Chrome 拡張版のみ。標準版ではスキップ報告）。
-        -   その他の登録機関（DataCite等）の場合：サポート外メッセージを表示します。
+        -   登録機関が **DataCite** の場合：DataCite REST API（`https://api.datacite.org/dois/`）からメタデータを取得します（CORS 対応・認証不要のため標準版・Chrome 拡張版とも動作。マッピング仕様は [docs/datacite_jpcoar_mapping.md](datacite_jpcoar_mapping.md) を参照）。
+        -   その他の登録機関の場合：サポート外メッセージを表示します。
     -   Crossref APIで得られる内容（例：`j.advnut.2025.100480.json`）を`ItemType.json`の構造に変更します。マッピングの例は  `sample.json` です。
 -   **DOIリスト一括取得**（[issue #154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）:
     -   複数のDOIを改行/カンマ/空白区切りでまとめて投入し、正規化・重複除去のうえ1件ずつ順次取得して既存のバッチに蓄積します。各取得間に待機を挟み（レート制御）、失敗したDOIはスキップして処理を継続し、完了後に成功/失敗件数と失敗DOI一覧を表示します。

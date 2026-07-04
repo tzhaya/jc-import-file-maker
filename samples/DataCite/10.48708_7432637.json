@@ -1,0 +1,175 @@
+{
+  "id": "10.48708/7432637",
+  "type": "dois",
+  "attributes": {
+    "doi": "10.48708/7432637",
+    "prefix": "10.48708",
+    "suffix": "7432637",
+    "identifiers": [
+      {
+        "identifier": "oai:irdb.nii.ac.jp:01211:0007418501",
+        "identifierType": "OAIPMH"
+      }
+    ],
+    "alternateIdentifiers": [
+      {
+        "alternateIdentifierType": "OAIPMH",
+        "alternateIdentifier": "oai:irdb.nii.ac.jp:01211:0007418501"
+      }
+    ],
+    "creators": [
+      {
+        "name": "Wada, Akio",
+        "nameType": "Personal",
+        "givenName": "Akio",
+        "familyName": "Wada",
+        "affiliation": [
+          {
+            "name": "Osaka University : Professor Emeritus"
+          }
+        ],
+        "nameIdentifiers": [
+          {
+            "nameIdentifier": "00191817",
+            "nameIdentifierScheme": "e-Rad_Researcher"
+          }
+        ]
+      }
+    ],
+    "titles": [
+      {
+        "lang": "fr",
+        "title": "“Salomé” devant la critique parisienne"
+      }
+    ],
+    "publisher": {
+      "lang": "en",
+      "name": "Kyushu University"
+    },
+    "container": {},
+    "publicationYear": 2026,
+    "subjects": [
+      {
+        "lang": "fr",
+        "subject": "“Salomé”",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "fr",
+        "subject": "Oscar Wilde",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "fr",
+        "subject": "Richard Strauss",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "ja",
+        "subject": "『サロメ』",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "ja",
+        "subject": "オスカー・ワイルド",
+        "subjectScheme": "Other"
+      },
+      {
+        "lang": "ja",
+        "subject": "リヒャルト・シュトラウス",
+        "subjectScheme": "Other"
+      }
+    ],
+    "contributors": [],
+    "dates": [
+      {
+        "date": "2026-06-11",
+        "dateType": "Issued"
+      }
+    ],
+    "language": "fr",
+    "types": {
+      "ris": "DATA",
+      "bibtex": "misc",
+      "citeproc": "dataset",
+      "schemaOrg": "Dataset",
+      "resourceType": "dataset",
+      "resourceTypeGeneral": "Dataset"
+    },
+    "relatedIdentifiers": [],
+    "relatedItems": [],
+    "sizes": [
+      "1.91MB"
+    ],
+    "formats": [
+      "application/pdf"
+    ],
+    "version": null,
+    "rightsList": [],
+    "descriptions": [],
+    "geoLocations": [],
+    "fundingReferences": [],
+    "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8cmVzb3VyY2UgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeG1sbnM9Imh0dHA6Ly9kYXRhY2l0ZS5vcmcvc2NoZW1hL2tlcm5lbC00IiB4c2k6c2NoZW1hTG9jYXRpb249Imh0dHA6Ly9kYXRhY2l0ZS5vcmcvc2NoZW1hL2tlcm5lbC00IGh0dHBzOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00LjYvbWV0YWRhdGEueHNkIj4KICA8aWRlbnRpZmllciBpZGVudGlmaWVyVHlwZT0iRE9JIj4xMC40ODcwOC83NDMyNjM3PC9pZGVudGlmaWVyPgogIDxjcmVhdG9ycz4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgeG1sOmxhbmc9ImVuIiBuYW1lVHlwZT0iUGVyc29uYWwiPldhZGEgQWtpbzwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+QWtpbzwvZ2l2ZW5OYW1lPgogICAgICA8ZmFtaWx5TmFtZT5XYWRhPC9mYW1pbHlOYW1lPgogICAgICA8bmFtZUlkZW50aWZpZXIgbmFtZUlkZW50aWZpZXJTY2hlbWU9ImUtUmFkX1Jlc2VhcmNoZXIiPjAwMTkxODE3PC9uYW1lSWRlbnRpZmllcj4KICAgICAgPGFmZmlsaWF0aW9uPk9zYWthIFVuaXZlcnNpdHkgOiBQcm9mZXNzb3IgRW1lcml0dXM8L2FmZmlsaWF0aW9uPgogICAgPC9jcmVhdG9yPgogIDwvY3JlYXRvcnM+CiAgPHRpdGxlcz4KICAgIDx0aXRsZSB4bWw6bGFuZz0iZnIiPuKAnFNhbG9tw6nigJ0gZGV2YW50IGxhIGNyaXRpcXVlIHBhcmlzaWVubmU8L3RpdGxlPgogIDwvdGl0bGVzPgogIDxwdWJsaXNoZXIgeG1sOmxhbmc9ImVuIj5LeXVzaHUgVW5pdmVyc2l0eTwvcHVibGlzaGVyPgogIDxwdWJsaWNhdGlvblllYXI+MjAyNjwvcHVibGljYXRpb25ZZWFyPgogIDxzdWJqZWN0cz4KICAgIDxzdWJqZWN0IHN1YmplY3RTY2hlbWU9Ik90aGVyIiB4bWw6bGFuZz0iZnIiPuKAnFNhbG9tw6nigJ08L3N1YmplY3Q+CiAgICA8c3ViamVjdCBzdWJqZWN0U2NoZW1lPSJPdGhlciIgeG1sOmxhbmc9ImZyIj5Pc2NhciBXaWxkZTwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHN1YmplY3RTY2hlbWU9Ik90aGVyIiB4bWw6bGFuZz0iZnIiPlJpY2hhcmQgU3RyYXVzczwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHN1YmplY3RTY2hlbWU9Ik90aGVyIiB4bWw6bGFuZz0iamEiPuOAjuOCteODreODoeOAjzwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHN1YmplY3RTY2hlbWU9Ik90aGVyIiB4bWw6bGFuZz0iamEiPuOCquOCueOCq+ODvOODu+ODr+OCpOODq+ODiTwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHN1YmplY3RTY2hlbWU9Ik90aGVyIiB4bWw6bGFuZz0iamEiPuODquODkuODo+ODq+ODiOODu+OCt+ODpeODiOODqeOCpuOCuTwvc3ViamVjdD4KICA8L3N1YmplY3RzPgogIDxjb250cmlidXRvcnMvPgogIDxkYXRlcz4KICAgIDxkYXRlIGRhdGVUeXBlPSJJc3N1ZWQiPjIwMjYtMDYtMTE8L2RhdGU+CiAgPC9kYXRlcz4KICA8bGFuZ3VhZ2U+ZnI8L2xhbmd1YWdlPgogIDxyZXNvdXJjZVR5cGUgcmVzb3VyY2VUeXBlR2VuZXJhbD0iRGF0YXNldCI+ZGF0YXNldDwvcmVzb3VyY2VUeXBlPgogIDxhbHRlcm5hdGVJZGVudGlmaWVycz4KICAgIDxhbHRlcm5hdGVJZGVudGlmaWVyIGFsdGVybmF0ZUlkZW50aWZpZXJUeXBlPSJPQUlQTUgiPm9haTppcmRiLm5paS5hYy5qcDowMTIxMTowMDA3NDE4NTAxPC9hbHRlcm5hdGVJZGVudGlmaWVyPgogIDwvYWx0ZXJuYXRlSWRlbnRpZmllcnM+CiAgPHJlbGF0ZWRJZGVudGlmaWVycy8+CiAgPHNpemVzPgogICAgPHNpemU+MS45MU1CPC9zaXplPgogIDwvc2l6ZXM+CiAgPGZvcm1hdHM+CiAgICA8Zm9ybWF0PmFwcGxpY2F0aW9uL3BkZjwvZm9ybWF0PgogIDwvZm9ybWF0cz4KICA8cmlnaHRzTGlzdC8+CiAgPGRlc2NyaXB0aW9ucy8+CiAgPGdlb0xvY2F0aW9ucy8+CiAgPGZ1bmRpbmdSZWZlcmVuY2VzLz4KPC9yZXNvdXJjZT4=",
+    "url": "https://hdl.handle.net/2324/7432637",
+    "contentUrl": null,
+    "metadataVersion": 0,
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "source": "mds",
+    "isActive": true,
+    "state": "findable",
+    "reason": null,
+    "viewCount": 0,
+    "viewsOverTime": [],
+    "downloadCount": 0,
+    "downloadsOverTime": [],
+    "referenceCount": 0,
+    "citationCount": 0,
+    "citationsOverTime": [],
+    "partCount": 0,
+    "partOfCount": 0,
+    "versionCount": 0,
+    "versionOfCount": 0,
+    "created": "2026-06-14T22:24:36.000Z",
+    "registered": "2026-06-14T22:30:59.000Z",
+    "published": "2026",
+    "updated": "2026-06-14T22:30:59.000Z"
+  },
+  "relationships": {
+    "client": {
+      "data": {
+        "id": "kyushuu.kyushuu",
+        "type": "clients"
+      }
+    },
+    "provider": {
+      "data": {
+        "id": "kyushuu",
+        "type": "providers"
+      }
+    },
+    "media": {
+      "data": {
+        "id": "10.48708/7432637",
+        "type": "media"
+      }
+    },
+    "references": {
+      "data": []
+    },
+    "citations": {
+      "data": []
+    },
+    "parts": {
+      "data": []
+    },
+    "partOf": {
+      "data": []
+    },
+    "versions": {
+      "data": []
+    },
+    "versionOf": {
+      "data": []
+    }
+  }
+}

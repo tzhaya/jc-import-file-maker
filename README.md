@@ -64,7 +64,7 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 | 閲覧中ページからのDOI自動取得 | ✅ | ❌ | 電子ジャーナルページのmetaタグから取得（ボタン押下時のみ） |
 | Crossref DOI からのメタデータ取得 | ✅ | ✅ | |
 | JaLC DOI からのメタデータ取得 | ✅ | ❌ | CORS制約のためChrome拡張機能のService Worker経由が必要 |
-| DataCite DOI からのメタデータ取得 | ❌ | ❌ | 未対応です |
+| DataCite DOI からのメタデータ取得 | ✅ | ✅ | CORS対応・認証不要のため両版で動作。[制限事項](docs/user_guide.md#datacite-doi-の制限事項)あり |
 | 自機関研究者の著作の取得（OpenAlex機関別著作検索） | ✅ | ✅ | 自機関RORで発表論文を検索 |
 | 自機関リポジトリでの登録有無の確認 | ✅ | ❌ | CORS制約のためChrome拡張機能版のみ（OpenSearchで照合） |
 | **メタデータ編集・出力** | | | |
@@ -96,8 +96,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-07-03 | ver. 1.16.1 | OpenAlex機関別著作検索の検索結果の外部リンクをクリックするとタブが「DOIインポート」に戻る不具合を修正（[#201](https://github.com/tzhaya/jc-import-file-maker/issues/201)） |
-| インポート用TSV生成ツール | 2026-07-02 | — | DOIリスト一括取得に「中断」ボタンを追加し、途中で処理を止められるように（[#194](https://github.com/tzhaya/jc-import-file-maker/issues/194)） |
+| Chrome拡張機能版 | 2026-07-04 | ver. 1.17.0 | DataCite DOI のメタデータ取得・マッピングに対応（[#208](https://github.com/tzhaya/jc-import-file-maker/issues/208)） |
+| インポート用TSV生成ツール | 2026-07-04 | — | DataCite DOI のメタデータ取得・マッピングに対応。CORS対応・認証不要のため通常ブラウザ版でも動作（[#208](https://github.com/tzhaya/jc-import-file-maker/issues/208)） |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 | OpenAlex機関別著作検索 | 2026-07-03 | — | 検索結果の外部リンクをクリックするとタブが「DOIインポート」に戻る不具合を修正（[#201](https://github.com/tzhaya/jc-import-file-maker/issues/201)）。所属の誤判定が疑われる候補に「⚠ 要確認」バッジを表示（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186)） |
 
@@ -301,11 +301,11 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-07-04 | DataCite DOI メタデータ取得・マッピングを実装（[#208](https://github.com/tzhaya/jc-import-file-maker/issues/208)）：[`docs/datacite_jpcoar_mapping.md`](docs/datacite_jpcoar_mapping.md)（#197）を仕様書として標準版・Chrome拡張版の両方に実装。CORS対応・認証不要のため環境分岐なしで両版とも直接fetchで動作。アクセス権・出版タイプはOpenAlex連携なしのため既定値固定。詳細は [変更履歴](docs/changelog.md) 参照。manifest version `1.16.1` → `1.17.0` |
 | 2026-07-03 | DataCite → JPCOAR マッピング表を作成（[#197](https://github.com/tzhaya/jc-import-file-maker/issues/197)）：DataCite DOI 対応の実装（[#208](https://github.com/tzhaya/jc-import-file-maker/issues/208)）に先立つ設計文書 [`docs/datacite_jpcoar_mapping.md`](docs/datacite_jpcoar_mapping.md) を新規作成。API仕様（CORS対応・`?publisher=true&affiliation=true`）の実測確認、国内機関リポジトリ由来DOI（NII準会員・jalccoコンソーシアム、いずれも doiRA=DataCite）の切り分け調査、resourceTypeGeneral 全34値（Schema 4.7）／relationType 全39値／relatedIdentifierType 全23値の対応表、E2E用テストDOI 7件を収載。ドキュメントのみの変更（本番HTML・拡張コードの変更なし） |
 | 2026-07-03 | OpenAlex機関別著作検索の検索結果外部リンクをクリックするとタブが「DOIインポート」に戻る不具合を修正（[#201](https://github.com/tzhaya/jc-import-file-maker/issues/201)）：`funder_lookup.js`（#150）と同じ委譲クリックハンドラを `openalex_panel.js`／`openalex_lookup.html` に追加し、`chrome.tabs.create` で外部リンクを新しいタブに開くよう修正。manifest version `1.16.0` → `1.16.1` |
 | 2026-07-03 | `make_jc_importer_test.html`（ローカル専用・`.gitignore`対象）のCONFIGブロックが `shared.js` 分離（#111）以前の構造のまま未更新だった問題を修正（[#203](https://github.com/tzhaya/jc-import-file-maker/issues/203)）：`shared.js` に #156 で追加済みの `DEFAULT_ROR_ID`・`DEFAULT_OPENALEX_DAYS` をインラインCONFIGブロックと `loadConfig()` に追記。`.claude/skills/sync-test/SKILL.md` の同期手順に「APIキーだけでなく `shared.js` 側で追加された初期値項目の有無も確認する」旨を追記し再発を防止 |
 | 2026-07-02 | DOIリスト一括取得に「中断」ボタンを追加（[#194](https://github.com/tzhaya/jc-import-file-maker/issues/194)）：一括取得中に「中断」ボタンを表示し、押下で次のDOI着手前（またはfetch完了直後・レート待機に入る前）にループを停止。中断前までの成功分は蓄積アイテムに保持され下書き保存も維持。標準版（`make_jc_importer.html`）・Chrome拡張版（`chrome-extension/make_jc_importer.js`・`panel.html`）に同一実装。manifest version `1.15.0` → `1.16.0` |
-| 2026-07-02 | `package.json`／`package-lock.json` のメタデータ整備（[#196](https://github.com/tzhaya/jc-import-file-maker/issues/196)）：`license` を実態（`LICENSE`＝CC0 1.0 Universal）に合わせて `ISC` → `CC0-1.0` に修正、`author`／`keywords` を記入、実体のない `main: "index.js"` を削除。`devDependencies` の `playwright` はE2Eテスト（`.claude/skills/e2e-test`）用に維持し用途を `docs/developer_docs.md` に明記。`scripts/check.js` の `JSON_FILES` に `package-lock.json` を追加 |
 
 全履歴は [docs/changelog.md](docs/changelog.md) を参照してください。
 

@@ -13,6 +13,7 @@ flowchart TD
     A([DOI 入力]) --> B["① DOI RA 判定\n doi.org/doiRA/{doi}"]
     B -->|Crossref| C
     B -->|JaLC| J["② JaLC REST API（Chrome拡張版のみ）\n api.japanlinkcenter.org/dois/{doi}"]
+    B -->|DataCite| K["② DataCite REST API（標準版・拡張版とも）\n api.datacite.org/dois/{doi}"]
     B -->|その他| Z2["⚠️ 未対応\n（エラー表示）"]
 
     subgraph C["② 並列フェッチ（Promise.all）"]
@@ -32,6 +33,9 @@ flowchart TD
 
     J --> ISSN2["ISSN早期抽出 → OPF取得"]
     ISSN2 --> EJ["③ mapToItemTypeJaLC()\n データ統合・マッピング（OpenAlex 不使用）\n④ buildJaLCFunders() / NCID取得 / 関連DOIタイトル取得"]
+
+    K --> EK["③ mapToItemTypeDataCite()\n データ統合・マッピング（OpenAlex 不使用、access_rightsは既定値固定）\n④ buildDataCiteFunders() / NCID取得"]
+    EK --> OPF2["OPF照会（参照リンク・ヒント表示のみ、アクセス権判定には不使用）"]
 
     E --> F["⑤ NCID 取得\n cir.nii.ac.jp/opensearch/v2/books?issn=..."]
     E --> G["⑥ 助成金情報取得\n（アワード番号ごとに並列）"]
@@ -57,9 +61,10 @@ flowchart TD
     G --> I
     H --> I
     EJ --> I
+    OPF2 --> I
 ```
 
-> **注意：** KAKEN XML API（`kaken.nii.ac.jp/opensearch/`）および OPF API（`api.openpolicyfinder.jisc.ac.uk`）は CORS 非対応のため通常ブラウザ版では利用不可。Chrome拡張版では Service Worker 経由で CORS 回避して利用可能です。
+> **注意：** KAKEN XML API（`kaken.nii.ac.jp/opensearch/`）および OPF API（`api.openpolicyfinder.jisc.ac.uk`）は CORS 非対応のため通常ブラウザ版では利用不可。Chrome拡張版では Service Worker 経由で CORS 回避して利用可能です。DataCite REST API は CORS 対応・認証不要のため、標準版・Chrome拡張版とも直接 `fetch()` で利用できます。
 
 ---
 
@@ -78,6 +83,7 @@ flowchart TD
 | 9 | JGN (Crossref) | `https://api.crossref.org/works/10.52926/{award}` | KAKEN XML失敗後のフォールバック（アワード番号が JP で始まる場合） | 不要 |
 | 10 | CiNii Research (KAKEN) | `https://cir.nii.ac.jp/opensearch/v2/projects?format=json&projectId={id}` | KAKEN XML・JGN いずれも失敗かつ科研費番号パターンにマッチの場合（最終フォールバック） | 任意（API Key） |
 | 11 | Crossref (関連 DOI) | `https://api.crossref.org/works/{doi}` | 関連エントリの DOI タイトル取得（並列） | 不要 |
+| 12 | DataCite REST API | `https://api.datacite.org/dois/{doi}?publisher=true&affiliation=true` | DataCite DOI の場合（標準版・Chrome拡張版とも） | 不要 |
 
 ---
 
@@ -173,6 +179,18 @@ flowchart TD
 | CiNii KAKEN | `items[0].title`（en, lang=en クエリ） | `funding_reference21[].subitem_award_titles[]`（lang=en） | 研究課題名 | 英語課題名（日英並列取得） |
 | CiNii KAKEN | `items[0]['dc:source'][@id]` | `funding_reference21[].subitem_award_numbers.subitem_award_uri` | 研究課題番号URI | KAKEN ページ URL |
 
+### 3-g. DataCite API → 出力フィールド（概要）
+
+DataCite パスは `mapToItemTypeDataCite()` / `buildDataCiteAuthors()` / `buildDataCiteFunders()` で処理されます。フィールド単位の完全な対応表（資源タイプ34値・関連タイプ39値・日付・言語2系統・位置情報等）は仕様書 [docs/datacite_jpcoar_mapping.md](docs/datacite_jpcoar_mapping.md) に集約されているため、ここでは Crossref/JaLC パスとの主な差異のみ記載します。
+
+| 観点 | Crossref/JaLC パス | DataCite パス |
+|------|-------------------|---------------|
+| 収録物情報の主ソース | Crossref: `container-title`、JaLC: `journal_title_name_list` | `relatedItems[]`（`relatedItemType: Journal`）を主ソースとし、`container` で補完（`container.title` の充足率が低いため） |
+| 助成機関識別子の取得元 | `funder[].DOI` / `funder_identifier_list` | `fundingReferences[].funderIdentifier`（`funderIdentifierType` が ROR/ISNI の場合も対応） |
+| 研究課題名 | KAKEN XML/JGN/CiNii Research の結果に依存 | 上記に加え `fundingReferences[].awardTitle` をフォールバックとして使用可能（DataCiteのみ持つ利点） |
+| アクセス権・出版タイプ | Crossref: OpenAlex OAステータスで動的判定、JaLC: OPFエンバーゴ連動 | **既定値固定**（`open access`、出版タイプは未設定）。OpenAlex連携なしのため自動判定しない。OPF照会は行うが参照リンク・ヒント表示のみに使用 |
+| その他のタイトル・時間的範囲・位置情報 | 未実装 | `titles[].titleType` → その他のタイトル、`dates[].dateType: Coverage` → 時間的範囲、`geoLocations[]` → 位置情報（point/box/place）にそれぞれ対応 |
+
 ---
 
 ## 4. 助成金情報取得フォールバックチェーン詳細
@@ -221,6 +239,8 @@ buildFunders(crJson.funder) を各アワード番号について実行：
 | `version_type15.subitem_version_resource` | 出版タイプURI | VoR → `c_970fb48d4fbd8a85`、AM → `c_ab4af688f83e57aa`、SMUR → `c_71e4c1898caa6e32` | 同上 |
 | `system.publish_status` | — | `"private"` | 常に固定 |
 | `system.pubdate` | 公開日 | 実行日の日付（YYYY-MM-DD） | `todayStr()` 関数 |
+
+> **DataCite パスの例外：** 上記の `access_rights4` の動的判定（`determineAccessRights()`）と `version_type15` の自動判定（`determineVersionInfo()`）は Crossref/JaLC パス専用です。DataCite パスは OpenAlex 連携を行わないため、`access_rights4.subitem_access_right` は常に `"open access"` 固定、`version_type15` は全サブフィールド空欄で出力されます。OPF 照会は行いますが、参照リンク・ヒント表示にのみ使用し、アクセス権の自動判定には使いません。
 
 #### アクセス権判定ロジック（`determineAccessRights()`）
 

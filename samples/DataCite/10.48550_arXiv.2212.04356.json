@@ -1,0 +1,247 @@
+{
+  "id": "10.48550/arxiv.2212.04356",
+  "type": "dois",
+  "attributes": {
+    "doi": "10.48550/arxiv.2212.04356",
+    "prefix": "10.48550",
+    "suffix": "arxiv.2212.04356",
+    "identifiers": [
+      {
+        "identifier": "2212.04356",
+        "identifierType": "arXiv"
+      }
+    ],
+    "alternateIdentifiers": [
+      {
+        "alternateIdentifierType": "arXiv",
+        "alternateIdentifier": "2212.04356"
+      }
+    ],
+    "creators": [
+      {
+        "name": "Radford, Alec",
+        "nameType": "Personal",
+        "givenName": "Alec",
+        "familyName": "Radford",
+        "affiliation": [],
+        "nameIdentifiers": []
+      },
+      {
+        "name": "Kim, Jong Wook",
+        "nameType": "Personal",
+        "givenName": "Jong Wook",
+        "familyName": "Kim",
+        "affiliation": [],
+        "nameIdentifiers": []
+      },
+      {
+        "name": "Xu, Tao",
+        "nameType": "Personal",
+        "givenName": "Tao",
+        "familyName": "Xu",
+        "affiliation": [],
+        "nameIdentifiers": []
+      },
+      {
+        "name": "Brockman, Greg",
+        "nameType": "Personal",
+        "givenName": "Greg",
+        "familyName": "Brockman",
+        "affiliation": [],
+        "nameIdentifiers": []
+      },
+      {
+        "name": "McLeavey, Christine",
+        "nameType": "Personal",
+        "givenName": "Christine",
+        "familyName": "McLeavey",
+        "affiliation": [],
+        "nameIdentifiers": []
+      },
+      {
+        "name": "Sutskever, Ilya",
+        "nameType": "Personal",
+        "givenName": "Ilya",
+        "familyName": "Sutskever",
+        "affiliation": [],
+        "nameIdentifiers": []
+      }
+    ],
+    "titles": [
+      {
+        "title": "Robust Speech Recognition via Large-Scale Weak Supervision"
+      }
+    ],
+    "publisher": {
+      "name": "arXiv"
+    },
+    "container": {},
+    "publicationYear": 2022,
+    "subjects": [
+      {
+        "lang": "en",
+        "subject": "Audio and Speech Processing (eess.AS)",
+        "subjectScheme": "arXiv"
+      },
+      {
+        "lang": "en",
+        "subject": "Computation and Language (cs.CL)",
+        "subjectScheme": "arXiv"
+      },
+      {
+        "lang": "en",
+        "subject": "Machine Learning (cs.LG)",
+        "subjectScheme": "arXiv"
+      },
+      {
+        "lang": "en",
+        "subject": "Sound (cs.SD)",
+        "subjectScheme": "arXiv"
+      },
+      {
+        "subject": "FOS: Electrical engineering, electronic engineering, information engineering",
+        "subjectScheme": "Fields of Science and Technology (FOS)"
+      },
+      {
+        "subject": "FOS: Electrical engineering, electronic engineering, information engineering",
+        "schemeUri": "http://www.oecd.org/science/inno/38235147.pdf",
+        "subjectScheme": "Fields of Science and Technology (FOS)"
+      },
+      {
+        "subject": "FOS: Computer and information sciences",
+        "subjectScheme": "Fields of Science and Technology (FOS)"
+      },
+      {
+        "subject": "FOS: Computer and information sciences",
+        "schemeUri": "http://www.oecd.org/science/inno/38235147.pdf",
+        "subjectScheme": "Fields of Science and Technology (FOS)"
+      }
+    ],
+    "contributors": [],
+    "dates": [
+      {
+        "date": "2022-12-06T18:46:04Z",
+        "dateType": "Submitted",
+        "dateInformation": "v1"
+      },
+      {
+        "date": "2022-12-09T01:15:34Z",
+        "dateType": "Updated",
+        "dateInformation": "v1"
+      },
+      {
+        "date": "2022-12",
+        "dateType": "Available",
+        "dateInformation": "v1"
+      },
+      {
+        "date": "2022",
+        "dateType": "Issued"
+      }
+    ],
+    "language": null,
+    "types": {
+      "ris": "GEN",
+      "bibtex": "misc",
+      "citeproc": "article",
+      "schemaOrg": "CreativeWork",
+      "resourceType": "Article",
+      "resourceTypeGeneral": "Preprint"
+    },
+    "relatedIdentifiers": [],
+    "relatedItems": [],
+    "sizes": [],
+    "formats": [],
+    "version": "1",
+    "rightsList": [
+      {
+        "rights": "arXiv.org perpetual, non-exclusive license",
+        "rightsUri": "http://arxiv.org/licenses/nonexclusive-distrib/1.0/"
+      }
+    ],
+    "descriptions": [
+      {
+        "description": "We study the capabilities of speech processing systems trained simply to predict large amounts of transcripts of audio on the internet. When scaled to 680,000 hours of multilingual and multitask supervision, the resulting models generalize well to standard benchmarks and are often competitive with prior fully supervised results but in a zero-shot transfer setting without the need for any fine-tuning. When compared to humans, the models approach their accuracy and robustness. We are releasing models and inference code to serve as a foundation for further work on robust speech processing.",
+        "descriptionType": "Abstract"
+      }
+    ],
+    "geoLocations": [],
+    "fundingReferences": [],
+    "xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHJlc291cmNlIHhtbG5zPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCIgeG1sbnM6eHNpPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYS1pbnN0YW5jZSIgeHNpOnNjaGVtYUxvY2F0aW9uPSJodHRwOi8vZGF0YWNpdGUub3JnL3NjaGVtYS9rZXJuZWwtNCBodHRwOi8vc2NoZW1hLmRhdGFjaXRlLm9yZy9tZXRhL2tlcm5lbC00LjMvbWV0YWRhdGEueHNkIj4KICA8aWRlbnRpZmllciBpZGVudGlmaWVyVHlwZT0iRE9JIj4xMC40ODU1MC9BUlhJVi4yMjEyLjA0MzU2PC9pZGVudGlmaWVyPgogIDxhbHRlcm5hdGVJZGVudGlmaWVycz4KICAgIDxhbHRlcm5hdGVJZGVudGlmaWVyIGFsdGVybmF0ZUlkZW50aWZpZXJUeXBlPSJhclhpdiI+MjIxMi4wNDM1NjwvYWx0ZXJuYXRlSWRlbnRpZmllcj4KICA8L2FsdGVybmF0ZUlkZW50aWZpZXJzPgogIDxjcmVhdG9ycz4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5SYWRmb3JkLCBBbGVjPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5BbGVjPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPlJhZGZvcmQ8L2ZhbWlseU5hbWU+CiAgICA8L2NyZWF0b3I+CiAgICA8Y3JlYXRvcj4KICAgICAgPGNyZWF0b3JOYW1lIG5hbWVUeXBlPSJQZXJzb25hbCI+S2ltLCBKb25nIFdvb2s8L2NyZWF0b3JOYW1lPgogICAgICA8Z2l2ZW5OYW1lPkpvbmcgV29vazwvZ2l2ZW5OYW1lPgogICAgICA8ZmFtaWx5TmFtZT5LaW08L2ZhbWlseU5hbWU+CiAgICA8L2NyZWF0b3I+CiAgICA8Y3JlYXRvcj4KICAgICAgPGNyZWF0b3JOYW1lIG5hbWVUeXBlPSJQZXJzb25hbCI+WHUsIFRhbzwvY3JlYXRvck5hbWU+CiAgICAgIDxnaXZlbk5hbWU+VGFvPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPlh1PC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSBuYW1lVHlwZT0iUGVyc29uYWwiPkJyb2NrbWFuLCBHcmVnPC9jcmVhdG9yTmFtZT4KICAgICAgPGdpdmVuTmFtZT5HcmVnPC9naXZlbk5hbWU+CiAgICAgIDxmYW1pbHlOYW1lPkJyb2NrbWFuPC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogICAgPGNyZWF0b3I+CiAgICAgIDxjcmVhdG9yTmFtZSBuYW1lVHlwZT0iUGVyc29uYWwiPk1jTGVhdmV5LCBDaHJpc3RpbmU8L2NyZWF0b3JOYW1lPgogICAgICA8Z2l2ZW5OYW1lPkNocmlzdGluZTwvZ2l2ZW5OYW1lPgogICAgICA8ZmFtaWx5TmFtZT5NY0xlYXZleTwvZmFtaWx5TmFtZT4KICAgIDwvY3JlYXRvcj4KICAgIDxjcmVhdG9yPgogICAgICA8Y3JlYXRvck5hbWUgbmFtZVR5cGU9IlBlcnNvbmFsIj5TdXRza2V2ZXIsIElseWE8L2NyZWF0b3JOYW1lPgogICAgICA8Z2l2ZW5OYW1lPklseWE8L2dpdmVuTmFtZT4KICAgICAgPGZhbWlseU5hbWU+U3V0c2tldmVyPC9mYW1pbHlOYW1lPgogICAgPC9jcmVhdG9yPgogIDwvY3JlYXRvcnM+CiAgPHRpdGxlcz4KICAgIDx0aXRsZT5Sb2J1c3QgU3BlZWNoIFJlY29nbml0aW9uIHZpYSBMYXJnZS1TY2FsZSBXZWFrIFN1cGVydmlzaW9uPC90aXRsZT4KICA8L3RpdGxlcz4KICA8cHVibGlzaGVyPmFyWGl2PC9wdWJsaXNoZXI+CiAgPHB1YmxpY2F0aW9uWWVhcj4yMDIyPC9wdWJsaWNhdGlvblllYXI+CiAgPHN1YmplY3RzPgogICAgPHN1YmplY3QgeG1sOmxhbmc9ImVuIiBzdWJqZWN0U2NoZW1lPSJhclhpdiI+QXVkaW8gYW5kIFNwZWVjaCBQcm9jZXNzaW5nIChlZXNzLkFTKTwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHhtbDpsYW5nPSJlbiIgc3ViamVjdFNjaGVtZT0iYXJYaXYiPkNvbXB1dGF0aW9uIGFuZCBMYW5ndWFnZSAoY3MuQ0wpPC9zdWJqZWN0PgogICAgPHN1YmplY3QgeG1sOmxhbmc9ImVuIiBzdWJqZWN0U2NoZW1lPSJhclhpdiI+TWFjaGluZSBMZWFybmluZyAoY3MuTEcpPC9zdWJqZWN0PgogICAgPHN1YmplY3QgeG1sOmxhbmc9ImVuIiBzdWJqZWN0U2NoZW1lPSJhclhpdiI+U291bmQgKGNzLlNEKTwvc3ViamVjdD4KICAgIDxzdWJqZWN0IHN1YmplY3RTY2hlbWU9IkZpZWxkcyBvZiBTY2llbmNlIGFuZCBUZWNobm9sb2d5IChGT1MpIj5GT1M6IEVsZWN0cmljYWwgZW5naW5lZXJpbmcsIGVsZWN0cm9uaWMgZW5naW5lZXJpbmcsIGluZm9ybWF0aW9uIGVuZ2luZWVyaW5nPC9zdWJqZWN0PgogICAgPHN1YmplY3Qgc3ViamVjdFNjaGVtZT0iRmllbGRzIG9mIFNjaWVuY2UgYW5kIFRlY2hub2xvZ3kgKEZPUykiPkZPUzogQ29tcHV0ZXIgYW5kIGluZm9ybWF0aW9uIHNjaWVuY2VzPC9zdWJqZWN0PgogIDwvc3ViamVjdHM+CiAgPGRhdGVzPgogICAgPGRhdGUgZGF0ZVR5cGU9IlN1Ym1pdHRlZCIgZGF0ZUluZm9ybWF0aW9uPSJ2MSI+MjAyMi0xMi0wNlQxODo0NjowNFo8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iVXBkYXRlZCIgZGF0ZUluZm9ybWF0aW9uPSJ2MSI+MjAyMi0xMi0wOVQwMToxNTozNFo8L2RhdGU+CiAgICA8ZGF0ZSBkYXRlVHlwZT0iQXZhaWxhYmxlIiBkYXRlSW5mb3JtYXRpb249InYxIj4yMDIyLTEyPC9kYXRlPgogIDwvZGF0ZXM+CiAgPHJlc291cmNlVHlwZSByZXNvdXJjZVR5cGVHZW5lcmFsPSJQcmVwcmludCI+QXJ0aWNsZTwvcmVzb3VyY2VUeXBlPgogIDx2ZXJzaW9uPjE8L3ZlcnNpb24+CiAgPHJpZ2h0c0xpc3Q+CiAgICA8cmlnaHRzIHJpZ2h0c1VSST0iaHR0cDovL2FyeGl2Lm9yZy9saWNlbnNlcy9ub25leGNsdXNpdmUtZGlzdHJpYi8xLjAvIj5hclhpdi5vcmcgcGVycGV0dWFsLCBub24tZXhjbHVzaXZlIGxpY2Vuc2U8L3JpZ2h0cz4KICA8L3JpZ2h0c0xpc3Q+CiAgPGRlc2NyaXB0aW9ucz4KICAgIDxkZXNjcmlwdGlvbiBkZXNjcmlwdGlvblR5cGU9IkFic3RyYWN0Ij5XZSBzdHVkeSB0aGUgY2FwYWJpbGl0aWVzIG9mIHNwZWVjaCBwcm9jZXNzaW5nIHN5c3RlbXMgdHJhaW5lZCBzaW1wbHkgdG8gcHJlZGljdCBsYXJnZSBhbW91bnRzIG9mIHRyYW5zY3JpcHRzIG9mIGF1ZGlvIG9uIHRoZSBpbnRlcm5ldC4gV2hlbiBzY2FsZWQgdG8gNjgwLDAwMCBob3VycyBvZiBtdWx0aWxpbmd1YWwgYW5kIG11bHRpdGFzayBzdXBlcnZpc2lvbiwgdGhlIHJlc3VsdGluZyBtb2RlbHMgZ2VuZXJhbGl6ZSB3ZWxsIHRvIHN0YW5kYXJkIGJlbmNobWFya3MgYW5kIGFyZSBvZnRlbiBjb21wZXRpdGl2ZSB3aXRoIHByaW9yIGZ1bGx5IHN1cGVydmlzZWQgcmVzdWx0cyBidXQgaW4gYSB6ZXJvLXNob3QgdHJhbnNmZXIgc2V0dGluZyB3aXRob3V0IHRoZSBuZWVkIGZvciBhbnkgZmluZS10dW5pbmcuIFdoZW4gY29tcGFyZWQgdG8gaHVtYW5zLCB0aGUgbW9kZWxzIGFwcHJvYWNoIHRoZWlyIGFjY3VyYWN5IGFuZCByb2J1c3RuZXNzLiBXZSBhcmUgcmVsZWFzaW5nIG1vZGVscyBhbmQgaW5mZXJlbmNlIGNvZGUgdG8gc2VydmUgYXMgYSBmb3VuZGF0aW9uIGZvciBmdXJ0aGVyIHdvcmsgb24gcm9idXN0IHNwZWVjaCBwcm9jZXNzaW5nLjwvZGVzY3JpcHRpb24+CiAgPC9kZXNjcmlwdGlvbnM+CjwvcmVzb3VyY2U+",
+    "url": "https://arxiv.org/abs/2212.04356",
+    "contentUrl": null,
+    "metadataVersion": 0,
+    "schemaVersion": "http://datacite.org/schema/kernel-4",
+    "source": "mds",
+    "isActive": true,
+    "state": "findable",
+    "reason": null,
+    "viewCount": 0,
+    "viewsOverTime": [],
+    "downloadCount": 0,
+    "downloadsOverTime": [],
+    "referenceCount": 0,
+    "citationCount": 2,
+    "citationsOverTime": [
+      {
+        "year": "2026",
+        "total": 2
+      }
+    ],
+    "partCount": 0,
+    "partOfCount": 0,
+    "versionCount": 0,
+    "versionOfCount": 0,
+    "created": "2022-12-09T01:56:17.000Z",
+    "registered": "2022-12-09T01:56:18.000Z",
+    "published": "2022",
+    "updated": "2023-02-23T20:06:49.000Z"
+  },
+  "relationships": {
+    "client": {
+      "data": {
+        "id": "arxiv.content",
+        "type": "clients"
+      }
+    },
+    "provider": {
+      "data": {
+        "id": "arxiv",
+        "type": "providers"
+      }
+    },
+    "media": {
+      "data": {
+        "id": "10.48550/arxiv.2212.04356",
+        "type": "media"
+      }
+    },
+    "references": {
+      "data": []
+    },
+    "citations": {
+      "data": [
+        {
+          "id": "10.5281/zenodo.19684901",
+          "type": "dois"
+        },
+        {
+          "id": "10.5281/zenodo.19684902",
+          "type": "dois"
+        }
+      ]
+    },
+    "parts": {
+      "data": []
+    },
+    "partOf": {
+      "data": []
+    },
+    "versions": {
+      "data": []
+    },
+    "versionOf": {
+      "data": []
+    }
+  }
+}

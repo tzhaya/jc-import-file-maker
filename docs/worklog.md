@@ -1,6 +1,40 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-03（DataCite→JPCOARマッピング表の作成 #197）
+最終更新: 2026-07-04（DataCite DOI メタデータ取得・マッピングの実装 #208）
+
+## DataCite DOI メタデータ取得・マッピングの実装（2026-07-04, #208）
+
+### 概要
+`docs/datacite_jpcoar_mapping.md`（#197）を仕様書として、DataCite REST API からのメタデータ取得・JPCOARマッピングを標準版 `make_jc_importer.html` と拡張版 `chrome-extension/make_jc_importer.js` の両方に実装した。JaLC実装（#6）と同型のパターンで、DataCite APIはCORS対応・認証不要のため`extensionFetch()`を使わず両版とも直接fetchで動作し、環境分岐が不要な点がJaLCと異なる。
+
+### 追加した関数・定数
+- 対応表定数: `DATACITE_RESOURCE_TYPE_MAP`（個別20値）・`DATACITE_RELATION_TYPE_MAP`（22値）・`DATACITE_RELATED_ID_TYPE_MAP`（10値）・`DATACITE_FUNDER_ID_TYPE_MAP`（5値）・`DATACITE_LANG_1_TO_2T`／`DATACITE_LANG_2B_TO_2T`（言語変換）
+- `fetchDataCite(doi)` / `fetchDataCiteData(doi)`：`?publisher=true&affiliation=true` 必須（付け忘れると識別子情報が欠落）
+- `buildDataCiteAuthors(creators)`：nameType=Organizational・ORCID正規化・affiliationIdentifierScheme（ROR/ISNI/Ringgold/GRID）に対応
+- `buildDataCiteFunders(fundingReferences)`：`buildJaLCFunders`とは独立した新規関数（共通化せずJaLC回帰リスクを排除）。KAKEN/JGN連携は既存関数を再利用しつつ、DataCite固有の`awardTitle`をフォールバックに追加
+- ヘルパー関数（`mapToItemTypeDataCite`本体はこれらを呼び出すのみに整理）：`normalizeDataCiteDate`・`buildDataCiteDatesAndTemporal`・`mapDataCiteLanguageToSubitemLanguage`・`mapDataCiteSubfieldLanguage`・`mapDataCiteRelatedIdentifiers`・`extractDataCiteBibliographicInfo`・`buildDataCiteGeolocations`
+- `mapToItemTypeDataCite(attrs)`・`fetchAndAccumulate`への`ra === 'DataCite'`分岐追加
+
+### 主要な設計判断（Issue #208 コメントでのレビュー指摘を反映）
+- **アクセス権・出版タイプは既定値固定**（`open access`固定・出版タイプ空欄）。OpenAlex連携なしのため自動判定しない。OPF照会は行うが参照リンク・ヒント表示にのみ使用し、JaLCパスの`determineAccessRights()`のようなエンバーゴ連動判定はしない
+- **`buildDataCiteFunders`を独立関数化**：当初案は「`buildJaLCFunders`のロジックに追記」だったが、JaLCパスへの影響を避けるため完全に独立させた
+- 資源タイプは「PascalCase正規化→`TITLE_MAPS.resourcetype`一致判定→個別マップ」の順（未知値は空文字）
+- 言語は639-2/T（本文言語）と639-1系（サブフィールド言語）の2系統を区別し、双方とも変換結果を`TITLE_MAPS`側のリストで検証してから採用（未収載は空、既定'eng'にしない）
+- 書誌情報は`relatedItems`（Journal種別）を主ソース、`container`を補完として使用（`container.title`の実測充足率が低いため）
+
+### 変更ファイル
+- `make_jc_importer.html` / `chrome-extension/make_jc_importer.js`（同一実装をミラー）
+- `make_jc_importer_test.html`（gitignore対象・ローカル再構築、コミット対象外）
+- `chrome-extension/manifest.json`（`1.16.1` → `1.17.0`）・`chrome-extension/panel.html`（更新概要）
+- `samples/DataCite/`：未保存だった5件（九大・阪大・JAMSTEC・Zenodo・arXiv）を追加取得（既存2件と合わせてテスト用DOI7件が揃った）
+- `README.md`・`docs/user_guide.md`（RA対応表・「DataCite DOIの制限事項」節を新設・FAQ）・`docs/requirements.md`・`api-flow.md`（フロー図・API表・マッピング概要）・`docs/fieldmapping.md`（「DataCiteパスの差異」節を新設）・`docs/changelog.md`
+
+### 検証
+`npm test`（JSON parse・JS構文・UTF-8妥当性・ファイル同期）がPASS。加えてブラウザE2Eの前段として、Nodeサンドボックス上で`mapToItemTypeDataCite`・`buildDataCiteAuthors`・`buildDataCiteFunders`を実データ7件（`samples/DataCite/`全件）に対して直接実行し、資源タイプ・日付正規化（タイムスタンプ切詰め・年のみ・`dates`空時のpublicationYearフォールバック）・言語変換・ORCID/NRID/e-Rad識別子・geoLocation・書誌情報抽出（relatedItems由来）が期待通りであることを確認した（`fundingReferences`を持つ実データは7件中0件だったため、助成情報パスは合成データで別途確認）。
+
+### 未確認事項
+- ブラウザ実機でのE2Eテスト（`/e2e-test`、ユーザーによる手動実行が必要）
+- 助成情報を持つ実際のDataCite DOIでの動作確認（テスト用7件はいずれも`fundingReferences`が空だった）
 
 ## DataCite→JPCOARマッピング表の作成（2026-07-03, #197）
 
