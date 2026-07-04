@@ -3929,12 +3929,23 @@ function findDataCiteSourceIdentifier(relatedItems, container) {
     ri.relatedItemType === 'Journal' || ri.relationType === 'IsPublishedIn'
   ) || {};
   const cont = container || {};
-  const riId   = journalItem.relatedItemIdentifier || {};
-  const idVal  = riId.relatedItemIdentifier || cont.identifier || '';
-  const idType = (riId.relatedItemIdentifierType || cont.identifierType || '').toUpperCase();
-  return (idVal && ['ISSN', 'EISSN', 'PISSN'].includes(idType))
-    ? { subitem_source_identifier: idVal, subitem_source_identifier_type: idType }
-    : null;
+
+  // relatedItemIdentifierはISSN以外の型（DOI等）を指すことがあるため、型がISSN系のときのみ採用する
+  // （値の有無だけで||フォールバックすると、DOI型の値がcontainerのISSNを覆い隠してしまう）
+  const riId     = journalItem.relatedItemIdentifier || {};
+  const riIdVal  = riId.relatedItemIdentifier || '';
+  const riIdType = (riId.relatedItemIdentifierType || '').toUpperCase();
+  if (riIdVal && ['ISSN', 'EISSN', 'PISSN'].includes(riIdType)) {
+    return { subitem_source_identifier: riIdVal, subitem_source_identifier_type: riIdType };
+  }
+
+  const contVal  = cont.identifier || '';
+  const contType = (cont.identifierType || '').toUpperCase();
+  if (contVal && ['ISSN', 'EISSN', 'PISSN'].includes(contType)) {
+    return { subitem_source_identifier: contVal, subitem_source_identifier_type: contType };
+  }
+
+  return null;
 }
 
 // ===== ISSN早期抽出（#214。OPF取得はmapToItemTypeDataCite実行前に必要なため、生レスポンスから先に抽出する） =====
