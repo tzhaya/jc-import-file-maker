@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "JAIRO Cloud インポート支援ツール",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "description": "JAIRO Cloud（WEKO3）に登録するメタデータの作成とインポートを支援するChrome拡張機能です。DOIを入力するだけで、Crossref / JaLC / DataCite / OpenAlex から書誌メタデータを自動で取得します。",
   "icons": {
     "16": "icons/icon16.png",

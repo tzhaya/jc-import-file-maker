@@ -1674,14 +1674,12 @@ async function fetchDataCiteData(doi) {
   lastOaStatus = oaStatus;
   document.getElementById('info-bar').style.display = 'flex';
 
-  // マッピング（access_rightsは既定値固定でOPFに依存しないため、OPF取得より先に実行できる）
-  const metadata = await mapToItemTypeDataCite(attrs, oaJson);
+  // ISSN早期抽出 → OPF取得（mapToItemTypeDataCite前に必要。#214でOPFエンバーゴ連動に対応）
+  const earlyIssns = extractDataCiteIssnsFromRaw(attrs.relatedItems, attrs.container);
+  await updateOpfStatus(earlyIssns);
 
-  // OPF照会は参照リンク・ヒント表示のみに使用し、アクセス権の自動判定には使わない
-  const issns = metadata.item_30002_source_identifier22
-    .filter(si => ['ISSN', 'EISSN', 'PISSN'].includes(si.subitem_source_identifier_type))
-    .map(si => si.subitem_source_identifier);
-  await updateOpfStatus(issns);
+  // マッピング → レンダリング（lastOpfData が設定済みの状態で実行）
+  const metadata = await mapToItemTypeDataCite(attrs, oaJson);
 
   showHints = true;
   renderAll(metadata);
@@ -3358,6 +3356,39 @@ function mapDataCiteRelatedIdentifiers(relatedIdentifiers) {
   return relations;
 }
 
+// ===== 4.5e-early 収録誌ISSN抽出（relatedItems（Journal）を主ソースとし、containerで補完） =====
+// extractDataCiteBibliographicInfo と ISSN早期抽出（extractDataCiteIssnsFromRaw、OPF取得用）の
+// 両方から使う共通ヘルパー。抽出優先順位が食い違うとOPF照会対象とメタデータ出力のISSNがズレるため一本化する。
+function findDataCiteSourceIdentifier(relatedItems, container) {
+  const journalItem = (relatedItems || []).find(ri =>
+    ri.relatedItemType === 'Journal' || ri.relationType === 'IsPublishedIn'
+  ) || {};
+  const cont = container || {};
+
+  // relatedItemIdentifierはISSN以外の型（DOI等）を指すことがあるため、型がISSN系のときのみ採用する
+  // （値の有無だけで||フォールバックすると、DOI型の値がcontainerのISSNを覆い隠してしまう）
+  const riId     = journalItem.relatedItemIdentifier || {};
+  const riIdVal  = riId.relatedItemIdentifier || '';
+  const riIdType = (riId.relatedItemIdentifierType || '').toUpperCase();
+  if (riIdVal && ['ISSN', 'EISSN', 'PISSN'].includes(riIdType)) {
+    return { subitem_source_identifier: riIdVal, subitem_source_identifier_type: riIdType };
+  }
+
+  const contVal  = cont.identifier || '';
+  const contType = (cont.identifierType || '').toUpperCase();
+  if (contVal && ['ISSN', 'EISSN', 'PISSN'].includes(contType)) {
+    return { subitem_source_identifier: contVal, subitem_source_identifier_type: contType };
+  }
+
+  return null;
+}
+
+// ===== ISSN早期抽出（#214。OPF取得はmapToItemTypeDataCite実行前に必要なため、生レスポンスから先に抽出する） =====
+function extractDataCiteIssnsFromRaw(relatedItems, container) {
+  const sourceId = findDataCiteSourceIdentifier(relatedItems, container);
+  return sourceId ? [sourceId.subitem_source_identifier] : [];
+}
+
 // ===== 4.5e 書誌情報抽出（§12。relatedItems（Journal）を主ソースとし、containerで補完） =====
 function extractDataCiteBibliographicInfo(relatedItems, container) {
   const journalItem = (relatedItems || []).find(ri =>
@@ -3369,11 +3400,8 @@ function extractDataCiteBibliographicInfo(relatedItems, container) {
   const sourceTitles = sourceTitleText
     ? [{ subitem_source_title: sourceTitleText, subitem_source_title_language: '' }] : [];
 
-  const riId   = journalItem.relatedItemIdentifier || {};
-  const idVal  = riId.relatedItemIdentifier || cont.identifier || '';
-  const idType = (riId.relatedItemIdentifierType || cont.identifierType || '').toUpperCase();
-  const sourceIdentifiers = (idVal && ['ISSN', 'EISSN', 'PISSN'].includes(idType))
-    ? [{ subitem_source_identifier: idVal, subitem_source_identifier_type: idType }] : [];
+  const sourceId = findDataCiteSourceIdentifier(relatedItems, container);
+  const sourceIdentifiers = sourceId ? [sourceId] : [];
 
   return {
     sourceIdentifiers,
@@ -3412,7 +3440,8 @@ function buildDataCiteGeolocations(geoLocations) {
 }
 
 // ===== 4.5g DataCite メインマッピング関数 =====
-// access_rights・version_type は OpenAlex連携なしのため既定値固定（JaLCパス同様、OPFはfetchDataCiteData側の表示のみに使用）
+// access_rights は OAステータス + OPFエンバーゴ連動（#214、Crossref/JaLCパスと同様）。
+// version_type は対象resourcetypeのみOpenAlexのOAステータスから判定（#212、非対象は既定値のまま）
 async function mapToItemTypeDataCite(attrs, oaJson) {
   const doi = attrs.doi || '';
 
@@ -3517,11 +3546,9 @@ async function mapToItemTypeDataCite(attrs, oaJson) {
   // ===== 位置情報 =====
   const geolocations = buildDataCiteGeolocations(attrs.geoLocations);
 
-  // ===== アクセス権（OPF連動は見送り。determineAccessRightsはOPFデータ無しでは常にopen accessを
-  // 返すため呼び出しても無意味であり、既定値のまま固定する。エンバーゴ判定込みのOPF連動は将来の
-  // フォローアップIssueで検討） =====
-  const accessRight    = 'open access';
-  const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || '';
+  // ===== アクセス権（OAステータス + OPFエンバーゴ連動。#214でCrossref/JaLCパスと同様に対応） =====
+  const accessRight    = determineAccessRights(oaStatus, lastOpfData);
+  const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== メタデータオブジェクト =====
   const metadata = {

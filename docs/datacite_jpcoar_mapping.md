@@ -63,7 +63,7 @@ JaLC 準会員（NII/IRDB 経由）・JaLC コンソーシアム（`jalcco`）�
 | 2 | **その他のタイトル** (alternative_title) | `titles[]`（`titleType` あり: AlternativeTitle / Subtitle / TranslatedTitle / Other） | Crossref/JaLC パスでは未実装。DataCite パスで新規に対応 |
 | 3 | **作成者** (creator) | `creators[]` | 詳細は §5。`nameType: "Organizational"` は `creatorNameType` の 'Organizational' へ（姓名分離せず） |
 | 4 | 寄与者 (contributor) | — `contributors[]` | **自動マッピング対象外**（初期実装のスコープ限定）。ツール UI には寄与者フィールドの定義・レンダラーが存在する（make_jc_importer.html L3473 付近。fieldmapping.md #4 の「空（未実装）」は「API からの自動設定が無い」の意）。DataCite では HostingInstitution 等が埋まる例があり拡張は可能。その際 contributorType 22値中 RegistrationAgency / RegistrationAuthority / RightsHolder / Translator の4値がツール select に無い点に注意（うち **RightsHolder は既存の権利者情報（rights_holder）フィールドへ逃がせる**ため、将来拡張候補として他と分けて扱う） |
-| 5 | アクセス権 (access_rights) | —（既定値） | `open access` 固定。#212 で OpenAlex 補完（OA バッジ・出版タイプ）を追加したが、OPF 連動（エンバーゴ判定）が無いため `determineAccessRights()` は常に `open access` を返す＝実質的な自動判定は行わない。OPF 連動は将来のフォローアップ Issue で検討 |
+| 5 | アクセス権 (access_rights) | `oaStatus`（#212 OpenAlex補完） + OPFエンバーゴ情報 | `determineAccessRights(oaStatus, opfData)`（Crossref/JaLCパスと共通関数）で動的判定（#214）。OAステータスがdiamond/gold/hybrid/bronze/greenなら`open access`、closed/未収録はOPFエンバーゴの有無で`embargoed access`/`open access`を判定。OPF照会が有効なChrome拡張版のみ実効、標準版は常に`open access` |
 | 6 | **権利情報** (rights) | `rightsList[]` | 詳細は §9。`rightsUri` → 既存 `detectLicenseType()` を再利用（CC の deed.ja / legalcode 付き URI も前方一致で判定可能なことを実データで確認） |
 | 8 | **主題** (subject) | `subjects[]` | `subject` + `lang`。`subjectScheme` はツール上 'Other' 扱い（arXiv 等の独自 scheme があるため） |
 | 9 | **内容記述** (description) | `descriptions[]` | `descriptionType`: Abstract / Methods / TableOfContents / TechnicalInfo / Other は同名で対応。**SeriesInformation は破棄**（書誌情報であり内容記述でない）。JATS クリーニング不要（プレーンテキスト） |
@@ -292,7 +292,7 @@ UI（`item_30002_geolocation20`、専用レンダラーあり）と DataCite の
 | 所属機関の識別子（ROR 等） | 元データの充足率が低く空になりやすい（ランダム40件中8件。国内機関はさらに低い） | データ起因のためツール側では解消不可。手動補完を推奨 |
 | 資源タイプの一部 | Text / Model / Instrument 等は「other」になる → 手動修正を推奨 | `types.resourceType`（自由記述）を参照した判定の精緻化（§6） |
 | 書誌情報（雑誌名・巻号頁） | relatedItems / container の両方が無いレコードでは生成されない（DataCite では雑誌書誌が疎） | — |
-| アクセス権 | 自動判定されない（`open access` 既定値固定。#212 で OpenAlex 補完後も OPF 連動が無いため実質不変） | OPF 連動（エンバーゴ判定）は将来のフォローアップ Issue で検討 |
+| アクセス権 | OAステータス + OPFエンバーゴ情報に基づき`determineAccessRights()`で動的に設定（#214、Crossref/JaLCパスと同様）。OPF照会が有効なChrome拡張版のみ実効、標準版は常に`open access` | — |
 | 出版タイプ・relation（Dataset/Software 等） | 「論文相当」の資源タイプ以外は自動判定されない（既定値のまま） | データセット・ソフトウェア等は版の概念が薄く、対象を広げる場合は資源タイプごとの判定ルール精緻化が必要 |
 | 著者所属 ROR | OpenAlex 補完は行わない（#212 スコープ外） | raw 所属文字列の充足率が低く #165 型の誤同定検出が成立しないため、ORCID 完全一致等の限定的な補完のみ将来のフォローアップ Issue で検討 |
 | 本文言語 | `language` が null のレコードでは空（既定 'eng' を入れない） | — |
