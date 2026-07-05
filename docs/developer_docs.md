@@ -13,13 +13,34 @@ npm install
 
 ## 品質チェック（npm test）
 
-`npm test` を実行すると `scripts/check.js` が走り、以下を検証します:
+`npm test` を実行すると `scripts/check.js`（静的チェック）と `node --test`（ユニットテスト）が順に走り、以下を検証します:
 
 - **JSON parse**: `package.json` / `package-lock.json` / `chrome-extension/manifest.json` / `data/tsv_headers.json` が構文的に正しいか
-- **JS 構文チェック** (`node --check`): 自作 JS ファイル（`shared.js`、Chrome拡張の各 JS）に構文エラーがないか
+- **JS 構文チェック** (`node --check`): 自作 JS ファイル（`shared.js`、Chrome拡張の各 JS、`tests/*.test.js`）に構文エラーがないか
 - **UTF-8 妥当性**: 上記ファイルおよび主要 Markdown が UTF-8 として正しく読めるか
+- **ファイル同期**: `shared.js` ↔ `chrome-extension/shared.js` 等の同期ペアが一致しているか
+- **ユニットテスト** (`node --test "tests/**/*.test.js"`): 副作用のない純粋関数の振る舞い（下記）
 
 外部 API・APIキー・ネットワーク接続は不要です。PR 作成時は CI が自動で実行します（[.github/workflows/ci.yml](../.github/workflows/ci.yml)）。
+
+### ユニットテスト（node:test・[#192](https://github.com/tzhaya/jc-import-file-maker/issues/192)）
+
+依存ゼロの Node 組み込み `node:test` + `node:assert` で、DOM に依存しない純粋関数を検証します。テストは `tests/` にあり、`node --test "tests/**/*.test.js"` で単体実行できます（`npm test` からも自動実行）。
+
+| テストファイル | 対象関数 | 主な検証内容 |
+| --- | --- | --- |
+| `tests/doi.test.js` | `normalizeDoi` / `isValidDoi` | URL・`dx.doi.org`・`doi:` プレフィックス除去、形式検証の正負例 |
+| `tests/abstract.test.js` | `processAbstract` | JATS タグ処理（実体参照の解除順序・`<jats:title>` 除去・`TITLE:` 変換） |
+| `tests/tsv.test.js` | `generateTsv` | 空配列→`null`、行数、タブ/改行サニタイズ、`repoHost` によるスキーマ URL 置換 |
+| `tests/aff-misattribution.test.js` | `detectAffMisattribution` / `canonicalRor` / `affStringSupportsInst` / `warnTooltip` | 所属誤判定（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186) 実例）、頭字語裏付けによる誤検出抑制、ROR 正規化 |
+
+**テスト対象は `chrome-extension/*.js` を `require` します。** そのため両ファイル末尾には Node から読み込むための以下の“テスト用ブロック”が恒常的に存在します。**本番 HTML からの同期時に削除しないでください**（ブラウザでは `typeof module === 'undefined'`／`typeof document !== 'undefined'` により無害）:
+
+- 先頭 CONFIG フォールバックの `typeof window !== 'undefined'` ガード
+- DOM 配線・初期化 IIFE を包む `if (typeof document !== 'undefined') { … }` ガード
+- 末尾の `if (typeof module !== 'undefined' && module.exports) { module.exports = { … }; }`
+
+`generateTsv` は `TSV_HEADERS_TEMPLATE` をグローバル参照するため、`tests/tsv.test.js` は `data/tsv_headers.json`（CI でテンプレートと**構造一致**が保証済）を `global.TSV_HEADERS_TEMPLATE` に注入して実テンプレートを供給します。
 
 ### devDependencies（playwright）について
 

@@ -29,6 +29,11 @@ const JS_FILES = [
   'chrome-extension/options.js',
   'chrome-extension/shared.js',
   'chrome-extension/tsv_headers_template.js',
+  // ユニットテスト（#192）
+  'tests/doi.test.js',
+  'tests/abstract.test.js',
+  'tests/tsv.test.js',
+  'tests/aff-misattribution.test.js',
 ];
 
 // Text files that may contain Japanese — verify no encoding corruption (#175)

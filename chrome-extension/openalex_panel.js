@@ -8,7 +8,8 @@
 // ============================================================
 
 // shared.js 未読込時のフォールバック（標準HTMLを単体配布した場合の保険）
-if (typeof CONFIG === 'undefined') {
+// （typeof window ガードは #192 ユニットテストで Node から require するため。ブラウザでは従来どおり動作）
+if (typeof CONFIG === 'undefined' && typeof window !== 'undefined') {
   console.warn('shared.js が読み込めませんでした。フォールバック設定で動作します。');
   window.CONFIG = { OpenAlex_API_KEY: '', DEFAULT_ROR_ID: '', DEFAULT_OPENALEX_DAYS: 90 };
   window.loadConfig = async function () {};
@@ -818,4 +819,13 @@ if (IS_CHROME_EXTENSION) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// #192: ユニットテストで Node から require できるよう、DOM 依存の初期化登録をガード。
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', init);
+}
+
+// ===== ユニットテスト用エクスポート（#192） =====
+// Node（node:test）から純粋関数を require するためのガード。ブラウザでは module 未定義のため不活性。
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { detectAffMisattribution, warnTooltip, canonicalRor, affStringSupportsInst };
+}
