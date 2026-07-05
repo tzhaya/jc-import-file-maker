@@ -92,11 +92,17 @@
 - 登録済み照合バッジ（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)・Chrome拡張版限定）
   - 候補タイトルを正規化して自機関リポジトリの OpenSearch を検索し、返戻 JPCOAR 内の識別子（`identifier`／`relatedIdentifier`／`identifierRegistration`）から DOI を抽出して照合。⚪ 登録済みの可能性大（タイトルヒット＋DOI一致）／🟡 要確認（ヒット＋DOI不一致）／🟢 未登録の可能性（ヒットなし）の3値表示
 - TSVフォーマット修正：タイトルの出版社XMLタグ片・改行を `cleanInlineText()` で除去し、`generateTsv()` で全セルの制御文字を空白化してインポート時の行崩れを防止
+- DataCite DOI対応（[#197](https://github.com/tzhaya/jc-import-file-maker/issues/197)設計→[#208](https://github.com/tzhaya/jc-import-file-maker/issues/208)実装→[#212](https://github.com/tzhaya/jc-import-file-maker/issues/212) OpenAlex補完→[#214](https://github.com/tzhaya/jc-import-file-maker/issues/214) OPF連動、全完了）
+  - DataCite REST API（CORS対応・認証不要）からメタデータを取得し JPCOAR スキーマへマッピング。標準版・Chrome拡張版とも同一実装で動作。マッピング仕様は [docs/datacite_jpcoar_mapping.md](docs/datacite_jpcoar_mapping.md) を参照
+  - OpenAlex補完：DOIがOpenAlexに収録されている場合、OAバッジを表示。資源タイプが「論文相当」（journal article/article/conference paper 等の許可リスト）のときのみ出版タイプ・関連情報（`isIdenticalTo`/`isVersionOf`）を判定（データセット・ソフトウェア等は対象外）
+  - OPF連動（Chrome拡張版のみ実効）：ISSNを早期抽出しOPFエンバーゴ情報を取得、`determineAccessRights()` でアクセス権を動的判定（標準版は `open access` 固定）
+  - 制限事項: 寄与者・ファイル情報・一部の識別子/関連情報/日付など未対応の項目あり。詳細は[使い方ガイドのDataCite制限事項](docs/user_guide.md#datacite-doi-の制限事項)を参照
+  - 著者所属のROR識別子: 元データの充足率が低く空欄になりやすい（ランダム40件中、所属あり9件・識別子あり8件）。自動補完はOpenAlex補完のスコープ外（#212）で、[#215](https://github.com/tzhaya/jc-import-file-maker/issues/215)でORCID完全一致等の限定的な方式を検討中（未着手）
 
 ## 技術スタック
 
 - HTML5 / CSS3 / JavaScript（依存ライブラリなし、単一HTMLファイル）
-- 外部API: [Crossref](https://api.crossref.org/), [JaLC](https://api.japanlinkcenter.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/), [CiNii Research](https://cir.nii.ac.jp/), [KAKEN API](https://support.nii.ac.jp/ja/kaken/api/api_outline), [Open Policy Finder](https://openpolicyfinder.jisc.ac.uk/)
+- 外部API: [Crossref](https://api.crossref.org/), [JaLC](https://api.japanlinkcenter.org/), [DataCite](https://api.datacite.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/), [CiNii Research](https://cir.nii.ac.jp/), [KAKEN API](https://support.nii.ac.jp/ja/kaken/api/api_outline), [Open Policy Finder](https://openpolicyfinder.jisc.ac.uk/)
 
 ### 実装計画・実装記録
 
@@ -117,6 +123,7 @@
 ### フィールド・語彙リファレンス
 
 - [フィールドマッピング一覧](docs/fieldmapping.md) Crossref/JaLC/OpenAlexとのマッピング表です。
+- [DataCite → JPCOAR マッピング表](docs/datacite_jpcoar_mapping.md) DataCiteパスの資源タイプ・関連タイプ・関連識別子タイプの対応表です。
 - [JPCOARスキーマ フィールド一覧](docs/fields.md) 「デフォルトアイテムタイプ（フル）」に含まれるフィールド一覧です。
 - [JPCOARスキーマ 項目別説明リンク一覧](docs/JPCOARschema_guide.md)
 - [資源タイプ語彙別表](docs/resource_type_vocabulary.md) JPCOAR 2.0対応の資源タイプ語彙一覧です。

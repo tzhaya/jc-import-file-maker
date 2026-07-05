@@ -1,6 +1,29 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-05（純粋関数の単体テストを追加 #192）
+最終更新: 2026-07-05（function.md にDataCite対応の記載漏れを追記）
+
+## function.md にDataCite対応の記載漏れを追記（2026-07-05）
+
+### 概要
+ユーザー依頼により、DataCite対応（#197設計→#208実装→#212 OpenAlex補完→#214 OPF連動、全てmasterマージ済み）に伴う README.md・docs/user_guide.md 等の反映状況を確認した。調査の結果、README.md・docs/user_guide.md・docs/requirements.md・docs/fieldmapping.md・docs/developer_docs.md は各PR時点で既に反映済みだったが、README が「機能と技術」ドキュメントとして案内している `function.md` には DataCite 関連の記載が一切ないという抜けを発見し、追記した。
+
+### 追加した内容
+- 技術スタックの外部APIリストに DataCite REST API を追加
+- 「Phase 2以降の機能強化」節に DataCite 対応一連（#197/#208/#212/#214）の概要を追記：DataCite REST API からの取得・JPCOAR マッピング（標準版・拡張版とも同一実装）、OpenAlex 補完（論文相当の資源タイプのみ出版タイプ・関連情報を判定）、OPF 連動によるアクセス権エンバーゴ判定（Chrome拡張版のみ実効）
+- 著者所属の ROR 識別子について、元データの充足率が低いこと（ランダム40件中、所属あり9件・識別子あり8件）と、自動補完は #212 のスコープ外で #215 で検討中（未着手）である旨を明記
+- 「フィールド・語彙リファレンス」節に `datacite_jpcoar_mapping.md` へのリンクを追加
+
+### 変更ファイル
+- `function.md`
+- `README.md` 変更履歴・`docs/changelog.md`
+- `docs/worklog.md`
+
+### 注意事項
+- ドキュメントのみの変更で、本番HTML・共有JS・Chrome拡張コードの変更は無い（E2E対象外・manifest更新不要・LOCAL_VERSION更新不要、#184/#181と同型）
+- README.md・docs/user_guide.md・docs/requirements.md・docs/fieldmapping.md・docs/developer_docs.md は既に反映済みと確認したため変更していない
+
+### 検証
+`npm test`（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造）が ALL PASS。
 
 ## 純粋関数の単体テストを追加（node:test）（2026-07-05・#192）
 
