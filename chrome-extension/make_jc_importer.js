@@ -4,13 +4,14 @@
 // ================================================================
 // CONFIG, loadConfig(), extensionFetch() は shared.js で定義
 // TSV_HEADERS_TEMPLATE は tsv_headers_template.js で定義
-if (typeof CONFIG === 'undefined') {
+// （typeof window ガードは #192 ユニットテストで Node から require するため。ブラウザでは従来どおり動作）
+if (typeof CONFIG === 'undefined' && typeof window !== 'undefined') {
   console.warn('shared.js が読み込めませんでした。APIキーなしで動作します。');
   window.CONFIG = { OpenAlex_API_KEY: '', CiNii_API_KEY: '', OPF_API_KEY: '' };
   window.loadConfig = async function() {};
   window.extensionFetch = function(url, options) { return fetch(url, options); };
 }
-if (typeof TSV_HEADERS_TEMPLATE === 'undefined') {
+if (typeof TSV_HEADERS_TEMPLATE === 'undefined' && typeof window !== 'undefined') {
   console.warn('tsv_headers_template.js が読み込めませんでした。TSV出力は使用できません。');
   window.TSV_HEADERS_TEMPLATE = null;
 }
@@ -847,7 +848,7 @@ function renderSystemFields(systemData) {
 // ===== DOI 正規化 =====
 function normalizeDoi(raw) {
   return raw.trim()
-    .replace(/^https?:\/\/doi\.org\//i, '')
+    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
     .replace(/^doi:/i, '')
     .trim();
 }
@@ -6998,6 +6999,11 @@ function closePreview() {
   document.body.style.overflow = '';
 }
 
+// ===== 以下、DOM 配線・初期化（ブラウザ実行時のみ実行） =====
+// #192: ユニットテストで Node から require できるよう、DOM に触れる実行文を
+// typeof document ガードで包む。関数宣言はホイストのためガード外（トップレベル）に残す。
+if (typeof document !== 'undefined') {
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closePreview(); closeOpfModal(); }
 });
@@ -7134,6 +7140,8 @@ document.getElementById('doi-input').addEventListener('keydown', e => {
   await maybeShowDraftBanner();
 })();
 
+}  // end typeof document ガード（DOM 配線・初期化） #192
+
 // ===== 下書き復元バナー制御（#162） =====
 let pendingDraft = null;
 
@@ -7171,8 +7179,8 @@ function restoreDraft() {
 }
 
 // ===== 更新チェック =====
-(async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-04';
+if (typeof document !== 'undefined') (async function checkForUpdate() {
+  const LOCAL_VERSION = '2026-07-05';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
@@ -7189,3 +7197,9 @@ function restoreDraft() {
     }
   } catch (_) { /* オフライン時は静かに無視 */ }
 })();
+
+// ===== ユニットテスト用エクスポート（#192） =====
+// Node（node:test）から純粋関数を require するためのガード。ブラウザでは module 未定義のため不活性。
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { normalizeDoi, isValidDoi, processAbstract, generateTsv };
+}

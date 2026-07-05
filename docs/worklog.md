@@ -1,6 +1,39 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-05（Codexによる現状レビューを docs に保存）
+最終更新: 2026-07-05（純粋関数の単体テストを追加 #192）
+
+## 純粋関数の単体テストを追加（node:test）（2026-07-05・#192）
+
+### 概要
+CI（`npm test` → `scripts/check.js`）は JSON構文・JS構文・UTF-8妥当性・ファイル同期のみを検証しており、ロジックの振る舞いを検証していなかった。依存ゼロの Node 組み込み `node:test` + `node:assert` を使い、DOM に依存しない純粋関数の単体テストを `tests/` に整備し、`npm test`（CI含む）に組み込んだ。テスト基盤の立ち上げが目的で、対象は副作用のない関数に絞った。
+
+### 実装のポイント（Node から `require` できるようにするガード）
+`chrome-extension/*.js` はブラウザ前提でトップレベルに DOM 配線・`window.*` 書込みがあり、そのままでは Node から `require` すると即例外になる。ブラウザ動作を変えずに require 可能にするため、以下のガードを `chrome-extension/make_jc_importer.js`・`openalex_panel.js` に追加した（HTML 側にはガード/exportは複製しない方針）:
+- 先頭 CONFIG／TSV_HEADERS_TEMPLATE フォールバックの `window.*` 書込みに `typeof window !== 'undefined'` を前置
+- DOM 配線・初期化 IIFE（`init`/`checkForUpdate` 等）を `if (typeof document !== 'undefined') { … }` で包む。**関数宣言はホイストのためガード外（トップレベル）に残し、実行文のみを包む**（sloppy モードのブロック内関数宣言の Annex B 依存を回避）
+- 末尾に `if (typeof module !== 'undefined' && module.exports) { module.exports = { … }; }`
+
+`generateTsv` は `TSV_HEADERS_TEMPLATE` をグローバル遅延参照するため、`tests/tsv.test.js` は `data/tsv_headers.json`（CI でテンプレートと構造一致が保証済）を `global.TSV_HEADERS_TEMPLATE` に注入して実テンプレートを供給する。
+
+### 併せて実施した実挙動変更
+`make_jc_importer` の `normalizeDoi` を `funder_lookup` に合わせ `https://dx.doi.org/…` 対応へ統一（`/^https?:\/\/doi\.org\//i` → `/^https?:\/\/(dx\.)?doi\.org\//i`）。本番HTMLの実挙動が変わるため E2E 対象。
+
+### テスト（31ケース）
+- `tests/doi.test.js`: `normalizeDoi`（URL・`dx.doi.org`・`doi:`・空白）／`isValidDoi`（登録者コード4桁未満・正規化前URL等の負例）
+- `tests/abstract.test.js`: `processAbstract`（実体参照の解除順序・先頭`<jats:title>`除去・`<jats:sec>`内`TITLE:`変換・タグ除去）
+- `tests/tsv.test.js`: `generateTsv`（空配列→`null`・行数・タブ/改行サニタイズ・`repoHost`スキーマURL置換）
+- `tests/aff-misattribution.test.js`: `detectAffMisattribution`（#186 JIRCAS実例で⚠／頭字語裏付けで抑制／bare ID正規化一致）・`canonicalRor`・`affStringSupportsInst`・`warnTooltip`
+
+### 変更ファイル
+- `chrome-extension/make_jc_importer.js`（ガード＋`normalizeDoi`統一＋`module.exports`＋LOCAL_VERSION）
+- `chrome-extension/openalex_panel.js`（ガード＋`module.exports`）
+- `make_jc_importer.html` / `make_jc_importer_test.html`（`normalizeDoi`統一のみ）＋最終更新・更新概要・LOCAL_VERSION
+- `chrome-extension/panel.html`（更新概要）・`chrome-extension/manifest.json`（`1.19.0`→`1.19.1`）
+- `package.json`（`test` に `node --test "tests/**/*.test.js"` を追加）・`scripts/check.js`（テストファイルを検査対象へ）
+- `tests/`（新規4ファイル）・`docs/developer_docs.md`（ユニットテスト節・同期保持ブロックの明記）
+
+### 検証
+`npm test` で `scripts/check.js` ALL PASS＋`node --test` 31ケース ALL PASS（exit 0）。`node -e "require(...)"` で両ファイルが例外なくロードされ期待どおりのエクスポートを確認。E2E は `/e2e-test`（`https://dx.doi.org/…` 入力を含むメインフロー）で確認。
 
 ## Codexによる現状レビューの保存（2026-07-05）
 

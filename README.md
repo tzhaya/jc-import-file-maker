@@ -96,8 +96,8 @@ DOIを入力してCrossref・OpenAlex APIから書誌情報を取得し、[JAIRO
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-07-04 | ver. 1.19.0 | DataCite DOIパスにOPF連動によるアクセス権エンバーゴ判定を追加（[#214](https://github.com/tzhaya/jc-import-file-maker/issues/214)） |
-| インポート用TSV生成ツール | 2026-07-04 | — | DataCite DOIパスにOPF連動によるアクセス権エンバーゴ判定を追加。OAステータスがclosed/未収録の場合にOPFエンバーゴの有無でembargoed access/open accessを判定（Crossref/JaLCパスと同様）（[#214](https://github.com/tzhaya/jc-import-file-maker/issues/214)） |
+| Chrome拡張機能版 | 2026-07-05 | ver. 1.19.1 | DOI入力の正規化が `https://dx.doi.org/…` 形式にも対応。あわせて純粋関数の単体テスト基盤（node:test）を整備（[#192](https://github.com/tzhaya/jc-import-file-maker/issues/192)） |
+| インポート用TSV生成ツール | 2026-07-05 | — | DOI入力の正規化が `https://dx.doi.org/…` 形式にも対応（従来の `https://doi.org/…`・`doi:…` に加えて）（[#192](https://github.com/tzhaya/jc-import-file-maker/issues/192)） |
 | 助成情報検索ツール | 2026-06-11 | — | マルチバイト文字列（日本語）を含む行から課題番号を抽出できないバグを修正（[#149](https://github.com/tzhaya/jc-import-file-maker/issues/149)）。検索結果の外部リンクをクリックするとツールがリロードされる不具合を修正（[#150](https://github.com/tzhaya/jc-import-file-maker/issues/150)） |
 | OpenAlex機関別著作検索 | 2026-07-03 | — | 検索結果の外部リンクをクリックするとタブが「DOIインポート」に戻る不具合を修正（[#201](https://github.com/tzhaya/jc-import-file-maker/issues/201)）。所属の誤判定が疑われる候補に「⚠ 要確認」バッジを表示（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186)） |
 
@@ -301,6 +301,7 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-07-05 | 純粋関数の単体テストを追加（[#192](https://github.com/tzhaya/jc-import-file-maker/issues/192)）：依存ゼロの Node 組み込み `node:test` で、DOM に依存しない純粋関数（`normalizeDoi`/`isValidDoi`/`processAbstract`/`generateTsv`/`detectAffMisattribution` 等）の単体テストを `tests/` に整備し、`npm test`（CI含む）に組み込み。テストから `require` できるよう `chrome-extension/make_jc_importer.js`・`openalex_panel.js` に `typeof window`／`typeof document`／`module.exports` ガードを追加（ブラウザ動作は不変）。あわせて `make_jc_importer` の DOI 正規化を `funder_lookup` に合わせ `https://dx.doi.org/…` 対応へ統一（実挙動変更）。標準版・Chrome拡張版に同一実装。manifest version `1.19.0` → `1.19.1` |
 | 2026-07-05 | Codexによる現状レビュー（進捗・実用性・将来拡張可能性・課題）を [`docs/current_review_2026-07-05.md`](docs/current_review_2026-07-05.md) として保存。新規ドキュメント追加ルールに従い、`scripts/check.js` の UTF-8 チェック対象と `docs/developer_docs.md` のドキュメント一覧にも登録。ドキュメント中心の変更（本番HTML・共有JS・Chrome拡張コードの変更なし、E2E対象外・manifest更新不要） |
 | 2026-07-05 | 開発者向けドキュメント（[`docs/developer_docs.md`](docs/developer_docs.md)）に「テストの限界と教訓」節（Nodeサンドボックス検証はDOM描画を見ない・標準版E2Eでは拡張版限定機能を検出できない・仕様書の除外規則は実装チェックリスト化する、の3点を実例付きで整理）と「テスト用DOIカタログ」節（回帰・E2Eで使う代表DOIと各々の検証観点）を追加。保守者向けドキュメントのみの変更（本番HTML・共有JS・Chrome拡張コードの変更なし） |
 | 2026-07-04 | DataCite DOIパスにOPF連動によるアクセス権エンバーゴ判定を追加（[#214](https://github.com/tzhaya/jc-import-file-maker/issues/214)）：#212のフォローアップ。処理順を「ISSN早期抽出（新設 `extractDataCiteIssnsFromRaw`／`findDataCiteSourceIdentifier`、`extractDataCiteBibliographicInfo`と抽出優先順位を共通化）→OPF取得→マッピング」に変更し、Crossref/JaLCパスと同じ `determineAccessRights(oaStatus, lastOpfData)` をDataCiteパスでも呼び出すことで、従来固定していた `open access` をOAステータスがclosed/未収録の場合にOPFエンバーゴの有無で `embargoed access`/`open access` に判定するよう変更。効果はOPF照会が有効なChrome拡張版のみ（標準版はOPF無効のため無回帰）。標準版・Chrome拡張版に同一実装。manifest version `1.18.0` → `1.19.0` |

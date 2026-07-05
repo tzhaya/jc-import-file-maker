@@ -6,7 +6,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "node scripts/check.js"
+    "test": "node scripts/check.js && node --test \"tests/**/*.test.js\""
   },
   "repository": {
     "type": "git",
