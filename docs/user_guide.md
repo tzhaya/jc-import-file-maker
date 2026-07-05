@@ -108,7 +108,7 @@ JAIRO Cloud (WEKO3) にメタデータをインポートするためのTSVファ
 
 #### データ取り込みの詳細
 
-Crossrefから得られる情報を元に、OpenAlex、ROR、CiNii Research、KAKEN XML、JGN（Japan Grant Number）、Open Policy Finder（OPF）からの情報で補完しています。
+DOI (Crossref/DataCite/JaLC)から得られる情報を元に、OpenAlex、ROR、CiNii Research、KAKEN XML、JGN（Japan Grant Number）、Open Policy Finder（OPF）からの情報で補完しています。
 詳しくは [api-flow.md](../api-flow.md) を参照してください。
 
 1. 共通
