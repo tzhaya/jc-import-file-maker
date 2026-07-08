@@ -861,6 +861,7 @@ document.querySelectorAll('input[name="jpcoar-version"]').forEach(radio => {
 // パネル自体が既定ページ（panel.html）にリセットされてしまうため、
 // chrome.tabs.create で明示的に新しいタブを開く。スタンドアロン版（chrome未定義）では
 // target="_blank" がそのまま機能するためこのハンドラは登録しない。
+// #228: active: false で背面タブとして開き、現在のタブとサイドパネルの状態を保持する。
 if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[href]');
@@ -868,7 +869,7 @@ if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
     const href = a.getAttribute('href');
     if (/^https?:\/\//i.test(href)) {
       e.preventDefault();
-      chrome.tabs.create({ url: href });
+      chrome.tabs.create({ url: href, active: false });
     }
   });
 }

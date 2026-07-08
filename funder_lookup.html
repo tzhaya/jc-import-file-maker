@@ -851,7 +851,7 @@ function parseTsvTemplate(text) {
   const lines = text.split(/\r?\n/);
 
   // 2行目を探す: .metadata.item_XXX[N].subitem_award_numbers を含む行
-  let row2 = null, row2idx = -1, row3 = null;
+  let row2 = null, row2idx = -1;
   for (let i = 0; i < lines.length; i++) {
     if (/\.metadata\.[^\t]*subitem_award_numbers/.test(lines[i])) {
       row2 = lines[i];
@@ -879,7 +879,7 @@ function parseTsvTemplate(text) {
 
   // 3行目からトップレベルラベルを抽出
   if (row2idx + 1 < lines.length) {
-    row3 = lines[row2idx + 1];
+    const row3 = lines[row2idx + 1];
     const cols3 = row3.split('\t');
     if (prefixCol >= 0 && prefixCol < cols3.length) {
       const lm = cols3[prefixCol].match(/^([^\[]+)\[/);
@@ -1005,6 +1005,7 @@ async function copyTsvToClipboard(btn) {
 // パネル自体が既定ページ（panel.html）にリセットされてしまうため、
 // chrome.tabs.create で明示的に新しいタブを開く。スタンドアロン版（chrome未定義）では
 // target="_blank" がそのまま機能するためこのハンドラは登録しない。
+// #228: active: false で背面タブとして開き、現在のタブとサイドパネルの状態を保持する。
 if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[href]');
@@ -1012,7 +1013,7 @@ if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
     const href = a.getAttribute('href');
     if (/^https?:\/\//i.test(href)) {
       e.preventDefault();
-      chrome.tabs.create({ url: href });
+      chrome.tabs.create({ url: href, active: false });
     }
   });
 }
