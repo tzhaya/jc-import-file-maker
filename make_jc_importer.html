@@ -490,7 +490,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-07-05 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-07-08 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -502,6 +502,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-08</td>
+        <td style="padding:2px 0;">バッチ全クリア/最後の1件削除時にDOM参照ミスでエラーになり下書きが復活する不具合（#221）、助成情報検索後にアコーディオンのラベルが更新されない不具合（#224）、TSVエクスポートのファイル名にDOI由来のWindows禁止文字が残る不具合（#226）を修正（Chrome拡張 ver. 1.19.2 と同期）</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-05</td>
         <td style="padding:2px 0;">DOI入力の正規化が <code>https://dx.doi.org/…</code> 形式にも対応（従来の <code>https://doi.org/…</code>・<code>doi:…</code> に加えて）（#192）。あわせて純粋関数の単体テスト基盤（node:test）を整備（Chrome拡張 ver. 1.19.1 と同期）</td>
@@ -7723,7 +7727,7 @@ function restoreDraft() {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-05';
+  const LOCAL_VERSION = '2026-07-08';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
