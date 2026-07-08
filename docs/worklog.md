@@ -1,6 +1,33 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-08（アクセス権判定にエンバーゴ満了日の判定を追加）
+最終更新: 2026-07-08（calcEmbargoEndDate() のタイムゾーン依存バグを修正）
+
+## calcEmbargoEndDate() のタイムゾーン依存バグを修正（2026-07-08・PR #233 コードレビュー指摘）
+
+### 概要
+#225（エンバーゴ満了考慮のアクセス権判定、PR #233）のマージ後、コードレビューでP2として指摘。`calcEmbargoEndDate()` は `new Date('YYYY-MM-DD')`（UTC深夜0時としてパース）に対して `setMonth()`/`setFullYear()`/`setDate()`（ローカル時刻メソッド）で加算し、`toISOString()`（UTC出力）で結果を返していた。パースと出力はUTCなのに演算だけローカル時刻という不整合があり、UTCより遅れたタイムゾーン（America/New_York等）で実行すると満了日が1日前後にずれる問題があった。この関数の戻り値は `determineAccessRights()` のアクセス権判定（`open access` / `embargoed access`）に直接使われるため、表示ヒントだけでなく実データに影響し得た。
+
+### 検証（修正前）
+指摘内容を実際に再現して確認した:
+```
+TZ=America/New_York: calcEmbargoEndDate('2020-01-15', {amount:6, units:'months'}) → '2020-07-14'（本来 '2020-07-15'）
+```
+
+### 修正内容
+`d.setMonth()`/`d.setFullYear()`/`d.setDate()` を `d.setUTCMonth()`/`d.setUTCFullYear()`/`d.setUTCDate()` に置き換え、パース・演算・出力をすべてUTC系メソッドに統一。実行環境のタイムゾーンに依存しない結果になる。
+
+### 変更ファイル
+- `make_jc_importer.html` / `chrome-extension/make_jc_importer.js` / `tests/access-rights.test.js`
+
+### 検証（修正後）
+- Node vm上で5タイムゾーン（America/New_York・Asia/Tokyo・UTC・Pacific/Kiritimati・Pacific/Midway）すべてで `2020-07-15`/`2021-01-15`/`2020-01-29` に一致することを確認
+- `tests/access-rights.test.js` に `process.env.TZ = 'America/New_York'` を切り替える回帰テストを追加。修正前コード（コミット8eb89e0）に対してこのテストロジックを実行し、実際にバグを検出できることを確認済み
+- `npm test`（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造・単体テスト計54件＝既存53＋新規1）が ALL PASS
+- E2E（`make_jc_importer_test.html`）: 通常DOIでの回帰確認（ALL PASSED）に加え、PlaywrightのブラウザコンテキストTZシミュレーション（`timezoneId: 'America/New_York'`）で `calcEmbargoEndDate()` を実ブラウザから直接呼び出し、正しい結果が返ることを確認（ALL PASSED）
+- manifest version `1.21.0` → `1.21.1`
+
+### 備考
+レビューでは「月末発行のエンバーゴ（例: `2020-01-31 + 1ヶ月` → `2020-03-02`）」も併せて言及されていたが、これはJSの `setMonth()` 系メソッドの月末オーバーフロー仕様によるもので、今回のタイムゾーン混在バグとは別種の問題。月末エンバーゴの扱い（オーバーフローさせるか月末に丸めるか）は業務仕様の判断が必要なため、今回はスコープに含めていない。
 
 ## アクセス権判定にエンバーゴ満了日の判定を追加（2026-07-08・#225）
 
