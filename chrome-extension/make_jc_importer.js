@@ -437,14 +437,17 @@ function determineAccessRights(oaStatus, opfData, pubDate) {
 }
 
 // ===== エンバーゴ公開可能日算出 =====
+// new Date('YYYY-MM-DD') は UTC 深夜0時としてパースされる一方、setMonth() 等のローカル時刻メソッドと
+// toISOString()（UTC出力）を混在させるとタイムゾーンによって満了日が1日前後にずれる（実行環境依存のバグ）。
+// パース・演算・出力を UTC 系メソッドで統一し、実行環境のタイムゾーンに依存しない結果にする。
 function calcEmbargoEndDate(pubDate, embargo) {
   if (!pubDate || !embargo?.amount) return null;
   const d = new Date(pubDate);
   if (isNaN(d.getTime())) return null;
   const units = embargo.units || 'months';
-  if (units === 'months') d.setMonth(d.getMonth() + embargo.amount);
-  else if (units === 'years') d.setFullYear(d.getFullYear() + embargo.amount);
-  else if (units === 'weeks') d.setDate(d.getDate() + embargo.amount * 7);
+  if (units === 'months') d.setUTCMonth(d.getUTCMonth() + embargo.amount);
+  else if (units === 'years') d.setUTCFullYear(d.getUTCFullYear() + embargo.amount);
+  else if (units === 'weeks') d.setUTCDate(d.getUTCDate() + embargo.amount * 7);
   else return null;
   return d.toISOString().slice(0, 10);
 }
