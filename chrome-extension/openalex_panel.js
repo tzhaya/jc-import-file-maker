@@ -802,12 +802,12 @@ async function init() {
   await restoreOpenAlexSearch();
 }
 
-// 検索結果内の外部リンクは新しいタブで開く（#150と同型・#201）
-// Chrome拡張のサイドパネルでは target="_blank" の外部リンクをクリックすると
-// パネル自体が既定ページ（panel.html）にリセットされてしまうため、
-// chrome.tabs.create で明示的に新しいタブを開く。標準版（IS_CHROME_EXTENSION が false）では
-// target="_blank" がそのまま機能するためこのハンドラは登録しない。
-// #228: active: false で背面タブとして開き、現在のタブとサイドパネルの状態を保持する。
+// 検索結果内の外部リンクは現在のアクティブタブ内で開く（#150と同型・#201・#228）
+// Chrome拡張のサイドパネルでは target="_blank" や新規タブのフォアグラウンド作成で
+// タブが切り替わり、パネルが既定ページ（panel.html）にリセットされてしまうため、
+// chrome.tabs.update で現在のタブをリンク先へ遷移させる（タブが切り替わらないため
+// パネルの表示状態が保持される）。遷移できない特殊タブでは背面タブにフォールバック。
+// 標準版（IS_CHROME_EXTENSION が false）では target="_blank" がそのまま機能するためこのハンドラは登録しない。
 if (IS_CHROME_EXTENSION) {
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[href]');
@@ -815,7 +815,7 @@ if (IS_CHROME_EXTENSION) {
     const href = a.getAttribute('href');
     if (/^https?:\/\//i.test(href)) {
       e.preventDefault();
-      chrome.tabs.create({ url: href, active: false });
+      chrome.tabs.update({ url: href }).catch(() => chrome.tabs.create({ url: href, active: false }));
     }
   });
 }
