@@ -1,6 +1,27 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-08（バッチ操作・助成情報検索UI・TSVエクスポートの不具合3件を修正）
+最終更新: 2026-07-08（サイドパネル外部リンクの不具合を再修正）
+
+## サイドパネル外部リンククリックでパネルがリセットされる不具合を再修正（2026-07-08・#228/#227）
+
+### 概要
+2026-07-06 のコード全体点検で、#201（PR #205, コミット `986aa9e`）で対応したはずの「サイドパネルの検索結果URLをクリックするとパネルが既定ページに戻る」不具合が、助成情報検索・OpenAlex機関別著作検索の両パネルで再発していることを発見した。
+
+### 原因
+#201 は委譲クリックハンドラを追加し、`target="_blank"` の代わりに `chrome.tabs.create({ url: href })` で新規タブを開くよう変更した。`e.preventDefault()` によりアンカー本来の遷移は抑止されるが、`chrome.tabs.create` は `active` 未指定のため既定の `active: true` で動作し、新規タブをフォアグラウンドで開いてフォーカスを移してしまう。Chromeのサイドパネルはタブ単位で表示状態を持つため、フォーカスが移った新規タブのサイドパネルは manifest の `default_path`（`panel.html`＝DOIインポート）で表示され、結果的に「パネルがDOIインポートに戻る」症状が変わらず残っていた。
+
+### 修正内容
+1. **#228**: 実機検証の結果を踏まえ、最終的に `chrome.tabs.update({ url: href })`（現在のアクティブタブをリンク先へ遷移させる）方式を採用。タブの新規作成・切り替えが発生しないため、サイドパネルの表示状態（検索結果）が保持される。当初検討した `active: false`（背面タブ）方式は「開いた先がすぐ見えない」ためユーザー確認の上で不採用とした。遷移できない特殊タブでは `chrome.tabs.create({ url, active: false })` にフォールバック。`chrome-extension/openalex_panel.js`・`chrome-extension/funder_lookup.js`・`openalex_lookup.html`・`funder_lookup.html` の4ファイルに同一修正を適用。
+2. **#227**: `funder_lookup.html` の `parseTsvTemplate()` で `row3` 変数の宣言位置（関数冒頭でまとめて宣言 vs 使用箇所直前で局所宣言）が拡張JS版と異なり、本番HTML⇔拡張JS同期確認のdiffノイズになっていたため、拡張JS版の書き方（局所 `const row3`）にHTML側を統一。
+
+### 変更ファイル
+- `chrome-extension/openalex_panel.js` / `chrome-extension/funder_lookup.js` / `openalex_lookup.html` / `funder_lookup.html`
+
+### 検証
+- `npm test`（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造・単体テスト31件）が ALL PASS
+- E2E: 助成情報検索（課題番号検索→TSV生成）・OpenAlex機関別著作検索（ROR検索、11件取得・所属誤判定バッジ確認）ともJSエラーなしで ALL PASSED
+- `chrome.tabs.update`/`chrome.tabs.create` は `chrome.tabs` API依存のため `file://` の静的E2Eでは実行されない。**Chrome実機のサイドパネルでの動作確認をユーザーが実施し、パネルがリセットされないことを確認済み**
+- manifest version `1.19.2` → `1.19.3`
 
 ## バッチ操作・助成情報検索UI・TSVエクスポートの不具合3件を修正（2026-07-08・#221/#224/#226）
 
