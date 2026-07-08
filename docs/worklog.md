@@ -1,6 +1,24 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-05（function.md にDataCite対応の記載漏れを追記）
+最終更新: 2026-07-08（バッチ操作・助成情報検索UI・TSVエクスポートの不具合3件を修正）
+
+## バッチ操作・助成情報検索UI・TSVエクスポートの不具合3件を修正（2026-07-08・#221/#224/#226）
+
+### 概要
+2026-07-06 のコード全体点検で発見した軽微〜中程度のバグ3件をまとめて修正した。
+
+### 修正内容
+1. **#221（優先度高）**: `removeBatchItem()`（最後の1件を削除したとき）と `clearBatch()`（全クリア時）が、存在しないDOM要素 `fields-container` を `document.getElementById()` で参照しており、null 参照で TypeError が発生していた。例外発生行以降の処理（`preview-area` の非表示化・`persistDraft()` の呼び出し）がスキップされるため、特に `clearBatch()` では下書きが削除されず、次回起動時に「前回の作業データを復元できます」バナーが出てクリアしたはずのデータが復活していた。編集フォームの実体である `metadata-fields` を参照するよう修正。
+2. **#224**: `renderOneFunder()` の「助成機関を検索」成功後、アコーディオンヘッダーのラベルを更新しようとするコードが `.nested-item-header span:last-child` という存在しないセレクタを使っており常に no-op だった（正しいラベル要素は `.item-label`）。データ自体は正しく設定されるが表示のみ古いままだった問題を修正。
+3. **#226**: TSVエクスポートのファイル名サニタイズが `doi.replace(/\//g, '_')` で `/` のみ置換しており、DOIに含まれ得る Windows ファイル名禁止文字（`< > : " | ? *`）が残っていた。連続する禁止文字を `_` 1つに置換する正規表現に変更。
+
+### 変更ファイル
+- `make_jc_importer.html` / `chrome-extension/make_jc_importer.js`（3箇所とも両ファイルに同一修正を適用）
+
+### 検証
+- `npm test`（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造・単体テスト31件）が ALL PASS
+- E2E（`make_jc_importer_test.html`）: DOI取得・バッチ1件削除・全件クリア・助成機関検索の一連の操作でJSエラーが発生しないこと、削除/クリア後に `metadata-fields`/`preview-area`/`export-btn` が正しい状態になること、助成機関検索後にヘッダーラベルが実際に更新されることを確認。ALL PASSED
+- manifest version `1.19.1` → `1.19.2`
 
 ## function.md にDataCite対応の記載漏れを追記（2026-07-05）
 
