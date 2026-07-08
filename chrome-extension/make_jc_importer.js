@@ -2734,6 +2734,9 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   const pageStart = pageParts[0] || '';
   const pageEnd   = pageParts[1] || '';
 
+  // ===== 言語（Crossref language を 639-2/T へ変換、不明時は 'eng' + 要確認）=====
+  const lang639_2 = mapDataCiteLanguageToSubitemLanguage(crJson.language || '');
+
   // ===== メタデータオブジェクト =====
   const metadata = {
     // ----- システムフィールド -----
@@ -2811,7 +2814,7 @@ async function mapToItemType(crJson, oaJson, rorMap) {
     item_1698624008: [],
 
     // ----- 言語 -----
-    item_30002_language12: [{ subitem_language: 'eng' }],
+    item_30002_language12: lang639_2 ? [{ subitem_language: lang639_2 }] : [{ subitem_language: 'eng', _warnLang: true }],
 
     // ----- 資源タイプ -----
     item_30002_resource_type13: { resourcetype, resourceuri },
@@ -3713,7 +3716,7 @@ const FIELD_DEFS = [
     ],
     sum: a => a?.[0]?.subitem_dcterms_date || '' },
   { key: 'item_30002_language12', label: '言語', type: 'array',
-    fields: [{ k: 'subitem_language', l: '言語', t: 'select', o: 'subitem_language' }],
+    fields: [{ k: 'subitem_language', l: '言語', t: 'select', o: 'subitem_language', w: '_warnLang' }],
     sum: a => a?.[0]?.subitem_language || '' },
   { key: 'item_30002_resource_type13', label: '資源タイプ', type: 'object',
     fields: [
@@ -4869,7 +4872,7 @@ function renderOneFunder(funder, idx, defLabel) {
       if (uriInput && result.kakenUrl) uriInput.value = result.kakenUrl;
 
       // ヘッダーラベルを更新
-      const headerSpan = fundItem.querySelector('.nested-item-header span:last-child');
+      const headerSpan = fundItem.querySelector('.item-label');
       if (headerSpan) {
         const newName = names[0]?.subitem_funder_name || '';
         headerSpan.textContent = `${defLabel}[${idx}]${newName ? ': '+newName.substring(0,40) : ''}`;
@@ -5707,7 +5710,7 @@ function removeBatchItem(index) {
   updateBatchPanel();
   if (allMetadata.length === 0) {
     currentBatchIndex = -1;
-    document.getElementById('fields-container').innerHTML = '';
+    document.getElementById('metadata-fields').innerHTML = '';
     document.getElementById('preview-area').style.display = 'none';
     document.getElementById('preview-btn').style.display = 'none';
     document.getElementById('export-btn').style.display = 'none';
@@ -5723,7 +5726,7 @@ function clearBatch() {
   allMetadata = [];
   currentBatchIndex = -1;
   updateBatchPanel();
-  document.getElementById('fields-container').innerHTML = '';
+  document.getElementById('metadata-fields').innerHTML = '';
   document.getElementById('preview-area').style.display = 'none';
   document.getElementById('preview-btn').style.display = 'none';
   document.getElementById('export-btn').style.display = 'none';
@@ -6646,7 +6649,7 @@ function exportTsv() {
   } else {
     // 1件: 既存のDOIベースファイル名
     const doi = items[0].system?.doi || 'import';
-    filename = `${doi.replace(/\//g, '_')}.tsv`;
+    filename = `${doi.replace(/[\/\\<>:"|?*\s]+/g, '_')}.tsv`;
   }
   downloadTsv(tsv, filename);
 }
@@ -7194,7 +7197,7 @@ function restoreDraft() {
 
 // ===== 更新チェック =====
 if (typeof document !== 'undefined') (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-05';
+  const LOCAL_VERSION = '2026-07-08';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

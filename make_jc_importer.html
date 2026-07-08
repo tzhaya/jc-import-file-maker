@@ -490,7 +490,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-07-05 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-07-08 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -502,6 +502,14 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-08</td>
+        <td style="padding:2px 0;">Crossrefパスの本文言語を <code>crJson.language</code>（ISO 639-1、地域タグ対応）から639-2/Tへ変換して設定するよう修正。従来は無条件で <code>eng</code> 固定だった。変換不能・language未提供時は <code>eng</code>＋「要確認」バッジを表示（#223）（Chrome拡張 ver. 1.20.0 と同期）</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-08</td>
+        <td style="padding:2px 0;">バッチ全クリア/最後の1件削除時にDOM参照ミスでエラーになり下書きが復活する不具合（#221）、助成情報検索後にアコーディオンのラベルが更新されない不具合（#224）、TSVエクスポートのファイル名にDOI由来のWindows禁止文字が残る不具合（#226）を修正（Chrome拡張 ver. 1.19.2 と同期）</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-05</td>
         <td style="padding:2px 0;">DOI入力の正規化が <code>https://dx.doi.org/…</code> 形式にも対応（従来の <code>https://doi.org/…</code>・<code>doi:…</code> に加えて）（#192）。あわせて純粋関数の単体テスト基盤（node:test）を整備（Chrome拡張 ver. 1.19.1 と同期）</td>
@@ -3297,6 +3305,9 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   const pageStart = pageParts[0] || '';
   const pageEnd   = pageParts[1] || '';
 
+  // ===== 言語（Crossref language を 639-2/T へ変換、不明時は 'eng' + 要確認）=====
+  const lang639_2 = mapDataCiteLanguageToSubitemLanguage(crJson.language || '');
+
   // ===== メタデータオブジェクト =====
   const metadata = {
     // ----- システムフィールド -----
@@ -3374,7 +3385,7 @@ async function mapToItemType(crJson, oaJson, rorMap) {
     item_1698624008: [],
 
     // ----- 言語 -----
-    item_30002_language12: [{ subitem_language: 'eng' }],
+    item_30002_language12: lang639_2 ? [{ subitem_language: lang639_2 }] : [{ subitem_language: 'eng', _warnLang: true }],
 
     // ----- 資源タイプ -----
     item_30002_resource_type13: { resourcetype, resourceuri },
@@ -4277,7 +4288,7 @@ const FIELD_DEFS = [
     ],
     sum: a => a?.[0]?.subitem_dcterms_date || '' },
   { key: 'item_30002_language12', label: '言語', type: 'array',
-    fields: [{ k: 'subitem_language', l: '言語', t: 'select', o: 'subitem_language' }],
+    fields: [{ k: 'subitem_language', l: '言語', t: 'select', o: 'subitem_language', w: '_warnLang' }],
     sum: a => a?.[0]?.subitem_language || '' },
   { key: 'item_30002_resource_type13', label: '資源タイプ', type: 'object',
     fields: [
@@ -5433,7 +5444,7 @@ function renderOneFunder(funder, idx, defLabel) {
       if (uriInput && result.kakenUrl) uriInput.value = result.kakenUrl;
 
       // ヘッダーラベルを更新
-      const headerSpan = fundItem.querySelector('.nested-item-header span:last-child');
+      const headerSpan = fundItem.querySelector('.item-label');
       if (headerSpan) {
         const newName = names[0]?.subitem_funder_name || '';
         headerSpan.textContent = `${defLabel}[${idx}]${newName ? ': '+newName.substring(0,40) : ''}`;
@@ -6271,7 +6282,7 @@ function removeBatchItem(index) {
   updateBatchPanel();
   if (allMetadata.length === 0) {
     currentBatchIndex = -1;
-    document.getElementById('fields-container').innerHTML = '';
+    document.getElementById('metadata-fields').innerHTML = '';
     document.getElementById('preview-area').style.display = 'none';
     document.getElementById('preview-btn').style.display = 'none';
     document.getElementById('export-btn').style.display = 'none';
@@ -6287,7 +6298,7 @@ function clearBatch() {
   allMetadata = [];
   currentBatchIndex = -1;
   updateBatchPanel();
-  document.getElementById('fields-container').innerHTML = '';
+  document.getElementById('metadata-fields').innerHTML = '';
   document.getElementById('preview-area').style.display = 'none';
   document.getElementById('preview-btn').style.display = 'none';
   document.getElementById('export-btn').style.display = 'none';
@@ -7210,7 +7221,7 @@ function exportTsv() {
   } else {
     // 1件: 既存のDOIベースファイル名
     const doi = items[0].system?.doi || 'import';
-    filename = `${doi.replace(/\//g, '_')}.tsv`;
+    filename = `${doi.replace(/[\/\\<>:"|?*\s]+/g, '_')}.tsv`;
   }
   downloadTsv(tsv, filename);
 }
@@ -7737,7 +7748,7 @@ function restoreDraft() {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-05';
+  const LOCAL_VERSION = '2026-07-08';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

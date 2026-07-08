@@ -1,6 +1,65 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-05（function.md にDataCite対応の記載漏れを追記）
+最終更新: 2026-07-08（Crossrefパスの本文言語をcrJson.languageから変換するよう修正）
+
+## Crossrefパスの本文言語をcrJson.languageから変換するよう修正（2026-07-08・#223）
+
+### 概要
+2026-07-06 のコード全体点検で発見。Crossref 取得フロー `mapToItemType()` が本文言語を無条件に `[{ subitem_language: 'eng' }]` とハードコードしており、Crossref API 応答の `message.language`（ISO 639-1、地域タグ付きの場合あり）を参照していなかった。日本語論文等で誤った言語が設定されるうえ、警告バッジも付かず気付きにくい問題だった。
+
+### 修正内容
+- DataCiteパスで既に実装済みの `mapDataCiteLanguageToSubitemLanguage()`（639-1→639-2/T変換。地域タグ付き言語コードは先頭部分のみ使用、例: `en-GB`→`eng`）をCrossrefパスからも呼び出すよう変更。関数宣言はホイストされるため `mapToItemType()` 前方から呼び出し可能。
+- `item_30002_language12` の値を、変換成功時は `[{ subitem_language: lang639_2 }]`、変換不能・language未提供時は従来どおり `[{ subitem_language: 'eng', _warnLang: true }]`（要確認バッジ付き）に変更。
+- `FIELD_DEFS` の `item_30002_language12` フィールド定義に `w: '_warnLang'` を追加し、`item_30002_title0` の言語フィールドで既に使われていたバッジ機構を流用。
+- JaLC・DataCiteパスの言語処理は変更なし。
+
+### 変更ファイル
+- `make_jc_importer.html` / `chrome-extension/make_jc_importer.js`
+
+### 検証
+- `npm test`（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造・単体テスト31件）が ALL PASS
+- 関数ロジック直接検証: `en→eng`、`ja→jpn`、空文字→`''`、未知コード→`''`、`en-GB→eng`（地域タグ除去）すべて想定どおり
+- E2E（`make_jc_importer_test.html`）: (1) Crossref language="en"のDOIで`eng`に正しく変換されバッジなし（実データ由来と確認）、(2) CrossrefレスポンスからlanguageフィールドをPlaywrightのroute機能で除去したケースで`eng`＋「仮に英語として設定しています。正確か確認してください」バッジが表示されることを確認。ともにALL PASSED
+- manifest version `1.19.3` → `1.20.0`
+
+## サイドパネル外部リンククリックでパネルがリセットされる不具合を再修正（2026-07-08・#228/#227）
+
+### 概要
+2026-07-06 のコード全体点検で、#201（PR #205, コミット `986aa9e`）で対応したはずの「サイドパネルの検索結果URLをクリックするとパネルが既定ページに戻る」不具合が、助成情報検索・OpenAlex機関別著作検索の両パネルで再発していることを発見した。
+
+### 原因
+#201 は委譲クリックハンドラを追加し、`target="_blank"` の代わりに `chrome.tabs.create({ url: href })` で新規タブを開くよう変更した。`e.preventDefault()` によりアンカー本来の遷移は抑止されるが、`chrome.tabs.create` は `active` 未指定のため既定の `active: true` で動作し、新規タブをフォアグラウンドで開いてフォーカスを移してしまう。Chromeのサイドパネルはタブ単位で表示状態を持つため、フォーカスが移った新規タブのサイドパネルは manifest の `default_path`（`panel.html`＝DOIインポート）で表示され、結果的に「パネルがDOIインポートに戻る」症状が変わらず残っていた。
+
+### 修正内容
+1. **#228**: 実機検証の結果を踏まえ、最終的に `chrome.tabs.update({ url: href })`（現在のアクティブタブをリンク先へ遷移させる）方式を採用。タブの新規作成・切り替えが発生しないため、サイドパネルの表示状態（検索結果）が保持される。当初検討した `active: false`（背面タブ）方式は「開いた先がすぐ見えない」ためユーザー確認の上で不採用とした。遷移できない特殊タブでは `chrome.tabs.create({ url, active: false })` にフォールバック。`chrome-extension/openalex_panel.js`・`chrome-extension/funder_lookup.js`・`openalex_lookup.html`・`funder_lookup.html` の4ファイルに同一修正を適用。
+2. **#227**: `funder_lookup.html` の `parseTsvTemplate()` で `row3` 変数の宣言位置（関数冒頭でまとめて宣言 vs 使用箇所直前で局所宣言）が拡張JS版と異なり、本番HTML⇔拡張JS同期確認のdiffノイズになっていたため、拡張JS版の書き方（局所 `const row3`）にHTML側を統一。
+
+### 変更ファイル
+- `chrome-extension/openalex_panel.js` / `chrome-extension/funder_lookup.js` / `openalex_lookup.html` / `funder_lookup.html`
+
+### 検証
+- `npm test`（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造・単体テスト31件）が ALL PASS
+- E2E: 助成情報検索（課題番号検索→TSV生成）・OpenAlex機関別著作検索（ROR検索、11件取得・所属誤判定バッジ確認）ともJSエラーなしで ALL PASSED
+- `chrome.tabs.update`/`chrome.tabs.create` は `chrome.tabs` API依存のため `file://` の静的E2Eでは実行されない。**Chrome実機のサイドパネルでの動作確認をユーザーが実施し、パネルがリセットされないことを確認済み**
+- manifest version `1.19.2` → `1.19.3`
+
+## バッチ操作・助成情報検索UI・TSVエクスポートの不具合3件を修正（2026-07-08・#221/#224/#226）
+
+### 概要
+2026-07-06 のコード全体点検で発見した軽微〜中程度のバグ3件をまとめて修正した。
+
+### 修正内容
+1. **#221（優先度高）**: `removeBatchItem()`（最後の1件を削除したとき）と `clearBatch()`（全クリア時）が、存在しないDOM要素 `fields-container` を `document.getElementById()` で参照しており、null 参照で TypeError が発生していた。例外発生行以降の処理（`preview-area` の非表示化・`persistDraft()` の呼び出し）がスキップされるため、特に `clearBatch()` では下書きが削除されず、次回起動時に「前回の作業データを復元できます」バナーが出てクリアしたはずのデータが復活していた。編集フォームの実体である `metadata-fields` を参照するよう修正。
+2. **#224**: `renderOneFunder()` の「助成機関を検索」成功後、アコーディオンヘッダーのラベルを更新しようとするコードが `.nested-item-header span:last-child` という存在しないセレクタを使っており常に no-op だった（正しいラベル要素は `.item-label`）。データ自体は正しく設定されるが表示のみ古いままだった問題を修正。
+3. **#226**: TSVエクスポートのファイル名サニタイズが `doi.replace(/\//g, '_')` で `/` のみ置換しており、DOIに含まれ得る Windows ファイル名禁止文字（`< > : " | ? *`）が残っていた。連続する禁止文字を `_` 1つに置換する正規表現に変更。
+
+### 変更ファイル
+- `make_jc_importer.html` / `chrome-extension/make_jc_importer.js`（3箇所とも両ファイルに同一修正を適用）
+
+### 検証
+- `npm test`（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造・単体テスト31件）が ALL PASS
+- E2E（`make_jc_importer_test.html`）: DOI取得・バッチ1件削除・全件クリア・助成機関検索の一連の操作でJSエラーが発生しないこと、削除/クリア後に `metadata-fields`/`preview-area`/`export-btn` が正しい状態になること、助成機関検索後にヘッダーラベルが実際に更新されることを確認。ALL PASSED
+- manifest version `1.19.1` → `1.19.2`
 
 ## function.md にDataCite対応の記載漏れを追記（2026-07-05）
 
