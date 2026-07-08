@@ -4855,7 +4855,7 @@ function renderOneFunder(funder, idx, defLabel) {
       if (uriInput && result.kakenUrl) uriInput.value = result.kakenUrl;
 
       // ヘッダーラベルを更新
-      const headerSpan = fundItem.querySelector('.nested-item-header span:last-child');
+      const headerSpan = fundItem.querySelector('.item-label');
       if (headerSpan) {
         const newName = names[0]?.subitem_funder_name || '';
         headerSpan.textContent = `${defLabel}[${idx}]${newName ? ': '+newName.substring(0,40) : ''}`;
@@ -5693,7 +5693,7 @@ function removeBatchItem(index) {
   updateBatchPanel();
   if (allMetadata.length === 0) {
     currentBatchIndex = -1;
-    document.getElementById('fields-container').innerHTML = '';
+    document.getElementById('metadata-fields').innerHTML = '';
     document.getElementById('preview-area').style.display = 'none';
     document.getElementById('preview-btn').style.display = 'none';
     document.getElementById('export-btn').style.display = 'none';
@@ -5709,7 +5709,7 @@ function clearBatch() {
   allMetadata = [];
   currentBatchIndex = -1;
   updateBatchPanel();
-  document.getElementById('fields-container').innerHTML = '';
+  document.getElementById('metadata-fields').innerHTML = '';
   document.getElementById('preview-area').style.display = 'none';
   document.getElementById('preview-btn').style.display = 'none';
   document.getElementById('export-btn').style.display = 'none';
@@ -6632,7 +6632,7 @@ function exportTsv() {
   } else {
     // 1件: 既存のDOIベースファイル名
     const doi = items[0].system?.doi || 'import';
-    filename = `${doi.replace(/\//g, '_')}.tsv`;
+    filename = `${doi.replace(/[\/\\<>:"|?*\s]+/g, '_')}.tsv`;
   }
   downloadTsv(tsv, filename);
 }
