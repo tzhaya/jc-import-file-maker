@@ -814,7 +814,7 @@ async function copyTsvToClipboard(btn) {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-28';
+  const LOCAL_VERSION = '2026-07-08';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;
@@ -856,11 +856,12 @@ document.querySelectorAll('input[name="jpcoar-version"]').forEach(radio => {
   radio.addEventListener('change', updateJpcoarNote);
 });
 
-// 検索結果内の外部リンクは新しいタブで開く（#150）
-// Chrome拡張のサイドパネルでは target="_blank" の外部リンクをクリックすると
-// パネル自体が既定ページ（panel.html）にリセットされてしまうため、
-// chrome.tabs.create で明示的に新しいタブを開く。スタンドアロン版（chrome未定義）では
-// target="_blank" がそのまま機能するためこのハンドラは登録しない。
+// 検索結果内の外部リンクは現在のアクティブタブ内で開く（#150・#228）
+// Chrome拡張のサイドパネルでは target="_blank" や新規タブのフォアグラウンド作成で
+// タブが切り替わり、パネルが既定ページ（panel.html）にリセットされてしまうため、
+// chrome.tabs.update で現在のタブをリンク先へ遷移させる（タブが切り替わらないため
+// パネルの表示状態が保持される）。遷移できない特殊タブでは背面タブにフォールバック。
+// スタンドアロン版（chrome未定義）では target="_blank" がそのまま機能するためこのハンドラは登録しない。
 if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[href]');
@@ -868,7 +869,7 @@ if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
     const href = a.getAttribute('href');
     if (/^https?:\/\//i.test(href)) {
       e.preventDefault();
-      chrome.tabs.create({ url: href });
+      chrome.tabs.update({ url: href }).catch(() => chrome.tabs.create({ url: href, active: false }));
     }
   });
 }

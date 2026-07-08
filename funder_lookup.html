@@ -229,7 +229,7 @@
 <body>
 <h1>助成情報検索ツール</h1>
 <p style="font-size:0.82em; color:#555; margin:4px 0 12px;">
-  最終更新: 2026-06-11 &nbsp;|&nbsp;
+  最終更新: 2026-07-08 &nbsp;|&nbsp;
   <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#555;">github.com/tzhaya/jc-import-file-maker</a>
   <span id="update-check"></span>
 </p>
@@ -851,7 +851,7 @@ function parseTsvTemplate(text) {
   const lines = text.split(/\r?\n/);
 
   // 2行目を探す: .metadata.item_XXX[N].subitem_award_numbers を含む行
-  let row2 = null, row2idx = -1, row3 = null;
+  let row2 = null, row2idx = -1;
   for (let i = 0; i < lines.length; i++) {
     if (/\.metadata\.[^\t]*subitem_award_numbers/.test(lines[i])) {
       row2 = lines[i];
@@ -879,7 +879,7 @@ function parseTsvTemplate(text) {
 
   // 3行目からトップレベルラベルを抽出
   if (row2idx + 1 < lines.length) {
-    row3 = lines[row2idx + 1];
+    const row3 = lines[row2idx + 1];
     const cols3 = row3.split('\t');
     if (prefixCol >= 0 && prefixCol < cols3.length) {
       const lm = cols3[prefixCol].match(/^([^\[]+)\[/);
@@ -1000,11 +1000,12 @@ async function copyTsvToClipboard(btn) {
   }
 }
 
-// 検索結果内の外部リンクは新しいタブで開く（#150）
-// Chrome拡張のサイドパネルでは target="_blank" の外部リンクをクリックすると
-// パネル自体が既定ページ（panel.html）にリセットされてしまうため、
-// chrome.tabs.create で明示的に新しいタブを開く。スタンドアロン版（chrome未定義）では
-// target="_blank" がそのまま機能するためこのハンドラは登録しない。
+// 検索結果内の外部リンクは現在のアクティブタブ内で開く（#150・#228）
+// Chrome拡張のサイドパネルでは target="_blank" や新規タブのフォアグラウンド作成で
+// タブが切り替わり、パネルが既定ページ（panel.html）にリセットされてしまうため、
+// chrome.tabs.update で現在のタブをリンク先へ遷移させる（タブが切り替わらないため
+// パネルの表示状態が保持される）。遷移できない特殊タブでは背面タブにフォールバック。
+// スタンドアロン版（chrome未定義）では target="_blank" がそのまま機能するためこのハンドラは登録しない。
 if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[href]');
@@ -1012,14 +1013,14 @@ if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
     const href = a.getAttribute('href');
     if (/^https?:\/\//i.test(href)) {
       e.preventDefault();
-      chrome.tabs.create({ url: href });
+      chrome.tabs.update({ url: href }).catch(() => chrome.tabs.create({ url: href, active: false }));
     }
   });
 }
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-06-11';
+  const LOCAL_VERSION = '2026-07-08';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;
