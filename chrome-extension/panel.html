@@ -515,6 +515,10 @@
     <tbody>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-08</td>
+        <td style="padding:2px 0;">Chrome拡張 ver. 1.21.1：<code>calcEmbargoEndDate()</code>のタイムゾーン依存バグを修正。UTCパースとローカル時刻メソッドの混在により、UTCより遅れたタイムゾーンで実行するとエンバーゴ満了日が1日ずれる不具合があり（アクセス権判定に影響）、UTC系メソッドに統一して解消（PR #233 コードレビュー指摘）</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-08</td>
         <td style="padding:2px 0;">Chrome拡張 ver. 1.21.0：アクセス権判定にエンバーゴ満了日の判定を追加。従来はOPFエンバーゴが1件でもあれば無条件で<code>embargoed access</code>としていたが、発行日とエンバーゴ期間から公開可能日を算出し、全エンバーゴが満了済みなら<code>open access</code>を設定するよう変更（満了日不明・未満了時は従来どおり安全側で<code>embargoed access</code>）（#225）</td>
       </tr>
       <tr>

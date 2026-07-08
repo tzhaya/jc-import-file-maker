@@ -504,6 +504,10 @@
     <tbody>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-08</td>
+        <td style="padding:2px 0;"><code>calcEmbargoEndDate()</code>のタイムゾーン依存バグを修正。UTCパースとローカル時刻メソッドの混在により、UTCより遅れたタイムゾーンで実行するとエンバーゴ満了日が1日ずれる不具合があり（アクセス権判定に影響）、UTC系メソッドに統一して解消（PR #233 コードレビュー指摘）（Chrome拡張 ver. 1.21.1 と同期）</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-08</td>
         <td style="padding:2px 0;">アクセス権判定にエンバーゴ満了日の判定を追加。従来はOPFエンバーゴが1件でもあれば無条件で<code>embargoed access</code>としていたが、発行日とエンバーゴ期間から公開可能日を算出し、全エンバーゴが満了済みなら<code>open access</code>を設定するよう変更（満了日不明・未満了時は従来どおり安全側で<code>embargoed access</code>）（#225）（Chrome拡張 ver. 1.21.0 と同期）</td>
       </tr>
       <tr>
@@ -1130,14 +1134,17 @@ function determineAccessRights(oaStatus, opfData, pubDate) {
 }
 
 // ===== エンバーゴ公開可能日算出 =====
+// new Date('YYYY-MM-DD') は UTC 深夜0時としてパースされる一方、setMonth() 等のローカル時刻メソッドと
+// toISOString()（UTC出力）を混在させるとタイムゾーンによって満了日が1日前後にずれる（実行環境依存のバグ）。
+// パース・演算・出力を UTC 系メソッドで統一し、実行環境のタイムゾーンに依存しない結果にする。
 function calcEmbargoEndDate(pubDate, embargo) {
   if (!pubDate || !embargo?.amount) return null;
   const d = new Date(pubDate);
   if (isNaN(d.getTime())) return null;
   const units = embargo.units || 'months';
-  if (units === 'months') d.setMonth(d.getMonth() + embargo.amount);
-  else if (units === 'years') d.setFullYear(d.getFullYear() + embargo.amount);
-  else if (units === 'weeks') d.setDate(d.getDate() + embargo.amount * 7);
+  if (units === 'months') d.setUTCMonth(d.getUTCMonth() + embargo.amount);
+  else if (units === 'years') d.setUTCFullYear(d.getUTCFullYear() + embargo.amount);
+  else if (units === 'weeks') d.setUTCDate(d.getUTCDate() + embargo.amount * 7);
   else return null;
   return d.toISOString().slice(0, 10);
 }

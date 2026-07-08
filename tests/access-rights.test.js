@@ -133,6 +133,23 @@ test('calcEmbargoEndDate: weeks 加算', () => {
   assert.strictEqual(calcEmbargoEndDate('2020-01-01', { amount: 2, units: 'weeks' }), '2020-01-15');
 });
 
+// #233 コードレビュー（P2）で指摘: new Date('YYYY-MM-DD')（UTCパース）と
+// setMonth() 等のローカル時刻メソッド・toISOString()（UTC出力）の混在により、
+// UTCより遅れたタイムゾーン（例: America/New_York）で満了日が1日ずれていた
+// （2020-01-15 + 6ヶ月が 2020-07-14 になる等）。UTC系メソッドへの統一で解消したことを
+// 実行環境のタイムゾーンを切り替えて検証する（回帰防止）。
+test('calcEmbargoEndDate: UTCより遅れたタイムゾーンでも満了日がずれない（#233 P2 回帰防止）', () => {
+  const originalTZ = process.env.TZ;
+  try {
+    process.env.TZ = 'America/New_York'; // UTC-5/-4（UTCより遅れている）
+    assert.strictEqual(calcEmbargoEndDate('2020-01-15', { amount: 6, units: 'months' }), '2020-07-15');
+    assert.strictEqual(calcEmbargoEndDate('2020-01-15', { amount: 1, units: 'years' }), '2021-01-15');
+    assert.strictEqual(calcEmbargoEndDate('2020-01-15', { amount: 2, units: 'weeks' }), '2020-01-29');
+  } finally {
+    if (originalTZ === undefined) delete process.env.TZ; else process.env.TZ = originalTZ;
+  }
+});
+
 test('calcEmbargoEndDate: units 既定は months', () => {
   assert.strictEqual(calcEmbargoEndDate('2020-01-15', { amount: 3 }), '2020-04-15');
 });
