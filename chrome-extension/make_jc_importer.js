@@ -2720,6 +2720,9 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   const pageStart = pageParts[0] || '';
   const pageEnd   = pageParts[1] || '';
 
+  // ===== 言語（Crossref language を 639-2/T へ変換、不明時は 'eng' + 要確認）=====
+  const lang639_2 = mapDataCiteLanguageToSubitemLanguage(crJson.language || '');
+
   // ===== メタデータオブジェクト =====
   const metadata = {
     // ----- システムフィールド -----
@@ -2797,7 +2800,7 @@ async function mapToItemType(crJson, oaJson, rorMap) {
     item_1698624008: [],
 
     // ----- 言語 -----
-    item_30002_language12: [{ subitem_language: 'eng' }],
+    item_30002_language12: lang639_2 ? [{ subitem_language: lang639_2 }] : [{ subitem_language: 'eng', _warnLang: true }],
 
     // ----- 資源タイプ -----
     item_30002_resource_type13: { resourcetype, resourceuri },
@@ -3699,7 +3702,7 @@ const FIELD_DEFS = [
     ],
     sum: a => a?.[0]?.subitem_dcterms_date || '' },
   { key: 'item_30002_language12', label: '言語', type: 'array',
-    fields: [{ k: 'subitem_language', l: '言語', t: 'select', o: 'subitem_language' }],
+    fields: [{ k: 'subitem_language', l: '言語', t: 'select', o: 'subitem_language', w: '_warnLang' }],
     sum: a => a?.[0]?.subitem_language || '' },
   { key: 'item_30002_resource_type13', label: '資源タイプ', type: 'object',
     fields: [

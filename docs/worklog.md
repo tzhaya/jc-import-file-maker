@@ -1,6 +1,26 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-08（サイドパネル外部リンクの不具合を再修正）
+最終更新: 2026-07-08（Crossrefパスの本文言語をcrJson.languageから変換するよう修正）
+
+## Crossrefパスの本文言語をcrJson.languageから変換するよう修正（2026-07-08・#223）
+
+### 概要
+2026-07-06 のコード全体点検で発見。Crossref 取得フロー `mapToItemType()` が本文言語を無条件に `[{ subitem_language: 'eng' }]` とハードコードしており、Crossref API 応答の `message.language`（ISO 639-1、地域タグ付きの場合あり）を参照していなかった。日本語論文等で誤った言語が設定されるうえ、警告バッジも付かず気付きにくい問題だった。
+
+### 修正内容
+- DataCiteパスで既に実装済みの `mapDataCiteLanguageToSubitemLanguage()`（639-1→639-2/T変換。地域タグ付き言語コードは先頭部分のみ使用、例: `en-GB`→`eng`）をCrossrefパスからも呼び出すよう変更。関数宣言はホイストされるため `mapToItemType()` 前方から呼び出し可能。
+- `item_30002_language12` の値を、変換成功時は `[{ subitem_language: lang639_2 }]`、変換不能・language未提供時は従来どおり `[{ subitem_language: 'eng', _warnLang: true }]`（要確認バッジ付き）に変更。
+- `FIELD_DEFS` の `item_30002_language12` フィールド定義に `w: '_warnLang'` を追加し、`item_30002_title0` の言語フィールドで既に使われていたバッジ機構を流用。
+- JaLC・DataCiteパスの言語処理は変更なし。
+
+### 変更ファイル
+- `make_jc_importer.html` / `chrome-extension/make_jc_importer.js`
+
+### 検証
+- `npm test`（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造・単体テスト31件）が ALL PASS
+- 関数ロジック直接検証: `en→eng`、`ja→jpn`、空文字→`''`、未知コード→`''`、`en-GB→eng`（地域タグ除去）すべて想定どおり
+- E2E（`make_jc_importer_test.html`）: (1) Crossref language="en"のDOIで`eng`に正しく変換されバッジなし（実データ由来と確認）、(2) CrossrefレスポンスからlanguageフィールドをPlaywrightのroute機能で除去したケースで`eng`＋「仮に英語として設定しています。正確か確認してください」バッジが表示されることを確認。ともにALL PASSED
+- manifest version `1.19.3` → `1.20.0`
 
 ## サイドパネル外部リンククリックでパネルがリセットされる不具合を再修正（2026-07-08・#228/#227）
 
