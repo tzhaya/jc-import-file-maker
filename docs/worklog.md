@@ -1,6 +1,27 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-08（Crossrefパスの本文言語をcrJson.languageから変換するよう修正）
+最終更新: 2026-07-08（アクセス権判定にエンバーゴ満了日の判定を追加）
+
+## アクセス権判定にエンバーゴ満了日の判定を追加（2026-07-08・#225）
+
+### 概要
+2026-07-06 のコード全体点検で発見。`determineAccessRights()` は closed/OAステータス不明のとき、OPFポリシーに `embargo.amount > 0` のエントリが1件でもあれば、発行からの経過期間を問わず無条件で `embargoed access` を返していた。出版から年月が経ちエンバーゴが既に満了している論文（機関リポジトリ登録の典型ケース）でも `embargoed access` になってしまう問題だった。エンバーゴ満了日の計算関数 `calcEmbargoEndDate()` は既に存在し（ヒント表示に使用中）、発行日もマッピング時点で取得済みのため、判定に組み込めた。
+
+### 修正内容
+- `determineAccessRights(oaStatus, opfData, pubDate)` に第3引数 `pubDate` を追加。
+- OPFポリシーから `embargo.amount > 0` の embargo を全収集し、`pubDate` が無ければ従来どおり安全側で `embargoed access`。
+- `pubDate` があれば各 embargo について `calcEmbargoEndDate(pubDate, embargo)` を計算し、**全エンバーゴの満了日が今日（`todayStr()`）以前**なら `open access`（満了済み）、**1つでも未来または算出不能（null）**なら安全側で `embargoed access`。日付比較は YYYY-MM-DD の辞書順文字列比較。
+- 呼び出し3箇所（Crossref=`pubDate`、JaLC=`pubDate`、DataCite=`issuedDate`）に各パスで取得済みの発行日変数を渡すよう変更。
+- ユニットテスト `tests/access-rights.test.js` を新規追加（22ケース、相対日付は `new Date()` から動的生成し実行日に依存しないテストに）。`determineAccessRights`・`calcEmbargoEndDate`・`todayStr` を拡張JS末尾の `module.exports` に追加してエクスポート。`scripts/check.js` の JS_FILES に登録。
+
+### 変更ファイル
+- `make_jc_importer.html` / `chrome-extension/make_jc_importer.js` / `tests/access-rights.test.js`（新規）/ `scripts/check.js`
+
+### 検証
+- `npm test`（JSON parse・JS構文・UTF-8妥当性・ファイル同期・TSVヘッダー構造・単体テスト計53件＝既存31＋新規22）が ALL PASS
+- E2E（`make_jc_importer_test.html`）: (1) 通常DOIでの回帰確認（アクセス権が正しく設定されJSエラーなし）、(2) `determineAccessRights()` をブラウザ内で直接呼び出す5パターン検証（open系ステータスはOPF無視／closed+OPFなしはopen access／closed+エンバーゴ満了済み(2年前発行,12ヶ月)はopen access／closed+エンバーゴ未満了(3ヶ月前発行,12ヶ月)はembargoed access／発行日不明時は安全側embargoed access）。ともにALL PASSED
+- OPF連携（エンバーゴ判定の実データ源）はChrome拡張専用機能（`isExtension`チェックあり）のため、標準版の静的E2Eでは実行経路に入らない。ロジック自体は単体テスト22件とブラウザ内直接検証で網羅済みだが、**実機（Chrome拡張）でのエンバーゴ満了済みclosed論文の確認は別途推奨**
+- manifest version `1.20.0` → `1.21.0`
 
 ## Crossrefパスの本文言語をcrJson.languageから変換するよう修正（2026-07-08・#223）
 

@@ -504,6 +504,10 @@
     <tbody>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-08</td>
+        <td style="padding:2px 0;">アクセス権判定にエンバーゴ満了日の判定を追加。従来はOPFエンバーゴが1件でもあれば無条件で<code>embargoed access</code>としていたが、発行日とエンバーゴ期間から公開可能日を算出し、全エンバーゴが満了済みなら<code>open access</code>を設定するよう変更（満了日不明・未満了時は従来どおり安全側で<code>embargoed access</code>）（#225）（Chrome拡張 ver. 1.21.0 と同期）</td>
+      </tr>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-08</td>
         <td style="padding:2px 0;">Crossrefパスの本文言語を <code>crJson.language</code>（ISO 639-1、地域タグ対応）から639-2/Tへ変換して設定するよう修正。従来は無条件で <code>eng</code> 固定だった。変換不能・language未提供時は <code>eng</code>＋「要確認」バッジを表示（#223）（Chrome拡張 ver. 1.20.0 と同期）</td>
       </tr>
       <tr>
@@ -1094,7 +1098,7 @@ function determineVersionInfo(oaStatus, oaJson) {
 }
 
 // ===== OAステータスに基づくアクセス権判定 =====
-function determineAccessRights(oaStatus, opfData) {
+function determineAccessRights(oaStatus, opfData, pubDate) {
   // Gold/Diamond/Hybrid/Bronze/Green → open access
   if (['diamond', 'gold', 'hybrid', 'bronze', 'green'].includes(oaStatus)) {
     return 'open access';
@@ -1102,10 +1106,24 @@ function determineAccessRights(oaStatus, opfData) {
   // Closed / Unknown → OPFエンバーゴの有無で判定
   // （open系5種は上で早期リターン済み。ここに到達するのは closed か OAステータス不明のみ）
   if (opfData?.items?.[0]) {
-    const hasEmbargo = (opfData.items[0].publisher_policy || []).some(p =>
-      (p.permitted_oa || []).some(oa => oa.embargo?.amount > 0)
+    const embargos = [];
+    (opfData.items[0].publisher_policy || []).forEach(p =>
+      (p.permitted_oa || []).forEach(oa => {
+        if (oa.embargo?.amount > 0) embargos.push(oa.embargo);
+      })
     );
-    if (hasEmbargo) return 'embargoed access';
+    if (embargos.length > 0) {
+      // 発行日不明ならエンバーゴ満了を判定できないため、安全側で embargoed access
+      if (!pubDate) return 'embargoed access';
+      // 全エンバーゴの満了日が今日以前なら公開済み → open access。
+      // 1つでも満了日が未来、または算出不能（null）なら安全側で embargoed access。
+      const today = todayStr();
+      const allExpired = embargos.every(e => {
+        const end = calcEmbargoEndDate(pubDate, e); // YYYY-MM-DD
+        return end !== null && end <= today;        // YYYY-MM-DD の辞書順比較で日付比較が成立
+      });
+      return allExpired ? 'open access' : 'embargoed access';
+    }
   }
   // エンバーゴなし / OPFデータなし → open access（機関リポジトリ登録用途を想定）
   return 'open access';
@@ -3260,7 +3278,7 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   const versionResource = VERSION_TYPE_MAP[versionType] || VERSION_TYPE_MAP['AM'];
 
   // ===== アクセス権（OAステータス + OPFエンバーゴ連動） =====
-  const accessRight    = determineAccessRights(oaStatus, lastOpfData);
+  const accessRight    = determineAccessRights(oaStatus, lastOpfData, pubDate);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== ISSN =====
@@ -3761,7 +3779,7 @@ async function mapToItemTypeJaLC(jalcJson) {
     : VERSION_TYPE_MAP['VoR'];
 
   // ===== アクセス権（OPFエンバーゴ連動） =====
-  const accessRight    = determineAccessRights(lastOaStatus, lastOpfData);
+  const accessRight    = determineAccessRights(lastOaStatus, lastOpfData, pubDate);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== メタデータオブジェクト =====
@@ -4123,7 +4141,7 @@ async function mapToItemTypeDataCite(attrs, oaJson) {
   const geolocations = buildDataCiteGeolocations(attrs.geoLocations);
 
   // ===== アクセス権（OAステータス + OPFエンバーゴ連動。#214でCrossref/JaLCパスと同様に対応） =====
-  const accessRight    = determineAccessRights(oaStatus, lastOpfData);
+  const accessRight    = determineAccessRights(oaStatus, lastOpfData, issuedDate);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== メタデータオブジェクト =====
