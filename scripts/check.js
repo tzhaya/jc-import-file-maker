@@ -34,6 +34,7 @@ const JS_FILES = [
   'tests/abstract.test.js',
   'tests/tsv.test.js',
   'tests/aff-misattribution.test.js',
+  'tests/access-rights.test.js',
 ];
 
 // Text files that may contain Japanese — verify no encoding corruption (#175)

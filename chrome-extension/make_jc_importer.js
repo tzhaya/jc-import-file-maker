@@ -406,17 +406,31 @@ function determineVersionInfo(oaStatus, oaJson) {
 }
 
 // ===== OAステータスに基づくアクセス権判定 =====
-function determineAccessRights(oaStatus, opfData) {
+function determineAccessRights(oaStatus, opfData, pubDate) {
   if (['diamond', 'gold', 'hybrid', 'bronze', 'green'].includes(oaStatus)) {
     return 'open access';
   }
   // Closed / Unknown → OPFエンバーゴの有無で判定
   // （open系5種は上で早期リターン済み。ここに到達するのは closed か OAステータス不明のみ）
   if (opfData?.items?.[0]) {
-    const hasEmbargo = (opfData.items[0].publisher_policy || []).some(p =>
-      (p.permitted_oa || []).some(oa => oa.embargo?.amount > 0)
+    const embargos = [];
+    (opfData.items[0].publisher_policy || []).forEach(p =>
+      (p.permitted_oa || []).forEach(oa => {
+        if (oa.embargo?.amount > 0) embargos.push(oa.embargo);
+      })
     );
-    if (hasEmbargo) return 'embargoed access';
+    if (embargos.length > 0) {
+      // 発行日不明ならエンバーゴ満了を判定できないため、安全側で embargoed access
+      if (!pubDate) return 'embargoed access';
+      // 全エンバーゴの満了日が今日以前なら公開済み → open access。
+      // 1つでも満了日が未来、または算出不能（null）なら安全側で embargoed access。
+      const today = todayStr();
+      const allExpired = embargos.every(e => {
+        const end = calcEmbargoEndDate(pubDate, e); // YYYY-MM-DD
+        return end !== null && end <= today;        // YYYY-MM-DD の辞書順比較で日付比較が成立
+      });
+      return allExpired ? 'open access' : 'embargoed access';
+    }
   }
   // エンバーゴなし / OPFデータなし → open access（機関リポジトリ登録用途を想定）
   return 'open access';
@@ -2689,7 +2703,7 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   const versionResource = VERSION_TYPE_MAP[versionType] || VERSION_TYPE_MAP['AM'];
 
   // ===== アクセス権（OAステータス + OPFエンバーゴ連動） =====
-  const accessRight    = determineAccessRights(oaStatus, lastOpfData);
+  const accessRight    = determineAccessRights(oaStatus, lastOpfData, pubDate);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== ISSN =====
@@ -3186,7 +3200,7 @@ async function mapToItemTypeJaLC(jalcJson) {
     : VERSION_TYPE_MAP['VoR'];
 
   // ===== アクセス権（OPFエンバーゴ連動） =====
-  const accessRight    = determineAccessRights(lastOaStatus, lastOpfData);
+  const accessRight    = determineAccessRights(lastOaStatus, lastOpfData, pubDate);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== メタデータオブジェクト =====
@@ -3548,7 +3562,7 @@ async function mapToItemTypeDataCite(attrs, oaJson) {
   const geolocations = buildDataCiteGeolocations(attrs.geoLocations);
 
   // ===== アクセス権（OAステータス + OPFエンバーゴ連動。#214でCrossref/JaLCパスと同様に対応） =====
-  const accessRight    = determineAccessRights(oaStatus, lastOpfData);
+  const accessRight    = determineAccessRights(oaStatus, lastOpfData, issuedDate);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== メタデータオブジェクト =====
@@ -7201,5 +7215,5 @@ if (typeof document !== 'undefined') (async function checkForUpdate() {
 // ===== ユニットテスト用エクスポート（#192） =====
 // Node（node:test）から純粋関数を require するためのガード。ブラウザでは module 未定義のため不活性。
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { normalizeDoi, isValidDoi, processAbstract, generateTsv };
+  module.exports = { normalizeDoi, isValidDoi, processAbstract, generateTsv, determineAccessRights, calcEmbargoEndDate, todayStr };
 }
