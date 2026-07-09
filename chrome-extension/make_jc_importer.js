@@ -1063,7 +1063,7 @@ async function fetchDataCite(doi) {
     headers: { 'Accept': 'application/vnd.api+json' },
   });
   if (!resp.ok) {
-    if (resp.status === 404) throw new Error('DOIが見つかりません（DataCite 404）');
+    if (resp.status === 404) throw new Error('DOIメタデータを取得できません（DataCite 404）。削除・非公開・Gone状態の可能性があります。');
     throw new Error(`DataCite APIエラー: ${resp.status}`);
   }
   const json = await resp.json();
@@ -7200,7 +7200,7 @@ function restoreDraft() {
 
 // ===== 更新チェック =====
 if (typeof document !== 'undefined') (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-08';
+  const LOCAL_VERSION = '2026-07-09';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;

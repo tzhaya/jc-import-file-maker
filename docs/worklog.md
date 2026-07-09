@@ -1,6 +1,31 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-08（calcEmbargoEndDate() のタイムゾーン依存バグを修正）
+最終更新: 2026-07-09（DataCite API 404時のエラーメッセージを改善）
+
+## DataCite API 404時のエラーメッセージを改善（2026-07-09・#211）
+
+### 概要
+PR #210（#214 DataCite OPF連動）マージ後、Chrome拡張版で `10.5281/zenodo.19493734` を確認したところ、DOI Registration Agency（RA）判定はDataCiteである一方、DataCite API（`api.datacite.org/dois/{doi}`）からは404が返るケースが見つかった。doi.org・Zenodo側では410 Gone（削除・非公開）になっており、DOI/レコード側の状態が原因と判明。`%2F` エンコード問題ではないことは切り分け済み（`10.5281/zenodo.3242074` は encoded/unencoded どちらでも200）。
+
+従来の `fetchDataCite()` は404時に「DOIが見つかりません（DataCite 404）」とだけ表示しており、利用者にはDOI入力ミスのように見えていた。
+
+### 修正内容
+`fetchDataCite()` の404時エラーメッセージを次に変更（標準版・Chrome拡張版とも同一文言）:
+```
+DOIメタデータを取得できません（DataCite 404）。削除・非公開・Gone状態の可能性があります。
+```
+doi.org や Zenodo API への追加照会による原因判定（CORS・レート・登録元差異のリスクあり）はスコープ外（issue本文の方針どおり、必要なら別issueで検討）。
+
+### 変更ファイル
+- `make_jc_importer.html` / `chrome-extension/make_jc_importer.js`（`fetchDataCite()` のエラーメッセージ）
+- `docs/user_guide.md`（DataCite DOIの制限事項節に404/Goneケースの補足を追記）
+
+### 検証
+- `npm test`（54件）ALL PASS
+- manifest version `1.21.1` → `1.21.2`
+
+### 備考
+`make_jc_importer_test.html` は2026-07-05以降の複数PR分（#221/#223/#224/#225/#226/#233等）の同期が未実施のまま蓄積しており、本PRでは今回変更したエラーメッセージ行のみをピンポイントで反映した（全体同期は別途対応が必要）。
 
 ## calcEmbargoEndDate() のタイムゾーン依存バグを修正（2026-07-08・PR #233 コードレビュー指摘）
 
