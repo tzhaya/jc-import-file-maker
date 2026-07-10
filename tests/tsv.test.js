@@ -71,3 +71,24 @@ test('generateTsv: repoHost 未指定なら既定の localhost スキーマ URL 
   const firstRow = tsv.split('\n')[0];
   assert.ok(firstRow.includes('localhost'));
 });
+
+test('generateTsv: 研究課題番号タイプ(JGN)が該当列に出力される（#222）', () => {
+  const AW_TYPE_PATH =
+    '.metadata.item_30002_funding_reference21[0].subitem_award_numbers.subitem_award_number_type';
+  const tsv = generateTsv([sampleMetadata({
+    item_30002_funding_reference21: [{
+      subitem_award_numbers: {
+        subitem_award_number:      'JPMJPR2125',
+        subitem_award_number_type: 'JGN',
+        subitem_award_uri:         'https://doi.org/10.52926/JPMJPR2125',
+      },
+    }],
+  })], '', '');
+  const lines = tsv.replace(/\n$/, '').split('\n');
+  // ヘッダ行（機械パス）は 2 行目（index 1）
+  const colIdx = lines[1].split('\t').indexOf(AW_TYPE_PATH);
+  assert.notStrictEqual(colIdx, -1, '研究課題番号タイプ列がヘッダに存在すること');
+  // データ行は 6 行目（index 5、5 ヘッダ行の後）
+  const dataCells = lines[5].split('\t');
+  assert.strictEqual(dataCells[colIdx], 'JGN');
+});

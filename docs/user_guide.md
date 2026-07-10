@@ -151,6 +151,7 @@ DOI (Crossref/DataCite/JaLC)から得られる情報を元に、OpenAlex、ROR�
     - KAKEN XML APIで取得できない場合は、JGN（Japan Grant Number）APIを試行し、さらに失敗した場合はCiNii Research KAKEN APIにフォールバックします。
     - 通常ブラウザ版では、JGN API → CiNii Research KAKEN API の順で取得を試みます。
     - JSTの研究課題は、JGN APIから研究課題名・プログラム情報を取得して設定しています。
+    - **研究課題番号タイプ**: JGN（Japan Grant Number）で取り込んだ体系的番号の場合、`JGN` を自動設定します（JPCOAR 2.0 の `awardNumberType`）。助成情報の編集フォームで「（未設定）/ JGN」から手動選択・修正もできます。KAKEN由来（科研費）の課題番号では空のままとなります。
 12. 出版者情報
     - JPCOAR 2.0 の出版者情報フィールド（出版者名・出版地）を自動設定します。
 

@@ -1,6 +1,31 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-09（DataCite API 404時のエラーメッセージを改善）
+最終更新: 2026-07-10（研究課題番号タイプ awardNumberType 対応）
+
+## 研究課題番号タイプ（awardNumberType）対応（2026-07-10・#222）
+
+### 概要
+TSVテンプレート（`data/tsv_headers.json` / `tsv_headers_template.js`）には `subitem_award_numbers.subitem_award_number_type`（JPCOAR 2.0 `awardNumberType`）列が存在するが、ツールは一度も値を設定せず常に空欄だった。JPCOAR 2.0 では体系的番号（JGN）の場合 `awardNumberType="JGN"` の設定が推奨されており、JGN連携（`fetchJgn()` 成功）で取得した課題番号はまさにこのケースに該当する。許容値はWEKO ItemTypeスキーマ上 `null / "JGN"` の2択（issue備考の宿題は解消済み）。
+
+### 修正内容
+1. **JGN由来マーカー**: `fetchJgn()` の戻り値に `source: 'JGN'` を追加。KAKEN XML / JGN / CiNii の結果が同じ `kakenResult` 変数に入り事後に区別できなかったため。
+2. **マッピング3パス**: `buildFunders` / `buildJaLCFunders` / `buildDataCiteFunders` の `subitem_award_number_type` を `kakenResult?.source === 'JGN' ? 'JGN' : ''` に変更。
+3. **select選択肢**: `TITLE_MAPS` に `subitem_award_number_type: [{ name: '（未設定）', value: '' }, 'JGN']` を追加（先頭に空選択肢：#161パターン）。
+4. **UIフィールド**: `renderOneFunder()` の研究課題番号行とURI行の間に「研究課題番号タイプ」select を追加。
+5. **検索ボタン連動**: 「助成機関を検索」成功時、`result.source === 'JGN'` のとき select を `JGN`、それ以外は空にリセット。
+6. **収集**: `collectFundingField()` に `subitem_award_number_type` を追加（TSVはヘッダパス基準のフラット化で列に流れる）。
+7. **funder_lookup**: `lookupOne()` のJGN分岐の戻り値に `awardNumberType: 'JGN'` を追加し、`FUNDING_COLUMNS` の該当extractorを `r => ''` → `r => r.awardNumberType || ''` に変更。
+
+### 変更ファイル
+- `make_jc_importer.html` / `chrome-extension/make_jc_importer.js` / `make_jc_importer_test.html`（1〜6）
+- `funder_lookup.html` / `chrome-extension/funder_lookup.js` / `funder_lookup_test.html`（7）
+- `tests/tsv.test.js`（generateTsvの列出力テストを1件追加）
+- `docs/fieldmapping.md` / `docs/user_guide.md`
+
+### 検証
+- `npm test`（55件）ALL PASS
+- manifest version `1.21.2` → `1.22.0`
+- E2E: JGN番号（例 `JPMJPR2125`）で検索→タイプJGN、KAKENHI番号で検索→タイプ空（回帰）、funder_lookupのJGN検索→TSVの研究課題番号タイプ列にJGN
 
 ## DataCite API 404時のエラーメッセージを改善（2026-07-09・#211）
 

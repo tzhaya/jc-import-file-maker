@@ -123,7 +123,7 @@ Crossrefの `funder[]` 配列から助成情報を構築します。1つのfunde
 | **助成機関識別子タイプ** | `subitem_funder_identifiers.subitem_funder_identifier_type` | — | DOIがある場合 'Crossref Funder'、なければ空 |
 | **助成機関識別子タイプURI** | `subitem_funder_identifiers.subitem_funder_identifier_type_uri` | — | `FUNDER_ID_TYPE_URI_MAP` で自動設定（#107）。下記参照 |
 | **研究課題番号** | `subitem_award_numbers.subitem_award_number` | `funder[].award[]` | 各awardごとに1エントリ生成 |
-| **研究課題番号タイプ** | `subitem_award_numbers.subitem_award_number_type` | — | 空（未使用） |
+| **研究課題番号タイプ** | `subitem_award_numbers.subitem_award_number_type` | — | JGN連携（`fetchJgn()` 成功）時に `JGN` を自動設定。それ以外は空。UI（助成情報編集）で「（未設定）/ JGN」から手動選択も可（#222） |
 | **研究課題番号URI** | `subitem_award_numbers.subitem_award_uri` | JGN: `https://doi.org/10.52926/{番号}` / KAKEN: CiNii Research URL | JGN/KAKEN連携で設定（#14, #2） |
 | **プログラム情報** | `subitem_funding_streams[].subitem_funding_stream` | JGN: `funding.scheme` / KAKEN: 科学研究費助成事業（定数、日英） | JGN/KAKEN連携で取得（#14, #52） |
 | **プログラム情報 言語** | `subitem_funding_streams[].subitem_funding_stream_language` | JGN: 空 / KAKEN: ja/en | JPCOAR 2.0（#34） |
@@ -192,6 +192,8 @@ Crossrefの `funder[]` 配列から助成情報を構築します。1つのfunde
   "subitem_award_titles": []
 }
 ```
+
+> 上の例は Crossref（NIH）由来のため `subitem_award_number_type` は空。JGN 連携（`fetchJgn()` 成功、例: `JPMJPR2125`）で取り込んだ場合は体系的番号のため `"subitem_award_number_type": "JGN"` が設定され、`subitem_award_uri` に `https://doi.org/10.52926/{番号}` が入る（#222）。許容値は WEKO ItemType スキーマ上 `null / "JGN"` の2択。
 
 ## 出版タイプ (Version Type) の判定ロジック
 

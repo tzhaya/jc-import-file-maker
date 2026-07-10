@@ -423,6 +423,7 @@ async function lookupOne(awardNumber) {
         funderDoi: jgnResult.funderDoi,
         funderIdType: jgnResult.funderDoi ? 'Crossref Funder' : '',
         awardNumber: awardNumber,
+        awardNumberType: 'JGN',
         awardUri: jgnResult.kakenUrl,
         titles: jgnResult.titles,
         fundingStreams: jgnResult.fundingStreams,
@@ -634,7 +635,7 @@ async function doSearch() {
 const FUNDING_COLUMNS = [
   // [subItemPath, jaLabel, dataExtractor, jpcoar]
   ['.subitem_award_numbers.subitem_award_number',      '.研究課題番号.研究課題番号',           r => r.awardNumber || '',  '1.0'],
-  ['.subitem_award_numbers.subitem_award_number_type',  '.研究課題番号.研究課題番号タイプ',     r => '',                   '1.0'],
+  ['.subitem_award_numbers.subitem_award_number_type',  '.研究課題番号.研究課題番号タイプ',     r => r.awardNumberType || '', '1.0'],
   ['.subitem_award_numbers.subitem_award_uri',          '.研究課題番号.研究課題番号URI',        r => r.awardUri || '',     '1.0'],
   ['.subitem_award_titles[0].subitem_award_title',          '.研究課題名[0].研究課題名',   r => (r.titles || [])[0]?.subitem_award_title || '',          '1.0'],
   ['.subitem_award_titles[0].subitem_award_title_language', '.研究課題名[0].言語',         r => (r.titles || [])[0]?.subitem_award_title_language || '', '1.0'],
@@ -814,7 +815,7 @@ async function copyTsvToClipboard(btn) {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-08';
+  const LOCAL_VERSION = '2026-07-10';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
     if (!res.ok) return;
