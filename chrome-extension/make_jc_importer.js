@@ -681,6 +681,8 @@ const TITLE_MAPS = {
   // プログラム情報識別子タイプ（JPCOAR 2.0）
   // 先頭に空選択肢を置き、識別子本体が空のとき既定値が誤出力されるのを防ぐ（#161）
   subitem_funding_stream_identifier_type: [{ name: '（未設定）', value: '' }, 'Crossref Funder', 'JGN_fundingStream'],
+  // 研究課題番号タイプ（JPCOAR 2.0 awardNumberType）: 体系的番号（JGN）のみ。空選択肢を先頭に置く（#161パターン）
+  subitem_award_number_type: [{ name: '（未設定）', value: '' }, 'JGN'],
   // ファイル情報: アクセス
   file_accessrole: ['open_access','open_date','open_login','open_no'],
   // ファイル情報: 表示形式
@@ -1315,7 +1317,7 @@ async function fetchJgn(awardNumber) {
     const codeMatch = awardNumber.match(/^JP([A-Z]+)\d/i);
     const fundingStreamId = codeMatch ? codeMatch[1].toUpperCase() : '';
 
-    return { titles, kakenUrl: `https://doi.org/10.52926/${awardNumber}`, funderNames, funderDoi, fundingStreams, fundingStreamId };
+    return { source: 'JGN', titles, kakenUrl: `https://doi.org/10.52926/${awardNumber}`, funderNames, funderDoi, fundingStreams, fundingStreamId };
   } catch {
     return null;
   }
@@ -2346,7 +2348,7 @@ async function buildFunders(crFunders) {
 
       obj.subitem_award_numbers = {
         subitem_award_number:      correctedAwardNum,
-        subitem_award_number_type: '',
+        subitem_award_number_type: kakenResult?.source === 'JGN' ? 'JGN' : '',
         subitem_award_uri:         kakenResult?.kakenUrl || '',
       };
 
@@ -2485,7 +2487,7 @@ async function buildJaLCFunders(jalcFundList) {
 
       obj.subitem_award_numbers = {
         subitem_award_number:      correctedAwardNum,
-        subitem_award_number_type: '',
+        subitem_award_number_type: kakenResult?.source === 'JGN' ? 'JGN' : '',
         subitem_award_uri:         kakenResult?.kakenUrl || '',
       };
       obj.subitem_award_titles = kakenResult?.titles || [];
@@ -2614,7 +2616,7 @@ async function buildDataCiteFunders(fundingReferences) {
 
     obj.subitem_award_numbers = {
       subitem_award_number:      correctedAwardNum,
-      subitem_award_number_type: '',
+      subitem_award_number_type: kakenResult?.source === 'JGN' ? 'JGN' : '',
       subitem_award_uri:         kakenResult?.kakenUrl || f.awardUri || '',
     };
 
@@ -4728,6 +4730,8 @@ function renderOneFunder(funder, idx, defLabel) {
     warnEl.textContent = '⚠ ' + funder._supplementaryWarning;
     fundContent.appendChild(warnEl);
   }
+  fundContent.appendChild(createFieldRow('研究課題番号タイプ', aw.subitem_award_number_type || '', 'select',
+    'subitem_award_number_type', { fieldKey: 'subitem_award_number_type' }));
   fundContent.appendChild(createFieldRow('研究課題番号URI', aw.subitem_award_uri || '', 'text', null, { fieldKey: 'subitem_award_uri' }));
 
   // 研究課題名（配列）
@@ -4869,6 +4873,10 @@ function renderOneFunder(funder, idx, defLabel) {
           fsCont.appendChild(grp);
         });
       }
+
+      // 研究課題番号タイプを設定（JGN 由来のときのみ 'JGN'、それ以外の検索成功時は空にリセット）
+      const awTypeSelect = fundContent.querySelector('[data-field-key="subitem_award_number_type"] select');
+      if (awTypeSelect) awTypeSelect.value = result.source === 'JGN' ? 'JGN' : '';
 
       // 研究課題番号URIを設定
       const uriInput = fundContent.querySelector('[data-field-key="subitem_award_uri"] input');
@@ -6113,6 +6121,7 @@ function collectFundingField(section) {
       },
       subitem_award_numbers: {
         subitem_award_number: getFieldVal(fc, 'subitem_award_number'),
+        subitem_award_number_type: getFieldVal(fc, 'subitem_award_number_type'),
         subitem_award_uri: getFieldVal(fc, 'subitem_award_uri'),
       },
       subitem_award_titles: [],
@@ -7200,7 +7209,7 @@ function restoreDraft() {
 
 // ===== 更新チェック =====
 if (typeof document !== 'undefined') (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-09';
+  const LOCAL_VERSION = '2026-07-10';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.html&per_page=1');
     if (!res.ok) return;
