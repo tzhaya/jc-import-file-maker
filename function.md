@@ -71,6 +71,11 @@
 
 ### Phase 2以降の機能強化
 
+- WEKO3 OpenSearch検索ツール（[#237](https://github.com/tzhaya/jc-import-file-maker/issues/237)・Chrome拡張版限定）
+  - JAIRO Cloud / WEKO3の公開済みアイテムを、キーワード・タイトル（完全一致可）・作成者・内容記述・資源タイプ全78件・IDで検索
+  - 詳細検索として主題・出版者・言語（`lang`）・収録物名・作成者名識別子に対応。ID種別や作成者名識別子の有効な体系は機関設定に依存
+  - 作成日時の昇順・降順、1ページ20件のページングに対応。ページ移動中は最初のリポジトリURL・検索条件・並べ替えを保持
+  - JPCOAR出力のページ内逆順を補正し、外部リンク遷移時もサイドパネルの検索状態を維持。`version`と日付範囲検索は対象外
 - OpenAlex由来RORの誤同定検出・注意喚起（[#165](https://github.com/tzhaya/jc-import-file-maker/issues/165)）
   - Crossrefが著者所属にRORを持たない場合に付与されるOpenAlex機械同定RORのURI欄に「⚠ 要確認」を常時表示
   - OpenAlexの機関名と同定元のCrossref所属表記（`raw_affiliation_string`）を有意トークンで照合（機関名トークンの過半数一致を主・最上位組織名照合を補助とする2段階判定）。誤同定の疑いがある場合はROR/ISNIを設定せずCrossref所属表記を機関名として採用し注意喚起

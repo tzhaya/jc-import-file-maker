@@ -17,6 +17,8 @@
 
 本書は、AIコーディングエージェントが実装計画、コード生成、テスト、レビューを行う際の入力仕様として利用できるように記述する。
 
+> **実測による補足（2026-07-14・Issue #237）:** 言語検索のクエリパラメータは `language` ではなく `lang` である。また、`format=jpcoar` のリクエストに独自の `Accept` ヘッダーを付けると、JIRCAS・筑波大学の実環境でHTTP 406となることを確認した。現行クライアントはブラウザ既定のヘッダーで取得する。検索項目の実装範囲は6章を参照すること。
+
 ---
 
 ## 2. 対象API
@@ -182,43 +184,55 @@ format=rss
 
 ## 6. 検索パラメータ
 
-### 6.1 優先対応項目
+### 6.1 現行クライアントの標準検索項目
 
-汎用クライアントでは、最初に次を実装する。
+Issue #237で実装した標準検索項目は次のとおりである。
 
-| パラメータ | 意味 | UI推奨 |
+| パラメータ | 意味 | UI | 備考 |
+|---|---|---|---|
+| `keyword` | メタデータ・全文横断検索 | テキスト | 標準検索の先頭に配置 |
+| `title` | タイトル | テキスト | `exact_title_match`と組み合わせ可能 |
+| `exact_title_match` | タイトル完全一致指定 | チェックボックス | タイトル入力時だけ`true`を送信 |
+| `creator` | 作成者・著者 | テキスト | 入力表記は前後空白以外を変更しない |
+| `des` | 内容記述・抄録 | テキスト |  |
+| `type` | 資源タイプ | 選択 | 既存語彙全78件から選択し英語名を送信 |
+| `id` + `id_attr` | ID検索 | ID値＋ID種別 | 必ず対で指定する |
+
+### 6.2 現行クライアントの詳細検索項目
+
+詳細検索は初期状態で折りたたんで表示する。
+
+| パラメータ | 意味 | UI | 備考 |
+|---|---|---|---|
+| `subject` | 主題 | テキスト |  |
+| `publisher` | 出版者 | テキスト |  |
+| `lang` | 言語 | テキスト | 実機で有効性を確認。`language`は使用しない |
+| `srctitle` | 収録物名 | テキスト |  |
+| `wid` | 作成者名識別子 | テキスト | ORCID、WEKO著者ID等。有効な体系は機関依存 |
+
+### 6.3 現行クライアントで実装しない検索項目
+
+APIには次の検索パラメータが定義されているが、Issue #237ではUI・URL生成とも対象外とする。
+
+| パラメータ | 意味 | 対象外とする理由・補足 |
 |---|---|---|
-| `keyword` | メタデータ・全文横断検索 | テキスト |
-| `title` | タイトル | テキスト |
-| `creator` | 作成者・著者 | テキスト |
-| `des` | 内容記述・抄録 | テキスト |
-| `publisher` | 出版者 | テキスト |
-| `type` | 資源タイプ | 選択またはテキスト |
-| `language` | 言語 | 選択 |
-| `subject` | 主題 | テキスト |
-| `srctitle` | 収録物名 | テキスト |
-| `mimetype` | ファイルMIMEタイプ | 選択 |
-| `itemtype` | WEKOアイテムタイプ | テキストまたは選択 |
+| `version` | バージョン種別 | 4機関で`VoR` / `AM` / `P`等がすべてHTTP 200・0件。動作環境確認後に再検討 |
+| `mimetype` | ファイルMIMEタイプ | 今回の標準・詳細検索の対象外 |
+| `itemtype` | WEKOアイテムタイプ | 今回の標準・詳細検索の対象外 |
+| `cname` | 寄与者 | 今回の「その他の検索項目」は実装しない |
+| `spatial` | 地理的位置 | 同上 |
+| `temporal` | 時間的範囲 | 同上 |
+| `dissno` | 学位論文番号 | 同上 |
+| `degreename` | 学位名 | 同上 |
+| `dgname` | 学位授与機関名 | 同上 |
+| `license` | ライセンス | 同上 |
+| `iid` | インデックスツリーID | 同上 |
 
-### 6.2 その他の検索項目
-
-| パラメータ | 意味 |
-|---|---|
-| `cname` | 寄与者 |
-| `spatial` | 地理的位置 |
-| `temporal` | 時間的範囲 |
-| `version` | バージョン種別 |
-| `dissno` | 学位論文番号 |
-| `degreename` | 学位名 |
-| `dgname` | 学位授与機関名 |
-| `license` | ライセンス |
-| `wid` | 作成者名識別子 |
-| `iid` | インデックスツリーID |
-| `exact_title_match` | タイトル完全一致指定 |
-
-### 6.3 識別子検索
+### 6.4 識別子検索
 
 識別子検索では、値と種別を組み合わせる。
+
+現行クライアントはID値とID種別の片方だけでは通信しない。検索可否は機関・識別子種別・検索インデックス設定に依存し、完全一致や1件だけの応答は保証しない。
 
 代表例:
 
@@ -246,7 +260,7 @@ id=<identifier-value>&id_attr=<identifier-type>
 /api/opensearch/search?id=10.1234/example&id_attr=DOI
 ```
 
-### 6.4 日付範囲
+### 6.5 日付範囲
 
 代表的なパラメータ:
 
@@ -270,7 +284,9 @@ date_range5_to
 /api/opensearch/search?dategranted_from=2020-01-01&dategranted_to=2025-12-31
 ```
 
-### 6.5 数値範囲
+これらはAPIに定義されているが、現行クライアントでは実装しない。`date_range1`～`date_range5`の意味が機関・アイテムタイプのマッピングに依存し、JPCOARのIssued / Availableと固定対応しないためである。レコード作成日時`_created`の範囲検索も非対応であり、`createdate`はソート専用として扱う。
+
+### 6.6 数値範囲
 
 ```text
 integer_range1_from
@@ -286,7 +302,9 @@ float_range5_from
 float_range5_to
 ```
 
-### 6.6 地理検索
+現行クライアントでは実装しない。
+
+### 6.7 地理検索
 
 距離検索:
 
@@ -310,7 +328,9 @@ geo_shape1_distance
 /api/opensearch/search?geo_point1_lat=35.68&geo_point1_lon=139.76&geo_point1_distance=10km
 ```
 
-### 6.7 汎用テキスト項目
+現行クライアントでは実装しない。
+
+### 6.8 汎用テキスト項目
 
 ```text
 text1
@@ -320,6 +340,8 @@ text30
 ```
 
 これらは機関ごとのアイテムタイプマッピングに依存する。汎用UIでは原則として非表示とし、上級者向け設定または機関別設定で扱う。
+
+現行クライアントでは実装しない。
 
 ---
 
@@ -573,11 +595,7 @@ JAIRO Cloud専用クライアントでは次を許可する。
 
 ### 12.1 HTTPヘッダー
 
-JPCOAR:
-
-```http
-Accept: application/xml, application/rdf+xml, text/xml;q=0.9
-```
+`format=jpcoar`を指定する場合も、独自の`Accept`ヘッダーは付けず、ブラウザ既定のヘッダーで送信する。JIRCAS・筑波大学では、独自の`Accept`条件を付けるとHTTP 406となることを実測で確認している。
 
 JSON:
 
@@ -1081,7 +1099,7 @@ AIエージェントは、ソースコードを確認せずに全置換しては
 1. `keyword`
 2. `publisher`
 3. `subject`
-4. `language`
+4. `lang`
 5. 識別子検索
 6. 日付範囲
 7. 機関別設定
@@ -1212,7 +1230,7 @@ https://example.repo.nii.ac.jp/api/opensearch/search?id=10.1234%2Fexample&id_att
 | `des` | 内容記述・抄録 | `search_des`, `search_des.ja` | `datacite:description` | 抄録、内容記述等にマッピングされた検索フィールドを対象とする。 |
 | `publisher` | 出版者 | `search_publisher`, `search_publisher.ja` | `dc:publisher` | 出版者名を検索する。 |
 | `type` | 資源タイプ | `type.raw` | `dc:type` | 主にCOAR Resource Type等の資源タイプ値を対象とする。 |
-| `language` | 言語 | `language` | `dc:language` | 通常は `jpn`, `eng` 等の言語コードを指定する。 |
+| `lang` | 言語 | `language` | `dc:language` | 通常は `jpn`, `eng` 等の言語コードを指定する。クエリパラメータは`language`ではない。 |
 | `subject` | 主題 | `subject` 配下。主題値は通常 `subject.value` | `subject` | `subjectScheme` を補助条件 `sbjscheme` で指定できる。 |
 | `srctitle` | 収録物名 | `sourceTitle`, `sourceTitle.ja` | `sourceTitle` | 掲載誌名、収録物名等を対象とする。 |
 | `mimetype` | ファイルMIMEタイプ | `file.mimeType` | `file/mimeType` | 例: `application/pdf`。ファイル情報に対応する。 |
