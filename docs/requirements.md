@@ -271,12 +271,16 @@ make_jc_importer.html
 
 -   **OpenSearch検索機能**（Chrome拡張版のみ、[issue #72](https://github.com/tzhaya/jc-import-file-maker/issues/72)）:
     -   サイドパネルに「OpenSearch検索」タブを追加し、JAIRO Cloud機関リポジトリの OpenSearch API を用いた文献検索を提供する
-    -   検索条件: リポジトリURL・タイトル・内容記述・資源タイプ（全47種）
+    -   標準検索条件: キーワード・タイトル（完全一致指定可）・作成者・内容記述・資源タイプ（既存語彙全78種）・ID値＋ID種別
+    -   詳細検索条件: 主題・出版者・言語・収録物名・作成者名識別子。`version` と日付範囲・その他の検索項目は機関差が大きいため対象外
+    -   並べ替え: 既定順・作成日時の昇順（`createdate`）・降順（`-createdate`）。作成日時の範囲検索は非対応
     -   対応リポジトリ: `*.repo.nii.ac.jp` および個別許可ホスト（ALLOWED_HOSTS_EXTRA）
     -   結果一覧: タイトル・著者・書誌情報（雑誌名・巻・号・ページ・発行日）・ファイルリンク・アイテムURL
     -   詳細展開: タイトルクリックで JPCOAR 要素の詳細テーブルを展開表示
     -   ページング: 1ページ20件固定、前へ/次へボタンで移動
-    -   Service Worker経由のfetchラッパー（CORS回避）を使用
+    -   初回検索時のリポジトリorigin・検索条件・並べ替えを保持し、ページングではフォームを再取得しない
+    -   「入力をクリア」は検索条件・完全一致指定・ID種別・並べ替えだけを初期化し、リポジトリURL・検索結果・ページングstateを維持する。検索中は操作不可
+    -   Chrome拡張のhost permissionsを使用し、サイドパネルから直接fetchする
     -   `options.html` にデフォルトリポジトリURL設定欄を追加。`chrome.storage.local` の `defaultRepositoryUrl` に保存し、タブ開放時に自動入力する
 
 -   **管理フィールド・リポジトリURLの初期値設定**（[issue #148](https://github.com/tzhaya/jc-import-file-maker/issues/148)）:
@@ -647,6 +651,4 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
   - `subitem_conference_sponsors[]` - 複数主催機関
   - `subitem_conference_venues[]` - 複数開催会場
   - `subitem_conference_places[]` - 複数開催地
-
-
 

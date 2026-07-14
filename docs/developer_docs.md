@@ -33,8 +33,9 @@ npm install
 | `tests/abstract.test.js` | `processAbstract` | JATS タグ処理（実体参照の解除順序・`<jats:title>` 除去・`TITLE:` 変換） |
 | `tests/tsv.test.js` | `generateTsv` | 空配列→`null`、行数、タブ/改行サニタイズ、`repoHost` によるスキーマ URL 置換 |
 | `tests/aff-misattribution.test.js` | `detectAffMisattribution` / `canonicalRor` / `affStringSupportsInst` / `warnTooltip` | 所属誤判定（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186) 実例）、頭字語裏付けによる誤検出抑制、ROR 正規化 |
+| `tests/opensearch.test.js` | `normalizeQuery` / `validateQuery` / `buildUrl` / `normalizeJpcoarItemOrder` / `getResultRange` / `clearSearchForm` | OpenSearch語彙78件、条件検証、URL生成、JPCOARページ内順序補正、ページ件数範囲、入力クリア時のリポジトリURL保持（#237） |
 
-**テスト対象は `chrome-extension/*.js` を `require` します。** そのため両ファイル末尾には Node から読み込むための以下の“テスト用ブロック”が恒常的に存在します。**本番 HTML からの同期時に削除しないでください**（ブラウザでは `typeof module === 'undefined'`／`typeof document !== 'undefined'` により無害）:
+**テスト対象は `chrome-extension/*.js` を `require` します。** `make_jc_importer.js`、`openalex_panel.js`、`opensearch_panel.js` にはNodeから読み込むための“テスト用ブロック”が恒常的に存在します。**同期・改修時に削除しないでください**（ブラウザでは `typeof module === 'undefined'`／`typeof document !== 'undefined'` により無害）:
 
 - 先頭 CONFIG フォールバックの `typeof window !== 'undefined'` ガード
 - DOM 配線・初期化 IIFE を包む `if (typeof document !== 'undefined') { … }` ガード
@@ -132,6 +133,9 @@ E2E・回帰テストで使う代表的な DOI と、それぞれが検証でき
 | [fieldmapping.md](fieldmapping.md) | JPCOARフィールドマッピング |
 | [datacite_jpcoar_mapping.md](datacite_jpcoar_mapping.md) | DataCite → JPCOAR マッピング表（#197。実装 #208 の仕様書） |
 | [current_review_2026-07-05.md](current_review_2026-07-05.md) | 2026-07-05 時点の進捗・実用性・将来拡張課題のレビュー |
+| [weko3-opensearch-client-spec.md](weko3-opensearch-client-spec.md) | Chrome拡張版WEKO3 OpenSearchクライアント仕様（#237） |
+| [weko3-opensearch-client-general-spec.md](weko3-opensearch-client-general-spec.md) | WEKO3 OpenSearch API調査原本 |
+| [resource_type_vocabulary.md](resource_type_vocabulary.md) | OpenSearch等で使用する資源タイプ語彙78件 |
 | [weko3_tsv_import_spec.md](weko3_tsv_import_spec.md) | WEKO3 TSVインポート仕様 |
 | [privacy-policy.md](privacy-policy.md) | プライバシーポリシー |
 | [chrome_store_permissions.md](chrome_store_permissions.md) | Chrome Web Store 権限の正当化 |
