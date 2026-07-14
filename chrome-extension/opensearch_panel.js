@@ -542,6 +542,20 @@ function collectRawQuery() {
   return raw;
 }
 
+function clearSearchForm(doc = document) {
+  // 検索済みstate・結果は維持する。ページングは初回検索時のstateを使い続ける。
+  SEARCH_FIELDS.forEach(({ elementId }) => {
+    doc.getElementById(elementId).value = '';
+  });
+  doc.getElementById('q-exact-title').checked = false;
+  doc.getElementById('q-id').value = '';
+  doc.getElementById('q-id-attr').value = '';
+  doc.getElementById('q-sort').value = '';
+  doc.getElementById('advanced-search').open = false;
+  hideError(doc);
+  doc.getElementById('q-keyword').focus();
+}
+
 function startSearch() {
   const repoVal = document.getElementById('repo-url').value.trim();
   if (!repoVal) {
@@ -600,6 +614,7 @@ async function loadPage(page, isPaging = false) {
 function setLoading(on, hideResults = true) {
   document.getElementById('loading').classList.toggle('hidden', !on);
   document.getElementById('btn-search').disabled = on;
+  document.getElementById('btn-clear-search').disabled = on;
   if (on && hideResults) document.getElementById('results-section').classList.add('hidden');
 }
 
@@ -610,8 +625,8 @@ function showError(msg, type = 'warn') {
   el.classList.remove('hidden');
 }
 
-function hideError() {
-  document.getElementById('error-msg').classList.add('hidden');
+function hideError(doc = document) {
+  doc.getElementById('error-msg').classList.add('hidden');
 }
 
 // ---- 初期化 ----
@@ -644,6 +659,7 @@ function init() {
   });
 
   document.getElementById('btn-search').addEventListener('click', startSearch);
+  document.getElementById('btn-clear-search').addEventListener('click', () => clearSearchForm());
 
   document.querySelectorAll('#search-section input[type="text"], #repo-url').forEach(input => {
     input.addEventListener('keydown', e => {
@@ -677,6 +693,7 @@ if (typeof module !== 'undefined' && module.exports) {
     normalizeJpcoarItemOrder,
     fetchJpcoar,
     getResultRange,
+    clearSearchForm,
     RESOURCE_TYPES,
     SEARCH_FIELDS,
     ID_ATTRS,

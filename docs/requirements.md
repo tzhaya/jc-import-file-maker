@@ -279,6 +279,7 @@ make_jc_importer.html
     -   詳細展開: タイトルクリックで JPCOAR 要素の詳細テーブルを展開表示
     -   ページング: 1ページ20件固定、前へ/次へボタンで移動
     -   初回検索時のリポジトリorigin・検索条件・並べ替えを保持し、ページングではフォームを再取得しない
+    -   「入力をクリア」は検索条件・完全一致指定・ID種別・並べ替えだけを初期化し、リポジトリURL・検索結果・ページングstateを維持する。検索中は操作不可
     -   Chrome拡張のhost permissionsを使用し、サイドパネルから直接fetchする
     -   `options.html` にデフォルトリポジトリURL設定欄を追加。`chrome.storage.local` の `defaultRepositoryUrl` に保存し、タブ開放時に自動入力する
 
@@ -650,5 +651,4 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
   - `subitem_conference_sponsors[]` - 複数主催機関
   - `subitem_conference_venues[]` - 複数開催会場
   - `subitem_conference_places[]` - 複数開催地
-
 

@@ -11,7 +11,9 @@ const {
   normalizeJpcoarItemOrder,
   fetchJpcoar,
   getResultRange,
+  clearSearchForm,
   RESOURCE_TYPES,
+  SEARCH_FIELDS,
   ID_ATTRS,
 } = require('../chrome-extension/opensearch_panel.js');
 
@@ -144,4 +146,34 @@ test('getResultRange はAPIのstartIndexに依存せずページ番号から件�
   assert.deepStrictEqual(getResultRange(1, 20), { startIndex: 1, endIndex: 20 });
   assert.deepStrictEqual(getResultRange(2, 20), { startIndex: 21, endIndex: 40 });
   assert.deepStrictEqual(getResultRange(3, 7), { startIndex: 41, endIndex: 47 });
+});
+
+test('clearSearchForm は検索条件だけを初期化し、リポジトリURLを保持する', () => {
+  const elements = {};
+  const addElement = (id, value = '') => {
+    elements[id] = {
+      value,
+      checked: true,
+      open: true,
+      focused: false,
+      classList: { add(className) { this.added = className; } },
+      focus() { this.focused = true; },
+    };
+  };
+  [...SEARCH_FIELDS.map(({ elementId }) => elementId), 'q-id', 'q-id-attr', 'q-sort', 'repo-url'].forEach(id => addElement(id, '入力値'));
+  addElement('q-exact-title');
+  addElement('advanced-search');
+  addElement('error-msg');
+
+  clearSearchForm({ getElementById: id => elements[id] });
+
+  SEARCH_FIELDS.forEach(({ elementId }) => assert.strictEqual(elements[elementId].value, ''));
+  assert.strictEqual(elements['q-id'].value, '');
+  assert.strictEqual(elements['q-id-attr'].value, '');
+  assert.strictEqual(elements['q-sort'].value, '');
+  assert.strictEqual(elements['q-exact-title'].checked, false);
+  assert.strictEqual(elements['advanced-search'].open, false);
+  assert.strictEqual(elements['error-msg'].classList.added, 'hidden');
+  assert.strictEqual(elements['q-keyword'].focused, true);
+  assert.strictEqual(elements['repo-url'].value, '入力値');
 });
