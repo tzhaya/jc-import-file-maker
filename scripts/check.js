@@ -35,6 +35,7 @@ const JS_FILES = [
   'tests/tsv.test.js',
   'tests/aff-misattribution.test.js',
   'tests/access-rights.test.js',
+  'tests/opensearch.test.js',
 ];
 
 // Text files that may contain Japanese — verify no encoding corruption (#175)
@@ -53,6 +54,9 @@ const UTF8_FILES = [
   'docs/Implementation_JaLC.md',
   'docs/datacite_jpcoar_mapping.md',
   'docs/current_review_2026-07-05.md',
+  'docs/resource_type_vocabulary.md',
+  'docs/weko3-opensearch-client-spec.md',
+  'docs/weko3-opensearch-client-general-spec.md',
   'function.md',
   // HTML (standalone)
   'make_jc_importer.html',

@@ -96,7 +96,7 @@ DOIを入力してCrossref / DataCite / OpenAlex APIから書誌情報を取得�
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-07-10 | ver. 1.22.0 | 研究課題番号タイプ（JPCOAR 2.0 `awardNumberType`）に対応（[#222](https://github.com/tzhaya/jc-import-file-maker/issues/222)）。JGN連携で取得した体系的番号には `JGN` を自動設定し、助成情報の編集フォームでも選択可能に。助成情報検索ツールのTSV出力にも反映 |
+| Chrome拡張機能版 | 2026-07-14 | ver. 1.23.0 | WEKO3 OpenSearchの検索項目を拡充（[#237](https://github.com/tzhaya/jc-import-file-maker/issues/237)）。標準・詳細検索、ID検索、作成日時ソート、資源タイプ全78件、検索条件を保持するページングに対応 |
 | インポート用TSV生成ツール | 2026-07-10 | — | 研究課題番号タイプ（JPCOAR 2.0 `awardNumberType`）に対応（[#222](https://github.com/tzhaya/jc-import-file-maker/issues/222)）。JGN連携で取得した体系的番号には `JGN` を自動設定し、助成情報の編集フォームでも選択可能に |
 | 助成情報検索ツール | 2026-07-10 | — | 研究課題番号タイプ列に対応（[#222](https://github.com/tzhaya/jc-import-file-maker/issues/222)）。JGN課題番号で検索した場合、TSV出力の「研究課題番号タイプ」列に `JGN` を出力 |
 | OpenAlex機関別著作検索 | 2026-07-08 | — | サイドパネルで検索結果URLをクリックするとパネルが「DOIインポート」に戻る不具合を再修正（[#228](https://github.com/tzhaya/jc-import-file-maker/issues/228)、#201の修正が不完全だった再発）。現在のアクティブタブ内でリンク先を開く方式に変更 |
@@ -183,8 +183,10 @@ APIからのデータ取得・マッピング・編集UI・プレビュー・TSV
 
 ### OpenSearch検索ツール（Chrome拡張機能版のみ）
 
-- Chrome拡張機能版のサイドパネルのタブから「OpenSearch検索」に切り替えて利用できます。
-- JAIRO Cloud利用機関のリポジトリURL・タイトル・内容記述・資源タイプを条件に文献を検索できます。
+- Chrome拡張機能版のサイドパネルから「リポジトリコンテンツ検索」に切り替えて利用できます。
+- キーワード・タイトル・作成者・内容記述・資源タイプ・IDを標準条件として検索できます。詳細検索では主題・出版者・言語・収録物名・作成者名識別子を指定できます。
+- 資源タイプはJPCOAR 1.0のみの語彙を含む全78件から選択できます。ID検索の対応種別はリポジトリ設定により異なります。
+- 作成日時の昇順・降順で並べ替えられます。作成日時やIssued / Availableの日付範囲検索には対応していません。
 - 検索結果はタイトル・著者・書誌情報・ファイルリンクとともに一覧表示され、クリックで詳細フィールドを展開できます。
 - 設定ページでデフォルトのリポジトリURLを登録しておくと、タブを開いた際に自動入力されます。
 
@@ -301,6 +303,7 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-07-14 | Chrome拡張 ver. 1.23.0：WEKO3 OpenSearch検索を拡充（[#237](https://github.com/tzhaya/jc-import-file-maker/issues/237)）。標準・詳細検索、ID値＋ID種別、作成日時ソート、資源タイプ全78件に対応。JPCOAR出力のページ内逆順を補正し、ページング中は初回のリポジトリ・条件・ソートを保持 |
 | 2026-07-10 | 研究課題番号タイプ（JPCOAR 2.0 `awardNumberType`）に対応（[#222](https://github.com/tzhaya/jc-import-file-maker/issues/222)）：TSVテンプレートに列は存在するが常に空欄だった `subitem_award_numbers.subitem_award_number_type` を、JGN（Japan Grant Number）連携（`fetchJgn()` 成功）で取得した体系的番号のとき `JGN` に自動設定するよう変更。`fetchJgn()` の戻り値に `source: 'JGN'` マーカーを追加し、Crossref/JaLC/DataCiteのマッピング3パスで判定。助成情報の編集フォーム（`renderOneFunder()`）に「研究課題番号タイプ」select（「（未設定）/ JGN」、許容値はWEKO ItemTypeスキーマの `null / JGN`）を追加し、`collectFundingField()` で収集。「助成機関を検索」ボタンでもJGN由来のとき自動設定・それ以外はリセット。助成情報検索ツール（`funder_lookup`）はJGN分岐の戻り値に `awardNumberType: 'JGN'` を追加し `FUNDING_COLUMNS` extractorを修正しTSV出力に反映。`generateTsv()` の単体テストを1件追加（`npm test` 計55件）。標準版・Chrome拡張版・両テスト用HTMLに同一実装。`docs/fieldmapping.md`・`docs/user_guide.md` を更新。manifest version `1.21.2` → `1.22.0` |
 | 2026-07-09 | DataCite API 404時のエラーメッセージを改善（[#211](https://github.com/tzhaya/jc-import-file-maker/issues/211)）：`fetchDataCite()` は404時に「DOIが見つかりません（DataCite 404）」とだけ表示していたため、DOI Registration Agency判定はDataCiteだがDataCite API側でメタデータを取得できない（削除・非公開・Gone状態等の）DOI（例: `10.5281/zenodo.19493734`、doi.org/Zenodoで410 Gone）でも入力ミスのように見えていた。エラー文言を「DOIメタデータを取得できません（DataCite 404）。削除・非公開・Gone状態の可能性があります。」に変更し、原因の可能性がわかるようにした。取得可能なDataCite DOIの正常系は変更なし。標準版・Chrome拡張版に同一実装。`docs/user_guide.md` のDataCite DOI制限事項節に補足を追記。manifest version `1.21.1` → `1.21.2` |
 | 2026-07-08 | `calcEmbargoEndDate()` のタイムゾーン依存バグを修正（PR #233 コードレビュー指摘、P2）：`new Date('YYYY-MM-DD')`（UTC深夜0時としてパース）と `setMonth()`/`setFullYear()`/`setDate()`（ローカル時刻メソッド）・`toISOString()`（UTC出力）を混在させていたため、UTCより遅れたタイムゾーン（例: America/New_York）で実行すると満了日が1日ずれていた（`2020-01-15 + 6ヶ月` が本来の `2020-07-15` ではなく `2020-07-14` になる等）。`determineAccessRights()` のアクセス権判定（open access / embargoed access）の根拠になっているため、表示ヒントだけでなく実データに影響し得た。パース・演算・出力をUTC系メソッド（`setUTCMonth`/`setUTCFullYear`/`setUTCDate`）に統一して解消。修正前コードで実際にバグを再現し、5タイムゾーン（America/New_York・Asia/Tokyo・UTC・Pacific/Kiritimati・Pacific/Midway）で一致することを確認。`tests/access-rights.test.js` に `process.env.TZ` を切り替える回帰テストを追加（修正前コードに対して実行しバグを検出できることも確認済み）。標準版・Chrome拡張版に同一実装。manifest version `1.21.0` → `1.21.1` |

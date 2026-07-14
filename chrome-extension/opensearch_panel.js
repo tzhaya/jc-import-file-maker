@@ -34,56 +34,106 @@ function isAllowedHost(repoUrl) {
 }
 // ===========================
 
-// 資源タイプ語彙
+// 資源タイプ語彙（docs/resource_type_vocabulary.md と同期）
 const RESOURCE_TYPES = [
-  { en: 'conference paper',        ja: '会議発表論文' },
-  { en: 'data paper',              ja: 'データ論文' },
-  { en: 'departmental bulletin paper', ja: '紀要論文' },
-  { en: 'editorial',               ja: 'エディトリアル' },
-  { en: 'journal article',         ja: '学術雑誌論文' },
-  { en: 'newspaper',               ja: '新聞' },
-  { en: 'periodical',              ja: '逐次刊行物' },
-  { en: 'review article',          ja: 'レビュー論文' },
-  { en: 'software paper',          ja: 'ソフトウェア論文' },
-  { en: 'article',                 ja: '記事' },
-  { en: 'book',                    ja: '図書' },
-  { en: 'book part',               ja: '図書（部分）' },
-  { en: 'cartographic material',   ja: '地図資料' },
-  { en: 'map',                     ja: '地図' },
-  { en: 'conference object',       ja: '会議発表資料' },
-  { en: 'conference proceedings',  ja: '会議録' },
-  { en: 'conference poster',       ja: '会議発表ポスター' },
-  { en: 'dataset',                 ja: 'データセット' },
-  { en: 'interview',               ja: 'インタビュー' },
-  { en: 'image',                   ja: 'イメージ' },
-  { en: 'still image',             ja: '静止画' },
-  { en: 'moving image',            ja: '動画' },
-  { en: 'video',                   ja: '録画資料' },
-  { en: 'lecture',                 ja: '講演' },
-  { en: 'patent',                  ja: '特許' },
-  { en: 'internal report',         ja: '内部報告書' },
-  { en: 'report',                  ja: '報告書' },
-  { en: 'research report',         ja: '研究報告書' },
-  { en: 'technical report',        ja: 'テクニカルレポート' },
-  { en: 'policy report',           ja: 'ポリシーレポート' },
-  { en: 'report part',             ja: '報告書（部分）' },
-  { en: 'working paper',           ja: 'ワーキングペーパー' },
-  { en: 'data management plan',    ja: 'データ管理計画' },
-  { en: 'sound',                   ja: '音声・音楽' },
-  { en: 'thesis',                  ja: '学位論文' },
-  { en: 'bachelor thesis',         ja: '学士論文' },
-  { en: 'master thesis',           ja: '修士論文' },
-  { en: 'doctoral thesis',         ja: '博士論文' },
-  { en: 'interactive resource',    ja: 'インタラクティブリソース' },
-  { en: 'learning object',         ja: '教材' },
-  { en: 'manuscript',              ja: '手稿' },
-  { en: 'musical notation',        ja: '楽譜' },
-  { en: 'research proposal',       ja: '研究計画書' },
-  { en: 'software',                ja: 'ソフトウェア' },
-  { en: 'technical documentation', ja: '技術文書' },
-  { en: 'workflow',                ja: 'ワークフロー' },
-  { en: 'other',                   ja: 'その他' },
+  { en: 'conference paper', ja: '会議発表論文', status: 'v1.0' },
+  { en: 'data paper', ja: 'データ論文', status: 'v1.0' },
+  { en: 'departmental bulletin paper', ja: '紀要論文', status: 'v1.0' },
+  { en: 'editorial', ja: 'エディトリアル', status: 'v1.0' },
+  { en: 'journal', ja: '学術雑誌', status: 'v2.0' },
+  { en: 'journal article', ja: '学術雑誌論文', status: 'v1.0' },
+  { en: 'newspaper', ja: '新聞', status: 'v1.0' },
+  { en: 'other periodical', ja: 'その他の逐次刊行物', status: 'v2.0' },
+  { en: 'review article', ja: 'レビュー論文', status: 'v1.0' },
+  { en: 'software paper', ja: 'ソフトウェア論文', status: 'v1.0' },
+  { en: 'article', ja: '記事', status: 'v1.0' },
+  { en: 'periodical', ja: '逐次刊行物', status: 'v1.0only' },
+  { en: 'book', ja: '図書', status: 'v1.0' },
+  { en: 'book part', ja: '図書（部分）', status: 'v1.0' },
+  { en: 'cartographic material', ja: '地図資料', status: 'v1.0' },
+  { en: 'map', ja: '地図', status: 'v1.0' },
+  { en: 'conference output', ja: '会議資料', status: 'v1.0' },
+  { en: 'conference presentation', ja: '会議発表スライド', status: 'v2.0' },
+  { en: 'conference proceedings', ja: '会議録', status: 'v1.0' },
+  { en: 'conference poster', ja: '会議発表ポスター', status: 'v1.0' },
+  { en: 'aggregated data', ja: '集計データ', status: 'v2.0' },
+  { en: 'clinical trial data', ja: '臨床試験データ', status: 'v2.0' },
+  { en: 'compiled data', ja: '編集データ', status: 'v2.0' },
+  { en: 'dataset', ja: 'データセット', status: 'v1.0' },
+  { en: 'encoded data', ja: '符号化データ', status: 'v2.0' },
+  { en: 'experimental data', ja: '実験データ', status: 'v2.0' },
+  { en: 'genomic data', ja: 'ゲノムデータ', status: 'v2.0' },
+  { en: 'geospatial data', ja: '地理空間データ', status: 'v2.0' },
+  { en: 'laboratory notebook', ja: '実験ノート', status: 'v2.0' },
+  { en: 'measurement and test data', ja: '測定・評価データ', status: 'v2.0' },
+  { en: 'observational data', ja: '観測データ', status: 'v2.0' },
+  { en: 'recorded data', ja: '記録データ', status: 'v2.0' },
+  { en: 'simulation data', ja: 'シミュレーションデータ', status: 'v2.0' },
+  { en: 'survey data', ja: '調査データ', status: 'v2.0' },
+  { en: 'image', ja: 'イメージ', status: 'v1.0' },
+  { en: 'still image', ja: '静止画', status: 'v1.0' },
+  { en: 'moving image', ja: '動画', status: 'v1.0' },
+  { en: 'video', ja: '録画資料', status: 'v1.0' },
+  { en: 'lecture', ja: '講演', status: 'v1.0' },
+  { en: 'design patent', ja: '意匠特許', status: 'v2.0' },
+  { en: 'patent', ja: '特許', status: 'v1.0' },
+  { en: 'PCT application', ja: 'PCT出願', status: 'v2.0' },
+  { en: 'plant patent', ja: '植物特許', status: 'v2.0' },
+  { en: 'plant variety protection', ja: '育成者権', status: 'v2.0' },
+  { en: 'software patent', ja: 'ソフトウェア特許', status: 'v2.0' },
+  { en: 'trademark', ja: '商標', status: 'v2.0' },
+  { en: 'utility model', ja: '実用新案', status: 'v2.0' },
+  { en: 'internal report', ja: '内部報告書', status: 'v1.0only' },
+  { en: 'report', ja: '報告書', status: 'v1.0' },
+  { en: 'research report', ja: '研究報告書', status: 'v1.0' },
+  { en: 'technical report', ja: 'テクニカルレポート', status: 'v1.0' },
+  { en: 'policy report', ja: 'ポリシーレポート', status: 'v1.0' },
+  { en: 'report part', ja: '報告書（部分）', status: 'v1.0only' },
+  { en: 'working paper', ja: 'ワーキングペーパー', status: 'v1.0' },
+  { en: 'data management plan', ja: 'データ管理計画', status: 'v1.0' },
+  { en: 'sound', ja: '音声・音楽', status: 'v1.0' },
+  { en: 'thesis', ja: '学位論文', status: 'v1.0' },
+  { en: 'bachelor thesis', ja: '学士論文', status: 'v1.0' },
+  { en: 'master thesis', ja: '修士論文', status: 'v1.0' },
+  { en: 'doctoral thesis', ja: '博士論文', status: 'v1.0' },
+  { en: 'commentary', ja: '論評', status: 'v2.0' },
+  { en: 'design', ja: 'デザイン', status: 'v2.0' },
+  { en: 'industrial design', ja: '工業デザイン', status: 'v2.0' },
+  { en: 'interactive resource', ja: 'インタラクティブリソース', status: 'v1.0' },
+  { en: 'layout design', ja: 'レイアウト設計', status: 'v2.0' },
+  { en: 'learning object', ja: '教材', status: 'v1.0' },
+  { en: 'manuscript', ja: '手稿', status: 'v1.0' },
+  { en: 'musical notation', ja: '楽譜', status: 'v1.0' },
+  { en: 'peer review', ja: '査読', status: 'v2.0' },
+  { en: 'research proposal', ja: '研究計画書', status: 'v1.0' },
+  { en: 'research protocol', ja: '研究プロトコル', status: 'v2.0' },
+  { en: 'software', ja: 'ソフトウェア', status: 'v1.0' },
+  { en: 'source code', ja: 'ソースコード', status: 'v2.0' },
+  { en: 'technical documentation', ja: '技術文書', status: 'v1.0' },
+  { en: 'transcription', ja: '文字起こし', status: 'v2.0' },
+  { en: 'workflow', ja: 'ワークフロー', status: 'v1.0' },
+  { en: 'other', ja: 'その他', status: 'v1.0' },
+  { en: 'interview', ja: 'インタビュー', status: 'v1.0only' },
 ];
+
+const SEARCH_FIELDS = [
+  { elementId: 'q-keyword', param: 'keyword' },
+  { elementId: 'q-title', param: 'title' },
+  { elementId: 'q-creator', param: 'creator' },
+  { elementId: 'q-des', param: 'des' },
+  { elementId: 'q-type', param: 'type' },
+  { elementId: 'q-subject', param: 'subject' },
+  { elementId: 'q-publisher', param: 'publisher' },
+  { elementId: 'q-language', param: 'lang' },
+  { elementId: 'q-srctitle', param: 'srctitle' },
+  { elementId: 'q-wid', param: 'wid' },
+];
+
+const ID_ATTRS = ['DOI', 'selfDOI', 'ISBN', 'ISSN', 'NCID', 'PMID', 'NAID', 'ICHUSHI', 'URI', 'fullTextURL', 'identifier'];
+const ALLOWED_QUERY_PARAMS = new Set([
+  ...SEARCH_FIELDS.map(({ param }) => param),
+  'exact_title_match', 'id', 'id_attr',
+]);
 
 // JPCOAR 要素の日本語ラベル
 const FIELD_LABELS = {
@@ -127,7 +177,7 @@ const SUMMARY_FIELDS = new Set([
 const PAGE_SIZE = 20;
 const NS_RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
 
-let state = { page: 1, query: {}, totalResults: 0 };
+let state = { page: 1, query: {}, sort: '', repoOrigin: '', totalResults: 0 };
 
 // ---- ユーティリティ ----
 
@@ -146,16 +196,56 @@ function pickByLang(els, lang) {
     || null;
 }
 
-// ---- URL 構築 ----
+// ---- 検索条件・URL構築 ----
 
-function buildUrl(query, page) {
-  const repoUrl = document.getElementById('repo-url').value.trim();
-  const base = new URL(repoUrl).origin + '/';
-  const params = new URLSearchParams({ format: 'jpcoar', size: PAGE_SIZE, page });
-  if (query.title) params.set('title', query.title);
-  if (query.des)   params.set('des',   query.des);
-  if (query.type)  params.set('type',  query.type);
-  return `${base}api/opensearch/search?${params}`;
+function normalizeQuery(raw) {
+  const query = {};
+  SEARCH_FIELDS.forEach(({ param }) => {
+    const value = typeof raw[param] === 'string' ? raw[param].trim() : '';
+    if (value) query[param] = value;
+  });
+
+  if (query.title && raw.exactTitleMatch) query.exact_title_match = 'true';
+  const id = typeof raw.id === 'string' ? raw.id.trim() : '';
+  const idAttr = typeof raw.idAttr === 'string' ? raw.idAttr.trim() : '';
+  if (id) query.id = id;
+  if (idAttr) query.id_attr = idAttr;
+  return query;
+}
+
+function validateQuery(query) {
+  if (query.id && !query.id_attr) {
+    return { ok: false, code: 'missing-id-attr', message: 'ID種別を選択してください。', focusId: 'q-id-attr' };
+  }
+  if (query.id_attr && !query.id) {
+    return { ok: false, code: 'missing-id', message: 'IDを入力してください。', focusId: 'q-id' };
+  }
+  const hasSearchCondition = Object.keys(query).some(key => key !== 'exact_title_match');
+  if (!hasSearchCondition) {
+    return { ok: false, code: 'empty-query', message: '検索条件を 1 つ以上入力してください。', focusId: null };
+  }
+  return { ok: true, code: null, message: '', focusId: null };
+}
+
+function buildUrl(repoOrigin, query, page, sort = '') {
+  const base = new URL(repoOrigin).origin + '/';
+  const params = new URLSearchParams({ format: 'jpcoar', size: String(PAGE_SIZE), page: String(page) });
+  Object.entries(query).forEach(([key, value]) => {
+    if (ALLOWED_QUERY_PARAMS.has(key) && value !== '') params.set(key, String(value));
+  });
+  if (sort === 'createdate' || sort === '-createdate') params.set('sort', sort);
+  return `${base}api/opensearch/search?${params.toString()}`;
+}
+
+function normalizeJpcoarItemOrder(items) {
+  // WEKO3のformat=jpcoarはJSONのヒット順をページ内で逆順に列挙する
+  // （JIRCAS・筑波大学で2026-07-14実測）。APIの指定順へ戻して表示する。
+  return [...items].reverse();
+}
+
+function fetchJpcoar(url, fetchImpl = fetch) {
+  // format=jpcoarをURLで指定するため、WEKO3が406を返し得る独自Acceptヘッダーは付けない。
+  return fetchImpl(url);
 }
 
 // ---- XML パース ----
@@ -173,7 +263,7 @@ function parseXML(xmlText) {
   const startIndex   = getNum('startIndex', 1);
 
   const descriptions = xml.getElementsByTagNameNS(NS_RDF, 'Description');
-  const items = Array.from(descriptions).map(parseItem);
+  const items = normalizeJpcoarItemOrder(Array.from(descriptions).map(parseItem));
 
   return { totalResults, startIndex, items };
 }
@@ -419,7 +509,7 @@ function renderPagination(totalResults, currentPage) {
   prevBtn.className = 'page-btn';
   prevBtn.textContent = '◀ 前へ';
   prevBtn.disabled = currentPage <= 1;
-  prevBtn.addEventListener('click', () => doSearch(currentPage - 1));
+  prevBtn.addEventListener('click', () => loadPage(currentPage - 1));
   pag.appendChild(prevBtn);
 
   const info = document.createElement('span');
@@ -431,18 +521,24 @@ function renderPagination(totalResults, currentPage) {
   nextBtn.className = 'page-btn';
   nextBtn.textContent = '次へ ▶';
   nextBtn.disabled = currentPage >= totalPages;
-  nextBtn.addEventListener('click', () => doSearch(currentPage + 1));
+  nextBtn.addEventListener('click', () => loadPage(currentPage + 1));
   pag.appendChild(nextBtn);
 }
 
 // ---- 検索実行 ----
 
-async function doSearch(page = 1) {
-  const query = {
-    title: document.getElementById('q-title').value.trim(),
-    des:   document.getElementById('q-des').value.trim(),
-    type:  document.getElementById('q-type').value,
-  };
+function collectRawQuery() {
+  const raw = {};
+  SEARCH_FIELDS.forEach(({ elementId, param }) => {
+    raw[param] = document.getElementById(elementId).value;
+  });
+  raw.exactTitleMatch = document.getElementById('q-exact-title').checked;
+  raw.id = document.getElementById('q-id').value;
+  raw.idAttr = document.getElementById('q-id-attr').value;
+  return raw;
+}
+
+function startSearch() {
   const repoVal = document.getElementById('repo-url').value.trim();
   if (!repoVal) {
     showError('リポジトリ URL を入力してください。', 'warn');
@@ -454,21 +550,38 @@ async function doSearch(page = 1) {
     document.getElementById('repo-url').focus();
     return;
   }
-  if (!query.title && !query.des && !query.type) {
-    showError('検索条件を 1 つ以上入力してください。', 'warn');
+
+  const query = normalizeQuery(collectRawQuery());
+  const validation = validateQuery(query);
+  if (!validation.ok) {
+    showError(validation.message, 'warn');
+    if (validation.focusId) document.getElementById(validation.focusId).focus();
     return;
   }
 
-  state.page  = page;
-  state.query = query;
+  state = {
+    page: 1,
+    query: { ...query },
+    sort: document.getElementById('q-sort').value,
+    repoOrigin: new URL(repoVal).origin,
+    totalResults: 0,
+  };
+  loadPage(1);
+}
+
+async function loadPage(page) {
+  if (!state.repoOrigin || !validateQuery(state.query).ok) return;
+  state.page = page;
   setLoading(true);
   hideError();
 
   try {
-    const res = await fetch(buildUrl(query, page));
+    const res = await fetchJpcoar(buildUrl(state.repoOrigin, state.query, page, state.sort));
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     const text = await res.text();
-    renderResults(parseXML(text));
+    const data = parseXML(text);
+    state.totalResults = data.totalResults;
+    renderResults(data);
   } catch (err) {
     showError(`エラー: ${err.message}`, 'warn');
   } finally {
@@ -509,17 +622,41 @@ function init() {
   RESOURCE_TYPES.forEach(rt => {
     const opt = document.createElement('option');
     opt.value = rt.en;
-    opt.textContent = `${rt.ja} (${rt.en})`;
+    const suffix = rt.status === 'v2.0' ? '【v2.0追加】' : rt.status === 'v1.0only' ? '【v1.0のみ】' : '';
+    opt.textContent = `${rt.ja} (${rt.en})${suffix}`;
     select.appendChild(opt);
   });
 
-  document.getElementById('btn-search').addEventListener('click', () => doSearch(1));
+  const idAttrSelect = document.getElementById('q-id-attr');
+  ID_ATTRS.forEach(value => {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = value;
+    idAttrSelect.appendChild(opt);
+  });
 
-  ['q-title', 'q-des'].forEach(id => {
-    document.getElementById(id).addEventListener('keydown', e => {
-      if (e.key === 'Enter') doSearch(1);
+  document.getElementById('btn-search').addEventListener('click', startSearch);
+
+  document.querySelectorAll('#search-section input[type="text"], #repo-url').forEach(input => {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') startSearch();
     });
   });
 }
 
-document.addEventListener('DOMContentLoaded', init);
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', init);
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    buildUrl,
+    normalizeQuery,
+    validateQuery,
+    normalizeJpcoarItemOrder,
+    fetchJpcoar,
+    RESOURCE_TYPES,
+    SEARCH_FIELDS,
+    ID_ATTRS,
+  };
+}
