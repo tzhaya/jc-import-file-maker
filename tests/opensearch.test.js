@@ -10,6 +10,7 @@ const {
   validateQuery,
   normalizeJpcoarItemOrder,
   fetchJpcoar,
+  getResultRange,
   RESOURCE_TYPES,
   ID_ATTRS,
 } = require('../chrome-extension/opensearch_panel.js');
@@ -137,4 +138,10 @@ test('fetchJpcoar はAcceptヘッダー等のオプションを付けずにfetch
   });
   assert.strictEqual(result, response);
   assert.deepStrictEqual(receivedArgs, ['https://example.repo.nii.ac.jp/api/opensearch/search?format=jpcoar']);
+});
+
+test('getResultRange はAPIのstartIndexに依存せずページ番号から件数範囲を算出する', () => {
+  assert.deepStrictEqual(getResultRange(1, 20), { startIndex: 1, endIndex: 20 });
+  assert.deepStrictEqual(getResultRange(2, 20), { startIndex: 21, endIndex: 40 });
+  assert.deepStrictEqual(getResultRange(3, 7), { startIndex: 41, endIndex: 47 });
 });

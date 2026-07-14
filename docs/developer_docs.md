@@ -33,7 +33,7 @@ npm install
 | `tests/abstract.test.js` | `processAbstract` | JATS タグ処理（実体参照の解除順序・`<jats:title>` 除去・`TITLE:` 変換） |
 | `tests/tsv.test.js` | `generateTsv` | 空配列→`null`、行数、タブ/改行サニタイズ、`repoHost` によるスキーマ URL 置換 |
 | `tests/aff-misattribution.test.js` | `detectAffMisattribution` / `canonicalRor` / `affStringSupportsInst` / `warnTooltip` | 所属誤判定（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186) 実例）、頭字語裏付けによる誤検出抑制、ROR 正規化 |
-| `tests/opensearch.test.js` | `normalizeQuery` / `validateQuery` / `buildUrl` / `normalizeJpcoarItemOrder` | OpenSearch語彙78件、条件検証、URL生成、JPCOARページ内順序補正（#237） |
+| `tests/opensearch.test.js` | `normalizeQuery` / `validateQuery` / `buildUrl` / `normalizeJpcoarItemOrder` / `getResultRange` | OpenSearch語彙78件、条件検証、URL生成、JPCOARページ内順序補正、ページ件数範囲（#237） |
 
 **テスト対象は `chrome-extension/*.js` を `require` します。** `make_jc_importer.js`、`openalex_panel.js`、`opensearch_panel.js` にはNodeから読み込むための“テスト用ブロック”が恒常的に存在します。**同期・改修時に削除しないでください**（ブラウザでは `typeof module === 'undefined'`／`typeof document !== 'undefined'` により無害）:
 

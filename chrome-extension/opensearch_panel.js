@@ -248,6 +248,11 @@ function fetchJpcoar(url, fetchImpl = fetch) {
   return fetchImpl(url);
 }
 
+function getResultRange(page, itemCount) {
+  const startIndex = (page - 1) * PAGE_SIZE + 1;
+  return { startIndex, endIndex: startIndex + itemCount - 1 };
+}
+
 // ---- XML パース ----
 
 function parseXML(xmlText) {
@@ -260,12 +265,10 @@ function parseXML(xmlText) {
     return parseInt(el?.textContent || fallback, 10);
   };
   const totalResults = getNum('totalResults', 0);
-  const startIndex   = getNum('startIndex', 1);
-
   const descriptions = xml.getElementsByTagNameNS(NS_RDF, 'Description');
   const items = normalizeJpcoarItemOrder(Array.from(descriptions).map(parseItem));
 
-  return { totalResults, startIndex, items };
+  return { totalResults, items };
 }
 
 function parseItem(desc) {
@@ -314,7 +317,7 @@ function parseItem(desc) {
 // ---- レンダリング ----
 
 function renderResults(data) {
-  const { totalResults, startIndex, items } = data;
+  const { totalResults, items } = data;
 
   if (totalResults === 0) {
     document.getElementById('result-info').textContent = '検索結果はありませんでした。';
@@ -324,7 +327,8 @@ function renderResults(data) {
     return;
   }
 
-  const endIndex = startIndex + items.length - 1;
+  // WEKO3は2ページ目以降もstartIndex=1を返す環境があるため、ページ番号から算出する。
+  const { startIndex, endIndex } = getResultRange(state.page, items.length);
   document.getElementById('result-info').textContent =
     `${totalResults.toLocaleString()} 件中 ${startIndex}〜${endIndex} 件目`;
 
@@ -509,7 +513,7 @@ function renderPagination(totalResults, currentPage) {
   prevBtn.className = 'page-btn';
   prevBtn.textContent = '◀ 前へ';
   prevBtn.disabled = currentPage <= 1;
-  prevBtn.addEventListener('click', () => loadPage(currentPage - 1));
+  prevBtn.addEventListener('click', () => loadPage(currentPage - 1, true));
   pag.appendChild(prevBtn);
 
   const info = document.createElement('span');
@@ -521,7 +525,7 @@ function renderPagination(totalResults, currentPage) {
   nextBtn.className = 'page-btn';
   nextBtn.textContent = '次へ ▶';
   nextBtn.disabled = currentPage >= totalPages;
-  nextBtn.addEventListener('click', () => loadPage(currentPage + 1));
+  nextBtn.addEventListener('click', () => loadPage(currentPage + 1, true));
   pag.appendChild(nextBtn);
 }
 
@@ -569,10 +573,12 @@ function startSearch() {
   loadPage(1);
 }
 
-async function loadPage(page) {
+async function loadPage(page, isPaging = false) {
   if (!state.repoOrigin || !validateQuery(state.query).ok) return;
+  const previousPage = state.page;
   state.page = page;
-  setLoading(true);
+  setLoading(true, !isPaging);
+  if (isPaging) document.getElementById('pagination').classList.add('hidden');
   hideError();
 
   try {
@@ -583,16 +589,18 @@ async function loadPage(page) {
     state.totalResults = data.totalResults;
     renderResults(data);
   } catch (err) {
+    if (isPaging) state.page = previousPage;
     showError(`エラー: ${err.message}`, 'warn');
   } finally {
     setLoading(false);
+    if (isPaging) document.getElementById('pagination').classList.remove('hidden');
   }
 }
 
-function setLoading(on) {
+function setLoading(on, hideResults = true) {
   document.getElementById('loading').classList.toggle('hidden', !on);
   document.getElementById('btn-search').disabled = on;
-  if (on) document.getElementById('results-section').classList.add('hidden');
+  if (on && hideResults) document.getElementById('results-section').classList.add('hidden');
 }
 
 function showError(msg, type = 'warn') {
@@ -645,6 +653,19 @@ function init() {
 }
 
 if (typeof document !== 'undefined') {
+  // サイドパネルで外部リンクを開いても検索結果を失わないよう、現在のタブを遷移させる。
+  // 遷移できない特殊タブでは背面タブにフォールバックする（#150・#201・#228と同型）。
+  if (IS_CHROME_EXTENSION) {
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href]');
+      if (!a) return;
+      const href = a.getAttribute('href');
+      if (/^https?:\/\//i.test(href)) {
+        e.preventDefault();
+        chrome.tabs.update({ url: href }).catch(() => chrome.tabs.create({ url: href, active: false }));
+      }
+    });
+  }
   document.addEventListener('DOMContentLoaded', init);
 }
 
@@ -655,6 +676,7 @@ if (typeof module !== 'undefined' && module.exports) {
     validateQuery,
     normalizeJpcoarItemOrder,
     fetchJpcoar,
+    getResultRange,
     RESOURCE_TYPES,
     SEARCH_FIELDS,
     ID_ATTRS,
