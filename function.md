@@ -1,8 +1,13 @@
-# JAIRO Cloud インポート用TSV生成ツール(β) 機能と技術
+# JAIRO Cloud インポート用TSV生成ツール（β）の機能と技術
 
 ## 機能
 
+このツールは、DOIからのメタデータ取得を起点に、JPCOAR形式での編集、確認、TSV出力までを一つの画面で扱います。
+機能は段階的に追加されてきましたが、現在は単一DOIだけでなく、複数DOIの一括処理やOpenAlexを起点とした登録候補の収集にも対応しています。
+
 ### Phase 1
+
+Phase 1では、外部APIから取得した情報をJPCOARスキーマへ対応づけ、利用者が確認、修正できる編集基盤を整備しました。
 
 - DOIの入力により Crossref / OpenAlex API から書誌情報を自動取得
 - JaLC DOI対応：JaLC REST APIからのメタデータ取得・マッピング（Chrome拡張版のみ有効・CORS非対応のため）（[#6](https://github.com/tzhaya/jc-import-file-maker/issues/6)・[#70](https://github.com/tzhaya/jc-import-file-maker/issues/70)）
@@ -53,6 +58,9 @@
 
 ### Phase 2（全完了）
 
+Phase 2では、編集したメタデータをJAIRO Cloudへ渡すためのTSV出力を実装しました。
+単一DOIから始まり、カスタムテンプレート、複数DOI、ItemType行の自動設定へと出力範囲を広げています。
+
 - Phase 2-A（実装完了）：単一DOI TSV出力（[#85](https://github.com/tzhaya/jc-import-file-maker/issues/85)）
   - DOM → JSON変換（`collectFromDOM()`）→ TSV生成（`generateTsv()`）→ ダウンロード（`exportTsv()`）
   - UTF-8 BOM付き・LF改行
@@ -71,6 +79,9 @@
 
 ### Phase 2以降の機能強化
 
+TSV出力の完成後は、登録前後の作業を減らす機能を追加しています。
+公開済みアイテムの検索、作業中データの復元、機関識別子の誤同定検出がその中心です。
+
 - WEKO3 OpenSearch検索ツール（[#237](https://github.com/tzhaya/jc-import-file-maker/issues/237)・Chrome拡張版限定）
   - JAIRO Cloud / WEKO3の公開済みアイテムを、キーワード・タイトル（完全一致可）・作成者・内容記述・資源タイプ全78件・IDで検索
   - 詳細検索として主題・出版者・言語（`lang`）・収録物名・作成者名識別子に対応。ID種別や作成者名識別子の有効な体系は機関設定に依存
@@ -87,6 +98,9 @@
 ### Phase 3（OpenAlex起点パイプライン前段階・手動運用版・全完了）
 
 検討ドキュメント [`docs/openalex_harvest_feasibility.md`](docs/openalex_harvest_feasibility.md) §5。自機関所属研究者の発表論文を OpenAlex から捕捉し、本ツールへ流し込む手動運用版（[#157](https://github.com/tzhaya/jc-import-file-maker/issues/157)）。
+
+DOIを一件ずつ探して入力する運用では、登録候補の取りこぼしを把握しにくくなります。
+Phase 3では、自機関のROR IDから候補論文を検索し、既登録の可能性を確認してから、複数DOIをインポート処理へ渡せるようにしました。
 
 - 機能B：DOIリスト一括取得（[#154](https://github.com/tzhaya/jc-import-file-maker/issues/154)）
   - 複数DOIを改行/カンマ/空白で投入→正規化・重複除去→順次取得して既存バッチに蓄積。失敗はスキップして継続し、完了後に成功/失敗件数＋失敗DOI一覧を表示
@@ -106,6 +120,8 @@
   - 著者所属のROR識別子: 元データの充足率が低く空欄になりやすい（ランダム40件中、所属あり9件・識別子あり8件）。自動補完はOpenAlex補完のスコープ外（#212）で、[#215](https://github.com/tzhaya/jc-import-file-maker/issues/215)でORCID完全一致等の限定的な方式を検討中（未着手）
 
 ## 技術スタック
+
+ブラウザだけで配布、実行できる構成を維持するため、実装はHTML、CSS、JavaScriptを中心とし、外部ライブラリには依存していません。
 
 - HTML5 / CSS3 / JavaScript（依存ライブラリなし、単一HTMLファイル）
 - 外部API: [Crossref](https://api.crossref.org/), [JaLC](https://api.japanlinkcenter.org/), [DataCite](https://api.datacite.org/), [OpenAlex](https://api.openalex.org/), [ROR](https://ror.org/), [CiNii Research](https://cir.nii.ac.jp/), [KAKEN API](https://support.nii.ac.jp/ja/kaken/api/api_outline), [Open Policy Finder](https://openpolicyfinder.jisc.ac.uk/)
