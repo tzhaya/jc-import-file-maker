@@ -6,36 +6,39 @@
 
 ## 概要
 
-DOIを入力してCrossref / DataCite / OpenAlex APIから書誌情報を取得し、[JAIRO Cloud](https://jpcoar.org/support/jairo-cloud/)へのインポート用TSVファイルを生成するツールです。Chrome拡張機能版では、閲覧中の電子ジャーナルページからDOIを自動取得することもできます。
+DOIから書誌情報を取得できても、JAIRO Cloudへの登録には識別子の確認、メタデータの補完、TSV形式への変換が残ります。
+このツールは、Crossref、DataCite、OpenAlexなどのAPIから情報を集め、[JAIRO Cloud](https://jpcoar.org/support/jairo-cloud/)へのインポート用TSVファイルを生成します。
+Chrome拡張機能版では、閲覧中の電子ジャーナルページからDOIを取得するところから始められます。
 
-特に、以下の課題の解決を目指しています。
+主な用途は次の5つです。
 
 1. 識別子（ORCID、ROR、KAKENなど）の検索時間の短縮
-2. メタデータ入力のサンプルの提示
-3. オープンアクセスポリシーの容易な参照
+2. メタデータ入力候補の取得と編集
+3. オープンアクセスポリシーの確認
 4. [JAIRO Cloud](https://jpcoar.org/support/jairo-cloud/)用インポートファイル（import.zip）作成の支援
 5. 自機関所属の研究者が発表した論文メタデータの調査と取得
 
-通常ブラウザ版とChrome拡張機能版の2つの利用方法があります。
+利用方法は、通常ブラウザ版とChrome拡張機能版の2つです。
+HTMLファイルを直接開いて使うなら通常ブラウザ版、JaLC、KAKEN、Open Policy Finder、機関リポジトリ検索まで一つのサイドパネルで扱うならChrome拡張機能版が適しています。
 
-- 通常ブラウザ版では、以下の機能が利用できます。
-  - Crossref DOIからのメタデータ取り込みと以下のAPIによるデータ補完
-    - 複数のDOIを指定して一括してメタデータを取り込めます。
-    - [Research Organization Registry (ROR)](https://ror.org/)(ISNI)
-    - [OpenAlex](https://openalex.org/)(ORCID)
-    - [CiNii Research](https://cir.nii.ac.jp/)(NCID、科研費課題名)
-  - [OpenAlex](https://openalex.org/) によるOA状況の表示
+- 通常ブラウザ版
+  - Crossref、DataCite DOIからのメタデータ取り込み
+  - 複数DOIの一括取り込み
+  - [Research Organization Registry（ROR）](https://ror.org/)によるISNIの補完
+  - [OpenAlex](https://openalex.org/)によるORCIDの補完とOA状況の表示
+  - [CiNii Research](https://cir.nii.ac.jp/)によるNCID、科研費課題名の補完
   - [JPCOARスキーマ](https://schema.irdb.nii.ac.jp/ja/schema)2.0対応のメタデータ入力
   - 入力メタデータのプレビュー表示
   - [Open Policy Finder](https://openpolicyfinder.jisc.ac.uk/)へのリンク表示
   - インポート用TSVファイル生成
-  - 作業中データの自動保存・復元（タブ／サイドパネルを閉じても次回起動時に復元）
+  - 作業中データの自動保存と復元
   - OpenAlexで自機関所属研究者の最新発表論文の検索と一覧表示
     - 既定値では過去90日に発表された論文を検索します。
     - DOIを出力し、[make_jc_importer.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/make_jc_importer.html)のインポート対象にできます
 
-- Chrome拡張機能版では、通常ブラウザ版に加えて以下の機能が利用できます。APIキーが必要ですが、こちらが高機能です。
-  - 以下の4ツールのタブ切替
+- Chrome拡張機能版
+  - 通常ブラウザ版の全機能
+  - 4つのツールを切り替えるサイドパネル
     - JAIRO Cloud インポート用TSV生成ツール
     - 助成情報検索ツール
     - 機関リポジトリのメタデータ検索（OpenSearch）
@@ -49,6 +52,9 @@ DOIを入力してCrossref / DataCite / OpenAlex APIから書誌情報を取得�
     - 「インポートタブへ送る」ボタンから登録対象とするDOIを「JAIRO Cloud インポート用TSV生成ツール」に送信できます
 
 ### 機能比較
+
+両版の差は、ブラウザのCORS制約を越える必要がある機能に現れます。
+JaLC、KAKEN XML、Open Policy Finder API、機関リポジトリとの照合が必要なら、Chrome拡張機能版を選んでください。
 
 | 機能 | Chrome拡張機能版 | 通常ブラウザ版 | 備考 |
 |------|:---:|:---:|------|
@@ -130,36 +136,39 @@ DOIを入力してCrossref / DataCite / OpenAlex APIから書誌情報を取得�
 
 ### 通常ブラウザ版
 
-HTMLファイルを直接ブラウザで開いて使用します。
+インストールせずに試したい場合は、3つのファイルを同じフォルダへ保存して使用します。
 
-1. [make_jc_importer.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/make_jc_importer.html) ←右クリック→「名前をつけてリンク(先)を保存」で保存
-2. [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js)←右クリック→「名前をつけてリンク(先)を保存」で保存
-3. [tsv_headers_template.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/tsv_headers_template.js)←右クリック→「名前をつけてリンク(先)を保存」で保存
-4. 「メモ帳」などで shared.js を開き、APIキーを入力して保存します。 
-5. make_jc_importer.htmlをブラウザで開きます
+1. [make_jc_importer.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/make_jc_importer.html)を右クリックし、「名前を付けてリンク先を保存」で保存します
+2. [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js)を同じフォルダへ保存します
+3. [tsv_headers_template.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/tsv_headers_template.js)も同じフォルダへ保存します
+4. 必要に応じて、`shared.js`をメモ帳などで開き、APIキーや初期値を設定します
+5. `make_jc_importer.html`をブラウザで開きます
 
 ## 使い方
 
-**このツールはベータ版です。**
-**アイテムタイプ「デフォルトアイテムタイプ（フル）」の形式でのインポート用TSVファイルのみ生成できます。なお、インポートは未検証です。正しく取り込まれないことがあります。**
+> **注意**
+> このツールはベータ版です。
+> 生成できるのは、アイテムタイプ「デフォルトアイテムタイプ（フル）」形式のインポート用TSVファイルです。
+> インポート結果は未検証のため、JAIRO Cloudへ登録する前に内容を確認してください。
 
-APIからのデータ取得・マッピング・編集UI・プレビュー・TSV出力（複数DOIの一括出力を含む）が実装されています。
+基本操作は、DOIの取得、メタデータの確認、TSV出力の3段階です。
 
 1. DOIを「DOI」の入力欄に入力します。
    - （Chrome拡張機能版のみ）電子ジャーナルの論文ページを開いた状態で「ページからDOI取得」ボタンを押すと、ページのmetaタグからDOIを自動入力できます。
-   - 「DOIリスト一括取得」から、複数のDOIをまとめて入植して取得できます。
+   - 「DOIリスト一括取得」では、複数のDOIをまとめて入力して取得できます。
 2. 「データ取得」ボタンを押します
-3. Crossrefなどから必要なメタデータを取得して、「メタデータ確認・編集」として表示します。編集も可能です。
-4. 「プレビュー表示」ボタンでプレビューができます。
+3. 取得したメタデータを「メタデータ確認・編集」で確認し、必要な項目を修正します
+4. 「プレビュー表示」ボタンで出力前の内容を確認します
 5. （Chrome拡張機能版のみ）外国雑誌等でOpen Policy Finderに登録されている雑誌にはDOIの隣に「OAポリシー」のボタンが表示されます。クリックすると、Open Policy Finderから取得したオープンアクセスにできる版や掲載場所の情報を表示します。
-6. TSVファイルとしてダウンロードができます（β版提供中：未検証です）。複数のDOIを連続取得して1つのTSVファイルにまとめて出力することもできます。
+6. 「TSV出力」からファイルをダウンロードします。複数のDOIを取得した場合は、1つのTSVファイルにまとめて出力できます
 
-詳しい使い方と取得したデータの取り扱いは[使い方ガイド](docs/user_guide.md)を参照ください。
+各フィールドの扱い、バッチ処理、DataCite DOIの制限事項は[使い方ガイド](docs/user_guide.md)を参照してください。
 
 ### 助成情報検索ツール
 
-- 付属ツールとして、助成情報検索ツールを同梱しています。
-- 科研費課題番号やJGN課題番号から、助成機関識別子・助成機関名・プログラム情報・研究課題名を検索します。
+謝辞に課題番号が書かれていても、助成機関名やプログラム情報までそろっているとは限りません。
+助成情報検索ツールは、科研費課題番号やJGN課題番号から、助成機関識別子、助成機関名、プログラム情報、研究課題名を検索します。
+
 - Chrome拡張機能版ではサイドパネルのタブから「助成情報検索」に切り替えて利用できます。
 - 通常ブラウザ版では [funder_lookup.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/funder_lookup.html) を右クリック→「名前をつけてリンク(先)を保存」で保存してご利用ください。
   - 動作には [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js) も必要です。同じフォルダに保存してください（インポート用TSV生成ツールの導入時に保存済みであれば共用できます）。
@@ -183,6 +192,9 @@ APIからのデータ取得・マッピング・編集UI・プレビュー・TSV
 
 ### OpenSearch検索ツール（Chrome拡張機能版のみ）
 
+登録しようとしているアイテムが、すでに機関リポジトリで公開されている場合があります。
+OpenSearch検索ツールは、公開済みアイテムを複数の条件で検索し、重複確認に使える情報を表示します。
+
 - Chrome拡張機能版のサイドパネルから「リポジトリコンテンツ検索」に切り替えて利用できます。
 - キーワード・タイトル・作成者・内容記述・資源タイプ・IDを標準条件として検索できます。詳細検索では主題・出版者・言語・収録物名・作成者名識別子を指定できます。
 - 資源タイプはJPCOAR 1.0のみの語彙を含む全78件から選択できます。ID検索の対応種別はリポジトリ設定により異なります。
@@ -192,8 +204,9 @@ APIからのデータ取得・マッピング・編集UI・プレビュー・TSV
 
 ### OpenAlex機関別著作検索
 
-- 付属ツールとして、OpenAlex機関別著作検索ツールを同梱しています。
-- 自機関の ROR ID と、検索対象期間（過去n日・**出版日ベース**、既定90日）、任意で資源タイプを指定して、自機関所属研究者が発表した論文のメタデータを検索します。
+DOIを一件ずつ探す運用では、自機関研究者の新しい論文を見落としたかどうかがわかりません。
+OpenAlex機関別著作検索ツールは、自機関のROR ID、検索対象期間（過去N日、**出版日ベース**、既定90日）、資源タイプを指定し、登録候補となる論文を検索します。
+
 - Chrome拡張機能版ではサイドパネルのタブから「OpenAlex機関別著作検索」に切り替えて利用できます。
 - 検索結果のうち登録対象とするDOIを選び、インポート支援ツールの「DOIリスト一括取得」へ渡せます。
   - 「選択DOIをコピー」で改行区切りのDOIリストをコピーできます。
@@ -281,6 +294,9 @@ APIキー（OpenAlex・CiNii・Open Policy Finder）と初期値（リポジト�
 
 ## 権限とセキュリティについて（Chrome拡張機能版）
 
+Chrome拡張機能版は、ページからのDOI取得と外部APIへの接続のために権限を使用します。
+ページ本文や閲覧履歴を常時収集するための権限ではありません。
+
 | 権限 | 理由 |
 |---|---|
 | `storage` | APIキー・設定をブラウザのローカルストレージに保存 |
@@ -289,7 +305,10 @@ APIキー（OpenAlex・CiNii・Open Policy Finder）と初期値（リポジト�
 | `optional_host_permissions`（`https://*/*`, `http://*/*`） | 電子ジャーナルのドメインは出版社ごとに異なり事前列挙不可のため、ユーザー操作時に実行時要求 |
 | `host_permissions`（学術 API・機関リポジトリ） | KAKEN・JaLC・OPF・WEKO3 リポジトリへの CORS 制約なしアクセス |
 
-**広いホスト権限（`https://*/*`, `http://*/*`）について**: 電子ジャーナルの掲載ページから DOI を抽出する機能のために必要です。インストール時には要求せず、「ページから DOI 取得」ボタンを押したときにのみ許可を求めます。読み取るのは DOI を示す meta タグ・JSON-LD の identifier のみで、ページ本文・閲覧履歴は読みません。ブラウザの設定からいつでも取り消せます。
+**広いホスト権限（`https://*/*`, `http://*/*`）について**：電子ジャーナルの掲載ページからDOIを抽出する機能のために必要です。
+インストール時には要求せず、「ページからDOI取得」ボタンを押したときにのみ許可を求めます。
+読み取るのはDOIを示すmetaタグとJSON-LDのidentifierだけで、ページ本文や閲覧履歴は読みません。
+許可はブラウザの設定からいつでも取り消せます。
 
 Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホスト）のみを対象とし、それ以外のホストへの proxy は拒否します。
 
@@ -303,6 +322,7 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-07-16 | README、使い方ガイド、機能と技術の文章構成を改善。機能事実は変えず、利用形態の選択基準、各ツールの利用場面、長い列挙の導入と段落構成を整理 |
 | 2026-07-14 | Chrome拡張 ver. 1.23.0：WEKO3 OpenSearch検索を拡充（[#237](https://github.com/tzhaya/jc-import-file-maker/issues/237)）。標準・詳細検索、ID値＋ID種別、作成日時ソート、資源タイプ全78件に対応。JPCOAR出力のページ内逆順を補正し、ページング中は初回のリポジトリ・条件・ソートを保持 |
 | 2026-07-10 | 研究課題番号タイプ（JPCOAR 2.0 `awardNumberType`）に対応（[#222](https://github.com/tzhaya/jc-import-file-maker/issues/222)）：TSVテンプレートに列は存在するが常に空欄だった `subitem_award_numbers.subitem_award_number_type` を、JGN（Japan Grant Number）連携（`fetchJgn()` 成功）で取得した体系的番号のとき `JGN` に自動設定するよう変更。`fetchJgn()` の戻り値に `source: 'JGN'` マーカーを追加し、Crossref/JaLC/DataCiteのマッピング3パスで判定。助成情報の編集フォーム（`renderOneFunder()`）に「研究課題番号タイプ」select（「（未設定）/ JGN」、許容値はWEKO ItemTypeスキーマの `null / JGN`）を追加し、`collectFundingField()` で収集。「助成機関を検索」ボタンでもJGN由来のとき自動設定・それ以外はリセット。助成情報検索ツール（`funder_lookup`）はJGN分岐の戻り値に `awardNumberType: 'JGN'` を追加し `FUNDING_COLUMNS` extractorを修正しTSV出力に反映。`generateTsv()` の単体テストを1件追加（`npm test` 計55件）。標準版・Chrome拡張版・両テスト用HTMLに同一実装。`docs/fieldmapping.md`・`docs/user_guide.md` を更新。manifest version `1.21.2` → `1.22.0` |
 | 2026-07-09 | DataCite API 404時のエラーメッセージを改善（[#211](https://github.com/tzhaya/jc-import-file-maker/issues/211)）：`fetchDataCite()` は404時に「DOIが見つかりません（DataCite 404）」とだけ表示していたため、DOI Registration Agency判定はDataCiteだがDataCite API側でメタデータを取得できない（削除・非公開・Gone状態等の）DOI（例: `10.5281/zenodo.19493734`、doi.org/Zenodoで410 Gone）でも入力ミスのように見えていた。エラー文言を「DOIメタデータを取得できません（DataCite 404）。削除・非公開・Gone状態の可能性があります。」に変更し、原因の可能性がわかるようにした。取得可能なDataCite DOIの正常系は変更なし。標準版・Chrome拡張版に同一実装。`docs/user_guide.md` のDataCite DOI制限事項節に補足を追記。manifest version `1.21.1` → `1.21.2` |
