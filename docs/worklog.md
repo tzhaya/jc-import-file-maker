@@ -1,6 +1,26 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-17（#241 重複照合バッジ改善・先行分＋OpenAlex資源タイプ複数選択）
+最終更新: 2026-07-17（#241 DOI直接ID検索による重複照合の補強）
+
+## DOI直接ID検索による登録済み照合の補強（#241 改善2, 2026-07-17）
+
+### 概要
+
+筑波大学・JIRCAS・国立国語研究所で `id_attr=DOI` と `id_attr=selfDOI` を実測した。外部DOIは `DOI`、自リポジトリ登録DOIは `selfDOI` で取得できる例を確認したため、両方の識別子検索で完全一致を調べた後、従来のタイトル検索へフォールバックする三段構成とした。
+
+### 修正内容
+
+1. `buildRepoSearchUrl()` を追加し、`URL` / `URLSearchParams` で `format=jpcoar`、`id`、`id_attr`、`size=20`、`page=1` を構築。DOI中の `/` を安全に保持。
+2. `matchAgainstRepo(..., { fetchImpl, parseXml })` を注入可能化。候補DOIが空なら識別子検索をスキップし、`DOI`、`selfDOI` の順で完全一致を確認する。一致時は `{ kind:'red', via:'doi' }`、両方が正常に0件・不一致ならタイトル検索へフォールバック。
+3. 識別子検索の通信、HTTP、XML解析エラーは `{ kind:'error' }` とし、`⚠ 照合不可` 表示とチェックOFFで停止。障害を🟢未登録に見せない。
+4. `tests/openalex-match.test.js` にURL生成、`DOI`完全一致、`selfDOI`完全一致、正常不一致フォールバック、DOI空、HTTPエラー、XML解析エラーを追加。
+5. 標準版 `openalex_lookup.html` は照合非実行だがinline parityを維持。manifest version `1.24.0` → `1.25.0`。
+
+### 検証
+
+- `npm test` ALL PASS（静的チェック＋ユニットテスト95件）。
+- `/e2e-test openalex` ALL PASSED（JIRCASのROR `005pdtr14`、直近30日、候補6件。件数表示、DOIリンク、所属確認列を確認）。
+- DOI ID検索の実測結果と採否判断をWEKO3 OpenSearch仕様書に記録。
 
 ## OpenAlex 資源タイプの複数選択・既定 article 化（#241 追補, 2026-07-17）
 

@@ -102,10 +102,10 @@ JaLC、KAKEN XML、Open Policy Finder API、機関リポジトリとの照合が
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-07-17 | ver. 1.24.0 | OpenAlex機関別著作検索の資源タイプを複数選択可能にし既定を「論文 (article)」に変更、登録済み照合バッジ（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）を改善（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)）。1つ前は WEKO3 OpenSearchの検索項目拡充（[#237](https://github.com/tzhaya/jc-import-file-maker/issues/237)、ver. 1.23.0） |
+| Chrome拡張機能版 | 2026-07-17 | ver. 1.25.0 | OpenAlex機関別著作検索の登録済み照合を `DOI` → `selfDOI` → タイトル検索の三段構成に改善（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)）。識別子検索の完全一致を早期に検出し、両方が正常に0件／不一致の場合は従来のタイトル検索へフォールバック |
 | インポート用TSV生成ツール | 2026-07-10 | — | 研究課題番号タイプ（JPCOAR 2.0 `awardNumberType`）に対応（[#222](https://github.com/tzhaya/jc-import-file-maker/issues/222)）。JGN連携で取得した体系的番号には `JGN` を自動設定し、助成情報の編集フォームでも選択可能に |
 | 助成情報検索ツール | 2026-07-10 | — | 研究課題番号タイプ列に対応（[#222](https://github.com/tzhaya/jc-import-file-maker/issues/222)）。JGN課題番号で検索した場合、TSV出力の「研究課題番号タイプ」列に `JGN` を出力 |
-| OpenAlex機関別著作検索 | 2026-07-17 | ver. 1.24.0 | 検索条件の「資源タイプ」を複数選択可能にし、既定を「論文 (article)」に変更。あわせて登録済み照合バッジ（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）を spec の知見で改善（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)）：🟡「要確認」の代表リンクをJPCOARページ内逆順補正で先頭ヒットに揃え、照合先を許可ホスト（`*.repo.nii.ac.jp` ＋登録済みリポジトリ）に限定。共通ロジックを `weko3_opensearch_core.js` に集約し単体テストを追加 |
+| OpenAlex機関別著作検索 | 2026-07-17 | ver. 1.25.0 | 登録済み照合で `DOI` と `selfDOI` を順に検索し、返戻JPCOAR内の候補DOI完全一致を検出した場合は登録済み可能性大と確定。両方が正常に0件／不一致ならタイトル検索へ進み、通信・解析エラーは未登録扱いにせず照合不可と表示（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)） |
 
 ## 導入方法
 
@@ -211,7 +211,7 @@ OpenAlex機関別著作検索ツールは、自機関のROR ID、検索対象期
 - 検索結果のうち登録対象とするDOIを選び、インポート支援ツールの「DOIリスト一括取得」へ渡せます。
   - 「選択DOIをコピー」で改行区切りのDOIリストをコピーできます。
   - Chrome拡張機能版では「インポートタブへ送る」ボタンから直接送信できます。
-- Chrome拡張機能版では、各候補に自機関リポジトリでの登録状況バッジ（⚪ 登録済みの可能性大／🟡 要確認／🟢 未登録の可能性）を表示します。
+- Chrome拡張機能版では、各候補に自機関リポジトリでの登録状況バッジ（⚪ 登録済みの可能性大／🟡 要確認／🟢 未登録の可能性）を表示します。`DOI` と `selfDOI` の識別子検索で完全一致を確認できない場合はタイトル検索へフォールバックします。
 - 通常ブラウザ版では [openalex_lookup.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/openalex_lookup.html) を右クリック→「名前をつけてリンク(先)を保存」で保存してご利用ください。
   - 動作には [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js) も必要です。同じフォルダに保存してください（インポート用TSV生成ツールの導入時に保存済みであれば共用できます）。
 
@@ -322,6 +322,7 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-07-17 | Chrome拡張 ver. 1.25.0：OpenAlex機関別著作検索の登録済み照合に `DOI`／`selfDOI`検索を追加（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241) 改善2）。筑波大学・JIRCAS・国立国語研究所で実測し、外部DOIを `DOI`、自リポジトリ登録DOIを `selfDOI` で取得できる例を確認。両方の返戻JPCOAR内で候補DOIの完全一致を調べ、正常な0件・不一致は従来のタイトル検索へフォールバック。通信・HTTP・XML解析エラーは障害を未登録に見せず `⚠ 照合不可` として停止。URLは `URL` / `URLSearchParams` で構築し、DOI中の `/` を保持。標準版は照合非実行だがinline parityを反映 |
 | 2026-07-17 | OpenAlex 機関別著作検索の「資源タイプ」を複数選択可能にし、既定を「論文 (article)」に変更（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)）：`<select multiple>` 化し `init()` で `article` を既定選択。`buildWorksUrl` は複数タイプを OpenAlex の OR 記法（`type:article\|review`、1フィルタ内 `\|` 区切り）で組み立て、未選択なら type フィルタを付けない。作業中データの保存 `type` を配列化し、旧形式（単一文字列）の復元にも後方互換対応。あわせて登録済み照合バッジ（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）を `weko3-opensearch-client-spec` の知見で改善（先行分）：(1) 🟡「要確認」の代表リンクが JPCOAR ページ内逆順のため最後のヒットを指していた不具合を、`normalizeJpcoarItemOrder`（spec §4.1）で API 指定順へ補正し先頭ヒットに修正。(2) 照合先を許可ホスト（HTTPS の `*.repo.nii.ac.jp` ＋登録済みリポジトリ、spec §2/§7）に限定し、許可外は fetch せず `—` 表示。(3) `openalex_panel.js` と `opensearch_panel.js` に重複していた共通純粋関数・定数（`isAllowedHost`／`normalizeJpcoarItemOrder`／`NS_RDF`／`bareDoi`）を新規コア `chrome-extension/weko3_opensearch_core.js` へ集約（ブラウザは名前空間 `globalThis.Weko3OpenSearchCore`、Node は `require`。素の const 再宣言によるブラウザクラッシュを回避）。`tests/openalex-match.test.js` を新設し `parseRepoSearch` はパーサー注入で DOM 非依存にテスト（`npm test` 計87件）。標準版 `openalex_lookup.html` は CORS 制約で照合を実行しないためコア非読込・inline 維持でロジック parity を反映。DOI 直接 ID 検索（spec §8）は実機確認を要するため後続対応。manifest version `1.23.0` → `1.24.0` |
 | 2026-07-14 | Chrome拡張 ver. 1.23.0：WEKO3 OpenSearch検索を拡充（[#237](https://github.com/tzhaya/jc-import-file-maker/issues/237)）。標準・詳細検索、ID値＋ID種別、作成日時ソート、資源タイプ全78件に対応。JPCOAR出力のページ内逆順を補正し、ページング中は初回のリポジトリ・条件・ソートを保持 |
 | 2026-07-10 | 研究課題番号タイプ（JPCOAR 2.0 `awardNumberType`）に対応（[#222](https://github.com/tzhaya/jc-import-file-maker/issues/222)）：TSVテンプレートに列は存在するが常に空欄だった `subitem_award_numbers.subitem_award_number_type` を、JGN（Japan Grant Number）連携（`fetchJgn()` 成功）で取得した体系的番号のとき `JGN` に自動設定するよう変更。`fetchJgn()` の戻り値に `source: 'JGN'` マーカーを追加し、Crossref/JaLC/DataCiteのマッピング3パスで判定。助成情報の編集フォーム（`renderOneFunder()`）に「研究課題番号タイプ」select（「（未設定）/ JGN」、許容値はWEKO ItemTypeスキーマの `null / JGN`）を追加し、`collectFundingField()` で収集。「助成機関を検索」ボタンでもJGN由来のとき自動設定・それ以外はリセット。助成情報検索ツール（`funder_lookup`）はJGN分岐の戻り値に `awardNumberType: 'JGN'` を追加し `FUNDING_COLUMNS` extractorを修正しTSV出力に反映。`generateTsv()` の単体テストを1件追加（`npm test` 計55件）。標準版・Chrome拡張版・両テスト用HTMLに同一実装。`docs/fieldmapping.md`・`docs/user_guide.md` を更新。manifest version `1.21.2` → `1.22.0` |

@@ -234,7 +234,9 @@ APIには次の検索パラメータが定義されているが、Issue #237で�
 
 識別子検索では、値と種別を組み合わせる。
 
-現行クライアントはID値とID種別の片方だけでは通信しない。検索可否は機関・識別子種別・検索インデックス設定に依存し、完全一致や1件だけの応答は保証しない。
+現行クライアントは、ID値とID種別の片方だけでは通信しない。
+
+検索可否は機関、識別子種別、検索インデックス設定に依存するため、完全一致や1件だけの応答は保証されない。
 
 代表例:
 
@@ -256,10 +258,22 @@ id=<identifier-value>&id_attr=<identifier-type>
 - `fullTextURL`
 - `identifier`
 
+DOI検索では、`DOI` と `selfDOI` を区別する。
+
+- **`DOI`**：外部DOIを検索する識別子種別。
+- **`selfDOI`**：リポジトリ自身が登録したDOIを検索する識別子種別。
+
+ただし、この対応はすべての機関で同一とは限らない。
+
+JIRCASでは、JPCOARの `identifierRegistration` に `identifierType="JaLC"` で格納されたDOIが、`id_attr=DOI` ではなく `id_attr=selfDOI` で検索された。
+
+したがって、登録済み確認でDOIを検索する場合は、`DOI` と `selfDOI` の両方を試し、返戻JPCOAR内のDOI完全一致を確認する。
+
 例:
 
 ```text
 /api/opensearch/search?id=10.1234/example&id_attr=DOI
+/api/opensearch/search?id=10.1234/example&id_attr=selfDOI
 ```
 
 ### 6.5 日付範囲
@@ -1193,11 +1207,16 @@ https://example.repo.nii.ac.jp/api/opensearch/search?creator=Hayashi&type=journa
 https://example.repo.nii.ac.jp/api/opensearch/search?creator=Hayashi&format=jpcoar&size=20&page=1
 ```
 
-### DOI
+### DOIとselfDOI
 
 ```text
 https://example.repo.nii.ac.jp/api/opensearch/search?id=10.1234%2Fexample&id_attr=DOI
+https://example.repo.nii.ac.jp/api/opensearch/search?id=10.1234%2Fexample&id_attr=selfDOI
 ```
+
+`id_attr=DOI` が0件でも、同じ値を `id_attr=selfDOI` で検索できる場合がある。
+
+JIRCASでは、OAI-PMH出力に `identifierRegistration identifierType="JaLC"` として存在する `10.34556/0002000483` が、この条件に該当した。
 
 ---
 
@@ -1211,6 +1230,7 @@ https://example.repo.nii.ac.jp/api/opensearch/search?id=10.1234%2Fexample&id_att
 - 作成者検索は完全一致検索ではない。
 - `exact_title_match` はタイトル専用であり、作成者の完全一致には利用しない。
 - 機関間互換性を重視する場合は、内部JSONよりJPCOAR形式を優先する。
+- DOIによる登録済み確認では、`id_attr=DOI` と `id_attr=selfDOI` の両方を検索し、返戻JPCOAR内の正規化済みDOIが完全一致した場合だけ一致と判定する。
 
 ## 検索パラメータとWEKO3／JPCOARフィールド対応表
 
@@ -1259,7 +1279,7 @@ https://example.repo.nii.ac.jp/api/opensearch/search?id=10.1234%2Fexample&id_att
 | パラメータ | 用途 | 関連フィールド／JPCOAR要素 |
 |---|---|---|
 | `sbjscheme` | 主題スキーム指定 | `subject.subjectScheme` / `subject/@subjectScheme` |
-| `id_attr` | 識別子種別指定 | DOI、ISBN、ISSN、NCID、PMID、URI等。JPCOARでは `identifierRegistration`、`sourceIdentifier`、`relation/relatedIdentifier`、`creator/nameIdentifier` 等に分散する。 |
+| `id_attr` | 識別子種別指定 | `DOI`、`selfDOI`、ISBN、ISSN、NCID、PMID、URI等。JPCOARでは `identifierRegistration`、`sourceIdentifier`、`relation/relatedIdentifier`、`creator/nameIdentifier` 等に分散する。`DOI` と `selfDOI` は別の検索対象になる場合がある。 |
 | `fd_attr` | ファイル日付種別指定 | `file.date.dateType` / `file/date/@dateType` |
 | `format` | レスポンス形式指定 | `jpcoar`, `atom`, `rss`。省略時はJSON。 |
 | `size` | 1ページ当たりの件数 | JPCOAR要素ではなくAPI制御値。 |

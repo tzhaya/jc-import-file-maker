@@ -110,7 +110,7 @@ Phase 3では、自機関のROR IDから候補論文を検索し、既登録の�
   - 選択DOIを改行区切りでコピー／（拡張版）`chrome.storage.local` 経由でインポートタブの一括取得欄へ受け渡し。検索条件・結果・照合・選択状態を自動保存し次回既定表示（キー `openAlexSearch`）
   - 標準版 `openalex_lookup.html`（検索ロジックをHTMLに内蔵）／Chrome拡張タブ。CONFIG・設定ページに `DEFAULT_ROR_ID`／`DEFAULT_OPENALEX_DAYS` を追加
 - 登録済み照合バッジ（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)・Chrome拡張版限定）
-  - 候補タイトルを正規化して自機関リポジトリの OpenSearch を検索し、返戻 JPCOAR 内の識別子（`identifier`／`relatedIdentifier`／`identifierRegistration`）から DOI を抽出して照合。⚪ 登録済みの可能性大（タイトルヒット＋DOI一致）／🟡 要確認（ヒット＋DOI不一致）／🟢 未登録の可能性（ヒットなし）の3値表示
+  - `DOI`、`selfDOI` の順で識別子検索を実行し、返戻 JPCOAR 内の識別子（`identifier`／`relatedIdentifier`／`identifierRegistration`）に候補DOIが完全一致すれば確定。両方が正常に0件・不一致なら候補タイトル検索へフォールバックし、⚪ 登録済みの可能性大（DOI一致）／🟡 要確認（タイトルヒット＋DOI不一致）／🟢 未登録の可能性（タイトルヒットなし）の3値表示。識別子検索の通信・解析エラーは `⚠ 照合不可` として未登録扱いにしない（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)）
 - TSVフォーマット修正：タイトルの出版社XMLタグ片・改行を `cleanInlineText()` で除去し、`generateTsv()` で全セルの制御文字を空白化してインポート時の行崩れを防止
 - DataCite DOI対応（[#197](https://github.com/tzhaya/jc-import-file-maker/issues/197)設計→[#208](https://github.com/tzhaya/jc-import-file-maker/issues/208)実装→[#212](https://github.com/tzhaya/jc-import-file-maker/issues/212) OpenAlex補完→[#214](https://github.com/tzhaya/jc-import-file-maker/issues/214) OPF連動、全完了）
   - DataCite REST API（CORS対応・認証不要）からメタデータを取得し JPCOAR スキーマへマッピング。標準版・Chrome拡張版とも同一実装で動作。マッピング仕様は [docs/datacite_jpcoar_mapping.md](docs/datacite_jpcoar_mapping.md) を参照
