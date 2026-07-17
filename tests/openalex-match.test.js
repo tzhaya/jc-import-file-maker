@@ -17,7 +17,11 @@ const {
   bareDoi,
   isAllowedHost,
   normalizeJpcoarItemOrder,
+  buildWorksUrl,
 } = require('../chrome-extension/openalex_panel.js');
+
+// buildWorksUrl は CONFIG グローバル（APIキー）を参照するためスタブを用意
+global.CONFIG = global.CONFIG || { OpenAlex_API_KEY: '' };
 
 const core = require('../chrome-extension/weko3_opensearch_core.js');
 
@@ -135,6 +139,34 @@ test('改善1: parseRepoSearch → classifyMatch で 🟡 代表リンクが API
     { itemUrl: 'pageBottom', dois: [] },
   ]));
   assert.deepStrictEqual(classifyMatch(items, '10.1/nomatch'), { kind: 'yellow', itemUrl: 'pageBottom' });
+});
+
+// ============================================================
+// buildWorksUrl（資源タイプ複数選択・OpenAlex type フィルタ OR）
+// ============================================================
+function typeFilterOf(url) {
+  const filter = new URL(url).searchParams.get('filter');
+  return (filter.split(',').find(f => f.startsWith('type:')) || '').replace(/^type:/, '');
+}
+
+test('buildWorksUrl: 資源タイプ未選択（空配列）なら type フィルタを付けない', () => {
+  const url = buildWorksUrl('https://ror.org/x', '2026-01-01', [], '*');
+  assert.ok(!new URL(url).searchParams.get('filter').includes('type:'));
+});
+
+test('buildWorksUrl: 単一タイプは type:<value>', () => {
+  const url = buildWorksUrl('https://ror.org/x', '2026-01-01', ['article'], '*');
+  assert.strictEqual(typeFilterOf(url), 'article');
+});
+
+test('buildWorksUrl: 複数タイプは `|`（OR）で連結する', () => {
+  const url = buildWorksUrl('https://ror.org/x', '2026-01-01', ['article', 'review', 'book-chapter'], '*');
+  assert.strictEqual(typeFilterOf(url), 'article|review|book-chapter');
+});
+
+test('buildWorksUrl: 後方互換で単一文字列も受け付ける', () => {
+  const url = buildWorksUrl('https://ror.org/x', '2026-01-01', 'article', '*');
+  assert.strictEqual(typeFilterOf(url), 'article');
 });
 
 // ============================================================

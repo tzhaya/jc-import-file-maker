@@ -1,6 +1,21 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-17（#241 重複照合バッジ改善・先行分）
+最終更新: 2026-07-17（#241 重複照合バッジ改善・先行分＋OpenAlex資源タイプ複数選択）
+
+## OpenAlex 資源タイプの複数選択・既定 article 化（#241 追補, 2026-07-17）
+
+### 概要
+
+OpenAlex 機関別著作検索の検索条件「資源タイプ」は単一選択（既定「-- 指定なし --」＝全タイプ）だった。利用場面（機関リポジトリ登録候補の抽出）では論文が主対象のため、既定を「論文 (article)」にし、かつ複数タイプの同時指定を可能にした。
+
+### 修正内容
+
+1. **UI**: `<select id="q-type">` を `multiple size="6"` 化し、`-- 指定なし --` 選択肢を削除（複数選択では未選択＝絞り込みなし）。操作ヒント（Ctrl/⌘+クリック、既定 article）を `form-hint` で追加。
+2. **既定選択**: `init()` の選択肢構築時に `article` を既定選択。
+3. **URL 構築**: `buildWorksUrl(ror, fromDate, types, cursor)` を配列対応にし、OpenAlex の 1 フィルタ内 OR 記法（`type:article|review|book-chapter`、`|` 区切り）で組み立て。未選択なら type フィルタを付けない。単一文字列も後方互換で受理。OpenAlex API で `type:article|review` の OR 動作を実測確認（count が単一より増加）。
+4. **保存/復元**: 作業中データ（#162）の `query.type` を配列化。復元は旧形式（単一文字列）と新形式（配列）の両対応で、各 option の `selected` を明示反映。
+5. **テスト**: `buildWorksUrl` を `module.exports` に公開し、`tests/openalex-match.test.js` に未選択・単一・複数（`|`連結）・後方互換の4ケースを追加（`npm test` 計87件）。`CONFIG` グローバルはテストでスタブ。
+6. 標準版 `openalex_lookup.html` にも同一実装を parity 反映。E2E（`/e2e-test openalex`）で multiple 化・既定 article・検索成功を確認。
 
 ## 重複照合バッジ（#156）の spec 知見による改善（#241・先行分, 2026-07-17）
 

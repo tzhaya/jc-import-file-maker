@@ -98,10 +98,9 @@
   <p class="form-hint">出版日（from_publication_date）ベースで過去N日分を検索します。既定 90 日。</p>
   <div class="form-row">
     <label for="q-type">資源タイプ</label>
-    <select id="q-type">
-      <option value="">-- 指定なし --</option>
-    </select>
+    <select id="q-type" multiple size="6"></select>
   </div>
+  <p class="form-hint">Ctrl（Mac は ⌘）+クリックで複数選択できます。既定は「論文 (article)」。未選択の場合は資源タイプで絞り込みません。</p>
   <div class="form-row">
     <label for="oa-repo-url">リポジトリURL</label>
     <input type="text" id="oa-repo-url" placeholder="https://example.repo.nii.ac.jp/">

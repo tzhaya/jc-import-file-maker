@@ -90,13 +90,15 @@ function isoNDaysAgo(n) {
 
 // ---- URL 構築 ----
 
-function buildWorksUrl(ror, fromDate, type, cursor) {
+function buildWorksUrl(ror, fromDate, types, cursor) {
   const filters = [
     'authorships.institutions.ror:' + ror,
     'from_publication_date:' + fromDate,
     'has_doi:true',
   ];
-  if (type) filters.push('type:' + encodeURIComponent(type));
+  // 資源タイプは複数選択可。OpenAlex は 1 フィルタ内の複数値を `|`（OR）で表現する。
+  const typeList = (Array.isArray(types) ? types : [types]).filter(Boolean);
+  if (typeList.length) filters.push('type:' + typeList.map(encodeURIComponent).join('|'));
   let url = 'https://api.openalex.org/works'
     + '?filter=' + filters.join(',')
     + '&select=' + encodeURIComponent('doi,title,publication_date,primary_location,open_access,authorships')
@@ -110,13 +112,13 @@ function buildWorksUrl(ror, fromDate, type, cursor) {
 
 // ---- 検索（cursor paging で全件取得） ----
 
-async function fetchAllWorks(ror, fromDate, type, onProgress) {
+async function fetchAllWorks(ror, fromDate, types, onProgress) {
   const out = [];
   let cursor = '*';
   let page = 0;
   while (cursor && page < OA_MAX_PAGES) {
     page++;
-    const res = await fetch(buildWorksUrl(ror, fromDate, type, cursor));
+    const res = await fetch(buildWorksUrl(ror, fromDate, types, cursor));
     if (!res.ok) {
       if (res.status === 401 || res.status === 403) {
         throw new Error('OpenAlex APIキーが必要、または無効です（' + res.status + '）。設定でAPIキーを確認してください。');
@@ -530,7 +532,7 @@ function buildOaState() {
     query: {
       ror: document.getElementById('q-ror').value.trim(),
       days: document.getElementById('q-days').value.trim(),
-      type: document.getElementById('q-type').value,
+      type: Array.from(document.getElementById('q-type').selectedOptions).map(o => o.value),
       repoUrl: (repoInput && repoInput.value.trim()) || '',
     },
     works: oaWorks.map(slimWork),
@@ -583,7 +585,14 @@ async function restoreOpenAlexSearch() {
   if (saved.query) {
     if (saved.query.ror)  document.getElementById('q-ror').value = saved.query.ror;
     if (saved.query.days) document.getElementById('q-days').value = saved.query.days;
-    if (saved.query.type) document.getElementById('q-type').value = saved.query.type;
+    if (saved.query.type !== undefined) {
+      // 旧形式（単一文字列）と新形式（配列）の両対応。選択を明示的に反映する。
+      const savedTypes = Array.isArray(saved.query.type)
+        ? saved.query.type
+        : (saved.query.type ? [saved.query.type] : []);
+      const typeSelect = document.getElementById('q-type');
+      Array.from(typeSelect.options).forEach(o => { o.selected = savedTypes.includes(o.value); });
+    }
     const repo = document.getElementById('oa-repo-url');
     if (repo && saved.query.repoUrl) repo.value = saved.query.repoUrl;
   }
@@ -717,7 +726,7 @@ async function doSearch() {
   const ror = normalizeRor(document.getElementById('q-ror').value);
   const daysRaw = document.getElementById('q-days').value.trim();
   const days = parseInt(daysRaw, 10);
-  const type = document.getElementById('q-type').value;
+  const types = Array.from(document.getElementById('q-type').selectedOptions).map(o => o.value).filter(Boolean);
 
   if (!ror) {
     showError('ROR ID を入力してください。', 'warn');
@@ -742,7 +751,7 @@ async function doSearch() {
   oaToDate = isoNDaysAgo(0);
 
   try {
-    oaWorks = await fetchAllWorks(ror, fromDate, type, (n, total) => {
+    oaWorks = await fetchAllWorks(ror, fromDate, types, (n, total) => {
       setLoading(true, `取得中… ${n}${total ? ' / ' + total : ''} 件`);
     });
     oaMatches = {};               // 再検索で前回の照合結果を破棄（入れ替え）
@@ -773,12 +782,13 @@ async function init() {
   if (CONFIG.DEFAULT_ROR_ID && !rorInput.value) rorInput.value = CONFIG.DEFAULT_ROR_ID;
   if (!daysInput.value) daysInput.value = CONFIG.DEFAULT_OPENALEX_DAYS || 90;
 
-  // 資源タイプ select を構築
+  // 資源タイプ select（複数選択可）を構築。既定は「論文 (article)」を選択。
   const select = document.getElementById('q-type');
   OA_RESOURCE_TYPES.forEach(rt => {
     const opt = document.createElement('option');
     opt.value = rt.value;
     opt.textContent = rt.ja;
+    if (rt.value === 'article') opt.selected = true;
     select.appendChild(opt);
   });
 
@@ -854,6 +864,8 @@ if (typeof module !== 'undefined' && module.exports) {
     detectAffMisattribution, warnTooltip, canonicalRor, affStringSupportsInst,
     // #241 照合純粋関数（tests/openalex-match.test.js から参照）
     normalizeTitleForSearch, parseRepoSearch, classifyMatch,
+    // #241 追補: OpenAlex Works URL 構築（資源タイプ複数選択の検証用）
+    buildWorksUrl,
     // コア re-export（テストが同一モジュールから取得できるよう）
     bareDoi, isAllowedHost, normalizeJpcoarItemOrder,
   };
