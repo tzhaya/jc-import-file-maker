@@ -18,6 +18,8 @@ const {
   isAllowedHost,
   normalizeJpcoarItemOrder,
   buildWorksUrl,
+  buildRepoSearchUrl,
+  matchAgainstRepo,
 } = require('../chrome-extension/openalex_panel.js');
 
 // buildWorksUrl は CONFIG グローバル（APIキー）を参照するためスタブを用意
@@ -39,6 +41,10 @@ function fakeXml(records, { parserError = false } = {}) {
   };
 }
 const parseWith = records => xmlText => fakeXml(records);
+
+function response(body, { ok = true, status = 200 } = {}) {
+  return { ok, status, text: async () => body };
+}
 
 // ============================================================
 // normalizeTitleForSearch
@@ -139,6 +145,132 @@ test('改善1: parseRepoSearch → classifyMatch で 🟡 代表リンクが API
     { itemUrl: 'pageBottom', dois: [] },
   ]));
   assert.deepStrictEqual(classifyMatch(items, '10.1/nomatch'), { kind: 'yellow', itemUrl: 'pageBottom' });
+});
+
+// ============================================================
+// matchAgainstRepo（改善2: DOI ID検索 → タイトル検索）
+// ============================================================
+test('buildRepoSearchUrl: DOI中の `/` を保持しID検索パラメータを設定する', () => {
+  const url = new URL(buildRepoSearchUrl('https://example.repo.nii.ac.jp/', {
+    id: '10.1234/example',
+    id_attr: 'DOI',
+  }));
+  assert.strictEqual(url.pathname, '/api/opensearch/search');
+  assert.strictEqual(url.searchParams.get('id'), '10.1234/example');
+  assert.strictEqual(url.searchParams.get('id_attr'), 'DOI');
+  assert.strictEqual(url.searchParams.get('format'), 'jpcoar');
+  assert.strictEqual(url.searchParams.get('size'), '20');
+  assert.strictEqual(url.searchParams.get('page'), '1');
+});
+
+test('matchAgainstRepo: DOI完全一致なら1回の検索でred確定（via: doi）', async () => {
+  const calls = [];
+  const result = await matchAgainstRepo('https://example.repo.nii.ac.jp/', 'unused title', '10.1234/MATCH', {
+    fetchImpl: async url => {
+      calls.push(new URL(url));
+      return response('doi-hit');
+    },
+    parseXml: () => fakeXml([{ itemUrl: 'record-1', dois: ['10.1234/match'] }]),
+  });
+  assert.deepStrictEqual(result, { kind: 'red', itemUrl: 'record-1', via: 'doi' });
+  assert.strictEqual(calls.length, 1);
+  assert.strictEqual(calls[0].searchParams.get('id'), '10.1234/match');
+  assert.strictEqual(calls[0].searchParams.get('id_attr'), 'DOI');
+});
+
+test('matchAgainstRepo: DOI不一致でもselfDOI完全一致なら2回目でred確定する', async () => {
+  const calls = [];
+  const result = await matchAgainstRepo('https://example.repo.nii.ac.jp/', 'unused title', '10.34556/0002000483', {
+    fetchImpl: async url => {
+      calls.push(new URL(url));
+      return response(calls.length === 1 ? 'doi-miss' : 'self-doi-hit');
+    },
+    parseXml: text => text === 'doi-miss'
+      ? fakeXml([])
+      : fakeXml([{ itemUrl: 'jircas-record', dois: ['10.34556/0002000483'] }]),
+  });
+  assert.deepStrictEqual(result, { kind: 'red', itemUrl: 'jircas-record', via: 'doi' });
+  assert.strictEqual(calls.length, 2);
+  assert.deepStrictEqual(calls.map(url => url.searchParams.get('id_attr')), ['DOI', 'selfDOI']);
+});
+
+test('matchAgainstRepo: DOIとselfDOIが不一致ならタイトル検索へフォールバックする', async () => {
+  const calls = [];
+  const result = await matchAgainstRepo('https://example.repo.nii.ac.jp/', 'A study title', '10.1234/target', {
+    fetchImpl: async url => {
+      const parsed = new URL(url);
+      calls.push(parsed);
+      return response(parsed.searchParams.has('title') ? 'title-hit' : 'doi-miss');
+    },
+    parseXml: text => text === 'doi-miss'
+      ? fakeXml([{ itemUrl: 'other', dois: ['10.1234/other'] }])
+      : fakeXml([{ itemUrl: 'target', dois: ['10.1234/target'] }]),
+  });
+  assert.deepStrictEqual(result, { kind: 'red', itemUrl: 'target' });
+  assert.strictEqual(calls.length, 3);
+  assert.deepStrictEqual(calls.slice(0, 2).map(url => url.searchParams.get('id_attr')), ['DOI', 'selfDOI']);
+  assert.strictEqual(calls[2].searchParams.get('title'), 'A study title');
+  assert.strictEqual(calls[2].searchParams.has('id'), false);
+});
+
+test('matchAgainstRepo: DOIが空ならID検索を行わずタイトル検索だけを1回行う', async () => {
+  const calls = [];
+  const result = await matchAgainstRepo('https://example.repo.nii.ac.jp/', 'Title only', '', {
+    fetchImpl: async url => {
+      calls.push(new URL(url));
+      return response('title-empty');
+    },
+    parseXml: () => fakeXml([]),
+  });
+  assert.deepStrictEqual(result, { kind: 'green' });
+  assert.strictEqual(calls.length, 1);
+  assert.strictEqual(calls[0].searchParams.get('title'), 'Title only');
+  assert.strictEqual(calls[0].searchParams.has('id'), false);
+});
+
+test('matchAgainstRepo: DOI検索のHTTPエラーはselfDOI・タイトル検索へ進まずerrorにする', async () => {
+  let calls = 0;
+  const result = await matchAgainstRepo('https://example.repo.nii.ac.jp/', 'must not run', '10.1/x', {
+    fetchImpl: async () => {
+      calls++;
+      return response('', { ok: false, status: 503 });
+    },
+    parseXml: () => fakeXml([]),
+  });
+  assert.strictEqual(result.kind, 'error');
+  assert.match(result.message, /DOI検索 HTTP 503/);
+  assert.strictEqual(calls, 1);
+});
+
+test('matchAgainstRepo: selfDOI検索のHTTPエラーはタイトル検索へ進まずerrorにする', async () => {
+  const calls = [];
+  const result = await matchAgainstRepo('https://example.repo.nii.ac.jp/', 'must not run', '10.1234/x', {
+    fetchImpl: async url => {
+      const parsed = new URL(url);
+      calls.push(parsed);
+      return parsed.searchParams.get('id_attr') === 'DOI'
+        ? response('doi-miss')
+        : response('', { ok: false, status: 503 });
+    },
+    parseXml: () => fakeXml([]),
+  });
+  assert.strictEqual(result.kind, 'error');
+  assert.match(result.message, /selfDOI検索 HTTP 503/);
+  assert.strictEqual(calls.length, 2);
+});
+
+test('matchAgainstRepo: DOI検索のXML解析エラーはタイトル検索せずerrorにする', async () => {
+  let calls = 0;
+  const result = await matchAgainstRepo('https://example.repo.nii.ac.jp/', 'must not run', '10.1/x', {
+    fetchImpl: async () => {
+      calls++;
+      return response('broken-xml');
+    },
+    parseXml: () => fakeXml([], { parserError: true }),
+  });
+  assert.strictEqual(result.kind, 'error');
+  assert.match(result.message, /XML解析/);
+  assert.strictEqual(calls, 1);
 });
 
 // ============================================================

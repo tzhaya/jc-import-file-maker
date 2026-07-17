@@ -34,7 +34,7 @@ npm install
 | `tests/tsv.test.js` | `generateTsv` | 空配列→`null`、行数、タブ/改行サニタイズ、`repoHost` によるスキーマ URL 置換 |
 | `tests/aff-misattribution.test.js` | `detectAffMisattribution` / `canonicalRor` / `affStringSupportsInst` / `warnTooltip` | 所属誤判定（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186) 実例）、頭字語裏付けによる誤検出抑制、ROR 正規化 |
 | `tests/opensearch.test.js` | `normalizeQuery` / `validateQuery` / `buildUrl` / `normalizeJpcoarItemOrder` / `getResultRange` / `clearSearchForm` | OpenSearch語彙78件、条件検証、URL生成、JPCOARページ内順序補正、ページ件数範囲、入力クリア時のリポジトリURL保持（#237） |
-| `tests/openalex-match.test.js` | `normalizeTitleForSearch` / `parseRepoSearch` / `classifyMatch` / `bareDoi` / `isAllowedHost` / `normalizeJpcoarItemOrder` / `buildWorksUrl` | 重複照合バッジ（#156）の純粋関数。タイトル正規化、DOI抽出、3値判定、🟡代表リンクの逆順補正（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241) 改善1）、許可ホスト判定と `manifest.json` 整合（#241 改善3）、資源タイプ複数選択の OpenAlex `type` フィルタ OR 連結（#241 追補） |
+| `tests/openalex-match.test.js` | `normalizeTitleForSearch` / `parseRepoSearch` / `classifyMatch` / `buildRepoSearchUrl` / `matchAgainstRepo` / `bareDoi` / `isAllowedHost` / `normalizeJpcoarItemOrder` / `buildWorksUrl` | 重複照合バッジ（#156）の純粋関数。`DOI`／`selfDOI`検索の完全一致確定、タイトル検索へのフォールバック、DOI空スキップ、HTTP／XMLエラー停止（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241) 改善2）、🟡代表リンク逆順補正、許可ホスト判定とmanifest整合、OpenAlex `type` フィルタOR連結 |
 
 **テスト対象は `chrome-extension/*.js` を `require` します。** `make_jc_importer.js`、`openalex_panel.js`、`opensearch_panel.js` にはNodeから読み込むための“テスト用ブロック”が恒常的に存在します。**同期・改修時に削除しないでください**（ブラウザでは `typeof module === 'undefined'`／`typeof document !== 'undefined'` により無害）:
 

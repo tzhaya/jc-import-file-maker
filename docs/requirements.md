@@ -123,7 +123,7 @@ make_jc_importer.html
 -   **OpenAlex機関別著作検索**（[issue #155](https://github.com/tzhaya/jc-import-file-maker/issues/155)・[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)・Phase 3 [#157](https://github.com/tzhaya/jc-import-file-maker/issues/157)）:
     -   自機関の ROR ID と過去N日（出版日ベース、既定90日）を指定して OpenAlex Works API（`authorships.institutions.ror` フィルタ）を cursor paging で全件取得し、タイトル・掲載誌・出版日・OAステータスバッジ・DOI＋チェックボックスの候補一覧を表示します。OpenAlex は CORS 対応のため標準版（`openalex_lookup.html`）・Chrome拡張版（タブ）の両方で動作します。
     -   選択したDOIを改行区切りでコピーでき、Chrome拡張版では `chrome.storage.local` 経由でインポートタブのDOIリスト一括取得欄へ直接受け渡します。検索条件・結果・照合結果・選択状態は作業中データとして自動保存し（[#162](https://github.com/tzhaya/jc-import-file-maker/issues/162) と同基盤、キー `openAlexSearch`）、次回起動時に既定表示、再検索で入れ替えます。
-    -   **登録済み照合バッジ**（Chrome拡張版限定）: 候補タイトルを正規化（タグ除去＋先頭N語）して自機関リポジトリの OpenSearch を検索し、返戻 JPCOAR 内の識別子（`identifier`/`relatedIdentifier`/`identifierRegistration`）から DOI を抽出して照合します。判定は3値で、🔴 登録済みの可能性大（タイトルヒット＋DOI一致・既定チェックOFF）／🟡 要確認（ヒット＋DOI不一致・OFF＋ヒットしたレコードへのリンク）／🟢 未登録の可能性（ヒットなし・ON）を表示します。最終判断はユーザーが行います。
+    -   **登録済み照合バッジ**（Chrome拡張版限定）: 候補DOIを `DOI`、`selfDOI` の順で検索し、返戻 JPCOAR 内の識別子（`identifier`/`relatedIdentifier`/`identifierRegistration`）との完全一致を確認します。両方が正常に0件または不一致の場合は、候補タイトルを正規化（タグ除去＋先頭N語）して検索する従来方式へフォールバックします。判定は3値で、🔴 登録済みの可能性大（DOI一致・既定チェックOFF）／🟡 要確認（タイトルヒット＋DOI不一致・OFF＋ヒットしたレコードへのリンク）／🟢 未登録の可能性（タイトルヒットなし・ON）を表示します。通信・HTTP・XML解析エラーは `⚠ 照合不可` とし、最終判断はユーザーが行います。
     -   **所属誤判定の可視化**（[issue #186](https://github.com/tzhaya/jc-import-file-maker/issues/186)・標準版／Chrome拡張版共通）: `authorships.institutions.ror` フィルタは OpenAlex 側の機関同定エラー（[#165](https://github.com/tzhaya/jc-import-file-maker/issues/165) と同型）により検索対象機関に実際は所属しない論文を含みうるため、結果テーブルに独立した「所属確認」列を設け、誤判定が疑われる論文に `⚠ 要確認` バッジを表示します。各論文の `authorships[].institutions[]` から検索対象 ROR に一致する機関を特定し、その機関 ID にマップされた `affiliations[].raw_affiliation_string` が機関を裏付けるか（機関名の識別的トークン＝汎用語・地名・`international` 等の弱語を除いた語、または頭字語が表記に現れるか）で判定します。裏付ける所属表記を持つ著者が 1 人も居ない論文のみをフラグし、tooltip に疑い著者名・元の所属表記（または affiliations 欠落の別）を、サマリに疑い件数を表示します。**自動除外は行わず注意喚起のみ**（既定チェックは ON のまま・除外はユーザー判断）で、検出は不完全な人間向けシグナルです。ROR 比較は末尾スラッシュ・大小文字・bare ID 差を正規化し、#156 登録済み照合列とは別列で描画します。
 -   **ROR/ISNI情報との連携**
     -   OpenAlexから取得したROR IDを基に、ROR v2 APIを介してISNI情報を取得し、所属機関の識別子として活用します。
@@ -651,4 +651,3 @@ ItemType.json には複数レベルのネスト構造を持つフィールドが
   - `subitem_conference_sponsors[]` - 複数主催機関
   - `subitem_conference_venues[]` - 複数開催会場
   - `subitem_conference_places[]` - 複数開催地
-

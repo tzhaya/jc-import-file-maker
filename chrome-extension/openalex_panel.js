@@ -356,11 +356,11 @@ function getSelectedDois() {
 }
 
 // ============================================================
-// 登録済み照合バッジ（#156）：タイトル検索 → JPCOAR内DOI照合
-// WEKO3 OpenSearch は DOI直接指定を持たないため、候補タイトルで検索し、
-// 返戻 JPCOAR XML 内の識別子から DOI を抽出して照合する。
+// 登録済み照合バッジ（#156・#241）：DOI ID検索 → タイトル検索フォールバック
+// DOI ID検索は機関・インデックス依存のため、返戻JPCOAR内に候補DOIが完全一致した
+// 場合だけ確定し、0件・不一致なら従来のタイトル検索で判定する。
 // OpenSearch は CORS 制約のため照合は Chrome拡張版限定。
-//   ⚪ 登録済みの可能性大 : タイトルヒット＋DOI一致（チェックOFF）
+//   ⚪ 登録済みの可能性大 : DOI一致（チェックOFF）
 //   🟡 要確認            : タイトルヒット＋DOI不一致（チェックOFF＋レコードリンク）
 //   🟢 未登録の可能性     : タイトルヒットなし（チェックON）
 // ============================================================
@@ -368,6 +368,7 @@ function getSelectedDois() {
 const MATCH_TITLE_WORDS = 12;   // タイトル検索に使う先頭語数（再現率優先で切り詰め）
 const MATCH_DELAY_MS = 500;     // 候補間の照合クエリ間隔（自機関リポジトリへの配慮）
 const OPENSEARCH_SIZE = 20;     // タイトル検索の取得件数
+const DOI_ID_ATTRS = ['DOI', 'selfDOI'];  // 外部DOI→自リポジトリ登録DOIの順で検索
 // NS_RDF は共通コア（Weko3Core）から取得（#241。旧 NS_RDF_OA から名称統一）
 
 // XML 文字列を DOM に変換する既定パーサー。Node（node:test）には DOMParser が
@@ -424,15 +425,56 @@ function classifyMatch(items, candidateDoi) {
   return { kind: 'yellow', itemUrl: items[0].itemUrl };
 }
 
-// 1候補をリポジトリへタイトル検索して判定する。
-async function matchAgainstRepo(repoOrigin, title, candidateDoi) {
+function buildRepoSearchUrl(repoOrigin, params) {
+  const url = new URL('api/opensearch/search', repoOrigin);
+  url.search = new URLSearchParams({
+    format: 'jpcoar',
+    ...params,
+    size: String(OPENSEARCH_SIZE),
+    page: '1',
+  }).toString();
+  return url.toString();
+}
+
+function matchError(error) {
+  return { kind: 'error', message: error && error.message ? error.message : String(error) };
+}
+
+// DOI ID検索で完全一致なら確定。不一致・0件ならタイトル検索へフォールバックする。
+// DOI検索の通信・HTTP・XML解析エラーは障害を未登録に見せないため照合不可で終了する。
+async function matchAgainstRepo(
+  repoOrigin,
+  title,
+  candidateDoi,
+  { fetchImpl = fetch, parseXml = defaultParseXml } = {},
+) {
+  const cand = bareDoi(candidateDoi);
+  if (cand) {
+    for (const idAttr of DOI_ID_ATTRS) {
+      const doiUrl = buildRepoSearchUrl(repoOrigin, { id: cand, id_attr: idAttr });
+      try {
+        const doiRes = await fetchImpl(doiUrl);
+        if (!doiRes.ok) throw new Error('OpenSearch ' + idAttr + '検索 HTTP ' + doiRes.status);
+        const doiItems = parseRepoSearch(await doiRes.text(), parseXml);
+        const doiMatch = classifyMatch(doiItems, cand);
+        if (doiMatch.kind === 'red') return { ...doiMatch, via: 'doi' };
+      } catch (error) {
+        return matchError(error);
+      }
+    }
+  }
+
   const q = normalizeTitleForSearch(title);
   if (!q) return { kind: 'green' };  // タイトルが空なら検索不能 → 未登録扱い
-  const url = repoOrigin + 'api/opensearch/search?format=jpcoar&title=' + encodeURIComponent(q) + '&size=' + OPENSEARCH_SIZE;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('OpenSearch HTTP ' + res.status);
-  const items = parseRepoSearch(await res.text());
-  return classifyMatch(items, candidateDoi);
+  const titleUrl = buildRepoSearchUrl(repoOrigin, { title: q });
+  try {
+    const titleRes = await fetchImpl(titleUrl);
+    if (!titleRes.ok) throw new Error('OpenSearch タイトル検索 HTTP ' + titleRes.status);
+    const items = parseRepoSearch(await titleRes.text(), parseXml);
+    return classifyMatch(items, cand);
+  } catch (error) {
+    return matchError(error);
+  }
 }
 
 function matchBadgeHtml(label, color, url) {
@@ -443,7 +485,10 @@ function matchBadgeHtml(label, color, url) {
 
 function renderMatchBadge(cell, result) {
   const checkbox = cell.closest('tr').querySelector('.row-check');
-  if (result.kind === 'red') {
+  if (result.kind === 'error') {
+    cell.innerHTML = '<span class="match-err" title="' + escHtml(result.message || '照合処理に失敗しました') + '">⚠ 照合不可</span>';
+    if (checkbox) checkbox.checked = false;
+  } else if (result.kind === 'red') {
     cell.innerHTML = matchBadgeHtml('⚪ 登録済みの可能性大', '#616161', result.itemUrl);
     if (checkbox) checkbox.checked = false;
   } else if (result.kind === 'yellow') {
@@ -483,7 +528,7 @@ async function applyDuplicateBadges(works) {
 
   cells.forEach(c => { c.innerHTML = '<span class="match-loading">⏳照合中…</span>'; });
 
-  // 候補1件＝OpenSearchクエリ1回。間隔を空けて順次実行。照合結果は oaMatches に記録（保存対象）。
+  // 候補1件につき最大3クエリ（DOI→selfDOI→タイトル）。候補間は間隔を空けて順次実行する。
   for (let i = 0; i < cells.length; i++) {
     const cell = cells[i];
     try {
@@ -491,7 +536,9 @@ async function applyDuplicateBadges(works) {
       oaMatches[cell.dataset.doi] = result;
       renderMatchBadge(cell, result);
     } catch (e) {
-      cell.innerHTML = '<span class="match-err" title="' + escHtml(e.message) + '">⚠ 照合不可</span>';
+      const result = matchError(e);
+      oaMatches[cell.dataset.doi] = result;
+      renderMatchBadge(cell, result);
     }
     if (i < cells.length - 1) await new Promise(r => setTimeout(r, MATCH_DELAY_MS));
   }
@@ -501,7 +548,7 @@ async function applyDuplicateBadges(works) {
 function paintSavedMatches() {
   document.querySelectorAll('.col-match').forEach(cell => {
     const m = oaMatches[cell.dataset.doi];
-    if (m && (m.kind === 'red' || m.kind === 'yellow' || m.kind === 'green')) {
+    if (m && (m.kind === 'red' || m.kind === 'yellow' || m.kind === 'green' || m.kind === 'error')) {
       renderMatchBadge(cell, m);
     } else if (IS_CHROME_EXTENSION) {
       cell.innerHTML = '<span class="match-na">—</span>';
@@ -863,7 +910,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     detectAffMisattribution, warnTooltip, canonicalRor, affStringSupportsInst,
     // #241 照合純粋関数（tests/openalex-match.test.js から参照）
-    normalizeTitleForSearch, parseRepoSearch, classifyMatch,
+    normalizeTitleForSearch, parseRepoSearch, classifyMatch, buildRepoSearchUrl, matchAgainstRepo,
     // #241 追補: OpenAlex Works URL 構築（資源タイプ複数選択の検証用）
     buildWorksUrl,
     // コア re-export（テストが同一モジュールから取得できるよう）
