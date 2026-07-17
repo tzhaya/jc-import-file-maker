@@ -102,7 +102,7 @@ JaLC、KAKEN XML、Open Policy Finder API、機関リポジトリとの照合が
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-07-14 | ver. 1.23.0 | WEKO3 OpenSearchの検索項目を拡充（[#237](https://github.com/tzhaya/jc-import-file-maker/issues/237)）。標準・詳細検索、ID検索、作成日時ソート、資源タイプ全78件、検索条件を保持するページングに対応 |
+| Chrome拡張機能版 | 2026-07-17 | ver. 1.24.0 | OpenAlex機関別著作検索の資源タイプを複数選択可能にし既定を「論文 (article)」に変更、登録済み照合バッジ（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）を改善（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)）。1つ前は WEKO3 OpenSearchの検索項目拡充（[#237](https://github.com/tzhaya/jc-import-file-maker/issues/237)、ver. 1.23.0） |
 | インポート用TSV生成ツール | 2026-07-10 | — | 研究課題番号タイプ（JPCOAR 2.0 `awardNumberType`）に対応（[#222](https://github.com/tzhaya/jc-import-file-maker/issues/222)）。JGN連携で取得した体系的番号には `JGN` を自動設定し、助成情報の編集フォームでも選択可能に |
 | 助成情報検索ツール | 2026-07-10 | — | 研究課題番号タイプ列に対応（[#222](https://github.com/tzhaya/jc-import-file-maker/issues/222)）。JGN課題番号で検索した場合、TSV出力の「研究課題番号タイプ」列に `JGN` を出力 |
 | OpenAlex機関別著作検索 | 2026-07-17 | ver. 1.24.0 | 検索条件の「資源タイプ」を複数選択可能にし、既定を「論文 (article)」に変更。あわせて登録済み照合バッジ（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）を spec の知見で改善（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)）：🟡「要確認」の代表リンクをJPCOARページ内逆順補正で先頭ヒットに揃え、照合先を許可ホスト（`*.repo.nii.ac.jp` ＋登録済みリポジトリ）に限定。共通ロジックを `weko3_opensearch_core.js` に集約し単体テストを追加 |
