@@ -29,6 +29,7 @@ const JS_FILES = [
   'chrome-extension/options.js',
   'chrome-extension/shared.js',
   'chrome-extension/tsv_headers_template.js',
+  'chrome-extension/weko3_opensearch_core.js',
   // ユニットテスト（#192）
   'tests/doi.test.js',
   'tests/abstract.test.js',
@@ -36,6 +37,7 @@ const JS_FILES = [
   'tests/aff-misattribution.test.js',
   'tests/access-rights.test.js',
   'tests/opensearch.test.js',
+  'tests/openalex-match.test.js',
 ];
 
 // Text files that may contain Japanese — verify no encoding corruption (#175)

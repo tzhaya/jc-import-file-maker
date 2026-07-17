@@ -2,36 +2,13 @@
 // Service Worker プロキシは不要。
 const IS_CHROME_EXTENSION = typeof chrome !== 'undefined' && !!chrome.runtime;
 
-// ===== 通信先ホスト制限 =====
-const ALLOWED_HOST_PATTERN = /\.repo\.nii\.ac\.jp$/i;
-const ALLOWED_HOSTS_EXTRA = new Set([
-  'repository.nii.ac.jp',
-  'd-repo.ier.hit-u.ac.jp',
-  'repository.lib.tottori-u.ac.jp',
-  'ismrepo.ism.ac.jp',
-  'repository.ninjal.ac.jp',
-  'ir.soken.ac.jp',
-  'repository.dl.itc.u-tokyo.ac.jp',
-  'teapot.lib.ocha.ac.jp',
-  'kutarr.kochi-tech.ac.jp',
-  'ir.jikei.ac.jp',
-  'ir.kagoshima-u.ac.jp',
-  'amcor.asahikawa-med.ac.jp',
-  'repository.ffpri.go.jp',
-  'repository.jircas.go.jp',
-  'repository.naro.go.jp',
-  'ir.ide.go.jp',
-  'repo.qst.go.jp',
-  'repo-tkfd.jp',
-]);
-
-function isAllowedHost(repoUrl) {
-  let parsed;
-  try { parsed = new URL(repoUrl); } catch { return false; }
-  if (parsed.protocol !== 'https:') return false;
-  const host = parsed.hostname;
-  return ALLOWED_HOST_PATTERN.test(host) || ALLOWED_HOSTS_EXTRA.has(host);
-}
+// ===== 共通コア（#241）=====
+// ブラウザは opensearch_panel.html で本 JS より前に読み込まれた
+// globalThis.Weko3OpenSearchCore を、Node（node:test）は require を参照する。
+const Weko3Core = (typeof module !== 'undefined' && module.exports)
+  ? require('./weko3_opensearch_core.js')
+  : globalThis.Weko3OpenSearchCore;
+const { ALLOWED_HOST_PATTERN, ALLOWED_HOSTS_EXTRA, isAllowedHost, NS_RDF, normalizeJpcoarItemOrder } = Weko3Core;
 // ===========================
 
 // 資源タイプ語彙（docs/resource_type_vocabulary.md と同期）
@@ -175,7 +152,7 @@ const SUMMARY_FIELDS = new Set([
 ]);
 
 const PAGE_SIZE = 20;
-const NS_RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+// NS_RDF は共通コア（Weko3Core）から取得（#241）
 
 let state = { page: 1, query: {}, sort: '', repoOrigin: '', totalResults: 0 };
 
@@ -237,11 +214,7 @@ function buildUrl(repoOrigin, query, page, sort = '') {
   return `${base}api/opensearch/search?${params.toString()}`;
 }
 
-function normalizeJpcoarItemOrder(items) {
-  // WEKO3のformat=jpcoarはJSONのヒット順をページ内で逆順に列挙する
-  // （JIRCAS・筑波大学で2026-07-14実測）。APIの指定順へ戻して表示する。
-  return [...items].reverse();
-}
+// normalizeJpcoarItemOrder は共通コア（Weko3Core）から取得（#241）
 
 function fetchJpcoar(url, fetchImpl = fetch) {
   // format=jpcoarをURLで指定するため、WEKO3が406を返し得る独自Acceptヘッダーは付けない。

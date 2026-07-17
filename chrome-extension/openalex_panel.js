@@ -17,6 +17,16 @@ if (typeof CONFIG === 'undefined' && typeof window !== 'undefined') {
 
 const IS_CHROME_EXTENSION = typeof chrome !== 'undefined' && !!chrome.runtime?.id;
 
+// ===== 共通コア（#241）=====
+// ブラウザは openalex_panel.html で本 JS より前に読み込まれた
+// globalThis.Weko3OpenSearchCore を、Node（node:test）は require を参照する。
+// 素の const/function をグローバルに撒くと衝突するため名前空間から取得する。
+const Weko3Core = (typeof module !== 'undefined' && module.exports)
+  ? require('./weko3_opensearch_core.js')
+  : globalThis.Weko3OpenSearchCore;
+const { bareDoi, isAllowedHost, normalizeJpcoarItemOrder, NS_RDF } = Weko3Core;
+// ===========================
+
 // OA ステータス → バッジ表示（make_jc_importer.js と同一定義）
 const OA_BADGE_MAP = {
   diamond: { label: '💎 Diamond OA', bg: '#4caf50' },
@@ -69,14 +79,7 @@ function normalizeRor(v) {
   return 'https://ror.org/' + id;
 }
 
-// DOI を素の形（小文字・プレフィックス除去）に
-function bareDoi(doi) {
-  return (doi || '')
-    .trim()
-    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
-    .replace(/^doi:/i, '')
-    .toLowerCase();
-}
+// bareDoi は共通コア（Weko3Core）から取得（#241）
 
 // 過去N日前の日付（YYYY-MM-DD）
 function isoNDaysAgo(n) {
@@ -363,7 +366,13 @@ function getSelectedDois() {
 const MATCH_TITLE_WORDS = 12;   // タイトル検索に使う先頭語数（再現率優先で切り詰め）
 const MATCH_DELAY_MS = 500;     // 候補間の照合クエリ間隔（自機関リポジトリへの配慮）
 const OPENSEARCH_SIZE = 20;     // タイトル検索の取得件数
-const NS_RDF_OA = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+// NS_RDF は共通コア（Weko3Core）から取得（#241。旧 NS_RDF_OA から名称統一）
+
+// XML 文字列を DOM に変換する既定パーサー。Node（node:test）には DOMParser が
+// 無いため、parseRepoSearch は parseXml を注入可能にしている（#241）。
+function defaultParseXml(xmlText) {
+  return new DOMParser().parseFromString(xmlText, 'application/xml');
+}
 
 // タイトルを検索用に正規化：HTMLタグ片除去＋エンティティ解除＋先頭N語に切り詰め。
 function normalizeTitleForSearch(title) {
@@ -378,12 +387,15 @@ function normalizeTitleForSearch(title) {
 }
 
 // OpenSearch（JPCOAR）応答をパースし、各レコードの itemUrl と DOI集合を返す。
-function parseRepoSearch(xmlText) {
-  const xml = new DOMParser().parseFromString(xmlText, 'application/xml');
+// parseXml は「XML文字列 → Document-like」を返す関数（既定は DOMParser）。
+// Node のユニットテストでは軽量パーサーを注入する（#241）。
+// 返却順は normalizeJpcoarItemOrder で API 指定順に補正する（#241 改善1・spec §4.1）。
+function parseRepoSearch(xmlText, parseXml = defaultParseXml) {
+  const xml = parseXml(xmlText);
   if (xml.querySelector('parsererror')) throw new Error('リポジトリ応答のXML解析に失敗しました');
-  const descriptions = Array.from(xml.getElementsByTagNameNS(NS_RDF_OA, 'Description'));
-  return descriptions.map(desc => {
-    const itemUrl = desc.getAttributeNS(NS_RDF_OA, 'about') || desc.getAttribute('rdf:about') || '';
+  const descriptions = Array.from(xml.getElementsByTagNameNS(NS_RDF, 'Description'));
+  const items = descriptions.map(desc => {
+    const itemUrl = desc.getAttributeNS(NS_RDF, 'about') || desc.getAttribute('rdf:about') || '';
     const dois = new Set();
     // JPCOAR内の複数箇所（identifier / relatedIdentifier / identifierRegistration）を全走査
     Array.from(desc.getElementsByTagName('*')).forEach(el => {
@@ -395,6 +407,9 @@ function parseRepoSearch(xmlText) {
     });
     return { itemUrl, dois };
   });
+  // ページ内は逆順に列挙されるため API 指定順へ戻す。これにより classifyMatch の
+  // 🟡 代表リンク（items[0]）が先頭ヒットを指す（#241 改善1）。
+  return normalizeJpcoarItemOrder(items);
 }
 
 // 候補DOIをリポジトリ検索結果と突合して3値判定。
@@ -454,6 +469,13 @@ async function applyDuplicateBadges(works) {
   try { origin = new URL(repoUrl).origin + '/'; }
   catch {
     cells.forEach(c => { c.innerHTML = '<span class="match-na" title="リポジトリURLが不正です">—</span>'; });
+    return;
+  }
+
+  // 通信先を許可ホスト（HTTPS の *.repo.nii.ac.jp ＋固定追加許可ホスト）に限定（#241 改善3・spec §2/§7）。
+  // 許可外は照合せず fetch もしない。
+  if (!isAllowedHost(origin)) {
+    cells.forEach(c => { c.innerHTML = '<span class="match-na" title="許可されていないリポジトリのため照合を行いません">—</span>'; });
     return;
   }
 
@@ -828,5 +850,11 @@ if (typeof document !== 'undefined') {
 // ===== ユニットテスト用エクスポート（#192） =====
 // Node（node:test）から純粋関数を require するためのガード。ブラウザでは module 未定義のため不活性。
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { detectAffMisattribution, warnTooltip, canonicalRor, affStringSupportsInst };
+  module.exports = {
+    detectAffMisattribution, warnTooltip, canonicalRor, affStringSupportsInst,
+    // #241 照合純粋関数（tests/openalex-match.test.js から参照）
+    normalizeTitleForSearch, parseRepoSearch, classifyMatch,
+    // コア re-export（テストが同一モジュールから取得できるよう）
+    bareDoi, isAllowedHost, normalizeJpcoarItemOrder,
+  };
 }

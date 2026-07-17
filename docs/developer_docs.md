@@ -34,12 +34,15 @@ npm install
 | `tests/tsv.test.js` | `generateTsv` | 空配列→`null`、行数、タブ/改行サニタイズ、`repoHost` によるスキーマ URL 置換 |
 | `tests/aff-misattribution.test.js` | `detectAffMisattribution` / `canonicalRor` / `affStringSupportsInst` / `warnTooltip` | 所属誤判定（[#186](https://github.com/tzhaya/jc-import-file-maker/issues/186) 実例）、頭字語裏付けによる誤検出抑制、ROR 正規化 |
 | `tests/opensearch.test.js` | `normalizeQuery` / `validateQuery` / `buildUrl` / `normalizeJpcoarItemOrder` / `getResultRange` / `clearSearchForm` | OpenSearch語彙78件、条件検証、URL生成、JPCOARページ内順序補正、ページ件数範囲、入力クリア時のリポジトリURL保持（#237） |
+| `tests/openalex-match.test.js` | `normalizeTitleForSearch` / `parseRepoSearch` / `classifyMatch` / `bareDoi` / `isAllowedHost` / `normalizeJpcoarItemOrder` | 重複照合バッジ（#156）の純粋関数。タイトル正規化、DOI抽出、3値判定、🟡代表リンクの逆順補正（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241) 改善1）、許可ホスト判定と `manifest.json` 整合（#241 改善3） |
 
 **テスト対象は `chrome-extension/*.js` を `require` します。** `make_jc_importer.js`、`openalex_panel.js`、`opensearch_panel.js` にはNodeから読み込むための“テスト用ブロック”が恒常的に存在します。**同期・改修時に削除しないでください**（ブラウザでは `typeof module === 'undefined'`／`typeof document !== 'undefined'` により無害）:
 
 - 先頭 CONFIG フォールバックの `typeof window !== 'undefined'` ガード
 - DOM 配線・初期化 IIFE を包む `if (typeof document !== 'undefined') { … }` ガード
 - 末尾の `if (typeof module !== 'undefined' && module.exports) { module.exports = { … }; }`
+
+**共通コア `chrome-extension/weko3_opensearch_core.js`（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)）**: `opensearch_panel.js`（#237）と `openalex_panel.js` の照合バッジ（#156）が共有する純粋関数・定数（`isAllowedHost`＋許可ホスト定義／`normalizeJpcoarItemOrder`／`NS_RDF`／`bareDoi`）を集約。ブラウザは各パネル JS より前に `<script src>` で読み込み `globalThis.Weko3OpenSearchCore` から、Node は `require` で参照します。**素の `const`/`function` をグローバルに撒くと同一ページのパネル JS と衝突して SyntaxError になるため、名前空間オブジェクトとしてのみ公開**します。各パネルは `typeof module … ? require : globalThis` のガード付き分岐で取得し、重複ローカル定義は持ちません。`parseRepoSearch(xmlText, parseXml?)` は Node に `DOMParser` が無いため XML パーサーを注入可能にしています。標準版 `openalex_lookup.html` は単体配布のためコアを読み込まず、同一ロジックを inline で保持します（照合は拡張版のみ実行）。
 
 `generateTsv` は `TSV_HEADERS_TEMPLATE` をグローバル参照するため、`tests/tsv.test.js` は `data/tsv_headers.json`（CI でテンプレートと**構造一致**が保証済）を `global.TSV_HEADERS_TEMPLATE` に注入して実テンプレートを供給します。
 

@@ -1,6 +1,27 @@
 # 作業ログ: make_jc_importer.html 実装記録
 
-最終更新: 2026-07-16（利用者向け文書の認知リズム改善）
+最終更新: 2026-07-17（#241 重複照合バッジ改善・先行分）
+
+## 重複照合バッジ（#156）の spec 知見による改善（#241・先行分, 2026-07-17）
+
+### 概要
+
+登録済み照合バッジ（#156・🔴/🟡/🟢 の3値判定。内部 `kind`、UI表示は 🔴→`⚪ 登録済みの可能性大`）は WEKO3 OpenSearch クライアント（#237）・`docs/weko3-opensearch-client-spec.md` の整備より前の実装で、spec が実測で確立した知見・実装資産を取り込めていなかった。本対応（先行分）で改善1・3＋コード共通化＋テストを実施。DOI 直接 ID 検索（改善2・spec §8）は機関・インデックス依存性の実機確認がブロッカーのため後続対応とした。
+
+### 修正内容
+
+1. **改善1（🟡 リンクの逆順補正・spec §4.1）**: `parseRepoSearch` が返す各レコードを `normalizeJpcoarItemOrder`（`[...items].reverse()`）で API 指定順へ補正。JPCOAR 出力はページ内で JSON ヒット順の逆順に列挙されるため、補正前は `classifyMatch` の 🟡 代表リンク（`items[0].itemUrl`）が最後のヒットを指していた。補正で先頭ヒットを指すよう修正（🔴 全走査・🟢 空には影響なし）。
+2. **改善3（ホスト許可リスト・spec §2/§7）**: `applyDuplicateBadges` に `isAllowedHost(origin)` 検証を追加。HTTPS の `*.repo.nii.ac.jp` ＋固定追加許可ホスト以外は fetch せずセルを `—`（理由を title 表示）。`optional_host_permissions` の任意ホストは静的判定の対象外。
+3. **コード共通化（改善4）**: `openalex_panel.js` と `opensearch_panel.js` に重複していた純粋関数・定数（`isAllowedHost`＋許可ホスト定義／`normalizeJpcoarItemOrder`／`NS_RDF`／`bareDoi`）を新規 `chrome-extension/weko3_opensearch_core.js` に集約。**ブラウザは名前空間オブジェクト `globalThis.Weko3OpenSearchCore`、Node は `require`** で公開（素の `const` をグローバルに撒くと同一ページの複数 `<script>` 間で再宣言 SyntaxError になりブラウザが即死するため）。各パネルは `typeof module … ? require : globalThis` のガード付き分岐で取得し重複ローカル定義を削除。`NS_RDF_OA`（openalex 旧名）は `NS_RDF` に統一。`opensearch_panel.js` は取得関数を `module.exports` で re-export し既存 `opensearch.test.js` を非破壊に維持。
+4. **テスト（改善4）**: `tests/openalex-match.test.js` を新設。`parseRepoSearch(xmlText, parseXml?)` を注入可能にし、Node に `DOMParser` が無くても軽量パーサーを渡して DOM 非依存でテスト。タイトル正規化・DOI 抽出・逆順補正・3値判定・許可ホスト判定・`ALLOWED_HOSTS_EXTRA`↔`manifest.json` 整合を検証（`npm test` 計83件）。`scripts/check.js` の `JS_FILES` にコアと新テストを登録。
+5. **標準版 parity**: `openalex_lookup.html` は CORS 制約で OpenSearch 照合を実行しない（`IS_CHROME_EXTENSION` false で早期 return）が、parity 規約に従い改善1・3・NS 改名を inline で反映。単体配布のためコアは読み込まず inline を維持（root コアコピーは消費者ゼロのため作成せず）。
+
+### 検証
+
+- `npm test` ALL PASS（静的チェック＋ユニットテスト83件）。
+- Node で `openalex_panel.js`／`opensearch_panel.js` の require チェーン・コア関数の戻り値をスモークテスト。
+- 標準版インラインスクリプトの構文チェック。
+- E2Eテスト（`/e2e-test openalex`）・実機確認は PR 前に実施。
 
 ## 利用者向け文書の認知リズム改善（2026-07-16）
 

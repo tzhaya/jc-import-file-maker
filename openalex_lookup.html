@@ -491,7 +491,43 @@ function getSelectedDois() {
 const MATCH_TITLE_WORDS = 12;   // タイトル検索に使う先頭語数（再現率優先で切り詰め）
 const MATCH_DELAY_MS = 500;     // 候補間の照合クエリ間隔（自機関リポジトリへの配慮）
 const OPENSEARCH_SIZE = 20;     // タイトル検索の取得件数
-const NS_RDF_OA = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+const NS_RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';  // 旧 NS_RDF_OA（#241 名称統一）
+
+// 拡張版は weko3_opensearch_core.js から取得するが、標準版は単体配布のため
+// 以下を inline で保持し拡張版とロジック parity を維持する（#241）。
+// なお標準版は照合を実行しない（IS_CHROME_EXTENSION が false）ため実際には不活性。
+const ALLOWED_HOST_PATTERN = /\.repo\.nii\.ac\.jp$/i;
+const ALLOWED_HOSTS_EXTRA = new Set([
+  'repository.nii.ac.jp',
+  'd-repo.ier.hit-u.ac.jp',
+  'repository.lib.tottori-u.ac.jp',
+  'ismrepo.ism.ac.jp',
+  'repository.ninjal.ac.jp',
+  'ir.soken.ac.jp',
+  'repository.dl.itc.u-tokyo.ac.jp',
+  'teapot.lib.ocha.ac.jp',
+  'kutarr.kochi-tech.ac.jp',
+  'ir.jikei.ac.jp',
+  'ir.kagoshima-u.ac.jp',
+  'amcor.asahikawa-med.ac.jp',
+  'repository.ffpri.go.jp',
+  'repository.jircas.go.jp',
+  'repository.naro.go.jp',
+  'ir.ide.go.jp',
+  'repo.qst.go.jp',
+  'repo-tkfd.jp',
+]);
+function isAllowedHost(repoUrl) {
+  let parsed;
+  try { parsed = new URL(repoUrl); } catch { return false; }
+  if (parsed.protocol !== 'https:') return false;
+  const host = parsed.hostname;
+  return ALLOWED_HOST_PATTERN.test(host) || ALLOWED_HOSTS_EXTRA.has(host);
+}
+function normalizeJpcoarItemOrder(items) {
+  // WEKO3のformat=jpcoarはページ内で逆順に列挙する（spec §4.1）。API指定順へ戻す。
+  return [...items].reverse();
+}
 
 // タイトルを検索用に正規化：HTMLタグ片除去＋エンティティ解除＋先頭N語に切り詰め。
 function normalizeTitleForSearch(title) {
@@ -506,12 +542,13 @@ function normalizeTitleForSearch(title) {
 }
 
 // OpenSearch（JPCOAR）応答をパースし、各レコードの itemUrl と DOI集合を返す。
+// 返却順は normalizeJpcoarItemOrder で API 指定順に補正する（#241 改善1・spec §4.1）。
 function parseRepoSearch(xmlText) {
   const xml = new DOMParser().parseFromString(xmlText, 'application/xml');
   if (xml.querySelector('parsererror')) throw new Error('リポジトリ応答のXML解析に失敗しました');
-  const descriptions = Array.from(xml.getElementsByTagNameNS(NS_RDF_OA, 'Description'));
-  return descriptions.map(desc => {
-    const itemUrl = desc.getAttributeNS(NS_RDF_OA, 'about') || desc.getAttribute('rdf:about') || '';
+  const descriptions = Array.from(xml.getElementsByTagNameNS(NS_RDF, 'Description'));
+  const items = descriptions.map(desc => {
+    const itemUrl = desc.getAttributeNS(NS_RDF, 'about') || desc.getAttribute('rdf:about') || '';
     const dois = new Set();
     // JPCOAR内の複数箇所（identifier / relatedIdentifier / identifierRegistration）を全走査
     Array.from(desc.getElementsByTagName('*')).forEach(el => {
@@ -523,6 +560,9 @@ function parseRepoSearch(xmlText) {
     });
     return { itemUrl, dois };
   });
+  // ページ内は逆順に列挙されるため API 指定順へ戻す。🟡 代表リンク（items[0]）が
+  // 先頭ヒットを指す（#241 改善1）。
+  return normalizeJpcoarItemOrder(items);
 }
 
 // 候補DOIをリポジトリ検索結果と突合して3値判定。
@@ -582,6 +622,13 @@ async function applyDuplicateBadges(works) {
   try { origin = new URL(repoUrl).origin + '/'; }
   catch {
     cells.forEach(c => { c.innerHTML = '<span class="match-na" title="リポジトリURLが不正です">—</span>'; });
+    return;
+  }
+
+  // 通信先を許可ホスト（HTTPS の *.repo.nii.ac.jp ＋固定追加許可ホスト）に限定（#241 改善3・spec §2/§7）。
+  // 許可外は照合せず fetch もしない。
+  if (!isAllowedHost(origin)) {
+    cells.forEach(c => { c.innerHTML = '<span class="match-na" title="許可されていないリポジトリのため照合を行いません">—</span>'; });
     return;
   }
 
