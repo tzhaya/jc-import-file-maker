@@ -17,6 +17,16 @@ if (typeof CONFIG === 'undefined' && typeof window !== 'undefined') {
 
 const IS_CHROME_EXTENSION = typeof chrome !== 'undefined' && !!chrome.runtime?.id;
 
+// ===== 共通コア（#241）=====
+// ブラウザは openalex_panel.html で本 JS より前に読み込まれた
+// globalThis.Weko3OpenSearchCore を、Node（node:test）は require を参照する。
+// 素の const/function をグローバルに撒くと衝突するため名前空間から取得する。
+const Weko3Core = (typeof module !== 'undefined' && module.exports)
+  ? require('./weko3_opensearch_core.js')
+  : globalThis.Weko3OpenSearchCore;
+const { bareDoi, isAllowedHost, normalizeJpcoarItemOrder, NS_RDF } = Weko3Core;
+// ===========================
+
 // OA ステータス → バッジ表示（make_jc_importer.js と同一定義）
 const OA_BADGE_MAP = {
   diamond: { label: '💎 Diamond OA', bg: '#4caf50' },
@@ -69,14 +79,7 @@ function normalizeRor(v) {
   return 'https://ror.org/' + id;
 }
 
-// DOI を素の形（小文字・プレフィックス除去）に
-function bareDoi(doi) {
-  return (doi || '')
-    .trim()
-    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
-    .replace(/^doi:/i, '')
-    .toLowerCase();
-}
+// bareDoi は共通コア（Weko3Core）から取得（#241）
 
 // 過去N日前の日付（YYYY-MM-DD）
 function isoNDaysAgo(n) {
@@ -87,13 +90,15 @@ function isoNDaysAgo(n) {
 
 // ---- URL 構築 ----
 
-function buildWorksUrl(ror, fromDate, type, cursor) {
+function buildWorksUrl(ror, fromDate, types, cursor) {
   const filters = [
     'authorships.institutions.ror:' + ror,
     'from_publication_date:' + fromDate,
     'has_doi:true',
   ];
-  if (type) filters.push('type:' + encodeURIComponent(type));
+  // 資源タイプは複数選択可。OpenAlex は 1 フィルタ内の複数値を `|`（OR）で表現する。
+  const typeList = (Array.isArray(types) ? types : [types]).filter(Boolean);
+  if (typeList.length) filters.push('type:' + typeList.map(encodeURIComponent).join('|'));
   let url = 'https://api.openalex.org/works'
     + '?filter=' + filters.join(',')
     + '&select=' + encodeURIComponent('doi,title,publication_date,primary_location,open_access,authorships')
@@ -107,13 +112,13 @@ function buildWorksUrl(ror, fromDate, type, cursor) {
 
 // ---- 検索（cursor paging で全件取得） ----
 
-async function fetchAllWorks(ror, fromDate, type, onProgress) {
+async function fetchAllWorks(ror, fromDate, types, onProgress) {
   const out = [];
   let cursor = '*';
   let page = 0;
   while (cursor && page < OA_MAX_PAGES) {
     page++;
-    const res = await fetch(buildWorksUrl(ror, fromDate, type, cursor));
+    const res = await fetch(buildWorksUrl(ror, fromDate, types, cursor));
     if (!res.ok) {
       if (res.status === 401 || res.status === 403) {
         throw new Error('OpenAlex APIキーが必要、または無効です（' + res.status + '）。設定でAPIキーを確認してください。');
@@ -363,7 +368,13 @@ function getSelectedDois() {
 const MATCH_TITLE_WORDS = 12;   // タイトル検索に使う先頭語数（再現率優先で切り詰め）
 const MATCH_DELAY_MS = 500;     // 候補間の照合クエリ間隔（自機関リポジトリへの配慮）
 const OPENSEARCH_SIZE = 20;     // タイトル検索の取得件数
-const NS_RDF_OA = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+// NS_RDF は共通コア（Weko3Core）から取得（#241。旧 NS_RDF_OA から名称統一）
+
+// XML 文字列を DOM に変換する既定パーサー。Node（node:test）には DOMParser が
+// 無いため、parseRepoSearch は parseXml を注入可能にしている（#241）。
+function defaultParseXml(xmlText) {
+  return new DOMParser().parseFromString(xmlText, 'application/xml');
+}
 
 // タイトルを検索用に正規化：HTMLタグ片除去＋エンティティ解除＋先頭N語に切り詰め。
 function normalizeTitleForSearch(title) {
@@ -378,12 +389,15 @@ function normalizeTitleForSearch(title) {
 }
 
 // OpenSearch（JPCOAR）応答をパースし、各レコードの itemUrl と DOI集合を返す。
-function parseRepoSearch(xmlText) {
-  const xml = new DOMParser().parseFromString(xmlText, 'application/xml');
+// parseXml は「XML文字列 → Document-like」を返す関数（既定は DOMParser）。
+// Node のユニットテストでは軽量パーサーを注入する（#241）。
+// 返却順は normalizeJpcoarItemOrder で API 指定順に補正する（#241 改善1・spec §4.1）。
+function parseRepoSearch(xmlText, parseXml = defaultParseXml) {
+  const xml = parseXml(xmlText);
   if (xml.querySelector('parsererror')) throw new Error('リポジトリ応答のXML解析に失敗しました');
-  const descriptions = Array.from(xml.getElementsByTagNameNS(NS_RDF_OA, 'Description'));
-  return descriptions.map(desc => {
-    const itemUrl = desc.getAttributeNS(NS_RDF_OA, 'about') || desc.getAttribute('rdf:about') || '';
+  const descriptions = Array.from(xml.getElementsByTagNameNS(NS_RDF, 'Description'));
+  const items = descriptions.map(desc => {
+    const itemUrl = desc.getAttributeNS(NS_RDF, 'about') || desc.getAttribute('rdf:about') || '';
     const dois = new Set();
     // JPCOAR内の複数箇所（identifier / relatedIdentifier / identifierRegistration）を全走査
     Array.from(desc.getElementsByTagName('*')).forEach(el => {
@@ -395,6 +409,9 @@ function parseRepoSearch(xmlText) {
     });
     return { itemUrl, dois };
   });
+  // ページ内は逆順に列挙されるため API 指定順へ戻す。これにより classifyMatch の
+  // 🟡 代表リンク（items[0]）が先頭ヒットを指す（#241 改善1）。
+  return normalizeJpcoarItemOrder(items);
 }
 
 // 候補DOIをリポジトリ検索結果と突合して3値判定。
@@ -457,6 +474,13 @@ async function applyDuplicateBadges(works) {
     return;
   }
 
+  // 通信先を許可ホスト（HTTPS の *.repo.nii.ac.jp ＋固定追加許可ホスト）に限定（#241 改善3・spec §2/§7）。
+  // 許可外は照合せず fetch もしない。
+  if (!isAllowedHost(origin)) {
+    cells.forEach(c => { c.innerHTML = '<span class="match-na" title="許可されていないリポジトリのため照合を行いません">—</span>'; });
+    return;
+  }
+
   cells.forEach(c => { c.innerHTML = '<span class="match-loading">⏳照合中…</span>'; });
 
   // 候補1件＝OpenSearchクエリ1回。間隔を空けて順次実行。照合結果は oaMatches に記録（保存対象）。
@@ -508,7 +532,7 @@ function buildOaState() {
     query: {
       ror: document.getElementById('q-ror').value.trim(),
       days: document.getElementById('q-days').value.trim(),
-      type: document.getElementById('q-type').value,
+      type: Array.from(document.getElementById('q-type').selectedOptions).map(o => o.value),
       repoUrl: (repoInput && repoInput.value.trim()) || '',
     },
     works: oaWorks.map(slimWork),
@@ -561,7 +585,14 @@ async function restoreOpenAlexSearch() {
   if (saved.query) {
     if (saved.query.ror)  document.getElementById('q-ror').value = saved.query.ror;
     if (saved.query.days) document.getElementById('q-days').value = saved.query.days;
-    if (saved.query.type) document.getElementById('q-type').value = saved.query.type;
+    if (saved.query.type !== undefined) {
+      // 旧形式（単一文字列）と新形式（配列）の両対応。選択を明示的に反映する。
+      const savedTypes = Array.isArray(saved.query.type)
+        ? saved.query.type
+        : (saved.query.type ? [saved.query.type] : []);
+      const typeSelect = document.getElementById('q-type');
+      Array.from(typeSelect.options).forEach(o => { o.selected = savedTypes.includes(o.value); });
+    }
     const repo = document.getElementById('oa-repo-url');
     if (repo && saved.query.repoUrl) repo.value = saved.query.repoUrl;
   }
@@ -695,7 +726,7 @@ async function doSearch() {
   const ror = normalizeRor(document.getElementById('q-ror').value);
   const daysRaw = document.getElementById('q-days').value.trim();
   const days = parseInt(daysRaw, 10);
-  const type = document.getElementById('q-type').value;
+  const types = Array.from(document.getElementById('q-type').selectedOptions).map(o => o.value).filter(Boolean);
 
   if (!ror) {
     showError('ROR ID を入力してください。', 'warn');
@@ -720,7 +751,7 @@ async function doSearch() {
   oaToDate = isoNDaysAgo(0);
 
   try {
-    oaWorks = await fetchAllWorks(ror, fromDate, type, (n, total) => {
+    oaWorks = await fetchAllWorks(ror, fromDate, types, (n, total) => {
       setLoading(true, `取得中… ${n}${total ? ' / ' + total : ''} 件`);
     });
     oaMatches = {};               // 再検索で前回の照合結果を破棄（入れ替え）
@@ -751,12 +782,13 @@ async function init() {
   if (CONFIG.DEFAULT_ROR_ID && !rorInput.value) rorInput.value = CONFIG.DEFAULT_ROR_ID;
   if (!daysInput.value) daysInput.value = CONFIG.DEFAULT_OPENALEX_DAYS || 90;
 
-  // 資源タイプ select を構築
+  // 資源タイプ select（複数選択可）を構築。既定は「論文 (article)」を選択。
   const select = document.getElementById('q-type');
   OA_RESOURCE_TYPES.forEach(rt => {
     const opt = document.createElement('option');
     opt.value = rt.value;
     opt.textContent = rt.ja;
+    if (rt.value === 'article') opt.selected = true;
     select.appendChild(opt);
   });
 
@@ -828,5 +860,13 @@ if (typeof document !== 'undefined') {
 // ===== ユニットテスト用エクスポート（#192） =====
 // Node（node:test）から純粋関数を require するためのガード。ブラウザでは module 未定義のため不活性。
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { detectAffMisattribution, warnTooltip, canonicalRor, affStringSupportsInst };
+  module.exports = {
+    detectAffMisattribution, warnTooltip, canonicalRor, affStringSupportsInst,
+    // #241 照合純粋関数（tests/openalex-match.test.js から参照）
+    normalizeTitleForSearch, parseRepoSearch, classifyMatch,
+    // #241 追補: OpenAlex Works URL 構築（資源タイプ複数選択の検証用）
+    buildWorksUrl,
+    // コア re-export（テストが同一モジュールから取得できるよう）
+    bareDoi, isAllowedHost, normalizeJpcoarItemOrder,
+  };
 }
