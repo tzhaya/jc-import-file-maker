@@ -127,8 +127,11 @@ E2E・回帰テストで使う代表的な DOI と、それぞれが検証でき
 
 ## ドキュメント一覧（保守者向け）
 
+全ドキュメントの目的別インデックスは [README.md](README.md) を参照してください。
+
 | ドキュメント | 内容 |
 |---|---|
+| [README.md](README.md) | `docs/` 以下のドキュメント一覧と将来的なフォルダ分け案 |
 | [user_guide.md](user_guide.md) | 使い方ガイド（初心者向け：STEP 1〜4、バッチ処理） |
 | [settings.md](settings.md) | 設定ガイド（APIキー・初期値の一覧と設定手順） |
 | [changelog.md](changelog.md) | 変更履歴（全量。READMEには最新5件のみ掲載） |
@@ -136,6 +139,7 @@ E2E・回帰テストで使う代表的な DOI と、それぞれが検証でき
 | [fieldmapping.md](fieldmapping.md) | JPCOARフィールドマッピング |
 | [datacite_jpcoar_mapping.md](datacite_jpcoar_mapping.md) | DataCite → JPCOAR マッピング表（#197。実装 #208 の仕様書） |
 | [current_review_2026-07-05.md](current_review_2026-07-05.md) | 2026-07-05 時点の進捗・実用性・将来拡張課題のレビュー |
+| [roadmap_2026-07-05.md](roadmap_2026-07-05.md) | 2026-07-05 時点の位置づけと今後の開発方針 |
 | [weko3-opensearch-client-spec.md](weko3-opensearch-client-spec.md) | Chrome拡張版WEKO3 OpenSearchクライアント仕様（#237） |
 | [weko3-opensearch-client-general-spec.md](weko3-opensearch-client-general-spec.md) | WEKO3 OpenSearch API調査原本 |
 | [resource_type_vocabulary.md](resource_type_vocabulary.md) | OpenSearch等で使用する資源タイプ語彙78件 |

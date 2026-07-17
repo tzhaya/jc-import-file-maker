@@ -46,6 +46,7 @@ const UTF8_FILES = [
   ...JS_FILES,
   // Markdown
   'README.md',
+  'docs/README.md',
   'docs/privacy-policy.md',
   'docs/user_guide.md',
   'docs/settings.md',
@@ -56,6 +57,7 @@ const UTF8_FILES = [
   'docs/Implementation_JaLC.md',
   'docs/datacite_jpcoar_mapping.md',
   'docs/current_review_2026-07-05.md',
+  'docs/roadmap_2026-07-05.md',
   'docs/resource_type_vocabulary.md',
   'docs/weko3-opensearch-client-spec.md',
   'docs/weko3-opensearch-client-general-spec.md',
