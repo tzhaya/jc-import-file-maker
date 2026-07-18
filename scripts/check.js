@@ -38,6 +38,11 @@ const JS_FILES = [
   'tests/access-rights.test.js',
   'tests/opensearch.test.js',
   'tests/openalex-match.test.js',
+  'tests/e2e-config.test.js',
+  'scripts/run-tests.js',
+  'scripts/e2e-config.mjs',
+  'scripts/run-e2e.mjs',
+  'scripts/verify-e2e-record.mjs',
 ];
 
 // Text files that may contain Japanese — verify no encoding corruption (#175)
@@ -62,6 +67,11 @@ const UTF8_FILES = [
   'docs/weko3-opensearch-client-spec.md',
   'docs/weko3-opensearch-client-general-spec.md',
   'function.md',
+  '.agents/skills/cross-review/SKILL.md',
+  '.agents/skills/e2e-test/SKILL.md',
+  '.agents/skills/e2e-test/references/troubleshooting.md',
+  '.agents/skills/plan-issue/SKILL.md',
+  '.agents/skills/prepare-pr/SKILL.md',
   // HTML (standalone)
   'make_jc_importer.html',
   'funder_lookup.html',
