@@ -17,7 +17,7 @@ description: Playwrightの恒久スクリプトでmain、funder、openalexの回
 回帰確認だけでIssue固有の完了条件を満たしたことにしない。
 
 ```powershell
-node .agents/skills/e2e-test/scripts/run-e2e.mjs <main|funder|openalex> [入力値]
+node scripts/run-e2e.mjs <main|funder|openalex> [入力値]
 ```
 
 mainで`AWARD_NUMBERS`が検出された場合は、runnerがfunderも自動確認する。

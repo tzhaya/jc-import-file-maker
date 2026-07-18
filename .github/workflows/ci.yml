@@ -28,3 +28,7 @@ jobs:
       - name: Verify E2E artifact binding
         if: github.event_name == 'pull_request'
         run: node scripts/verify-e2e-record.mjs --changed-from "${{ github.event.pull_request.base.sha }}"
+
+      - name: Check pull request diff whitespace
+        if: github.event_name == 'pull_request'
+        run: git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"

@@ -9,7 +9,7 @@ import {
   E2E_SCHEMA_VERSION,
   E2E_SUITES,
   E2E_TARGETS,
-} from '../../../../scripts/e2e-config.mjs';
+} from './e2e-config.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const { target, input } = parseArgs(process.argv.slice(2));

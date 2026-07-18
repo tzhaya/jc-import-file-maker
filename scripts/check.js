@@ -41,8 +41,8 @@ const JS_FILES = [
   'tests/e2e-config.test.js',
   'scripts/run-tests.js',
   'scripts/e2e-config.mjs',
+  'scripts/run-e2e.mjs',
   'scripts/verify-e2e-record.mjs',
-  '.agents/skills/e2e-test/scripts/run-e2e.mjs',
 ];
 
 // Text files that may contain Japanese — verify no encoding corruption (#175)
