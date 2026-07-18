@@ -1,338 +1,42 @@
 ---
 name: e2e-test
-description: Playwrightを使ってmake_jc_importer_test.html・funder_lookup_test.html・openalex_lookup.htmlのE2Eテストを実行する。DOI・課題番号・ROR IDを入力し、取得結果のフィールドを検証する。
+description: Playwrightの恒久スクリプトでmain、funder、openalexの回帰確認またはIssue固有確認を手動実行し、合否と対象成果物のSHA-256記録を生成する。
 disable-model-invocation: true
 argument-hint: "[main | funder | openalex] [DOI / award number / ROR ID]"
 allowed-tools:
   - Bash
   - Read
-  - Write
-  - Edit
   - Grep
   - Glob
 ---
 
-# E2E テスト（Playwright）
+# E2Eテスト
 
-ブラウザを自動操作して、テスト用HTMLの動作を検証します。
+このSkillはユーザーが手動で起動する。ClaudeからブラウザE2Eを開始しない。
 
-## 前提条件
+共通設定は正準実装 `scripts/e2e-config.mjs`（対象・入力・記録対象ファイル）、
+記録の検証は `scripts/verify-e2e-record.mjs`（`prepare-pr`／CIが使用）。
 
-Node.js と Playwright がインストールされていること。未インストールの場合は以下を実行:
-```bash
-npm init -y 2>/dev/null
-npm install --save-dev playwright
-npx playwright install chromium
+## 対象を選ぶ
+
+- `main`: `make_jc_importer_test.html`
+- `funder`: `funder_lookup_test.html`
+- `openalex`: `openalex_lookup.html`
+
+回帰確認とIssue固有確認を区別する。
+回帰確認だけでIssue固有の完了条件を満たしたことにしない。
+
+```powershell
+node .claude/skills/e2e-test/scripts/run-e2e.mjs <main|funder|openalex> [入力値]
 ```
 
-## 引数
+mainで`AWARD_NUMBERS`が検出された場合は、runnerがfunderも自動確認する。
+記録のsuiteは回帰確認に限定する。Issue固有の受入結果はPR本文へ別に記録する。
 
-- 第1引数: `main`（make_jc_importer_test.html、デフォルト）・`funder`（funder_lookup_test.html）・`openalex`（openalex_lookup.html）
-- 第2引数: テスト対象の DOI・課題番号・ROR ID（省略時はデフォルト値を使用）
+成功時は`.e2e-results/<target>.json`へ対象コミット、JST日時、suite、対象ファイルのSHA-256、結果を記録する。
+この記録は成果物ドリフトの検出用であり、実行証明ではない。
 
-デフォルト値:
-- main: `10.1016/j.advnut.2025.100480`
-- funder: `JPMJPR2125`
-- openalex: `005pdtr14`（JIRCAS、#186検証実績のROR ID）
+Chrome拡張限定機能は標準HTMLのE2Eで完了扱いにしない。
+unpacked extensionの実E2Eを行うか、未実施範囲と代替テストをPRへ明記し、「E2E済み」と書かない。
 
-> `openalex` はテスト版HTMLが存在しないため、本番の `openalex_lookup.html` を直接対象にする（同一フォルダの `shared.js` が必要。リポジトリ直下で実行すれば満たされる）。
-
-## 重要: DOM セレクタの注意点
-
-make_jc_importer_test.html の DOM 構造:
-- **metadata-fields**: `#metadata-fields` — 全フィールドのコンテナ
-- **data-key 属性**: FIELD_DEFS の配列インデックスが付与される（例: `item_30002_title0`, `item_30002_creator2`）。固定値ではないため、**部分一致** `[data-key*="title"]` で検索すること
-- **著者カード**: `.person-card` は存在しない。著者は `[data-key*="creator"] .nested-item.level-1` で取得
-- **資源タイプ**: `[data-key*="resource_type"] select`
-- **データ取得完了の検知**: `#metadata-fields` の子要素数が 0 より大きくなるのを `waitForFunction` で待機する（`.person-card` や `#error-msg` の visible 待ちは不可）
-- **追加待機**: 非同期処理（助成情報のKAKEN/JGN取得、ROR取得等）があるため、metadata-fields 描画後に `waitForTimeout(5000)` で追加待機する
-- **ブラウザ起動オプション**: `chromium.launch({ headless: true, args: ['--disable-web-security'] })` を使用する（file:// からのAPI呼び出し対応）
-
-openalex_lookup.html の DOM 構造:
-- **ROR入力**: `#q-ror`、**対象日数**: `#q-days`（テストでは `30` 等の短い値にして結果件数を抑制する）、**検索ボタン**: `#btn-search`
-- **結果**: `#result-tbody` の `tr` が検索結果行（OpenAlexのページング取得があるため待機は長め・`timeout: 60000` 目安）
-- **件数メッセージ**: `#result-info`、**エラー**: `#error-msg`
-- **所属確認列（#186）**: `.col-warn`（要確認バッジの列）が存在するかで機能有無を確認できる
-
-## テスト手順
-
-### 1. テストスクリプトの生成
-
-プロジェクトルートに一時的なテストスクリプト `_e2e_test.mjs` を生成してください。
-テスト用HTMLは `file://` プロトコルでローカルファイルを直接開きます。
-
-#### main（make_jc_importer_test.html）の場合
-
-```javascript
-import { chromium } from 'playwright';
-
-const doi = process.argv[2] || '10.1016/j.advnut.2025.100480';
-const filePath = process.argv[3]; // テスト用HTMLの絶対パス
-
-(async () => {
-  const browser = await chromium.launch({ headless: true, args: ['--disable-web-security'] });
-  const page = await browser.newPage();
-
-  page.on('pageerror', err => console.error('PAGE ERROR:', err.message));
-
-  // HTMLを開く
-  await page.goto(`file:///${filePath.replace(/\\/g, '/')}`);
-
-  // DOI入力 → 取得ボタンクリック
-  await page.fill('#doi-input', doi);
-  await page.click('#fetch-btn');
-
-  // metadata-fieldsに子要素が描画されるのを待つ
-  try {
-    await page.waitForFunction(
-      () => document.getElementById('metadata-fields')?.children.length > 0,
-      { timeout: 45000 }
-    );
-  } catch {
-    console.error('TIMEOUT: metadata-fields still empty after 45s');
-    await browser.close();
-    process.exit(1);
-  }
-
-  // 非同期処理（助成情報等）の完了を待機
-  await page.waitForTimeout(5000);
-
-  const results = await page.evaluate(() => {
-    const mf = document.getElementById('metadata-fields');
-
-    // タイトル
-    const titleEl = mf.querySelector('[data-key*="title"] input[type="text"]');
-    const title = titleEl?.value || '';
-
-    // 著者
-    const creatorSection = mf.querySelector('[data-key*="creator"]');
-    const authors = creatorSection ? creatorSection.querySelectorAll('.nested-item.level-1').length : 0;
-
-    // DOIリンク
-    const doiLink = document.getElementById('doi-link');
-    const doiHref = doiLink?.href || '';
-
-    // 資源タイプ
-    const rtSection = mf.querySelector('[data-key*="resource_type"]');
-    const rtSelect = rtSection?.querySelector('select');
-    const resourceType = rtSelect?.value || '';
-
-    // セクション数
-    const sectionCount = mf.children.length;
-
-    // 科研費課題番号の抽出（助成情報セクションから）
-    const fundingSection = mf.querySelector('[data-key*="funding"]');
-    const awardNumbers = [];
-    if (fundingSection) {
-      const awardInputs = fundingSection.querySelectorAll('input[type="text"]');
-      for (const input of awardInputs) {
-        const val = input.value.trim();
-        // JP + 英数字のパターン（科研費・JST等の課題番号）
-        if (/^JP[A-Za-z0-9]+$/.test(val)) {
-          awardNumbers.push(val);
-        }
-      }
-    }
-
-    return { title, authors, doiHref, resourceType, sectionCount, awardNumbers };
-  });
-
-  const checks = [
-    { field: 'タイトル', ok: results.title.length > 0, value: results.title.substring(0, 80) || '(空)' },
-    { field: '著者数', ok: results.authors > 0, value: `${results.authors}人` },
-    { field: 'DOIリンク', ok: results.doiHref.includes('doi.org'), value: results.doiHref || 'なし' },
-    { field: '資源タイプ', ok: results.resourceType.length > 0, value: results.resourceType || '(空)' },
-    { field: 'セクション数', ok: results.sectionCount > 10, value: `${results.sectionCount}セクション` },
-  ];
-
-  console.log('\n=== E2E テスト結果 (main) ===');
-  console.log(`DOI: ${doi}\n`);
-  let allPassed = true;
-  for (const c of checks) {
-    const mark = c.ok ? 'PASS' : 'FAIL';
-    if (!c.ok) allPassed = false;
-    console.log(`[${mark}] ${c.field}: ${c.value}`);
-  }
-
-  // 科研費課題番号が見つかった場合は出力（funder テスト連携用）
-  if (results.awardNumbers.length > 0) {
-    console.log(`\n検出された課題番号: ${results.awardNumbers.join(', ')}`);
-    console.log(`AWARD_NUMBERS=${results.awardNumbers.join(',')}`);
-  } else {
-    console.log('\n課題番号: なし');
-    console.log('AWARD_NUMBERS=');
-  }
-
-  console.log(`\n結果: ${allPassed ? 'ALL PASSED' : 'SOME FAILED'}`);
-  await browser.close();
-  process.exit(allPassed ? 0 : 1);
-})();
-```
-
-#### funder（funder_lookup_test.html）の場合
-
-```javascript
-import { chromium } from 'playwright';
-
-const awardNumber = process.argv[2] || 'JPMJPR2125';
-const filePath = process.argv[3];
-
-(async () => {
-  const browser = await chromium.launch({ headless: true, args: ['--disable-web-security'] });
-  const page = await browser.newPage();
-
-  page.on('pageerror', err => console.error('PAGE ERROR:', err.message));
-
-  await page.goto(`file:///${filePath.replace(/\\/g, '/')}`);
-
-  // 課題番号入力 → 検索ボタンクリック
-  await page.fill('#award-input', awardNumber);
-  await page.click('#search-btn');
-
-  // 結果を待機
-  try {
-    await page.waitForSelector('.result-card, .error-message', { timeout: 30000 });
-  } catch {
-    const html = await page.evaluate(() => document.getElementById('results')?.innerHTML?.substring(0, 500) || 'NO #results');
-    console.log('Timeout - DOM state:', html);
-  }
-
-  await page.waitForTimeout(3000);
-
-  const checks = [];
-
-  // 結果カードが1つ以上あるか
-  const cards = await page.$$('.result-card');
-  checks.push({ field: '結果カード数', ok: cards.length > 0, value: `${cards.length}件` });
-
-  // カード内容の検証（あれば）
-  if (cards.length > 0) {
-    const cardText = await cards[0].textContent();
-    checks.push({ field: 'カード内容', ok: cardText.length > 10, value: cardText.substring(0, 100) });
-  }
-
-  console.log('\n=== E2E テスト結果 (funder) ===');
-  console.log(`課題番号: ${awardNumber}\n`);
-  let allPassed = true;
-  for (const c of checks) {
-    const mark = c.ok ? 'PASS' : 'FAIL';
-    if (!c.ok) allPassed = false;
-    console.log(`[${mark}] ${c.field}: ${c.value}`);
-  }
-
-  console.log(`\n結果: ${allPassed ? 'ALL PASSED' : 'SOME FAILED'}`);
-  await browser.close();
-  process.exit(allPassed ? 0 : 1);
-})();
-```
-
-#### openalex（openalex_lookup.html）の場合
-
-```javascript
-import { chromium } from 'playwright';
-
-const ror = process.argv[2] || '005pdtr14';
-const filePath = process.argv[3]; // openalex_lookup.html の絶対パス（本番HTMLを直接使用）
-
-(async () => {
-  const browser = await chromium.launch({ headless: true, args: ['--disable-web-security'] });
-  const page = await browser.newPage();
-
-  page.on('pageerror', err => console.error('PAGE ERROR:', err.message));
-
-  await page.goto(`file:///${filePath.replace(/\\/g, '/')}`);
-
-  // ROR入力 → 対象日数を絞る（結果件数抑制） → 検索ボタンクリック
-  await page.fill('#q-ror', ror);
-  await page.fill('#q-days', '30');
-  await page.click('#btn-search');
-
-  // 結果テーブルに行が描画されるのを待つ（OpenAlexページング取得のため長め）
-  try {
-    await page.waitForFunction(
-      () => document.querySelectorAll('#result-tbody tr').length > 0,
-      { timeout: 60000 }
-    );
-  } catch {
-    const errMsg = await page.textContent('#error-msg').catch(() => '');
-    const info = await page.textContent('#result-info').catch(() => '');
-    console.error('TIMEOUT: result-tbody still empty after 60s', { errMsg, info });
-    await browser.close();
-    process.exit(1);
-  }
-
-  const results = await page.evaluate(() => {
-    const rows = document.querySelectorAll('#result-tbody tr');
-    const rowCount = rows.length;
-    const infoText = document.getElementById('result-info')?.textContent || '';
-    const firstRowDoiLink = rows[0]?.querySelector('a[href*="doi.org"]')?.href || '';
-    const hasWarnColumn = document.querySelectorAll('#result-tbody .col-warn').length > 0;
-    return { rowCount, infoText, firstRowDoiLink, hasWarnColumn };
-  });
-
-  const checks = [
-    { field: '結果行数', ok: results.rowCount > 0, value: `${results.rowCount}件` },
-    { field: '件数メッセージ', ok: results.infoText.length > 0, value: results.infoText.substring(0, 80) || '(空)' },
-    { field: '1行目DOIリンク', ok: results.firstRowDoiLink.includes('doi.org'), value: results.firstRowDoiLink || 'なし' },
-    { field: '所属確認列(#186)', ok: results.hasWarnColumn, value: results.hasWarnColumn ? 'あり' : 'なし' },
-  ];
-
-  console.log('\n=== E2E テスト結果 (openalex) ===');
-  console.log(`ROR: ${ror}\n`);
-  let allPassed = true;
-  for (const c of checks) {
-    const mark = c.ok ? 'PASS' : 'FAIL';
-    if (!c.ok) allPassed = false;
-    console.log(`[${mark}] ${c.field}: ${c.value}`);
-  }
-
-  console.log(`\n結果: ${allPassed ? 'ALL PASSED' : 'SOME FAILED'}`);
-  await browser.close();
-  process.exit(allPassed ? 0 : 1);
-})();
-```
-
-### 2. テストの実行
-
-```bash
-node _e2e_test.mjs <DOI・課題番号・ROR ID> <対象HTMLの絶対パス>
-```
-
-openalex の場合、`<対象HTMLの絶対パス>` は本番の `openalex_lookup.html`（テスト版なし）。
-
-### 3. main テスト時の funder 連携テスト
-
-**main テストで科研費課題番号（`JP` で始まる番号）が検出された場合、自動的に funder_lookup_test.html のテストも実行してください。**
-
-手順:
-1. main テストの出力から `AWARD_NUMBERS=` 行を解析する
-2. `AWARD_NUMBERS=` が空でなければ、カンマ区切りの各課題番号について funder テスト用スクリプトを生成・実行する
-3. 両方のテスト結果をまとめて報告する
-
-例: main テストで `JP19KK0341` が検出された場合:
-```bash
-# 1. main テスト
-node _e2e_test.mjs "10.1016/j.advnut.2025.100480" "/path/to/make_jc_importer_test.html"
-# → AWARD_NUMBERS=JP19KK0341 が出力される
-
-# 2. funder テスト（検出された課題番号で自動実行）
-node _e2e_test_funder.mjs "JP19KK0341" "/path/to/funder_lookup_test.html"
-```
-
-### 4. 追加検証（任意）
-
-テスト結果の出力を確認し、必要に応じて追加の検証項目をスクリプトに加えてください。
-例:
-- 特定のフィールドに期待する値が入っているか
-- プレビュー表示が正しく動作するか
-- TSVエクスポートの内容が正しいか
-
-### 5. クリーンアップ
-
-テスト完了後、一時スクリプト `_e2e_test.mjs`・`_e2e_test_funder.mjs`・`_e2e_test_openalex.mjs` を削除してください。
-
-### 6. 結果報告
-
-テストの合否と各検証項目の結果をユーザーに報告してください。
-main と funder の両方をテストした場合は、両方の結果をまとめて報告してください。
-失敗した項目がある場合は、原因の調査も行ってください。
+失敗時だけ詳細を確認する。トラブル時は`references/troubleshooting.md`を読む。
