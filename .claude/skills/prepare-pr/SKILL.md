@@ -35,7 +35,7 @@ model: sonnet
 
 1. `node scripts/verify-e2e-record.mjs --require-if-changed`を実行する。
 2. `npm test`を実行する。
-3. `git diff --check`を実行する。
+3. `git diff --check master`を実行し、PRブランチのコミット済み・未コミット差分を確認する。
 4. 同期、バージョン、JST日付、必須文書を確認する。
 5. Issue固有の受入結果と未検証範囲を確認する。
 6. 最終差分からレビュー方式を決める。

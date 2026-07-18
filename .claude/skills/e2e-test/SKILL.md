@@ -15,6 +15,7 @@ allowed-tools:
 このSkillはユーザーが手動で起動する。ClaudeからブラウザE2Eを開始しない。
 
 共通設定は正準実装 `scripts/e2e-config.mjs`（対象・入力・記録対象ファイル）、
+実行本体は `scripts/run-e2e.mjs`、
 記録の検証は `scripts/verify-e2e-record.mjs`（`prepare-pr`／CIが使用）。
 
 ## 対象を選ぶ
@@ -27,7 +28,7 @@ allowed-tools:
 回帰確認だけでIssue固有の完了条件を満たしたことにしない。
 
 ```powershell
-node .claude/skills/e2e-test/scripts/run-e2e.mjs <main|funder|openalex> [入力値]
+node scripts/run-e2e.mjs <main|funder|openalex> [入力値]
 ```
 
 mainで`AWARD_NUMBERS`が検出された場合は、runnerがfunderも自動確認する。
