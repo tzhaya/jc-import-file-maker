@@ -11,7 +11,7 @@ import {
   E2E_TARGETS,
 } from './e2e-config.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { target, input } = parseArgs(process.argv.slice(2));
 const configs = E2E_TARGETS;
 
