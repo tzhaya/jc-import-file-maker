@@ -51,6 +51,8 @@ const UTF8_FILES = [
   ...JS_FILES,
   // Markdown
   'README.md',
+  'CLAUDE.md',
+  'chrome-extension/CLAUDE.md',
   'docs/README.md',
   'docs/privacy-policy.md',
   'docs/user_guide.md',
