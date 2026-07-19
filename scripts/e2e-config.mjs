@@ -1,6 +1,6 @@
 export const E2E_TARGETS = {
   main: {
-    file: 'make_jc_importer_test.html',
+    file: 'make_jc_importer.html',
     defaultInput: '10.1016/j.advnut.2025.100480',
   },
   funder: {

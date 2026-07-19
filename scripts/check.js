@@ -63,12 +63,9 @@ for (const f of UTF8_FILES) {
   });
 }
 
-// File sync pairs (#193)
+// File sync pairs (#193): 正本→拡張のコピー（npm run build）が反映済みかを検証
 console.log('--- File sync ---');
-const SYNC_PAIRS = [
-  ['shared.js', 'chrome-extension/shared.js'],
-  ['tsv_headers_template.js', 'chrome-extension/tsv_headers_template.js'],
-];
+const { COPY_PAIRS: SYNC_PAIRS } = require('./build.js');
 for (const [a, b] of SYNC_PAIRS) {
   check(`${a} ↔ ${b}`, () => {
     const ca = fs.readFileSync(path.join(ROOT, a), 'utf8');

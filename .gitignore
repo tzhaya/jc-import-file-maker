@@ -9,6 +9,9 @@ old/
 # Dependencies
 node_modules/
 
+# 開発者ローカル設定（APIキー等。標準版HTMLが任意読込する）
+config.local.js
+
 # OS
 .DS_Store
 Thumbs.db
