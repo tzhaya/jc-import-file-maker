@@ -18,6 +18,7 @@
 - PR作成の直前に `/prepare-pr` を実行すること（build反映・テスト・LOCAL_VERSION・E2E依頼の短いチェックリスト）
 - HTML/JS に変更があるPRは、ユーザーが `/e2e-test` を手動実行し ALL PASSED になるまでPR作成に進まない（Claudeからは起動不可）。ドキュメントのみの変更はE2E不要
 - `chrome-extension/manifest.json` の `version` は **リリース時のみ** 更新する（`docs/release_procedure.md` 参照）。通常のPRでは触らない
+- リリース作業は `/release` を使用する（リリースPR準備と検証を行い、タグpushなどの公開操作は直前に確認する）
 - 変更記録は **PR本文と `docs/changelog.md`** に残す。`docs/worklog.md` への毎PR追記は不要（過去分のアーカイブとして保持）
 
 ## ドキュメント運用
