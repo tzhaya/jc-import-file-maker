@@ -825,9 +825,9 @@ async function copyTsvToClipboard(btn) {
 
 // ===== 更新チェック =====
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-10';
+  const LOCAL_VERSION = '2026-07-19';
   try {
-    const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.html&per_page=1');
+    const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.js&per_page=1');
     if (!res.ok) return;
     const commits = await res.json();
     if (!commits.length) return;
