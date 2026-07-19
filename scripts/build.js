@@ -17,6 +17,9 @@ const COPY_PAIRS = [
   ['tsv_headers_template.js', 'chrome-extension/tsv_headers_template.js'],
   ['make_jc_importer.js', 'chrome-extension/make_jc_importer.js'],
   ['funder_lookup.js', 'chrome-extension/funder_lookup.js'],
+  ['weko3_opensearch_core.js', 'chrome-extension/weko3_opensearch_core.js'],
+  // 標準版は openalex_lookup.js、拡張版は openalex_panel.js の名前で参照する同一ファイル
+  ['openalex_lookup.js', 'chrome-extension/openalex_panel.js'],
 ];
 
 function build() {
