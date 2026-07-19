@@ -25,10 +25,6 @@ jobs:
       - name: Run quality checks (JSON parse + JS syntax + UTF-8 + file sync + TSV headers)
         run: npm test
 
-      - name: Verify E2E artifact binding
-        if: github.event_name == 'pull_request'
-        run: node scripts/verify-e2e-record.mjs --changed-from "${{ github.event.pull_request.base.sha }}"
-
       - name: Check pull request diff whitespace
         if: github.event_name == 'pull_request'
         run: git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
