@@ -4,6 +4,8 @@
 
 `v*` タグを push すると GitHub Actions（`.github/workflows/release.yml`）が自動起動し、`chrome-extension/` を zip 化して GitHub Releases に添付します。
 
+一連の作業には `/release` Skillを使用します。リリースPRの準備と検証を支援し、タグpushなどの公開操作は実行直前に確認します。Chromeウェブストアへの提出は手動です。
+
 ---
 
 ## 手順

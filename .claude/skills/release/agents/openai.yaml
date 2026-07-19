@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release"
+  short_description: "Chrome拡張のリリース準備と公開手順を安全に実行"
+  default_prompt: "Use $release to prepare and run a Chrome extension release."
