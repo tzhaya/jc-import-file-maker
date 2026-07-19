@@ -16,6 +16,7 @@ const COPY_PAIRS = [
   ['shared.js', 'chrome-extension/shared.js'],
   ['tsv_headers_template.js', 'chrome-extension/tsv_headers_template.js'],
   ['make_jc_importer.js', 'chrome-extension/make_jc_importer.js'],
+  ['funder_lookup.js', 'chrome-extension/funder_lookup.js'],
 ];
 
 function build() {

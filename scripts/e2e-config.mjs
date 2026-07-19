@@ -4,7 +4,7 @@ export const E2E_TARGETS = {
     defaultInput: '10.1016/j.advnut.2025.100480',
   },
   funder: {
-    file: 'funder_lookup_test.html',
+    file: 'funder_lookup.html',
     defaultInput: 'JPMJPR2125',
   },
   openalex: {
