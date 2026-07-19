@@ -136,13 +136,14 @@ JaLC、KAKEN XML、Open Policy Finder API、機関リポジトリとの照合が
 
 ### 通常ブラウザ版
 
-インストールせずに試したい場合は、3つのファイルを同じフォルダへ保存して使用します。
+インストールせずに試したい場合は、4つのファイルを同じフォルダへ保存して使用します（[リポジトリのZIP](https://github.com/tzhaya/jc-import-file-maker/archive/refs/heads/master.zip)を展開しても同じ構成が得られます）。
 
 1. [make_jc_importer.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/make_jc_importer.html)を右クリックし、「名前を付けてリンク先を保存」で保存します
 2. [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js)を同じフォルダへ保存します
 3. [tsv_headers_template.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/tsv_headers_template.js)も同じフォルダへ保存します
-4. 必要に応じて、`shared.js`をメモ帳などで開き、APIキーや初期値を設定します
-5. `make_jc_importer.html`をブラウザで開きます
+4. [make_jc_importer.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/make_jc_importer.js)も同じフォルダへ保存します
+5. 必要に応じて、`shared.js`をメモ帳などで開き、APIキーや初期値を設定します
+6. `make_jc_importer.html`をブラウザで開きます
 
 ## 使い方
 
@@ -171,7 +172,7 @@ JaLC、KAKEN XML、Open Policy Finder API、機関リポジトリとの照合が
 
 - Chrome拡張機能版ではサイドパネルのタブから「助成情報検索」に切り替えて利用できます。
 - 通常ブラウザ版では [funder_lookup.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/funder_lookup.html) を右クリック→「名前をつけてリンク(先)を保存」で保存してご利用ください。
-  - 動作には [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js) も必要です。同じフォルダに保存してください（インポート用TSV生成ツールの導入時に保存済みであれば共用できます）。
+  - 動作には [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js) と [funder_lookup.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/funder_lookup.js) も必要です。同じフォルダに保存してください（`shared.js` はインポート用TSV生成ツールの導入時に保存済みであれば共用できます）。
 
 #### 利用方法
 
@@ -213,7 +214,7 @@ OpenAlex機関別著作検索ツールは、自機関のROR ID、検索対象期
   - Chrome拡張機能版では「インポートタブへ送る」ボタンから直接送信できます。
 - Chrome拡張機能版では、各候補に自機関リポジトリでの登録状況バッジ（⚪ 登録済みの可能性大／🟡 要確認／🟢 未登録の可能性）を表示します。`DOI` と `selfDOI` の識別子検索で完全一致を確認できない場合はタイトル検索へフォールバックします。
 - 通常ブラウザ版では [openalex_lookup.html](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/openalex_lookup.html) を右クリック→「名前をつけてリンク(先)を保存」で保存してご利用ください。
-  - 動作には [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js) も必要です。同じフォルダに保存してください（インポート用TSV生成ツールの導入時に保存済みであれば共用できます）。
+  - 動作には [shared.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/shared.js)・[weko3_opensearch_core.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/weko3_opensearch_core.js)・[openalex_lookup.js](https://github.com/tzhaya/jc-import-file-maker/raw/refs/heads/master/openalex_lookup.js) も必要です。同じフォルダに保存してください（`shared.js` はインポート用TSV生成ツールの導入時に保存済みであれば共用できます）。
 
 利用手順と「未登録かどうか」の判定ロジックは [使い方ガイド](docs/user_guide.md#openalex機関別著作検索からのインポート) を参照してください。
 
@@ -231,26 +232,27 @@ APIキー（OpenAlex・CiNii・Open Policy Finder）と初期値（リポジト�
 ## ディレクトリ構成
 
 ```
-├── make_jc_importer.html      # メインツール（通常ブラウザ版）
-├── funder_lookup.html         # 助成情報検索ツール（通常ブラウザ版）
-├── openalex_lookup.html       # OpenAlex機関別著作検索ツール（通常ブラウザ版・検索ロジックをHTMLに内蔵）
+├── make_jc_importer.html      # メインツール（通常ブラウザ版・マークアップのみ）
+├── funder_lookup.html         # 助成情報検索ツール（通常ブラウザ版・マークアップのみ）
+├── openalex_lookup.html       # OpenAlex機関別著作検索ツール（通常ブラウザ版・マークアップのみ）
 ├── shared.js                  # 共通設定（CONFIG定数・APIキー）と通信処理（各HTML・Chrome拡張で共有）
 ├── tsv_headers_template.js    # TSVヘッダーテンプレート定義（メインツールで使用）
+├── make_jc_importer.js        # メインツール ロジック（正本。標準版・Chrome拡張版で共有）
+├── funder_lookup.js           # 助成情報検索 ロジック（正本。標準版・Chrome拡張版で共有）
+├── openalex_lookup.js         # OpenAlex機関別著作検索 ロジック（正本。拡張版では openalex_panel.js）
+├── weko3_opensearch_core.js   # WEKO3 OpenSearch 共通コア（正本。標準版・Chrome拡張版で共有）
+├── scripts/build.js           # 正本JS → chrome-extension/ への同期コピー（npm run build）
 ├── chrome-extension/          # Chrome拡張機能版（このフォルダを読み込んで使用）
 │   ├── manifest.json          #   Manifest V3 定義
 │   ├── background.js          #   Service Worker（CORS プロキシ）
 │   ├── panel.html             #   サイドパネル（メインツール）
-│   ├── make_jc_importer.js    #   メインツール ロジック
 │   ├── funder_panel.html      #   サイドパネル（助成情報検索）
-│   ├── funder_lookup.js       #   助成情報検索 ロジック
 │   ├── opensearch_panel.html  #   サイドパネル（リポジトリコンテンツ検索／OpenSearch）
-│   ├── opensearch_panel.js    #   リポジトリコンテンツ検索 ロジック
+│   ├── opensearch_panel.js    #   リポジトリコンテンツ検索 ロジック（拡張専用）
 │   ├── openalex_panel.html    #   サイドパネル（OpenAlex機関別著作検索）
-│   ├── openalex_panel.js      #   OpenAlex機関別著作検索 ロジック
 │   ├── options.html           #   設定ページ（APIキー管理 UI）
 │   ├── options.js             #   設定ページ ロジック
-│   ├── shared.js              #   ルートの shared.js の同期コピー
-│   ├── tsv_headers_template.js#   ルートの tsv_headers_template.js の同期コピー
+│   ├── *.js                   #   ルート正本の同期コピー（npm run build が生成。直接編集しない）
 │   └── icons/                 #   拡張機能アイコン（16/48/128 PNG + SVG）
 ├── api-flow.md                # APIフロー整理（Crossref/OpenAlex等の取得順・JPCOARマッピング）
 ├── data/                      # 参照・設定データ
@@ -323,6 +325,7 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-07-19 | 開発基盤の簡素化：標準版HTMLのインラインJSとChrome拡張版JSの手動同期を廃止し、リポジトリ直下の正本JSを両版で共有する構成に変更（`npm run build` が `chrome-extension/` へコピーし、CIが反映漏れを検出）。**通常ブラウザ版の必要ファイルが変わりました**（メインツールは `make_jc_importer.js`、助成情報検索は `funder_lookup.js`、OpenAlex検索は `weko3_opensearch_core.js`・`openalex_lookup.js` も同じフォルダに必要）。機能・使い方の変更はありません |
 | 2026-07-17 | `docs/README.md` を新設し、利用者向けガイド、開発・運用資料、仕様書、調査資料、ポリシー、実装履歴を目的別に一覧化。現行ファイルへのリンクと将来的なフォルダ分け案を記載。あわせて `docs/roadmap_2026-07-05.md` を登録・推敲し、少数実機での取り込み成功と検証完了を区別。ドキュメントのみの変更（E2E対象外・manifest更新不要） |
 | 2026-07-17 | Chrome拡張 ver. 1.25.0：OpenAlex機関別著作検索の登録済み照合に `DOI`／`selfDOI`検索を追加（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241) 改善2）。筑波大学・JIRCAS・国立国語研究所で実測し、外部DOIを `DOI`、自リポジトリ登録DOIを `selfDOI` で取得できる例を確認。両方の返戻JPCOAR内で候補DOIの完全一致を調べ、正常な0件・不一致は従来のタイトル検索へフォールバック。通信・HTTP・XML解析エラーは障害を未登録に見せず `⚠ 照合不可` として停止。URLは `URL` / `URLSearchParams` で構築し、DOI中の `/` を保持。標準版は照合非実行だがinline parityを反映 |
 | 2026-07-17 | OpenAlex 機関別著作検索の「資源タイプ」を複数選択可能にし、既定を「論文 (article)」に変更（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)）：`<select multiple>` 化し `init()` で `article` を既定選択。`buildWorksUrl` は複数タイプを OpenAlex の OR 記法（`type:article\|review`、1フィルタ内 `\|` 区切り）で組み立て、未選択なら type フィルタを付けない。作業中データの保存 `type` を配列化し、旧形式（単一文字列）の復元にも後方互換対応。あわせて登録済み照合バッジ（[#156](https://github.com/tzhaya/jc-import-file-maker/issues/156)）を `weko3-opensearch-client-spec` の知見で改善（先行分）：(1) 🟡「要確認」の代表リンクが JPCOAR ページ内逆順のため最後のヒットを指していた不具合を、`normalizeJpcoarItemOrder`（spec §4.1）で API 指定順へ補正し先頭ヒットに修正。(2) 照合先を許可ホスト（HTTPS の `*.repo.nii.ac.jp` ＋登録済みリポジトリ、spec §2/§7）に限定し、許可外は fetch せず `—` 表示。(3) `openalex_panel.js` と `opensearch_panel.js` に重複していた共通純粋関数・定数（`isAllowedHost`／`normalizeJpcoarItemOrder`／`NS_RDF`／`bareDoi`）を新規コア `chrome-extension/weko3_opensearch_core.js` へ集約（ブラウザは名前空間 `globalThis.Weko3OpenSearchCore`、Node は `require`。素の const 再宣言によるブラウザクラッシュを回避）。`tests/openalex-match.test.js` を新設し `parseRepoSearch` はパーサー注入で DOM 非依存にテスト（`npm test` 計87件）。標準版 `openalex_lookup.html` は CORS 制約で照合を実行しないためコア非読込・inline 維持でロジック parity を反映。DOI 直接 ID 検索（spec §8）は実機確認を要するため後続対応。manifest version `1.23.0` → `1.24.0` |

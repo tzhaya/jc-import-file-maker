@@ -8,35 +8,26 @@
 
 ## 手順
 
-### 1. 実装・テスト
+### 1. 実装・テスト（通常のPRフロー）
 
 1. ブランチを作成して実装する（`feature/xxx` または `fix/xxx`）
-2. `make_jc_importer_test.html` / `funder_lookup_test.html` を更新する
-3. `/e2e-test` で ALL PASSED を確認する
+2. JS正本（リポジトリ直下）を変更したら `npm run build` で `chrome-extension/` へ反映する
+3. `npm test` と `/e2e-test`（ALL PASSED）を確認し、PRを作成・マージする
 
-### 2. PR マージ前の更新チェック
+通常のPRでは `manifest.json` の `version` を更新しない。
 
-以下がすべて更新されていることを確認する。
+### 2. リリースPRを作成する
+
+リリースするタイミングで、以下をまとめた小さなリリースPRを作る。
 
 | 更新対象 | 内容 |
 |---|---|
-| `LOCAL_VERSION`（`make_jc_importer.html` / `chrome-extension/make_jc_importer.js`） | コミット日（JST）に更新 |
-| `LOCAL_VERSION`（`funder_lookup.html` / `chrome-extension/funder_lookup.js`） | 変更した場合のみ更新 |
-| `chrome-extension/manifest.json` の `version` | セマンティックバージョニングで patch/minor/major を上げる |
-| 各 HTML の「最終更新」日付・更新概要テーブル（直近5件） | `make_jc_importer.html` / `chrome-extension/panel.html` など |
-| `README.md` の「最新の更新」テーブルと変更履歴テーブル | |
-| `docs/worklog.md` の最終更新日・バージョン履歴・実装セクション | |
+| `chrome-extension/manifest.json` の `version` | 前リリース以降の変更内容に応じて patch/minor/major を上げる |
+| `LOCAL_VERSION`（`make_jc_importer.js` / `funder_lookup.js`） | 未反映ならリリース日（JST）に更新 |
+| `docs/changelog.md` | 前リリース以降の変更をまとめる |
+| `README.md` の変更履歴 | 必要に応じて更新 |
 
-### 3. PR を作成・マージする
-
-```bash
-gh pr create --title "..." --body "..."
-# レビュー後マージ
-git checkout master && git pull
-git branch -d feature/xxx
-```
-
-### 4. タグを作成して push する
+### 3. タグを作成して push する
 
 manifest.json の `version`（例: `1.9.5`）に合わせたタグを打つ。
 
@@ -77,7 +68,7 @@ git push origin v1.9.5
 | 機能追加（新タブ・API対応追加等） | minor | `1.9.x` → `1.10.0` |
 | バグ修正・軽微な改善 | patch | `1.9.4` → `1.9.5` |
 
-Chrome拡張配下のファイル（`make_jc_importer.js`, `funder_lookup.js`, `panel.html`, `funder_panel.html` 等）を変更した場合のみ version を更新する。
+version の更新はリリースPRでのみ行い、前リリース以降に Chrome 拡張へ影響する変更（正本JS・拡張専用ファイル）が含まれる場合に、その内容で桁を決める。
 
 ---
 

@@ -6,7 +6,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "node scripts/run-tests.js"
+    "test": "node scripts/run-tests.js",
+    "build": "node scripts/build.js"
   },
   "repository": {
     "type": "git",

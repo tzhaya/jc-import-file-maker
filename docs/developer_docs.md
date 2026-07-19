@@ -11,6 +11,23 @@ cd jc-import-file-maker
 npm install
 ```
 
+### 正本とビルド（npm run build）
+
+アプリケーションJSの正本はリポジトリ直下にあります（`shared.js` / `tsv_headers_template.js` / `make_jc_importer.js` / `funder_lookup.js` / `openalex_lookup.js` / `weko3_opensearch_core.js`）。標準版HTMLは `<script src>` でこれらを読み込み、Chrome拡張版は `npm run build`（`scripts/build.js`）が `chrome-extension/` へ生成する同期コピーを使用します。**`chrome-extension/` 配下のコピーは直接編集せず**、正本を編集して `npm run build` を実行してください。反映漏れは `npm test` の File sync 検査（CI でも実行）で検出されます。
+
+### 開発者ローカル設定（config.local.js）
+
+APIキー等の個人設定は、git 管理外の `config.local.js` をリポジトリ直下（または標準版HTMLと同じフォルダ）に置いて上書きします。標準版HTMLが任意読込するため、本番HTMLをそのままE2E・手動確認に使えます（テスト用HTMLの複製は不要）。
+
+```js
+// config.local.js（例）
+Object.assign(CONFIG, {
+  OpenAlex_API_KEY: 'xxxx',
+  CiNii_API_KEY: 'xxxx',
+  OPF_API_KEY: 'xxxx',
+});
+```
+
 ## 品質チェック（npm test）
 
 `npm test` を実行すると `scripts/check.js`（静的チェック）と `node --test`（ユニットテスト）が順に走り、以下を検証します:
@@ -42,7 +59,7 @@ npm install
 - DOM 配線・初期化 IIFE を包む `if (typeof document !== 'undefined') { … }` ガード
 - 末尾の `if (typeof module !== 'undefined' && module.exports) { module.exports = { … }; }`
 
-**共通コア `chrome-extension/weko3_opensearch_core.js`（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)）**: `opensearch_panel.js`（#237）と `openalex_panel.js` の照合バッジ（#156）が共有する純粋関数・定数（`isAllowedHost`＋許可ホスト定義／`normalizeJpcoarItemOrder`／`NS_RDF`／`bareDoi`）を集約。ブラウザは各パネル JS より前に `<script src>` で読み込み `globalThis.Weko3OpenSearchCore` から、Node は `require` で参照します。**素の `const`/`function` をグローバルに撒くと同一ページのパネル JS と衝突して SyntaxError になるため、名前空間オブジェクトとしてのみ公開**します。各パネルは `typeof module … ? require : globalThis` のガード付き分岐で取得し、重複ローカル定義は持ちません。`parseRepoSearch(xmlText, parseXml?)` は Node に `DOMParser` が無いため XML パーサーを注入可能にしています。標準版 `openalex_lookup.html` は単体配布のためコアを読み込まず、同一ロジックを inline で保持します（照合は拡張版のみ実行）。
+**共通コア `chrome-extension/weko3_opensearch_core.js`（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)）**: `opensearch_panel.js`（#237）と `openalex_panel.js` の照合バッジ（#156）が共有する純粋関数・定数（`isAllowedHost`＋許可ホスト定義／`normalizeJpcoarItemOrder`／`NS_RDF`／`bareDoi`）を集約。ブラウザは各パネル JS より前に `<script src>` で読み込み `globalThis.Weko3OpenSearchCore` から、Node は `require` で参照します。**素の `const`/`function` をグローバルに撒くと同一ページのパネル JS と衝突して SyntaxError になるため、名前空間オブジェクトとしてのみ公開**します。各パネルは `typeof module … ? require : globalThis` のガード付き分岐で取得し、重複ローカル定義は持ちません。`parseRepoSearch(xmlText, parseXml?)` は Node に `DOMParser` が無いため XML パーサーを注入可能にしています。標準版 `openalex_lookup.html` も拡張版と同じく `<script src>` でコア（正本はルートの `weko3_opensearch_core.js`）を読み込みます（照合の実行は拡張版のみ）。
 
 `generateTsv` は `TSV_HEADERS_TEMPLATE` をグローバル参照するため、`tests/tsv.test.js` は `data/tsv_headers.json`（CI でテンプレートと**構造一致**が保証済）を `global.TSV_HEADERS_TEMPLATE` に注入して実テンプレートを供給します。
 
@@ -87,7 +104,7 @@ Get-Content -Encoding UTF8 README.md | Select-Object -First 20
 
 ## テストの限界と教訓
 
-このツールは「標準版 HTML」と「Chrome 拡張版」の二系統を同一ロジックでミラーしており、検証は **Node サンドボックス（`vm` でマッピング関数を直接実行）** と **ブラウザ E2E（`/e2e-test`、Playwright）** を併用します。過去の実装で「片方の検証層だけでは取りこぼす」バグを繰り返し踏んでいるため、実装・レビュー時のチェックポイントとして以下を残します。
+このツールは「標準版 HTML」と「Chrome 拡張版」が同一の正本JSを共有しており（環境差分は実行時ガード）、検証は **Node サンドボックス（`vm` でマッピング関数を直接実行）** と **ブラウザ E2E（`/e2e-test`、Playwright）** を併用します。過去の実装で「片方の検証層だけでは取りこぼす」バグを繰り返し踏んでいるため、実装・レビュー時のチェックポイントとして以下を残します。
 
 ### 1. Node サンドボックス検証は DOM 描画を見ない
 

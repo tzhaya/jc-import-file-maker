@@ -11,82 +11,20 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 
-const JSON_FILES = [
-  'package.json',
-  'package-lock.json',
-  'chrome-extension/manifest.json',
-  'data/tsv_headers.json',
-];
+// git追跡下のテキストファイルを拡張子で自動列挙する。
+// 新規ファイルは追加登録なしで自動的に検査対象へ入る（旧: 手動リスト運用）。
+// samples/ は外部API等から採取した参照データのため自作ファイルの検査対象外。
+const TRACKED_FILES = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
+  .split(/\r?\n/)
+  .filter(Boolean)
+  .filter((f) => !f.startsWith('samples/'));
+const byExt = (...exts) => TRACKED_FILES.filter((f) => exts.some((ext) => f.endsWith(ext)));
 
-const JS_FILES = [
-  'shared.js',
-  'tsv_headers_template.js',
-  'chrome-extension/background.js',
-  'chrome-extension/funder_lookup.js',
-  'chrome-extension/make_jc_importer.js',
-  'chrome-extension/openalex_panel.js',
-  'chrome-extension/opensearch_panel.js',
-  'chrome-extension/options.js',
-  'chrome-extension/shared.js',
-  'chrome-extension/tsv_headers_template.js',
-  'chrome-extension/weko3_opensearch_core.js',
-  // ユニットテスト（#192）
-  'tests/doi.test.js',
-  'tests/abstract.test.js',
-  'tests/tsv.test.js',
-  'tests/aff-misattribution.test.js',
-  'tests/access-rights.test.js',
-  'tests/opensearch.test.js',
-  'tests/openalex-match.test.js',
-  'tests/e2e-config.test.js',
-  'scripts/run-tests.js',
-  'scripts/e2e-config.mjs',
-  'scripts/run-e2e.mjs',
-  'scripts/verify-e2e-record.mjs',
-];
+const JSON_FILES = byExt('.json');
+const JS_FILES = byExt('.js', '.mjs');
 
 // Text files that may contain Japanese — verify no encoding corruption (#175)
-const UTF8_FILES = [
-  ...JSON_FILES,
-  ...JS_FILES,
-  // Markdown
-  'README.md',
-  'CLAUDE.md',
-  'chrome-extension/CLAUDE.md',
-  'docs/README.md',
-  'docs/privacy-policy.md',
-  'docs/user_guide.md',
-  'docs/settings.md',
-  'docs/developer_docs.md',
-  'docs/requirements.md',
-  'docs/fields.md',
-  'docs/handover_cors_extension.md',
-  'docs/Implementation_JaLC.md',
-  'docs/datacite_jpcoar_mapping.md',
-  'docs/current_review_2026-07-05.md',
-  'docs/roadmap_2026-07-05.md',
-  'docs/resource_type_vocabulary.md',
-  'docs/weko3-opensearch-client-spec.md',
-  'docs/weko3-opensearch-client-general-spec.md',
-  'function.md',
-  '.agents/skills/cross-review/SKILL.md',
-  '.agents/skills/e2e-test/SKILL.md',
-  '.agents/skills/e2e-test/references/troubleshooting.md',
-  '.agents/skills/plan-issue/SKILL.md',
-  '.agents/skills/prepare-pr/SKILL.md',
-  // HTML (standalone)
-  'make_jc_importer.html',
-  'funder_lookup.html',
-  'openalex_lookup.html',
-  // HTML (Chrome extension)
-  'chrome-extension/panel.html',
-  'chrome-extension/funder_panel.html',
-  'chrome-extension/openalex_panel.html',
-  'chrome-extension/opensearch_panel.html',
-  'chrome-extension/options.html',
-  // GitHub Pages
-  'docs/index.html',
-];
+const UTF8_FILES = [...JSON_FILES, ...JS_FILES, ...byExt('.md', '.html', '.yml')];
 
 let errors = 0;
 
@@ -125,12 +63,9 @@ for (const f of UTF8_FILES) {
   });
 }
 
-// File sync pairs (#193)
+// File sync pairs (#193): 正本→拡張のコピー（npm run build）が反映済みかを検証
 console.log('--- File sync ---');
-const SYNC_PAIRS = [
-  ['shared.js', 'chrome-extension/shared.js'],
-  ['tsv_headers_template.js', 'chrome-extension/tsv_headers_template.js'],
-];
+const { COPY_PAIRS: SYNC_PAIRS } = require('./build.js');
 for (const [a, b] of SYNC_PAIRS) {
   check(`${a} ↔ ${b}`, () => {
     const ca = fs.readFileSync(path.join(ROOT, a), 'utf8');

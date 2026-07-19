@@ -1,15 +1,7 @@
 import { chromium } from 'playwright';
-import { createHash } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import {
-  E2E_RECORD_DIR,
-  E2E_SCHEMA_VERSION,
-  E2E_SUITES,
-  E2E_TARGETS,
-} from './e2e-config.mjs';
+import { E2E_TARGETS } from './e2e-config.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { target, input } = parseArgs(process.argv.slice(2));
@@ -54,11 +46,6 @@ for (const check of checks) console.log(`[${check.ok ? 'PASS' : 'FAIL'}] ${check
 if (target === 'main') {
   const awardNumbers = details.awardNumbers || [];
   console.log(`AWARD_NUMBERS=${awardNumbers.join(',')}`);
-}
-
-if (passed) {
-  await writeRecord(target, config.value);
-  if (linkedAwards.length > 0) await writeRecord('funder', linkedAwards.join(','));
 }
 
 console.log(`result: ${passed ? 'ALL PASSED' : 'SOME FAILED'}`);
@@ -127,40 +114,4 @@ async function testOpenAlex(page, value) {
 
 function parseArgs(args) {
   return { target: args[0] || 'main', input: args[1] };
-}
-
-async function writeRecord(recordTarget, recordInput) {
-  const recordConfig = E2E_TARGETS[recordTarget];
-  const hashFiles = async (files) => Object.fromEntries(await Promise.all(files.map(async (file) => {
-    const bytes = await readFile(path.join(root, file));
-    return [file, createHash('sha256').update(bytes).digest('hex')];
-  })));
-  const record = {
-    schemaVersion: E2E_SCHEMA_VERSION,
-    commit: gitHead(),
-    executedAtJst: jstTimestamp(),
-    target: recordTarget,
-    suite: 'regression',
-    input: recordInput,
-    files: await hashFiles(recordConfig.files),
-    executionFiles: await hashFiles(recordConfig.executionFiles),
-    result: 'passed',
-    limitation: 'This record binds results to file hashes; it does not independently prove browser execution.',
-  };
-  const resultDir = path.join(root, E2E_RECORD_DIR);
-  await mkdir(resultDir, { recursive: true });
-  await writeFile(path.join(resultDir, `${recordTarget}.json`), `${JSON.stringify(record, null, 2)}\n`, 'utf8');
-}
-
-function gitHead() {
-  try { return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(); }
-  catch { return null; }
-}
-
-function jstTimestamp() {
-  const parts = new Intl.DateTimeFormat('sv-SE', {
-    timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-  }).format(new Date());
-  return `${parts.replace(' ', 'T')}+09:00`;
 }
