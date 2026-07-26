@@ -83,6 +83,7 @@ Crossrefの著者とOpenAlexの著者の突合は、以下の手順で行われ�
 | diamond / gold / hybrid / bronze / green | — | `open access` |
 | closed / 不明 | あり（`embargo.amount > 0`） | `embargoed access` |
 | closed / 不明 | なし / OPFデータなし | `open access`（IR登録用途を想定） |
+| closed / 不明 | OPF取得エラー（401/403/429等、`opfStatus === 'error'`） | `embargoed access`（エンバーゴ有無を確認できていないため安全側。#229） |
 
 ## 出版者情報 (Publisher Detail) フィールドの詳細マッピング
 

@@ -418,11 +418,15 @@ function determineVersionInfo(oaStatus, oaJson) {
 }
 
 // ===== OAステータスに基づくアクセス権判定 =====
-function determineAccessRights(oaStatus, opfData, pubDate) {
+// opfStatus: lastOpfStatus（'error'|'not-found'|'found'等）。OPF取得自体が失敗した場合は
+// エンバーゴの有無を判断できないため、「エンバーゴなし」と同一視せず安全側に倒す（#229）。
+function determineAccessRights(oaStatus, opfData, pubDate, opfStatus) {
   // Gold/Diamond/Hybrid/Bronze/Green → open access
   if (['diamond', 'gold', 'hybrid', 'bronze', 'green'].includes(oaStatus)) {
     return 'open access';
   }
+  // OPF取得が401/403/429等の実エラーで失敗した場合、エンバーゴなしとは断定できないため安全側で embargoed access
+  if (opfStatus === 'error') return 'embargoed access';
   // Closed / Unknown → OPFエンバーゴの有無で判定
   // （open系5種は上で早期リターン済み。ここに到達するのは closed か OAステータス不明のみ）
   if (opfData?.items?.[0]) {
@@ -1383,6 +1387,8 @@ async function fetchOpenPolicyFinder(issns) {
         let detail = '';
         try { detail = JSON.stringify(await resp.json()); } catch { /* JSONでない場合は無視 */ }
         console.warn(`OPF APIエラー (ISSN: ${issn}, status: ${resp.status}):`, detail);
+        // 401/403/429はISSNを変えても解消せず、429は再試行で悪化しうるため残りのISSNは試さない
+        if (resp.status === 401 || resp.status === 403 || resp.status === 429) break;
         continue;
       }
       const data = await resp.json();
@@ -2740,7 +2746,7 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   const versionResource = VERSION_TYPE_MAP[versionType] || VERSION_TYPE_MAP['AM'];
 
   // ===== アクセス権（OAステータス + OPFエンバーゴ連動） =====
-  const accessRight    = determineAccessRights(oaStatus, lastOpfData, pubDate);
+  const accessRight    = determineAccessRights(oaStatus, lastOpfData, pubDate, lastOpfStatus);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== ISSN =====
@@ -3241,7 +3247,7 @@ async function mapToItemTypeJaLC(jalcJson) {
     : VERSION_TYPE_MAP['VoR'];
 
   // ===== アクセス権（OPFエンバーゴ連動） =====
-  const accessRight    = determineAccessRights(lastOaStatus, lastOpfData, pubDate);
+  const accessRight    = determineAccessRights(lastOaStatus, lastOpfData, pubDate, lastOpfStatus);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== メタデータオブジェクト =====
@@ -3603,7 +3609,7 @@ async function mapToItemTypeDataCite(attrs, oaJson) {
   const geolocations = buildDataCiteGeolocations(attrs.geoLocations);
 
   // ===== アクセス権（OAステータス + OPFエンバーゴ連動。#214でCrossref/JaLCパスと同様に対応） =====
-  const accessRight    = determineAccessRights(oaStatus, lastOpfData, issuedDate);
+  const accessRight    = determineAccessRights(oaStatus, lastOpfData, issuedDate, lastOpfStatus);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== メタデータオブジェクト =====
