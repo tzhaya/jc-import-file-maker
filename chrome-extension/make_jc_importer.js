@@ -1365,6 +1365,10 @@ async function fetchOpenPolicyFinder(issns) {
     try {
       const params = new URLSearchParams({
         'item-type': 'publication',
+        // 2026-07-29のJISC API v1リリースで廃止予定と通知されているが、
+        // 現行APIでは必須（省略すると400 Bad Requestで全ISSNが失敗する。実測で確認済み）。
+        // リリース後に新APIでの要否を再確認してから削除する（#229フォローアップ）。
+        'format': 'Json',
         'identifier': issn,
       });
       const resp = await extensionFetch(
