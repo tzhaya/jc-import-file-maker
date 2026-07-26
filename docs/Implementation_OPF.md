@@ -302,3 +302,46 @@ JPCOARスキーマでは、出版社版との関係を関連情報（`jpcoar:rel
 1. **Step 1** を実装 → CORSテスト → 成否を確認
 2. CORSが通れば Steps 2-3 を順次実装、Step 4 はUIラベルのみ日本語化
 3. CORSが通らなければ Issue にて代替策（プロキシ等）を検討
+
+---
+
+## 2026-07-29 JISC API v1 full リリース対応（Issue #229）
+
+JISCから2026-07-29に Open Policy Finder API の "full v1" リリース通知があった。影響範囲を調査し、予防的対応とエラーハンドリング改善を実施した（`fetchOpenPolicyFinder()` / `updateOpfStatus()` / `renderOpfModal()`、`make_jc_importer.js` に一本化）。
+
+### 影響評価
+
+本ツールは `retrieve_by_id` エンドポイントのみを `item-type=publication` / `format=Json` / `identifier=<ISSN>` の3パラメータで呼び出しており、ページネーション（`retrieve` / `object_ids` エンドポイント）は未使用のため、JISC通知の変更の大部分は影響なし。対応が必要だったのは以下の1点。
+
+- **エラーレスポンスが常にJSONオブジェクトになる（新APIの変更点）**: 従来 `!resp.ok` を一律 `continue`（次のISSNへ）していたため、401/403/429等の実エラーが「未収録」と誤表示される構造的な問題があった（#211/PR #235と同種）。404（未収録）とそれ以外のエラーを分岐し、後者は例外として呼び出し元に伝える形に変更した
+
+### `format` パラメータは現時点では削除しない（実測で確認）
+
+JISC通知には「`retrieve_by_id` で `format` パラメータのサポートが終了する」とあったため、当初は `format: 'Json'` を削除する予防的対応を計画していた。しかし実装後にレビュー目的で実APIへ直接疎通確認したところ、**2026-07-26時点（v1 full リリース前）の現行APIでは `format` パラメータが必須**であり、省略すると `400 Bad Request`（`{"error":"An error occurred"}`）で全ISSNが失敗することが判明した（ISSN `2156-5376` / `2161-8313` の両方で再現）。
+
+Chrome拡張の実機確認では同じ現象が `403 Forbidden`（`{"message":"Forbidden"}`）として観測された。ステータスコードの違いは、Service Worker経由のfetchが送信するOriginヘッダー等をJISC側WAFが別ルートで弾いたためと推測されるが、いずれの経路でも「`format` 省略＝失敗」という結論は一致した。
+
+このため、Planで「未検証」としていた削除の安全性は誤りだったと確認できた。**`format: 'Json'` は現状維持**とし、2026-07-29のリリース後に新APIでの要否（廃止パラメータを送っても許容されるか、エラーになるか）を再確認してから削除を検討する。
+
+### 変更内容
+
+- `fetchOpenPolicyFinder()`: `format` パラメータは維持。404以外の `!resp.ok` はエラー詳細（JSONボディ）を `console.warn` に出力した上で `hadError` を立てる。401/403/429はISSNを変えても解消せず（429は再試行で悪化しうる）残りのISSNを試す価値がないため、検出直後にループを打ち切る（`break`）。ループ終了後、`hadError` が真なら例外を送出する
+- `updateOpfStatus()`: `lastOpfStatus` に `'error'` を追加（従来は例外時も `'not-found'` と同じ値で、バッジ文言のみ異なっていた）。エラー時はバッジを赤系配色（`#ffebee` / `#c62828`）にして「情報なし」と区別
+- `renderOpfModal()`: `status === 'error'` 時に専用メッセージを表示
+- `determineAccessRights(oaStatus, opfData, pubDate, opfStatus)`: 第4引数 `opfStatus` を追加。OPF取得が実エラー（`opfStatus === 'error'`）で失敗した場合、従来は `opfData` が `null` のため「エンバーゴなし」と同一視され `open access` になっていたが、これは「エンバーゴの有無を確認できていない」状態であり「エンバーゴなしと確認できた」状態とは異なる。安全側の `embargoed access` を返すよう変更（呼び出し元3箇所に `lastOpfStatus` を渡すよう追記）
+
+### クロスレビューで発見した設計上の問題（`determineAccessRights` のエラー時フォールバック）
+
+実装後、`/cross-review`（Claude独立レビュー + Codex）で軽度〜中度の指摘が3件出た。うち1件（Codex指摘）は、OPF取得が401/403/429等で失敗した場合に `lastOpfData` が `null` のまま残り、`determineAccessRights()` がこれを「エンバーゴ情報なし」と区別できず `open access` を返してしまう問題だった。
+
+`git show master:make_jc_importer.js` で確認したところ、この挙動は本Issue対応前から存在しており（旧コードも `!resp.ok` を一律 `continue` し最終的に `null` を返すため同一の結果になる）、**本PRによる新規の退行ではない**。ただし、本PRでOPFエラーを赤バッジ「取得失敗」として明示するようになった分、「表示は失敗なのにTSV出力は無条件でopen access」という乖離が従来より目立つようになるため、本PR内で合わせて対応することにした（`determineAccessRights` への `opfStatus` 引数追加）。
+
+### 効率面の指摘（401/403/429での早期打ち切り）
+
+Codexから、401/403/429（ISSNに依存しない認証・レート制限エラー）でも残りのISSNへの試行を続けるのは無駄で、429の場合はレート制限を悪化させうるとの指摘があった。Claudeの独立レビューは「ISSN数が通常1〜3件程度のため実害は薄い」と評価していたが、429悪化のリスクは見落としており、Codex固有の有効な指摘と判断して対応した（該当ステータス検出時に `break`）。
+
+### 未検証事項（フォローアップ）
+
+- `retrieve_by_id` のレスポンス構造（`items` ラップの有無等）の実際の変化は2026-07-29以降でないと確認できない。JISC公式ヘルプページは自動アクセスがボット対策とみられる403でブロックされ、事前の裏付けは取れなかった
+- 2026-07-29以降、`format` パラメータを送信し続けた場合の新APIの挙動（無視されるか、エラーになるか）をテストISSN（`2156-5376`, `1546-1696`）で再確認し、削除可否を判断する（別Issue化を検討）。Codexからは「`format`ありで要求し400なら同一ISSNを`format`なしで再試行する」互換フォールバック案も出たが、実挙動が未確定な段階での実装は時期尚早と判断し見送った
+- 今回の403/400の実測は、エラー分岐の実装（404 vs それ以外）自体が正しく機能していることも同時に裏付けた（従来コードなら本エラーは「未収録」に隠れて気づけなかった）

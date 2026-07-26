@@ -106,6 +106,29 @@ test('units 不明（calcEmbargoEndDate が null）→ 安全側で embargoed ac
   assert.strictEqual(determineAccessRights('closed', opf, dateMonthsAgo(24)), 'embargoed access');
 });
 
+// ===== opfStatus === 'error'（#229: OPF取得失敗時の安全側フォールバック） =====
+
+test('closed + OPF取得エラー → エンバーゴなしと同一視せず安全側で embargoed access', () => {
+  assert.strictEqual(determineAccessRights('closed', null, dateMonthsAgo(1), 'error'), 'embargoed access');
+});
+
+test('closed + OPF取得エラー（opfDataが残っていても）→ embargoed access優先', () => {
+  const opf = opfWithEmbargos([{ amount: 0, units: 'months' }]);
+  assert.strictEqual(determineAccessRights('closed', opf, dateMonthsAgo(1), 'error'), 'embargoed access');
+});
+
+test('open系ステータス（gold）は opfStatus=error でも open access（OA判定が優先）', () => {
+  assert.strictEqual(determineAccessRights('gold', null, dateMonthsAgo(1), 'error'), 'open access');
+});
+
+test('closed + opfStatus=not-found（未収録・エラーではない）→ 従来どおり open access', () => {
+  assert.strictEqual(determineAccessRights('closed', null, dateMonthsAgo(1), 'not-found'), 'open access');
+});
+
+test('closed + opfStatus未指定（第4引数省略、後方互換）→ 従来どおり open access', () => {
+  assert.strictEqual(determineAccessRights('closed', null, dateMonthsAgo(1)), 'open access');
+});
+
 // ===== calcEmbargoEndDate =====
 
 test('calcEmbargoEndDate: pubDate 空 → null', () => {

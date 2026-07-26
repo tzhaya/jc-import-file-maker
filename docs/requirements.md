@@ -415,6 +415,7 @@ make_jc_importer.html
             - diamond/gold/hybrid/bronze/green: "open access"
             - closed/unknown + OPFエンバーゴあり: "embargoed access"
             - closed/unknown + エンバーゴなし/OPFデータなし: "open access"（機関リポジトリ登録用途を想定）
+            - closed/unknown + OPF取得エラー（401/403/429等）: "embargoed access"（エンバーゴの有無を確認できていないため安全側。#229）
             - JaLCパスでも `determineAccessRights()` を使用（OAステータスは空文字）
         - アクセス権URI（"key": "item_30002_access_rights4.subitem_access_right_uri"）
             - アクセス権の値に応じて `ACCESS_RIGHTS_MAP` から自動設定

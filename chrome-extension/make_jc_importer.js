@@ -28,7 +28,7 @@ if (typeof TSV_HEADERS_TEMPLATE === 'undefined' && typeof window !== 'undefined'
 
 // ===== OPF連携グローバル状態 =====
 let lastOpfData   = null;   // 最後に取得したOPFデータ
-let lastOpfStatus = 'none'; // 'none' | 'no-issn' | 'disabled' | 'not-found' | 'found'
+let lastOpfStatus = 'none'; // 'none' | 'no-issn' | 'disabled' | 'not-found' | 'error' | 'found'
 let lastOaStatus  = '';     // OpenAlex oa_status（'diamond'|'gold'|'green'|'hybrid'|'bronze'|'closed'|''）
 
 // ===== OAステータスバッジ定義 =====
@@ -418,11 +418,15 @@ function determineVersionInfo(oaStatus, oaJson) {
 }
 
 // ===== OAステータスに基づくアクセス権判定 =====
-function determineAccessRights(oaStatus, opfData, pubDate) {
+// opfStatus: lastOpfStatus（'error'|'not-found'|'found'等）。OPF取得自体が失敗した場合は
+// エンバーゴの有無を判断できないため、「エンバーゴなし」と同一視せず安全側に倒す（#229）。
+function determineAccessRights(oaStatus, opfData, pubDate, opfStatus) {
   // Gold/Diamond/Hybrid/Bronze/Green → open access
   if (['diamond', 'gold', 'hybrid', 'bronze', 'green'].includes(oaStatus)) {
     return 'open access';
   }
+  // OPF取得が401/403/429等の実エラーで失敗した場合、エンバーゴなしとは断定できないため安全側で embargoed access
+  if (opfStatus === 'error') return 'embargoed access';
   // Closed / Unknown → OPFエンバーゴの有無で判定
   // （open系5種は上で早期リターン済み。ここに到達するのは closed か OAステータス不明のみ）
   if (opfData?.items?.[0]) {
@@ -1360,10 +1364,14 @@ async function fetchNcid(issns) {
 // 拡張なし環境では OPF 連携チェックボックスが無効化されるため、この関数は呼ばれません。
 async function fetchOpenPolicyFinder(issns) {
   if (!CONFIG.OPF_API_KEY || CONFIG.OPF_API_KEY === 'YOUR_OPF_API_KEY') return null;
+  let hadError = false;
   for (const issn of issns) {
     try {
       const params = new URLSearchParams({
         'item-type': 'publication',
+        // 2026-07-29のJISC API v1リリースで廃止予定と通知されているが、
+        // 現行APIでは必須（省略すると400 Bad Requestで全ISSNが失敗する。実測で確認済み）。
+        // リリース後に新APIでの要否を再確認してから削除する（#229フォローアップ）。
         'format': 'Json',
         'identifier': issn,
       });
@@ -1371,11 +1379,26 @@ async function fetchOpenPolicyFinder(issns) {
         `https://api.openpolicyfinder.jisc.ac.uk/retrieve_by_id?${params}`,
         { headers: { 'x-api-key': CONFIG.OPF_API_KEY } }
       );
-      if (!resp.ok) continue;
+      if (!resp.ok) {
+        // 404 = そのISSNがOPF未収録。次のISSNを試す（従来どおり）
+        if (resp.status === 404) continue;
+        // 404以外（401/403/429/5xx等）は実エラー。呼び出し元に伝わるよう例外化する
+        hadError = true;
+        let detail = '';
+        try { detail = JSON.stringify(await resp.json()); } catch { /* JSONでない場合は無視 */ }
+        console.warn(`OPF APIエラー (ISSN: ${issn}, status: ${resp.status}):`, detail);
+        // 401/403/429はISSNを変えても解消せず、429は再試行で悪化しうるため残りのISSNは試さない
+        if (resp.status === 401 || resp.status === 403 || resp.status === 429) break;
+        continue;
+      }
       const data = await resp.json();
       if (data?.items?.length) return data;
-    } catch { continue; }
+    } catch (e) {
+      hadError = true;
+      console.warn(`OPF APIリクエスト失敗 (ISSN: ${issn}):`, e.message);
+    }
   }
+  if (hadError) throw new Error('OPF API エラー');
   return null;
 }
 
@@ -1457,11 +1480,11 @@ async function updateOpfStatus(issns) {
       badge.style.color = '#999';
     }
   } catch (e) {
-    lastOpfStatus = 'not-found';
+    lastOpfStatus = 'error';
     lastOpfData = null;
     badge.textContent = '📋 OAポリシー（取得失敗）';
-    badge.style.background = '#f5f5f5';
-    badge.style.color = '#999';
+    badge.style.background = '#ffebee';
+    badge.style.color = '#c62828';
     console.warn('OPF取得失敗:', e.message);
   }
 }
@@ -1480,6 +1503,7 @@ function closeOpfModal() {
 function renderOpfModal(data, status, oaStatus) {
   if (status === 'disabled') return '<p>OPF APIキーが設定されていないか、Chrome拡張版でご利用ください。</p>';
   if (status === 'no-issn')  return '<p>ISSNが取得できなかったためOAポリシーを検索できません。</p>';
+  if (status === 'error')    return '<p>OPF APIの取得中にエラーが発生しました（開発者ツールのコンソールに詳細を出力しています）。しばらくしてから再度お試しください。</p>';
   if (!data?.items?.length)  return '<p>OAポリシー情報が見つかりませんでした。</p>';
 
   const item = data.items[0];
@@ -2722,7 +2746,7 @@ async function mapToItemType(crJson, oaJson, rorMap) {
   const versionResource = VERSION_TYPE_MAP[versionType] || VERSION_TYPE_MAP['AM'];
 
   // ===== アクセス権（OAステータス + OPFエンバーゴ連動） =====
-  const accessRight    = determineAccessRights(oaStatus, lastOpfData, pubDate);
+  const accessRight    = determineAccessRights(oaStatus, lastOpfData, pubDate, lastOpfStatus);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== ISSN =====
@@ -3223,7 +3247,7 @@ async function mapToItemTypeJaLC(jalcJson) {
     : VERSION_TYPE_MAP['VoR'];
 
   // ===== アクセス権（OPFエンバーゴ連動） =====
-  const accessRight    = determineAccessRights(lastOaStatus, lastOpfData, pubDate);
+  const accessRight    = determineAccessRights(lastOaStatus, lastOpfData, pubDate, lastOpfStatus);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== メタデータオブジェクト =====
@@ -3585,7 +3609,7 @@ async function mapToItemTypeDataCite(attrs, oaJson) {
   const geolocations = buildDataCiteGeolocations(attrs.geoLocations);
 
   // ===== アクセス権（OAステータス + OPFエンバーゴ連動。#214でCrossref/JaLCパスと同様に対応） =====
-  const accessRight    = determineAccessRights(oaStatus, lastOpfData, issuedDate);
+  const accessRight    = determineAccessRights(oaStatus, lastOpfData, issuedDate, lastOpfStatus);
   const accessRightUri = ACCESS_RIGHTS_MAP[accessRight] || ACCESS_RIGHTS_MAP['open access'];
 
   // ===== メタデータオブジェクト =====
@@ -7226,7 +7250,7 @@ function restoreDraft() {
 
 // ===== 更新チェック =====
 if (typeof document !== 'undefined') (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-19';
+  const LOCAL_VERSION = '2026-07-26';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.js&per_page=1');
     if (!res.ok) return;
