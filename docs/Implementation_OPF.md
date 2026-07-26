@@ -302,3 +302,27 @@ JPCOARスキーマでは、出版社版との関係を関連情報（`jpcoar:rel
 1. **Step 1** を実装 → CORSテスト → 成否を確認
 2. CORSが通れば Steps 2-3 を順次実装、Step 4 はUIラベルのみ日本語化
 3. CORSが通らなければ Issue にて代替策（プロキシ等）を検討
+
+---
+
+## 2026-07-29 JISC API v1 full リリース対応（Issue #229）
+
+JISCから2026-07-29に Open Policy Finder API の "full v1" リリース通知があった。影響範囲を調査し、予防的対応とエラーハンドリング改善を実施した（`fetchOpenPolicyFinder()` / `updateOpfStatus()` / `renderOpfModal()`、`make_jc_importer.js` に一本化）。
+
+### 影響評価
+
+本ツールは `retrieve_by_id` エンドポイントのみを `item-type=publication` / `identifier=<ISSN>` の2パラメータで呼び出しており、ページネーション（`retrieve` / `object_ids` エンドポイント）は未使用のため、JISC通知の変更の大部分は影響なし。対応が必要だったのは以下の2点。
+
+- **`format` パラメータの廃止**: `retrieve_by_id` で `format` パラメータのサポートが終了するとの通知のため、送信していた `format: 'Json'` を削除した（レスポンスは常にJSON化される）
+- **エラーレスポンスが常にJSONオブジェクトになる**: 従来 `!resp.ok` を一律 `continue`（次のISSNへ）していたため、401/403/429等の実エラーが「未収録」と誤表示される構造的な問題があった（#211/PR #235と同種）。404（未収録）とそれ以外のエラーを分岐し、後者は例外として呼び出し元に伝える形に変更した
+
+### 変更内容
+
+- `fetchOpenPolicyFinder()`: `format` パラメータを削除。404以外の `!resp.ok` はエラー詳細（JSONボディ）を `console.warn` に出力した上で、ループ終了後に例外を送出する
+- `updateOpfStatus()`: `lastOpfStatus` に `'error'` を追加（従来は例外時も `'not-found'` と同じ値で、バッジ文言のみ異なっていた）。エラー時はバッジを赤系配色（`#ffebee` / `#c62828`）にして「情報なし」と区別
+- `renderOpfModal()`: `status === 'error'` 時に専用メッセージを表示
+
+### 未検証事項（フォローアップ）
+
+- `retrieve_by_id` のレスポンス構造（`items` ラップの有無等）の実際の変化は2026-07-29以降でないと確認できない。JISC公式ヘルプページは自動アクセスがボット対策とみられる403でブロックされ、事前の裏付けは取れなかった
+- リリース後、テストISSN（`2156-5376`, `1546-1696`）で実APIを再実行し、`samples/OpenPolicyFinder/*.json` との差分を確認する（別Issue化を検討）
