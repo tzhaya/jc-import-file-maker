@@ -7240,7 +7240,7 @@ function restoreDraft() {
 
 // ===== 更新チェック =====
 if (typeof document !== 'undefined') (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-19';
+  const LOCAL_VERSION = '2026-07-26';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.js&per_page=1');
     if (!res.ok) return;
