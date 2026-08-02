@@ -1100,15 +1100,30 @@ async function fetchDataCite(doi) {
 //   / x-rate-limit-interval: 1s / x-concurrency-limit: 1
 const CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS = 250;
 
+function _defaultCrossrefNow() {
+  return typeof performance !== 'undefined' ? performance.now() : Date.now();
+}
+
 let _crossrefPacingIntervalMs = CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS;
 let _crossrefGateTail = Promise.resolve();
 let _crossrefLastStart = -Infinity;
+// 429のRetry-After等から算出したcooldown終了時刻（単調時計基準）。ゲートを通る
+// 全呼び出しが共有し、単一の呼び出しに対するローカル待機だけでは防げない、
+// 並行呼び出し（例: Enterキーとボタンの二重起動）によるcooldown中の送信を防ぐ。
+let _crossrefNotBefore = -Infinity;
 
 // テスト用: モジュールスコープのペーシング状態をリセットする（本番コードからは呼ばない）。
 function _resetCrossrefPacingForTest() {
   _crossrefPacingIntervalMs = CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS;
   _crossrefGateTail = Promise.resolve();
   _crossrefLastStart = -Infinity;
+  _crossrefNotBefore = -Infinity;
+}
+
+// 429を受けた呼び出しが、429本文を読み終えたpaced task内（tailが進む前）で
+// 呼び出す。時刻を後退させない（複数の並行429が来ても最も遅いcooldownを残す）。
+function _recordCrossrefCooldown(untilTs) {
+  if (untilTs > _crossrefNotBefore) _crossrefNotBefore = untilTs;
 }
 
 // レスポンスヘッダから同時実行/rps上限をbest-effortで読み取り、次回以降の間隔を
@@ -1144,12 +1159,14 @@ function _updateCrossrefPacingFromHeaders(headers) {
 // は呼び出し元へそのまま伝播させる一方、tail側は必ずcatchして次の待機者へ進む
 // （1件の失敗が後続の待機をブロックしないようにするため）。
 function crossrefPaced(fn, deps = {}) {
-  const now = deps.now || (() => (typeof performance !== 'undefined' ? performance.now() : Date.now()));
+  const now = deps.now || _defaultCrossrefNow;
   const sleep = deps.sleep || ((ms) => new Promise(resolve => setTimeout(resolve, ms)));
 
   const runWhenReady = _crossrefGateTail.then(async () => {
-    const elapsed = now() - _crossrefLastStart;
-    const wait = _crossrefPacingIntervalMs - elapsed;
+    const nowTs = now();
+    const intervalWait = _crossrefPacingIntervalMs - (nowTs - _crossrefLastStart);
+    const cooldownWait = _crossrefNotBefore - nowTs;
+    const wait = Math.max(intervalWait, cooldownWait, 0);
     if (wait > 0) await sleep(wait);
     _crossrefLastStart = now();
     return fn();
@@ -1173,6 +1190,7 @@ async function fetchRelationTitle(doi, deps = {}) {
   const fetchImpl = deps.fetchImpl || (typeof fetch !== 'undefined' ? fetch : undefined);
   const sleep = deps.sleep || ((ms) => new Promise(resolve => setTimeout(resolve, ms)));
   const { now } = deps;
+  const nowFn = now || _defaultCrossrefNow;
 
   const bareDoi = doi.replace(/^https?:\/\/doi\.org\//i, '');
   const url = `https://api.crossref.org/works/${encodeURIComponent(bareDoi)}`;
@@ -1188,25 +1206,36 @@ async function fetchRelationTitle(doi, deps = {}) {
       result = await crossrefPaced(async () => {
         const r = await fetchImpl(url);
         _updateCrossrefPacingFromHeaders(r.headers);
-        const retryAfter = r.headers?.get?.('Retry-After') ?? null;
         let body = null;
         try {
           body = await r.json();
         } catch {
           body = null;
         }
-        return { status: r.status, ok: r.ok, retryAfter, body };
+
+        let retryWaitMs = null;
+        if (r.status === 429) {
+          const retryAfterSec = parseFloat(r.headers?.get?.('Retry-After'));
+          retryWaitMs = Number.isFinite(retryAfterSec) && retryAfterSec >= 0
+            ? retryAfterSec * 1000
+            : CROSSREF_RELATION_TITLE_BACKOFF_MS[attempt];
+          // Retry-Afterはuser agent全体への指示（RFC 9110 §10.2.3）であり、この
+          // 呼び出し自身のローカル待機（下のsleep）だけでは、同じゲートに並ぶ
+          // 別の並行呼び出し（Enterキーとボタンの二重起動等、fetchData()は処理
+          // 中もボタンを無効化しないため成立し得る）がcooldown中に開始し得る。
+          // 429本文を読み終えたこのpaced task内・tailが進む前に共有notBeforeへ
+          // 反映し、ゲートを通る全待機者へcooldownを適用する（レビュー指摘）。
+          _recordCrossrefCooldown(nowFn() + retryWaitMs);
+        }
+
+        return { status: r.status, ok: r.ok, body, retryWaitMs };
       }, { now, sleep });
     } catch {
       return null;
     }
 
     if (result.status === 429 && attempt < CROSSREF_RELATION_TITLE_MAX_RETRIES) {
-      const retryAfterSec = parseFloat(result.retryAfter);
-      const waitMs = Number.isFinite(retryAfterSec) && retryAfterSec >= 0
-        ? retryAfterSec * 1000
-        : CROSSREF_RELATION_TITLE_BACKOFF_MS[attempt];
-      await sleep(waitMs);
+      await sleep(result.retryWaitMs);
       continue;
     }
 

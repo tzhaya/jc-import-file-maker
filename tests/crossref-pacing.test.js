@@ -243,6 +243,79 @@ test('fetchRelationTitle: リトライを含む全試行が同じゲートを通
   assert.ok(clock.sleepCalls.some((ms) => ms >= 250), `gate wait (>=250ms) not observed: ${clock.sleepCalls}`);
 });
 
+// ===== 共有ゲート: 429 cooldownの並行呼び出しへの反映・P1回帰の結線検証 =====
+
+test('fetchRelationTitle: 429のRetry-Afterは共有ゲートに反映され、並行呼び出しもcooldownを待つ（実タイマーで検証）', { timeout: 5000 }, async () => {
+  _resetCrossrefPacingForTest();
+  // このテストは実際のマイクロタスク/タイマーの順序に依存するため、仮想時計では
+  // なく実タイマーを使う。sleep()呼び出し時点でtをその場で(同期的に)進める仮想
+  // 時計だと、2件目のゲート待機判定より前に1件目のローカル待機が"先に"共有時刻を
+  // 進めてしまい、共有notBefore反映の有無に関わらずテストが通る偽陽性を生む
+  // （実際のsetTimeoutは、マイクロタスク経由で2件目の待機判定が先に走ってから
+  // 初めて後で解決するため、この問題が起きない）。
+  const start = Date.now();
+  let call1 = 0;
+  const fetchImpl1 = async () => {
+    call1++;
+    if (call1 === 1) return makeResponse({ status: 429, headers: { 'Retry-After': '1' } }); // 1000ms cooldown
+    return makeResponse({ status: 200, body: { message: { title: ['A'], language: 'en' } } });
+  };
+  let start2 = null;
+  const fetchImpl2 = async () => {
+    start2 = Date.now();
+    return makeResponse({ status: 200, body: { message: { title: ['B'], language: 'en' } } });
+  };
+
+  const p1 = fetchRelationTitle('10.1234/concurrent-cooldown-1', { fetchImpl: fetchImpl1 });
+  const p2 = fetchRelationTitle('10.1234/concurrent-cooldown-2', { fetchImpl: fetchImpl2 });
+
+  const [r1, r2] = await Promise.all([p1, p2]);
+  assert.deepStrictEqual(r1, { title: 'A', lang: 'en' });
+  assert.deepStrictEqual(r2, { title: 'B', lang: 'en' });
+  assert.ok(start2 !== null);
+  // 既定の開始間隔(250ms)だけでは説明がつかない、cooldown(1000ms)相当の待機が
+  // 2件目にも適用されていることを確認する（既定間隔のみなら250ms程度で開始されるはず）。
+  assert.ok(start2 - start >= 900, `2件目がcooldown中に開始された可能性: elapsed=${start2 - start}ms`);
+});
+
+test('fetchRelationTitle: 1件目の応答本文(json())が解放されるまで2件目のfetchImplは実行されない（P1回帰・結線レベル）', async () => {
+  _resetCrossrefPacingForTest();
+  const clock = makeVirtualClock();
+
+  let resolveJson1;
+  const json1Promise = new Promise((resolve) => { resolveJson1 = resolve; });
+  const response1 = {
+    ok: true,
+    status: 200,
+    headers: { get: () => null },
+    json: () => json1Promise, // 明示的に解放を制御する
+  };
+  const fetchImpl1 = async () => response1;
+
+  let fetch2Called = false;
+  const fetchImpl2 = async () => {
+    fetch2Called = true;
+    return makeResponse({ status: 200, body: { message: { title: ['B'], language: 'en' } } });
+  };
+
+  // このテストの不変条件はPromiseチェーンの構造的な依存（gate task2は1件目の
+  // paced task=json()読取完了まで開始できない）であり、時刻の値には依存しない
+  // ため、仮想時計を使っても偽陽性の問題は生じない。
+  const p1 = fetchRelationTitle('10.1234/gate-body-1', { fetchImpl: fetchImpl1, ...clock });
+  const p2 = fetchRelationTitle('10.1234/gate-body-2', { fetchImpl: fetchImpl2, ...clock });
+
+  // 保留中のマイクロタスクが尽きるのを待ってから、まだ呼ばれていないことを確認する。
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.strictEqual(fetch2Called, false, '1件目の本文読取(json())完了前に2件目のfetchImplが呼ばれた（P1回帰）');
+
+  resolveJson1({ message: { title: ['A'], language: 'en' } });
+
+  const [r1, r2] = await Promise.all([p1, p2]);
+  assert.deepStrictEqual(r1, { title: 'A', lang: 'en' });
+  assert.deepStrictEqual(r2, { title: 'B', lang: 'en' });
+  assert.strictEqual(fetch2Called, true);
+});
+
 // ===== ヘッダからのペーシング調整（best-effort） =====
 // 各テストは、1回目の応答でヘッダを与えてペーシング状態を更新させた後、sleepCalls
 // をクリアしてから2回目を呼び、そのgate待機の「正確な値」を検証する（vague な
