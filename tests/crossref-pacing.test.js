@@ -257,6 +257,17 @@ test('fetchRelationTitle: 404はctx.failureReasonを設定しない（正常な�
   assert.strictEqual(ctx.failureReason, undefined);
 }));
 
+test('fetchRelationTitle: 5xxはctx.failureReasonへerrorを記録する（404以外の非OKを黙って空欄にしない）', async () => {
+  for (const status of [500, 502, 403]) {
+    _resetCrossrefPacingForTest();
+    const clock = makeVirtualClock();
+    const fetchImpl = async () => makeResponse({ status });
+    const ctx = {};
+    assert.strictEqual(await fetchRelationTitle(`10.1234/ctx-${status}`, { fetchImpl, ...clock }, ctx), null);
+    assert.strictEqual(ctx.failureReason, 'error', `status ${status}`);
+  }
+});
+
 test('fetchRelationTitle: 200かつタイトルなしはctx.failureReasonを設定しない', async () => {
   _resetCrossrefPacingForTest();
   const clock = makeVirtualClock();

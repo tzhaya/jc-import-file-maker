@@ -1107,7 +1107,8 @@ async function fetchDataCite(doi) {
 // ===== 3.2a 関連DOIタイトル取得（Crossref）=====
 // タイトルを取得できなかった理由が「障害」の場合だけ ctx.failureReason に記録する（#262）。
 // 呼び出し元はこれを見て「⚠ 要確認」を表示する。404・タイトル無しは正常な「タイトルなし」
-// なので記録しない（未収録DOIに警告を出すと誤検知になる）。
+// なので記録しない（未収録DOIに警告を出すと誤検知になる）。それ以外の非OK・fetch例外は
+// 障害として記録する（PR #264レビュー指摘: 5xxを黙って空欄にしない）。
 async function fetchRelationTitle(doi, deps = {}, ctx = {}) {
   const bareDoi = doi.replace(/^https?:\/\/doi\.org\//i, '');
   const url = `https://api.crossref.org/works/${encodeURIComponent(bareDoi)}`;
@@ -1121,7 +1122,10 @@ async function fetchRelationTitle(doi, deps = {}, ctx = {}) {
     ctx.failureReason = 'error';
     return null;
   }
-  if (result.status === 429) ctx.failureReason = 'rate-limited';
+  // 404だけが正常な「未収録」。それ以外の非OK（5xx等の一時障害を含む）は障害として扱う。
+  if (!result.ok && result.status !== 404) {
+    ctx.failureReason = result.status === 429 ? 'rate-limited' : 'error';
+  }
   if (!result.ok) return null;
   const msg = result.body?.message || {};
   const title = msg.title?.[0] || '';
