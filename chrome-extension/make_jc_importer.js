@@ -1369,10 +1369,8 @@ async function fetchOpenPolicyFinder(issns) {
     try {
       const params = new URLSearchParams({
         'item-type': 'publication',
-        // 2026-07-29のJISC API v1リリースで廃止予定と通知されているが、
-        // 現行APIでは必須（省略すると400 Bad Requestで全ISSNが失敗する。実測で確認済み）。
-        // リリース後に新APIでの要否を再確認してから削除する（#229フォローアップ）。
-        'format': 'Json',
+        // format パラメータは JISC API v1（2026-07-30リリース）で廃止された。
+        // 省略しても従来と同一のJSONが返ることを実測で確認済み（#229）。
         'identifier': issn,
       });
       const resp = await extensionFetch(
@@ -1380,7 +1378,8 @@ async function fetchOpenPolicyFinder(issns) {
         { headers: { 'x-api-key': CONFIG.OPF_API_KEY } }
       );
       if (!resp.ok) {
-        // 404 = そのISSNがOPF未収録。次のISSNを試す（従来どおり）
+        // 未収録ISSNは v1 では 200 + {"items":[]} が返るため、この 404 分岐は
+        // 現行APIでは通常到達しない。仕様が戻った場合の保険として残す（#229）
         if (resp.status === 404) continue;
         // 404以外（401/403/429/5xx等）は実エラー。呼び出し元に伝わるよう例外化する
         hadError = true;
@@ -7250,7 +7249,7 @@ function restoreDraft() {
 
 // ===== 更新チェック =====
 if (typeof document !== 'undefined') (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-26';
+  const LOCAL_VERSION = '2026-08-02';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=make_jc_importer.js&per_page=1');
     if (!res.ok) return;
