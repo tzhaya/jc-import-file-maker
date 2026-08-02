@@ -1090,18 +1090,133 @@ async function fetchDataCite(doi) {
 }
 
 // ===== 3.2a 関連DOIタイトル取得（Crossref）=====
-async function fetchRelationTitle(doi) {
+// Crossref Public pool（GET /works/{doi} 単一レコード取得）は2026-07-21改定後も
+// 5 rps・同時実行1（#253）。同時実行を1に絞るだけでは応答が既定間隔未満の環境
+// （低遅延・キャッシュヒット時）でrps側を超え得るため、開始間隔にも安全余裕を
+// 持たせた250msを既定値とする。
+// 出典: https://www.crossref.org/documentation/retrieve-metadata/rest-api/access-and-authentication/
+//       https://community.crossref.org/t/refining-rest-api-limits-for-improved-stability-and-reliability/16137
+// 実測(2026-08-02, Public pool): x-api-pool: public-single / x-rate-limit-limit: 5
+//   / x-rate-limit-interval: 1s / x-concurrency-limit: 1
+const CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS = 250;
+
+let _crossrefPacingIntervalMs = CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS;
+let _crossrefGateTail = Promise.resolve();
+let _crossrefLastStart = -Infinity;
+
+// テスト用: モジュールスコープのペーシング状態をリセットする（本番コードからは呼ばない）。
+function _resetCrossrefPacingForTest() {
+  _crossrefPacingIntervalMs = CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS;
+  _crossrefGateTail = Promise.resolve();
+  _crossrefLastStart = -Infinity;
+}
+
+// レスポンスヘッダから同時実行/rps上限をbest-effortで読み取り、次回以降の間隔を
+// 更新する。Public pool（x-api-pool が "public" で始まる）と判定できる間は
+// CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS を下限として維持し、Crossrefが制限を
+// 厳しくした場合のみ間隔が広がるようにする。ヘッダ欠落・不正値では何もしない。
+function _updateCrossrefPacingFromHeaders(headers) {
+  if (!headers || typeof headers.get !== 'function') return;
+  const pool = headers.get('x-api-pool') || '';
+  const isPublicPool = /^public/i.test(pool);
+
+  const limit = parseInt(headers.get('x-rate-limit-limit'), 10);
+  const intervalRaw = (headers.get('x-rate-limit-interval') || '').trim();
+  const intervalMatch = /^(\d+(?:\.\d+)?)(ms|s)?$/i.exec(intervalRaw);
+  if (!Number.isFinite(limit) || limit <= 0 || !intervalMatch) return;
+
+  const unit = (intervalMatch[2] || 's').toLowerCase();
+  const intervalValue = parseFloat(intervalMatch[1]);
+  if (!Number.isFinite(intervalValue) || intervalValue <= 0) return;
+  const intervalMs = unit === 'ms' ? intervalValue : intervalValue * 1000;
+
+  const computed = intervalMs / limit;
+  _crossrefPacingIntervalMs = isPublicPool
+    ? Math.max(CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS, computed)
+    : computed;
+}
+
+// Crossref Public pool向けの同時実行数1・開始間隔制御ゲート。fn()の完了までを
+// 直列化しつつ、直前試行の開始時刻から一定間隔（既定250ms）空くまで待機してから
+// fn()を呼ぶ。実行Promise（呼び出し元へ返す）と継続用tailを分離し、fn()のreject
+// は呼び出し元へそのまま伝播させる一方、tail側は必ずcatchして次の待機者へ進む
+// （1件の失敗が後続の待機をブロックしないようにするため）。
+function crossrefPaced(fn, deps = {}) {
+  const now = deps.now || (() => (typeof performance !== 'undefined' ? performance.now() : Date.now()));
+  const sleep = deps.sleep || ((ms) => new Promise(resolve => setTimeout(resolve, ms)));
+
+  const runWhenReady = _crossrefGateTail.then(async () => {
+    const elapsed = now() - _crossrefLastStart;
+    const wait = _crossrefPacingIntervalMs - elapsed;
+    if (wait > 0) await sleep(wait);
+    _crossrefLastStart = now();
+    return fn();
+  });
+
+  // tail: 次の待機者を進めるためだけの経路。fn()の結果/例外に関わらず継続する。
+  // 呼び出し元が受け取るのは（tailではなく）runWhenReady自身であり、reject時は
+  // 呼び出し元にもそのまま伝わる。
+  _crossrefGateTail = runWhenReady.then(() => {}, () => {});
+
+  return runWhenReady;
+}
+
+// 429時のリトライ回数・待機時間（Retry-Afterが無い場合の暫定値）。
+const CROSSREF_RELATION_TITLE_MAX_RETRIES = 2;
+const CROSSREF_RELATION_TITLE_BACKOFF_MS = [500, 1000];
+
+// deps は依存注入用（テスト専用）: { fetchImpl, sleep, now }。省略時は実fetch・実タイマー・
+// 実時計を使い、本番の呼び出しシグネチャ（doiのみ）は変更しない。
+async function fetchRelationTitle(doi, deps = {}) {
+  const fetchImpl = deps.fetchImpl || (typeof fetch !== 'undefined' ? fetch : undefined);
+  const sleep = deps.sleep || ((ms) => new Promise(resolve => setTimeout(resolve, ms)));
+  const { now } = deps;
+
   const bareDoi = doi.replace(/^https?:\/\/doi\.org\//i, '');
-  try {
-    const resp = await fetch(`https://api.crossref.org/works/${encodeURIComponent(bareDoi)}`);
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    const msg = data.message || {};
-    const title = (msg.title || [])[0] || '';
-    const lang = msg.language || 'en';
-    return title ? { title, lang } : null;
-  } catch {
-    return null;
+  const url = `https://api.crossref.org/works/${encodeURIComponent(bareDoi)}`;
+
+  for (let attempt = 0; ; attempt++) {
+    let resp;
+    try {
+      // ヘッダ解析(_updateCrossrefPacingFromHeaders)はゲートのタスク内で行う。
+      // crossrefPaced()の外側（呼び出し元）で行うと、次にキューされた待機が
+      // 先に進んでしまい、更新後の間隔が間に合わない可能性があるため。
+      resp = await crossrefPaced(async () => {
+        const r = await fetchImpl(url);
+        _updateCrossrefPacingFromHeaders(r.headers);
+        return r;
+      }, { now, sleep });
+    } catch {
+      return null;
+    }
+
+    if (resp.status === 429 && attempt < CROSSREF_RELATION_TITLE_MAX_RETRIES) {
+      const retryAfterSec = parseFloat(resp.headers?.get?.('Retry-After'));
+      const waitMs = Number.isFinite(retryAfterSec) && retryAfterSec >= 0
+        ? retryAfterSec * 1000
+        : CROSSREF_RELATION_TITLE_BACKOFF_MS[attempt];
+      await sleep(waitMs);
+      continue;
+    }
+
+    if (!resp.ok) {
+      // 404等の正常な「未収録」は警告を出さない。429はリトライを尽くした場合のみ、
+      // 理由不明のまま欠落しないようDOI・status・試行回数を記録する。
+      if (resp.status === 429) {
+        console.warn(`関連DOIタイトル取得: レート制限のため断念しました (DOI: ${bareDoi}, status: 429, 試行: ${attempt + 1})`);
+      }
+      return null;
+    }
+
+    try {
+      const data = await resp.json();
+      const msg = data.message || {};
+      const title = (msg.title || [])[0] || '';
+      const lang = msg.language || 'en';
+      return title ? { title, lang } : null;
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -2993,7 +3108,12 @@ async function mapToItemType(crJson, oaJson, rorMap) {
           doiRelEntries.push({ index: i, doi: relDoi });
         }
       });
-      const relTitles = await Promise.all(doiRelEntries.map(e => fetchRelationTitle(e.doi)));
+      // Crossref Public poolの同時実行1・rps制限を守るため逐次取得する（ペーシングは
+      // fetchRelationTitle()内部の責務。ここではゲートを取得しない、#253）。
+      const relTitles = [];
+      for (const entry of doiRelEntries) {
+        relTitles.push(await fetchRelationTitle(entry.doi));
+      }
       doiRelEntries.forEach((e, i) => {
         if (relTitles[i]) {
           relations[e.index].subitem_relation_name = [{
@@ -7270,5 +7390,8 @@ if (typeof document !== 'undefined') (async function checkForUpdate() {
 // ===== ユニットテスト用エクスポート（#192） =====
 // Node（node:test）から純粋関数を require するためのガード。ブラウザでは module 未定義のため不活性。
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { normalizeDoi, isValidDoi, processAbstract, generateTsv, determineAccessRights, calcEmbargoEndDate, todayStr };
+  module.exports = {
+    normalizeDoi, isValidDoi, processAbstract, generateTsv, determineAccessRights, calcEmbargoEndDate, todayStr,
+    fetchRelationTitle, crossrefPaced, _resetCrossrefPacingForTest,
+  };
 }
