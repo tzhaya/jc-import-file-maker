@@ -1216,9 +1216,14 @@ async function fetchRelationTitle(doi, deps = {}) {
         let retryWaitMs = null;
         if (r.status === 429) {
           const retryAfterSec = parseFloat(r.headers?.get?.('Retry-After'));
+          // 最終(3回目)試行はattempt===2だがBACKOFF_MSは2要素(index 0,1)のため、
+          // Retry-After欠落・不正のまま[attempt]で参照するとundefinedになり、
+          // 以降の_recordCrossrefCooldown(nowFn()+undefined)がNaNとなって共有
+          // cooldownが記録されない（レビュー指摘）。配列末尾でクランプする。
+          const backoffIdx = Math.min(attempt, CROSSREF_RELATION_TITLE_BACKOFF_MS.length - 1);
           retryWaitMs = Number.isFinite(retryAfterSec) && retryAfterSec >= 0
             ? retryAfterSec * 1000
-            : CROSSREF_RELATION_TITLE_BACKOFF_MS[attempt];
+            : CROSSREF_RELATION_TITLE_BACKOFF_MS[backoffIdx];
           // Retry-Afterはuser agent全体への指示（RFC 9110 §10.2.3）であり、この
           // 呼び出し自身のローカル待機（下のsleep）だけでは、同じゲートに並ぶ
           // 別の並行呼び出し（Enterキーとボタンの二重起動等、fetchData()は処理

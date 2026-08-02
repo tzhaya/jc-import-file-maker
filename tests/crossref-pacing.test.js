@@ -316,6 +316,26 @@ test('fetchRelationTitle: 1件目の応答本文(json())が解放されるまで
   assert.strictEqual(fetch2Called, true);
 });
 
+test('fetchRelationTitle: 最終試行(3回目)の429でRetry-Afterが欠落していても共有cooldownが正しく記録される(バックオフ配列末尾へクランプ)', async () => {
+  _resetCrossrefPacingForTest();
+  const clock = makeVirtualClock();
+  // 常に429・Retry-Afterなし。attempt=0,1,2の3回試行し尽くしてnullになる過程で、
+  // 最終試行(attempt=2)はCROSSREF_RELATION_TITLE_BACKOFF_MS(長さ2)の範囲外となる。
+  // クランプせず[attempt]のまま参照するとundefinedとなり、_recordCrossrefCooldown
+  // にNaNが渡って共有cooldownが記録されない（レビュー指摘の境界条件）。
+  const fetchImpl = async () => makeResponse({ status: 429 });
+  const result = await fetchRelationTitle('10.1234/exhausted-429-no-retry-after', { fetchImpl, ...clock });
+  assert.strictEqual(result, null);
+
+  // 直後の別呼び出しの待機が、バックオフ配列末尾(1000ms)相当のcooldownを反映
+  // していることを確認する。共有cooldownが記録されていなければ、待機は既定
+  // 間隔(250ms)にとどまってしまう。
+  clock.sleepCalls.length = 0;
+  const fetchImplNext = async () => makeResponse({ status: 200, body: { message: { title: ['T'], language: 'en' } } });
+  await fetchRelationTitle('10.1234/after-exhausted-429', { fetchImpl: fetchImplNext, ...clock });
+  assert.ok(clock.sleepCalls.some((ms) => ms >= 1000), `shared cooldown not reflected: sleepCalls=${clock.sleepCalls}`);
+});
+
 // ===== ヘッダからのペーシング調整（best-effort） =====
 // 各テストは、1回目の応答でヘッダを与えてペーシング状態を更新させた後、sleepCalls
 // をクリアしてから2回目を呼び、そのgate待機の「正確な値」を検証する（vague な
