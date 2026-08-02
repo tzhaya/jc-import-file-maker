@@ -75,7 +75,7 @@ async function extensionFetch(url, options = {}) {
   return fetch(url, options);
 }
 
-// ===== Crossref REST API 共通HTTP境界（#253 / #256） =====
+// ===== Crossref APIとの共通通信処理（#253 / #256） =====
 // 素のトップレベル関数を公開すると後続scriptの字句宣言と衝突し得るため、
 // ブラウザは globalThis.CrossrefHttp、Nodeは module.exports だけで公開する。
 (function initCrossrefHttp(root) {

@@ -1037,6 +1037,9 @@ async function fetchCrossref(doi) {
   );
   if (!result.ok) {
     if (result.status === 404) throw new Error('DOIが見つかりません（Crossref 404）');
+    if (result.status === 429) {
+      throw new Error(`Crossref APIがレート制限に達したため書誌情報を取得できませんでした（${result.attempts}回試行）。時間を置いて再試行してください。`);
+    }
     throw new Error(`Crossref APIエラー: ${result.status}`);
   }
   return result.body?.message;
@@ -1181,7 +1184,12 @@ async function fetchCrossrefFunderDetails(funderUri) {
     `https://api.crossref.org/funders/${encodeURIComponent(doi)}`,
     { label: `Crossref助成機関取得 (DOI: ${doi})` },
   );
-  if (!result.ok) throw new Error(`Crossref Funders APIエラー: ${result.status}`);
+  if (!result.ok) {
+    if (result.status === 429) {
+      throw new Error(`Crossref APIがレート制限に達したため助成機関情報を取得できませんでした（${result.attempts}回試行）。時間を置いて再試行してください。`);
+    }
+    throw new Error(`Crossref Funders APIエラー: ${result.status}`);
+  }
   const name = result.body?.message?.name || '';
   // alt-names は言語タグなしのため上書き対象外（表示のみ）
   const altNames = (result.body?.message?.['alt-names'] || []).join(', ');

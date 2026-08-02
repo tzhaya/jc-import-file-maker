@@ -92,3 +92,18 @@ test('generateTsv: 研究課題番号タイプ(JGN)が該当列に出力され�
   const dataCells = lines[5].split('\t');
   assert.strictEqual(dataCells[colIdx], 'JGN');
 });
+
+test('generateTsv: 内部警告フラグ _warnJgnRateLimited はTSVへ出力しない', () => {
+  const funding = {
+    subitem_award_numbers: { subitem_award_number: 'JPMJPR2125' },
+  };
+  const withoutWarning = generateTsv([sampleMetadata({
+    item_30002_funding_reference21: [funding],
+  })], '', '');
+  const withWarning = generateTsv([sampleMetadata({
+    item_30002_funding_reference21: [{ ...funding, _warnJgnRateLimited: true }],
+  })], '', '');
+
+  assert.strictEqual(withWarning, withoutWarning);
+  assert.ok(!withWarning.includes('_warnJgnRateLimited'));
+});

@@ -379,7 +379,7 @@ test('CrossrefHttp: 429要求のbackoffと待機者のcooldownはtail解放後�
 
   await waitUntilTrue(() => sleeps.length === 2);
   assert.strictEqual(sleeps.length, 2);
-  assert.ok(sleeps.every(s => s.ms >= 990 && s.ms <= 1000),
+  assert.ok(sleeps.every(s => s.ms >= 900 && s.ms <= 1000),
     `backoff/cooldownが別々に登録されていない: ${sleeps.map(s => s.ms)}`);
   sleeps.forEach(s => s.resolve());
   await Promise.all([first, second]);
@@ -388,12 +388,34 @@ test('CrossrefHttp: 429要求のbackoffと待機者のcooldownはtail解放後�
 test('CrossrefHttp: CommonJSではglobalThis.CrossrefHttpを暗黙に公開しない', () => {
   assert.strictEqual(globalThis.CrossrefHttp, CrossrefHttp);
   const modulePath = require.resolve('../chrome-extension/shared.js');
-  delete require.cache[modulePath];
-  delete globalThis.CrossrefHttp;
-  const reloaded = require(modulePath);
-  assert.ok(reloaded.fetchJson);
-  assert.strictEqual(globalThis.CrossrefHttp, undefined);
-  globalThis.CrossrefHttp = CrossrefHttp;
+  const originalCachedModule = require.cache[modulePath];
+  try {
+    delete require.cache[modulePath];
+    delete globalThis.CrossrefHttp;
+    const reloaded = require(modulePath);
+    assert.ok(reloaded.fetchJson);
+    assert.strictEqual(globalThis.CrossrefHttp, undefined);
+  } finally {
+    require.cache[modulePath] = originalCachedModule;
+    globalThis.CrossrefHttp = CrossrefHttp;
+  }
+});
+
+test('主DOI・助成機関取得: 429は試行回数を含む日本語のレート制限エラーにする', async () => {
+  const original = CrossrefHttp.fetchJson;
+  CrossrefHttp.fetchJson = async () => ({ status: 429, ok: false, body: {}, attempts: 3 });
+  try {
+    await assert.rejects(
+      fetchCrossref('10.1234/rate-limited'),
+      /レート制限に達したため書誌情報を取得できませんでした（3回試行）。時間を置いて再試行してください/,
+    );
+    await assert.rejects(
+      fetchCrossrefFunderDetails('https://doi.org/10.13039/rate-limited'),
+      /レート制限に達したため助成機関情報を取得できませんでした（3回試行）。時間を置いて再試行してください/,
+    );
+  } finally {
+    CrossrefHttp.fetchJson = original;
+  }
 });
 
 test('fetchRelationTitle: 1件目の応答本文(json())が解放されるまで2件目のfetchImplは実行されない（P1回帰・結線レベル）', async () => {

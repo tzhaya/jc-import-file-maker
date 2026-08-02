@@ -204,6 +204,7 @@ async function fetchAwardsByDoiFromInput() {
   const ta = document.getElementById('award-input');
   if (btn) btn.disabled = true;
   statusEl.textContent = 'DOIから課題番号を検索中...';
+  statusEl.style.color = '';
   try {
     const { awards, errors } = await fetchAwardsByDoi(doi);
     if (awards.length === 0) {
