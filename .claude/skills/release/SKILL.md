@@ -32,6 +32,7 @@ description: Chrome拡張機能のリリースPR準備、manifest version更新�
 
 1. 最新の `master` から `release/<version>` ブランチを作る。
 2. `chrome-extension/manifest.json` の `version` を更新する。
+   あわせて `README.md` の「最新の更新」「変更履歴」、`chrome-extension/panel.html` と `make_jc_importer.html` の更新概要テーブル、各HTML（`funder_lookup.html` / `chrome-extension/funder_panel.html` を含む）の「最終更新」表示をリリース単位で更新する。利用者向けの記述にする（詳細は CLAUDE.md「ドキュメント運用」）。
 3. `make_jc_importer.js` と `funder_lookup.js` の `LOCAL_VERSION` を確認する。前リリース以降の機能変更が未反映の場合だけ、リリース日（JST、`YYYY-MM-DD`）へ更新する。
 4. ルートのJSを変更した場合は `npm run build` を実行する。
 5. `docs/changelog.md` に前回リリース以降の変更をまとめる。必要な場合だけREADMEの更新概要も直す。
