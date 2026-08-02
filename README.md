@@ -326,11 +326,11 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
+| 2026-08-02 | JISC Open Policy Finder API の v1リリース（2026-07-30に延期）後、実APIへクエリを送信して挙動を検証（[#229](https://github.com/tzhaya/jc-import-file-maker/issues/229) フォローアップ）。タイトル識別子が400で拒否されること・`format` 省略で正常応答が返ることからv1適用済みと確認し、v1で廃止された `format` パラメータの送信を削除。レスポンス構造はリリース前のサンプルとキー集合が完全一致で、`items` ラッパーを含め変化なし。未収録ISSNは404ではなく `200` + 空配列で返るため該当コメントを実態に合わせて修正（挙動は従来どおり「情報なし」で正しく動作）。機能・使い方の変更はなし |
 | 2026-07-26 | Chrome拡張 ver. 1.25.1：JISCの Open Policy Finder API "full v1" リリース（2026-07-29）通知を受け、OPF連携のエラーハンドリングを改善（[#229](https://github.com/tzhaya/jc-import-file-maker/issues/229)）：404（未収録）とそれ以外のAPIエラー（401/403/429等）を分岐し、従来「情報なし」と誤表示されていたAPIエラーを専用バッジ・モーダル文言で区別。OPF取得エラー時にアクセス権が無条件で `open access` になっていた問題も修正し、安全側の `embargoed access` を返すよう変更。廃止予定の `format` パラメータは、現行APIでは省略すると全件エラーになることを実測で確認したため削除を見送り。詳細は [docs/changelog.md](docs/changelog.md) 参照 |
 | 2026-07-20 | 通常ブラウザ版の導入案内をJS単一ソース化後の構成へ追随させ、必要ファイルに `make_jc_importer.js` を追加。あわせてリリース作業を標準化する `/release` Skillを追加し、リリースPR準備・version判定・テスト・タグとmanifestの整合確認・GitHub Release確認を手順化。ドキュメントと開発フローのみの変更で、manifest versionは更新しない |
 | 2026-07-19 | 開発基盤の簡素化：標準版HTMLのインラインJSとChrome拡張版JSの手動同期を廃止し、リポジトリ直下の正本JSを両版で共有する構成に変更（`npm run build` が `chrome-extension/` へコピーし、CIが反映漏れを検出）。**通常ブラウザ版の必要ファイルが変わりました**（メインツールは `make_jc_importer.js`、助成情報検索は `funder_lookup.js`、OpenAlex検索は `weko3_opensearch_core.js`・`openalex_lookup.js` も同じフォルダに必要）。機能・使い方の変更はありません |
 | 2026-07-17 | `docs/README.md` を新設し、利用者向けガイド、開発・運用資料、仕様書、調査資料、ポリシー、実装履歴を目的別に一覧化。現行ファイルへのリンクと将来的なフォルダ分け案を記載。あわせて `docs/roadmap_2026-07-05.md` を登録・推敲し、少数実機での取り込み成功と検証完了を区別。ドキュメントのみの変更（E2E対象外・manifest更新不要） |
-| 2026-07-17 | Chrome拡張 ver. 1.25.0：OpenAlex機関別著作検索の登録済み照合に `DOI`／`selfDOI`検索を追加（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241) 改善2）。筑波大学・JIRCAS・国立国語研究所で実測し、外部DOIを `DOI`、自リポジトリ登録DOIを `selfDOI` で取得できる例を確認。両方の返戻JPCOAR内で候補DOIの完全一致を調べ、正常な0件・不一致は従来のタイトル検索へフォールバック。通信・HTTP・XML解析エラーは障害を未登録に見せず `⚠ 照合不可` として停止。URLは `URL` / `URLSearchParams` で構築し、DOI中の `/` を保持。標準版は照合非実行だがinline parityを反映 |
 
 全履歴は [docs/changelog.md](docs/changelog.md) を参照してください。
 
