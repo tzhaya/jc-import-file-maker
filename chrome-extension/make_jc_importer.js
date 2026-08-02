@@ -1105,7 +1105,11 @@ async function fetchDataCite(doi) {
 }
 
 // ===== 3.2a 関連DOIタイトル取得（Crossref）=====
-async function fetchRelationTitle(doi, deps = {}) {
+// タイトルを取得できなかった理由が「障害」の場合だけ ctx.failureReason に記録する（#262）。
+// 呼び出し元はこれを見て「⚠ 要確認」を表示する。404・タイトル無しは正常な「タイトルなし」
+// なので記録しない（未収録DOIに警告を出すと誤検知になる）。それ以外の非OK・fetch例外は
+// 障害として記録する（PR #264レビュー指摘: 5xxを黙って空欄にしない）。
+async function fetchRelationTitle(doi, deps = {}, ctx = {}) {
   const bareDoi = doi.replace(/^https?:\/\/doi\.org\//i, '');
   const url = `https://api.crossref.org/works/${encodeURIComponent(bareDoi)}`;
   let result;
@@ -1115,7 +1119,12 @@ async function fetchRelationTitle(doi, deps = {}) {
       label: `関連DOIタイトル取得 (DOI: ${bareDoi})`,
     });
   } catch {
+    ctx.failureReason = 'error';
     return null;
+  }
+  // 404だけが正常な「未収録」。それ以外の非OK（5xx等の一時障害を含む）は障害として扱う。
+  if (!result.ok && result.status !== 404) {
+    ctx.failureReason = result.status === 429 ? 'rate-limited' : 'error';
   }
   if (!result.ok) return null;
   const msg = result.body?.message || {};
@@ -3050,8 +3059,11 @@ async function mapToItemType(crJson, oaJson, rorMap) {
       // Crossref Public poolの同時実行1・rps制限を守るため逐次取得する（ペーシングは
       // fetchRelationTitle()内部の責務。ここではゲートを取得しない、#253）。
       const relTitles = [];
+      const relCtxs = [];
       for (const entry of doiRelEntries) {
-        relTitles.push(await fetchRelationTitle(entry.doi));
+        const ctx = {};
+        relTitles.push(await fetchRelationTitle(entry.doi, {}, ctx));
+        relCtxs.push(ctx);
       }
       doiRelEntries.forEach((e, i) => {
         if (relTitles[i]) {
@@ -3059,6 +3071,9 @@ async function mapToItemType(crJson, oaJson, rorMap) {
             subitem_relation_name_text: relTitles[i].title,
             subitem_relation_name_language: relTitles[i].lang,
           }];
+        } else if (relCtxs[i].failureReason) {
+          // 取得失敗を黙って空欄にせず、利用者に手動確認を促す（#262）。
+          relations[e.index]._warnRelationTitle = relCtxs[i].failureReason;
         }
       });
       return relations;
@@ -4059,6 +4074,35 @@ function setJgnRateLimitWarning(row, active) {
   }
 }
 
+// 関連DOIタイトルの取得失敗（#262）。理由ごとに文言を出し分ける。
+const RELATION_TITLE_WARNING_TITLES = {
+  'rate-limited': 'Crossref APIのレート制限により、関連DOIのタイトルを取得できませんでした。時間を置いて再試行してください。',
+  'error': 'Crossref APIとの通信に失敗したため、関連DOIのタイトルを取得できませんでした。時間を置いて再試行してください。',
+};
+
+function setRelationTitleWarning(row, reason) {
+  if (!row) return;
+  const title = RELATION_TITLE_WARNING_TITLES[reason];
+  row.dataset.warnRelationTitle = title ? reason : '';
+  const existing = row.querySelector('.warn-badge[data-warning-kind="relation-title"]');
+  if (title && !existing) {
+    const badge = document.createElement('span');
+    badge.className = 'warn-badge';
+    badge.dataset.warningKind = 'relation-title';
+    badge.title = title;
+    badge.textContent = '⚠ 要確認';
+    row.appendChild(badge);
+  } else if (!title && existing) {
+    existing.remove();
+  }
+}
+
+function getRelationTitleWarning(container) {
+  const idRow = container?.querySelector?.('[data-field-key="subitem_relation_type_id_text"]');
+  const reason = idRow?.dataset.warnRelationTitle || '';
+  return RELATION_TITLE_WARNING_TITLES[reason] ? reason : '';
+}
+
 function hasJgnRateLimitWarning(container) {
   const awardRow = container?.querySelector?.('[data-field-key="subitem_award_number"]');
   return awardRow?.dataset.warnJgnRateLimited === 'true';
@@ -4686,7 +4730,9 @@ function renderRelationField(def, relations) {
     // 関連識別子（fieldset）
     const relId = rel.subitem_relation_type_id || {};
     relContent.appendChild(createFieldRow('識別子タイプ', relId.subitem_relation_type_select || '', 'select', 'subitem_relation_type_select', { fieldKey: 'subitem_relation_type_select' }));
-    relContent.appendChild(createFieldRow('関連識別子', relId.subitem_relation_type_id_text || '', 'text', null, { fieldKey: 'subitem_relation_type_id_text' }));
+    const relIdRow = createFieldRow('関連識別子', relId.subitem_relation_type_id_text || '', 'text', null, { fieldKey: 'subitem_relation_type_id_text' });
+    setRelationTitleWarning(relIdRow, rel._warnRelationTitle);
+    relContent.appendChild(relIdRow);
 
     // 関連名称（配列）
     const { wrapper: rnWrap, content: rnCont } = createNestedSectionHeader('関連名称', 2, (cont) => {
@@ -6186,6 +6232,9 @@ function collectRelationField(section) {
       },
       subitem_relation_name: [],
     };
+    // 再描画・下書き復元でも警告が残るよう、DOM上の状態を書き戻す（#262）。
+    const relWarn = getRelationTitleWarning(rc);
+    if (relWarn) rel._warnRelationTitle = relWarn;
     rc.querySelectorAll('.entry-group').forEach(grp => {
       if (grp.querySelector('[data-field-key="subitem_relation_name_text"]')) {
         rel.subitem_relation_name.push({
@@ -7378,5 +7427,6 @@ if (typeof module !== 'undefined' && module.exports) {
     fetchCrossref, fetchRelationTitle, fetchCrossrefFunderDetails, fetchJgn,
     buildFunders, buildJaLCFunders, buildDataCiteFunders, buildDataCiteAuthors,
     setJgnRateLimitWarning, hasJgnRateLimitWarning, collectFundingField,
+    setRelationTitleWarning, getRelationTitleWarning, collectRelationField,
   };
 }

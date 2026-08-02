@@ -11,6 +11,7 @@ const importer = require('../chrome-extension/make_jc_importer.js');
 const {
   fetchCrossref, fetchRelationTitle, fetchCrossrefFunderDetails,
   fetchJgn: fetchImporterJgn, setJgnRateLimitWarning, hasJgnRateLimitWarning, collectFundingField,
+  setRelationTitleWarning, getRelationTitleWarning, collectRelationField,
 } = importer;
 const funderLookup = require('../chrome-extension/funder_lookup.js');
 const crossrefPaced = CrossrefHttp._paced;
@@ -223,6 +224,137 @@ test('fetchRelationTitle: ネットワークエラー（fetch自体の例外）�
   const fetchImpl = async () => { throw new Error('network down'); };
   const result = await fetchRelationTitle('10.1234/network-error', { fetchImpl, ...clock });
   assert.strictEqual(result, null);
+});
+
+// ===== #262: 関連DOIタイトルの取得失敗をctxへ記録し、警告として表示する =====
+
+test('fetchRelationTitle: 429を出し切った場合はctx.failureReasonへrate-limitedを記録する', () => withWarnSpy(async () => {
+  _resetCrossrefPacingForTest();
+  const clock = makeVirtualClock();
+  const fetchImpl = async () => makeResponse({ status: 429 });
+  const ctx = {};
+  const result = await fetchRelationTitle('10.1234/ctx-429', { fetchImpl, ...clock }, ctx);
+  assert.strictEqual(result, null);
+  assert.strictEqual(ctx.failureReason, 'rate-limited');
+}));
+
+test('fetchRelationTitle: ネットワークエラーはctx.failureReasonへerrorを記録する', async () => {
+  _resetCrossrefPacingForTest();
+  const clock = makeVirtualClock();
+  const fetchImpl = async () => { throw new Error('network down'); };
+  const ctx = {};
+  const result = await fetchRelationTitle('10.1234/ctx-network', { fetchImpl, ...clock }, ctx);
+  assert.strictEqual(result, null);
+  assert.strictEqual(ctx.failureReason, 'error');
+});
+
+test('fetchRelationTitle: 404はctx.failureReasonを設定しない（正常な未収録に警告を出さない）', () => withWarnSpy(async () => {
+  _resetCrossrefPacingForTest();
+  const clock = makeVirtualClock();
+  const fetchImpl = async () => makeResponse({ status: 404 });
+  const ctx = {};
+  assert.strictEqual(await fetchRelationTitle('10.1234/ctx-404', { fetchImpl, ...clock }, ctx), null);
+  assert.strictEqual(ctx.failureReason, undefined);
+}));
+
+test('fetchRelationTitle: 5xxはctx.failureReasonへerrorを記録する（404以外の非OKを黙って空欄にしない）', async () => {
+  for (const status of [500, 502, 403]) {
+    _resetCrossrefPacingForTest();
+    const clock = makeVirtualClock();
+    const fetchImpl = async () => makeResponse({ status });
+    const ctx = {};
+    assert.strictEqual(await fetchRelationTitle(`10.1234/ctx-${status}`, { fetchImpl, ...clock }, ctx), null);
+    assert.strictEqual(ctx.failureReason, 'error', `status ${status}`);
+  }
+});
+
+test('fetchRelationTitle: 200かつタイトルなしはctx.failureReasonを設定しない', async () => {
+  _resetCrossrefPacingForTest();
+  const clock = makeVirtualClock();
+  const fetchImpl = async () => makeResponse({ status: 200, body: { message: {} } });
+  const ctx = {};
+  assert.strictEqual(await fetchRelationTitle('10.1234/ctx-no-title', { fetchImpl, ...clock }, ctx), null);
+  assert.strictEqual(ctx.failureReason, undefined);
+});
+
+test('fetchRelationTitle: 429の後に200で成功した場合はctx.failureReasonを設定しない', async () => {
+  _resetCrossrefPacingForTest();
+  const clock = makeVirtualClock();
+  let call = 0;
+  const fetchImpl = async () => {
+    call++;
+    if (call === 1) return makeResponse({ status: 429, headers: { 'Retry-After': '0' } });
+    return makeResponse({ status: 200, body: { message: { title: ['Recovered'], language: 'en' } } });
+  };
+  const ctx = {};
+  const result = await fetchRelationTitle('10.1234/ctx-recovered', { fetchImpl, ...clock }, ctx);
+  assert.deepStrictEqual(result, { title: 'Recovered', lang: 'en' });
+  assert.strictEqual(ctx.failureReason, undefined);
+});
+
+test('関連DOIタイトル警告: DOM状態の保存・解除とcollector向け復元が往復する', () => {
+  const originalDocument = globalThis.document;
+  const badges = [];
+  const row = {
+    dataset: {},
+    querySelector: () => badges[0] || null,
+    appendChild: badge => badges.push(badge),
+  };
+  globalThis.document = {
+    createElement: () => ({
+      dataset: {},
+      remove() { badges.splice(badges.indexOf(this), 1); },
+    }),
+  };
+  const rc = {
+    querySelector: selector => selector.includes('subitem_relation_type_id_text') ? row : null,
+    querySelectorAll: () => [],
+  };
+  const section = {
+    querySelector: () => ({
+      querySelectorAll: () => [{ querySelector: () => rc }],
+    }),
+  };
+  try {
+    setRelationTitleWarning(row, 'rate-limited');
+    assert.strictEqual(row.dataset.warnRelationTitle, 'rate-limited');
+    assert.strictEqual(badges.length, 1);
+    assert.strictEqual(badges[0].dataset.warningKind, 'relation-title');
+    assert.match(badges[0].title, /レート制限/);
+    assert.strictEqual(getRelationTitleWarning(rc), 'rate-limited');
+    assert.strictEqual(collectRelationField(section)[0]._warnRelationTitle, 'rate-limited');
+
+    setRelationTitleWarning(row, 'error');
+    assert.strictEqual(row.dataset.warnRelationTitle, 'error');
+    assert.match(badges[0].title, /レート制限/); // 既存バッジは作り直さない（JGNと同じ挙動）
+    assert.strictEqual(collectRelationField(section)[0]._warnRelationTitle, 'error');
+
+    setRelationTitleWarning(row, undefined);
+    assert.strictEqual(row.dataset.warnRelationTitle, '');
+    assert.strictEqual(badges.length, 0);
+    assert.strictEqual(getRelationTitleWarning(rc), '');
+    assert.strictEqual(collectRelationField(section)[0]._warnRelationTitle, undefined);
+  } finally {
+    globalThis.document = originalDocument;
+  }
+});
+
+test('関連DOIタイトル警告: 未知の理由は警告として扱わない', () => {
+  const originalDocument = globalThis.document;
+  const badges = [];
+  const row = {
+    dataset: {},
+    querySelector: () => badges[0] || null,
+    appendChild: badge => badges.push(badge),
+  };
+  globalThis.document = { createElement: () => ({ dataset: {}, remove() {} }) };
+  try {
+    setRelationTitleWarning(row, 'something-else');
+    assert.strictEqual(row.dataset.warnRelationTitle, '');
+    assert.strictEqual(badges.length, 0);
+  } finally {
+    globalThis.document = originalDocument;
+  }
 });
 
 // ===== fetchRelationTitle: Retry-After の扱い =====
