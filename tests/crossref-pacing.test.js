@@ -37,6 +37,20 @@ function withWarnSpy(fn) {
   return fn(calls).finally(() => { console.warn = orig; });
 }
 
+// 実際に処理が「重なる」条件を作るため、fn()の完了を外部から制御できるdeferredを使う。
+// 同期本体のfn()（awaitを含まない）はJSのシングルスレッド実行により、ゲートの有無に
+// 関わらずactive++/active--が重ならず偽陽性になるため使わない（レビュー指摘）。
+function waitUntilTrue(cond, timeoutMs = 2000) {
+  const start = Date.now();
+  return new Promise((resolve, reject) => {
+    (function poll() {
+      if (cond()) return resolve();
+      if (Date.now() - start > timeoutMs) return reject(new Error('waitUntilTrue timeout'));
+      setTimeout(poll, 1);
+    })();
+  });
+}
+
 // ===== crossrefPaced: 同時実行数・開始間隔・順序 =====
 
 test('crossrefPaced: 0件の入力では何も実行されない', async () => {
@@ -53,24 +67,33 @@ test('crossrefPaced: 1件はそのまま実行される', async () => {
   assert.strictEqual(result, 'ok');
 });
 
-test('crossrefPaced: 複数件でも同時実行は1を超えず、開始間隔が既定値(250ms)以上空き、結果順序が保たれる', async () => {
+test('crossrefPaced: 複数件でも実際の処理重なりは1を超えず、開始間隔が既定値(250ms)以上空き、結果順序が保たれる', async () => {
   _resetCrossrefPacingForTest();
   const clock = makeVirtualClock();
   let active = 0;
   let maxActive = 0;
   const starts = [];
-  const makeFn = (i) => async () => {
+  const releasers = [];
+
+  // fn()はPromiseの外部resolveで完了を制御し、次のfn()が実際に開始されるまで
+  // 「処理中」の状態を維持できるようにする（真の重なり検証のため）。
+  const makeFn = (i) => () => new Promise((resolve) => {
     active++;
     maxActive = Math.max(maxActive, active);
     starts.push(clock.now());
-    active--;
-    return i;
-  };
+    releasers.push(() => { active--; resolve(i); });
+  });
 
-  const results = await Promise.all([0, 1, 2, 3].map((i) => crossrefPaced(makeFn(i), clock)));
+  const resultsPromise = Promise.all([0, 1, 2, 3].map((i) => crossrefPaced(makeFn(i), clock)));
 
+  for (let i = 0; i < 4; i++) {
+    await waitUntilTrue(() => releasers.length === i + 1);
+    assert.strictEqual(maxActive, 1, `maxActive exceeded 1 at task ${i}`);
+    releasers[i]();
+  }
+
+  const results = await resultsPromise;
   assert.deepStrictEqual(results, [0, 1, 2, 3]); // 入力順を保つ
-  assert.strictEqual(maxActive, 1);              // 同時実行は常に1以下
   for (let i = 1; i < starts.length; i++) {
     assert.ok(starts[i] - starts[i - 1] >= 250, `interval too short: ${starts[i] - starts[i - 1]}`);
   }
@@ -198,7 +221,7 @@ test('fetchRelationTitle: 不正なRetry-Afterは500ms→1000msへフォール�
 
 // ===== fetchRelationTitle: リトライを含む全試行のペーシング =====
 
-test('fetchRelationTitle: リトライを含む全試行が同じゲートを通り、開始間隔が保たれる', async () => {
+test('fetchRelationTitle: リトライを含む全試行が同じゲートを通り、開始間隔が保たれる（Retry-After:0でゲート由来の待機のみを検証）', async () => {
   _resetCrossrefPacingForTest();
   const clock = makeVirtualClock();
   const starts = [];
@@ -206,93 +229,94 @@ test('fetchRelationTitle: リトライを含む全試行が同じゲートを通
   const fetchImpl = async () => {
     starts.push(clock.now());
     call++;
-    if (call === 1) return makeResponse({ status: 429 }); // Retry-Afterなし→500ms待機
+    // Retry-After:0 とし、リトライ自体の待機を0にする。それでも開始間隔が
+    // 250ms以上空くなら、その待機はゲート由来（バックオフ由来ではない）と言える
+    // （既定バックオフ500msが偶然250ms以上を満たすだけの偽陽性を避けるため）。
+    if (call === 1) return makeResponse({ status: 429, headers: { 'Retry-After': '0' } });
     return makeResponse({ status: 200, body: { message: { title: ['T'], language: 'en' } } });
   };
-  await fetchRelationTitle('10.1234/paced-retry', { fetchImpl, ...clock });
+  await fetchRelationTitle('10.1234/paced-retry-zero', { fetchImpl, ...clock });
   assert.strictEqual(starts.length, 2);
   assert.ok(starts[1] - starts[0] >= 250, `interval too short: ${starts[1] - starts[0]}`);
+  // ゲート由来の待機(250ms程度)とリトライ由来の待機(0ms)が別々に発生していることを明示的に確認する。
+  assert.ok(clock.sleepCalls.includes(0), `retry wait (0ms) not observed: ${clock.sleepCalls}`);
+  assert.ok(clock.sleepCalls.some((ms) => ms >= 250), `gate wait (>=250ms) not observed: ${clock.sleepCalls}`);
 });
 
 // ===== ヘッダからのペーシング調整（best-effort） =====
+// 各テストは、1回目の応答でヘッダを与えてペーシング状態を更新させた後、sleepCalls
+// をクリアしてから2回目を呼び、そのgate待機の「正確な値」を検証する（vague な
+// `some`/`every` は0件でも真になり得るため、必ず件数と値の両方をassertする）。
 
-test('fetchRelationTitle: Public poolでヘッダの算出値(200ms)が既定値(250ms)を下回っても既定値が維持される', async () => {
-  _resetCrossrefPacingForTest();
-  const clock = makeVirtualClock();
+async function primeThenMeasure(clock, primeHeaders, primeStatus = 200) {
   const fetchImpl1 = async () => makeResponse({
-    status: 200,
-    headers: { 'x-api-pool': 'public-single', 'x-rate-limit-limit': '5', 'x-rate-limit-interval': '1s' }, // 算出200ms
+    status: primeStatus,
+    headers: primeHeaders,
     body: { message: { title: ['T1'], language: 'en' } },
   });
-  await fetchRelationTitle('10.1234/hdr-floor-1', { fetchImpl: fetchImpl1, ...clock });
-
+  await fetchRelationTitle('10.1234/prime', { fetchImpl: fetchImpl1, ...clock });
   clock.sleepCalls.length = 0;
   const fetchImpl2 = async () => makeResponse({ status: 200, body: { message: { title: ['T2'], language: 'en' } } });
-  await fetchRelationTitle('10.1234/hdr-floor-2', { fetchImpl: fetchImpl2, ...clock });
-  assert.ok(clock.sleepCalls.some((ms) => ms >= 250), `sleepCalls=${clock.sleepCalls}`);
-});
+  await fetchRelationTitle('10.1234/measure', { fetchImpl: fetchImpl2, ...clock });
+}
 
-test('fetchRelationTitle: Public poolでヘッダの算出値(500ms)が既定値を上回る場合は広がる', async () => {
+test('fetchRelationTitle: Public poolでヘッダの算出値(200ms)が既定値(250ms)を下回っても既定値ちょうどが維持される', async () => {
   _resetCrossrefPacingForTest();
   const clock = makeVirtualClock();
-  const fetchImpl1 = async () => makeResponse({
-    status: 200,
-    headers: { 'x-api-pool': 'public-single', 'x-rate-limit-limit': '2', 'x-rate-limit-interval': '1s' }, // 算出500ms
-    body: { message: { title: ['T1'], language: 'en' } },
-  });
-  await fetchRelationTitle('10.1234/hdr-widen-1', { fetchImpl: fetchImpl1, ...clock });
-
-  clock.sleepCalls.length = 0;
-  const fetchImpl2 = async () => makeResponse({ status: 200, body: { message: { title: ['T2'], language: 'en' } } });
-  await fetchRelationTitle('10.1234/hdr-widen-2', { fetchImpl: fetchImpl2, ...clock });
-  assert.ok(clock.sleepCalls.some((ms) => ms >= 500), `sleepCalls=${clock.sleepCalls}`);
+  await primeThenMeasure(clock, { 'x-api-pool': 'public-single', 'x-rate-limit-limit': '5', 'x-rate-limit-interval': '1s' }); // 算出200ms
+  assert.deepStrictEqual(clock.sleepCalls, [250], `sleepCalls=${clock.sleepCalls}`);
 });
 
-test('fetchRelationTitle: Polite pool等（x-api-poolがpublicで始まらない）は既定値の下限を適用しない', async () => {
+test('fetchRelationTitle: Public poolでヘッダの算出値(500ms)が既定値を上回る場合はその値まで広がる', async () => {
   _resetCrossrefPacingForTest();
   const clock = makeVirtualClock();
-  const fetchImpl1 = async () => makeResponse({
-    status: 200,
-    headers: { 'x-api-pool': 'polite', 'x-rate-limit-limit': '10', 'x-rate-limit-interval': '1s' }, // 算出100ms
-    body: { message: { title: ['T1'], language: 'en' } },
-  });
-  await fetchRelationTitle('10.1234/polite-1', { fetchImpl: fetchImpl1, ...clock });
-
-  clock.sleepCalls.length = 0;
-  const fetchImpl2 = async () => makeResponse({ status: 200, body: { message: { title: ['T2'], language: 'en' } } });
-  await fetchRelationTitle('10.1234/polite-2', { fetchImpl: fetchImpl2, ...clock });
-  // 100ms間隔まで縮まるため、250ms以上の待機は発生しない
-  assert.ok(clock.sleepCalls.every((ms) => ms < 250), `sleepCalls=${clock.sleepCalls}`);
+  await primeThenMeasure(clock, { 'x-api-pool': 'public-single', 'x-rate-limit-limit': '2', 'x-rate-limit-interval': '1s' }); // 算出500ms
+  assert.deepStrictEqual(clock.sleepCalls, [500], `sleepCalls=${clock.sleepCalls}`);
 });
 
-test('fetchRelationTitle: x-rate-limit-interval の ms サフィックス・単位なしをbest-effortで解釈する', async () => {
+test('fetchRelationTitle: x-api-poolが欠落している場合もPublic pool同様に既定値の下限を維持する（pool判定不能時の安全側フォールバック）', async () => {
   _resetCrossrefPacingForTest();
   const clock = makeVirtualClock();
-  // 500ms interval, limit 5 → 算出100ms（Polite想定でfloorなし）
-  const fetchImplMs = async () => makeResponse({
-    status: 200,
-    headers: { 'x-api-pool': 'polite', 'x-rate-limit-limit': '5', 'x-rate-limit-interval': '500ms' },
-    body: { message: { title: ['T'], language: 'en' } },
-  });
-  await fetchRelationTitle('10.1234/unit-ms', { fetchImpl: fetchImplMs, ...clock });
-  clock.sleepCalls.length = 0;
-  const fetchImplNext = async () => makeResponse({ status: 200, body: { message: { title: ['T2'], language: 'en' } } });
-  await fetchRelationTitle('10.1234/unit-ms-2', { fetchImpl: fetchImplNext, ...clock });
-  assert.ok(clock.sleepCalls.every((ms) => ms < 250), `sleepCalls=${clock.sleepCalls}`);
+  // x-api-pool自体が無い。limit/intervalの算出値(200ms)は250msを下回るが、
+  // pool不明のためフォールバックし既定値250msを維持しなければならない（レビューで
+  // 指摘された不具合: 従来はpool欠落時に非Public扱いとなり200msへ縮んでいた）。
+  await primeThenMeasure(clock, { 'x-rate-limit-limit': '5', 'x-rate-limit-interval': '1s' });
+  assert.deepStrictEqual(clock.sleepCalls, [250], `sleepCalls=${clock.sleepCalls}`);
+});
+
+test('fetchRelationTitle: 未知のx-api-pool値でもPublic pool同様に既定値の下限を維持する（既知の非Public poolのみ下限を外す）', async () => {
+  _resetCrossrefPacingForTest();
+  const clock = makeVirtualClock();
+  await primeThenMeasure(clock, { 'x-api-pool': 'some-future-pool', 'x-rate-limit-limit': '5', 'x-rate-limit-interval': '1s' }); // 算出200ms
+  assert.deepStrictEqual(clock.sleepCalls, [250], `sleepCalls=${clock.sleepCalls}`);
+});
+
+test('fetchRelationTitle: Polite pool（既知の非Public pool）は既定値の下限を適用しない', async () => {
+  _resetCrossrefPacingForTest();
+  const clock = makeVirtualClock();
+  await primeThenMeasure(clock, { 'x-api-pool': 'polite', 'x-rate-limit-limit': '10', 'x-rate-limit-interval': '1s' }); // 算出100ms
+  assert.deepStrictEqual(clock.sleepCalls, [100], `sleepCalls=${clock.sleepCalls}`);
+});
+
+test('fetchRelationTitle: x-rate-limit-interval の ms サフィックスをbest-effortで解釈する', async () => {
+  _resetCrossrefPacingForTest();
+  const clock = makeVirtualClock();
+  // 500ms ÷ limit 5 = 100ms（Polite想定でfloorなし）
+  await primeThenMeasure(clock, { 'x-api-pool': 'polite', 'x-rate-limit-limit': '5', 'x-rate-limit-interval': '500ms' });
+  assert.deepStrictEqual(clock.sleepCalls, [100], `sleepCalls=${clock.sleepCalls}`);
+});
+
+test('fetchRelationTitle: x-rate-limit-interval の単位なし（秒とみなす）をbest-effortで解釈する', async () => {
+  _resetCrossrefPacingForTest();
+  const clock = makeVirtualClock();
+  // 単位なし"2" → 2秒 → 2000ms ÷ limit 5 = 400ms（Polite想定でfloorなし）
+  await primeThenMeasure(clock, { 'x-api-pool': 'polite', 'x-rate-limit-limit': '5', 'x-rate-limit-interval': '2' });
+  assert.deepStrictEqual(clock.sleepCalls, [400], `sleepCalls=${clock.sleepCalls}`);
 });
 
 test('fetchRelationTitle: 想定外のヘッダ書式は既定値を維持する（安全側フォールバック）', async () => {
   _resetCrossrefPacingForTest();
   const clock = makeVirtualClock();
-  const fetchImpl1 = async () => makeResponse({
-    status: 200,
-    headers: { 'x-api-pool': 'public-single', 'x-rate-limit-limit': 'not-a-number', 'x-rate-limit-interval': 'garbage' },
-    body: { message: { title: ['T1'], language: 'en' } },
-  });
-  await fetchRelationTitle('10.1234/hdr-malformed-1', { fetchImpl: fetchImpl1, ...clock });
-
-  clock.sleepCalls.length = 0;
-  const fetchImpl2 = async () => makeResponse({ status: 200, body: { message: { title: ['T2'], language: 'en' } } });
-  await fetchRelationTitle('10.1234/hdr-malformed-2', { fetchImpl: fetchImpl2, ...clock });
-  assert.ok(clock.sleepCalls.some((ms) => ms >= 250), `sleepCalls=${clock.sleepCalls}`);
+  await primeThenMeasure(clock, { 'x-api-pool': 'public-single', 'x-rate-limit-limit': 'not-a-number', 'x-rate-limit-interval': 'garbage' });
+  assert.deepStrictEqual(clock.sleepCalls, [250], `sleepCalls=${clock.sleepCalls}`);
 });
