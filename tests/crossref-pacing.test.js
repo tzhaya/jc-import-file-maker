@@ -5,9 +5,16 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
+const CrossrefHttp = require('../chrome-extension/shared.js');
+globalThis.CrossrefHttp = CrossrefHttp;
+const importer = require('../chrome-extension/make_jc_importer.js');
 const {
-  fetchRelationTitle, crossrefPaced, _resetCrossrefPacingForTest,
-} = require('../chrome-extension/make_jc_importer.js');
+  fetchCrossref, fetchRelationTitle, fetchCrossrefFunderDetails,
+  fetchJgn: fetchImporterJgn, setJgnRateLimitWarning, hasJgnRateLimitWarning, collectFundingField,
+} = importer;
+const funderLookup = require('../chrome-extension/funder_lookup.js');
+const crossrefPaced = CrossrefHttp._paced;
+const _resetCrossrefPacingForTest = CrossrefHttp._resetForTest;
 
 function makeResponse({ status = 200, headers = {}, body = {} } = {}) {
   const h = new Map(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), v]));
@@ -36,6 +43,47 @@ function withWarnSpy(fn) {
   console.warn = (...args) => calls.push(args.join(' '));
   return fn(calls).finally(() => { console.warn = orig; });
 }
+
+test('JGN 429警告: DOM状態の保存・解除とcollector向け復元判定が往復する', () => {
+  const originalDocument = globalThis.document;
+  const badges = [];
+  const row = {
+    dataset: {},
+    querySelector: () => badges[0] || null,
+    appendChild: badge => badges.push(badge),
+  };
+  globalThis.document = {
+    createElement: () => ({
+      dataset: {},
+      remove() { badges.splice(badges.indexOf(this), 1); },
+    }),
+  };
+  try {
+    setJgnRateLimitWarning(row, true);
+    assert.strictEqual(row.dataset.warnJgnRateLimited, 'true');
+    assert.strictEqual(badges.length, 1);
+    assert.strictEqual(badges[0].dataset.warningKind, 'jgn-rate-limited');
+    assert.strictEqual(hasJgnRateLimitWarning({ querySelector: () => row }), true);
+    const fc = {
+      querySelector: selector => selector.includes('subitem_award_number') ? row : null,
+      querySelectorAll: () => [],
+    };
+    const section = {
+      querySelector: () => ({
+        querySelectorAll: () => [{ querySelector: () => fc }],
+      }),
+    };
+    assert.strictEqual(collectFundingField(section)[0]._warnJgnRateLimited, true);
+
+    setJgnRateLimitWarning(row, false);
+    assert.strictEqual(row.dataset.warnJgnRateLimited, 'false');
+    assert.strictEqual(badges.length, 0);
+    assert.strictEqual(hasJgnRateLimitWarning({ querySelector: () => row }), false);
+    assert.strictEqual(collectFundingField(section)[0]._warnJgnRateLimited, undefined);
+  } finally {
+    globalThis.document = originalDocument;
+  }
+});
 
 // 実際に処理が「重なる」条件を作るため、fn()の完了を外部から制御できるdeferredを使う。
 // 同期本体のfn()（awaitを含まない）はJSのシングルスレッド実行により、ゲートの有無に
@@ -192,6 +240,34 @@ test('fetchRelationTitle: Retry-Afterありはその秒数を待機値として�
   assert.ok(clock.sleepCalls.includes(2000), `sleepCalls=${clock.sleepCalls}`);
 });
 
+test('CrossrefHttp: HTTP-date形式のRetry-Afterを待機時間へ変換する', async () => {
+  CrossrefHttp._resetForTest();
+  const clock = makeVirtualClock();
+  const wallBase = Date.parse('2026-08-02T00:00:00Z');
+  let call = 0;
+  const fetchImpl = async () => {
+    call++;
+    if (call === 1) {
+      return makeResponse({
+        status: 429,
+        headers: { 'Retry-After': 'Sun, 02 Aug 2026 00:00:02 GMT' },
+      });
+    }
+    return makeResponse({ status: 200, body: { message: {} } });
+  };
+
+  const result = await CrossrefHttp.fetchJson('https://api.crossref.org/works/date-retry', {
+    fetchImpl,
+    now: clock.now,
+    sleep: clock.sleep,
+    wallNow: () => wallBase,
+  });
+
+  assert.strictEqual(result.status, 200);
+  assert.strictEqual(result.attempts, 2);
+  assert.ok(clock.sleepCalls.includes(2000), `HTTP-date由来の2000ms待機がない: ${clock.sleepCalls}`);
+});
+
 test('fetchRelationTitle: Retry-Afterなしは500ms→1000msへフォールバックする', async () => {
   _resetCrossrefPacingForTest();
   const clock = makeVirtualClock();
@@ -276,6 +352,70 @@ test('fetchRelationTitle: 429のRetry-Afterは共有ゲートに反映され、�
   // 既定の開始間隔(250ms)だけでは説明がつかない、cooldown(1000ms)相当の待機が
   // 2件目にも適用されていることを確認する（既定間隔のみなら250ms程度で開始されるはず）。
   assert.ok(start2 - start >= 900, `2件目がcooldown中に開始された可能性: elapsed=${start2 - start}ms`);
+});
+
+test('CrossrefHttp: 429要求のbackoffと待機者のcooldownはtail解放後に別々に開始する', async () => {
+  CrossrefHttp._resetForTest();
+  const sleeps = [];
+  const sleep = (ms) => {
+    if (sleeps.length >= 2) return Promise.resolve();
+    let resolve;
+    const promise = new Promise(r => { resolve = r; });
+    sleeps.push({ ms, resolve });
+    return promise;
+  };
+  let firstCalls = 0;
+  const first = CrossrefHttp.fetchJson('https://api.crossref.org/works/first', {
+    fetchImpl: async () => makeResponse({
+      status: firstCalls++ === 0 ? 429 : 200,
+      headers: firstCalls === 1 ? { 'Retry-After': '1' } : {},
+    }),
+    sleep,
+  });
+  const second = CrossrefHttp.fetchJson('https://api.crossref.org/works/second', {
+    fetchImpl: async () => makeResponse({ status: 200 }),
+    sleep,
+  });
+
+  await waitUntilTrue(() => sleeps.length === 2);
+  assert.strictEqual(sleeps.length, 2);
+  assert.ok(sleeps.every(s => s.ms >= 900 && s.ms <= 1000),
+    `backoff/cooldownが別々に登録されていない: ${sleeps.map(s => s.ms)}`);
+  sleeps.forEach(s => s.resolve());
+  await Promise.all([first, second]);
+});
+
+test('CrossrefHttp: CommonJSではglobalThis.CrossrefHttpを暗黙に公開しない', () => {
+  assert.strictEqual(globalThis.CrossrefHttp, CrossrefHttp);
+  const modulePath = require.resolve('../chrome-extension/shared.js');
+  const originalCachedModule = require.cache[modulePath];
+  try {
+    delete require.cache[modulePath];
+    delete globalThis.CrossrefHttp;
+    const reloaded = require(modulePath);
+    assert.ok(reloaded.fetchJson);
+    assert.strictEqual(globalThis.CrossrefHttp, undefined);
+  } finally {
+    require.cache[modulePath] = originalCachedModule;
+    globalThis.CrossrefHttp = CrossrefHttp;
+  }
+});
+
+test('主DOI・助成機関取得: 429は試行回数を含む日本語のレート制限エラーにする', async () => {
+  const original = CrossrefHttp.fetchJson;
+  CrossrefHttp.fetchJson = async () => ({ status: 429, ok: false, body: {}, attempts: 3 });
+  try {
+    await assert.rejects(
+      fetchCrossref('10.1234/rate-limited'),
+      /レート制限に達したため書誌情報を取得できませんでした（3回試行）。時間を置いて再試行してください/,
+    );
+    await assert.rejects(
+      fetchCrossrefFunderDetails('https://doi.org/10.13039/rate-limited'),
+      /レート制限に達したため助成機関情報を取得できませんでした（3回試行）。時間を置いて再試行してください/,
+    );
+  } finally {
+    CrossrefHttp.fetchJson = original;
+  }
 });
 
 test('fetchRelationTitle: 1件目の応答本文(json())が解放されるまで2件目のfetchImplは実行されない（P1回帰・結線レベル）', async () => {
@@ -412,4 +552,138 @@ test('fetchRelationTitle: 想定外のヘッダ書式は既定値を維持する
   const clock = makeVirtualClock();
   await primeThenMeasure(clock, { 'x-api-pool': 'public-single', 'x-rate-limit-limit': 'not-a-number', 'x-rate-limit-interval': 'garbage' });
   assert.deepStrictEqual(clock.sleepCalls, [250], `sleepCalls=${clock.sleepCalls}`);
+});
+
+// ===== #256: 共通名前空間・全Crossref経路の結線 =====
+
+test('CrossrefHttp: 公開APIを3キーだけに固定する', () => {
+  assert.deepStrictEqual(
+    Object.keys(CrossrefHttp).sort(),
+    ['_paced', '_resetForTest', 'fetchJson'],
+  );
+});
+
+test('CrossrefHttp: ネットワーク例外をHTTP結果へ変換せず、再試行なしで伝播する', async () => {
+  CrossrefHttp._resetForTest();
+  let calls = 0;
+  const error = new Error('offline');
+  await assert.rejects(
+    CrossrefHttp.fetchJson('https://api.crossref.org/works/x', {
+      fetchImpl: async () => { calls++; throw error; },
+    }),
+    error,
+  );
+  assert.strictEqual(calls, 1);
+});
+
+test('CrossrefHttp: ヘッダ欠落時は直前のpolite間隔を保持し、次のpublic応答で250ms下限へ戻る', async () => {
+  CrossrefHttp._resetForTest();
+  const clock = makeVirtualClock();
+  const responses = [
+    makeResponse({ headers: { 'x-api-pool': 'polite', 'x-rate-limit-limit': '10', 'x-rate-limit-interval': '1s' } }),
+    makeResponse(),
+    makeResponse({ headers: { 'x-api-pool': 'public-single', 'x-rate-limit-limit': '5', 'x-rate-limit-interval': '1s' } }),
+    makeResponse(),
+  ];
+  const fetchImpl = async () => responses.shift();
+  for (let i = 0; i < 4; i++) {
+    await CrossrefHttp.fetchJson(`https://api.crossref.org/works/${i}`, { fetchImpl, ...clock });
+  }
+  assert.deepStrictEqual(clock.sleepCalls, [100, 100, 250]);
+});
+
+test('全6経路が同一CrossrefHttp.fetchJsonへ結線される', async () => {
+  const original = CrossrefHttp.fetchJson;
+  const originalFetch = global.fetch;
+  global.CONFIG = { OpenAlex_API_KEY: '', CiNii_API_KEY: '' };
+  const urls = [];
+  CrossrefHttp.fetchJson = async (url) => {
+    urls.push(url);
+    if (url.includes('/funders/')) {
+      return { status: 200, ok: true, body: { message: { name: 'Funder' } }, attempts: 1 };
+    }
+    if (url.includes('10.52926')) {
+      return { status: 200, ok: true, body: { message: { type: 'grant', project: [] } }, attempts: 1 };
+    }
+    return { status: 200, ok: true, body: { message: { title: ['Title'], funder: [] } }, attempts: 1 };
+  };
+  global.fetch = async () => makeResponse({ body: { grants: [] } });
+  try {
+    await fetchCrossref('10.1/main');
+    await fetchRelationTitle('10.1/relation');
+    await fetchCrossrefFunderDetails('https://doi.org/10.13039/test');
+    await fetchImporterJgn('JPTEST1');
+    await funderLookup.fetchAwardsByDoi('10.1/lookup');
+    await funderLookup.fetchJgn('JPTEST2');
+  } finally {
+    CrossrefHttp.fetchJson = original;
+    global.fetch = originalFetch;
+  }
+  assert.strictEqual(urls.length, 6);
+  assert.deepStrictEqual(urls.map(url => {
+    if (url.includes('/funders/')) return 'importer-funder';
+    if (url.includes('JPTEST1')) return 'importer-jgn';
+    if (url.includes('JPTEST2')) return 'lookup-jgn';
+    if (url.includes('relation')) return 'relation-title';
+    if (url.includes('lookup')) return 'lookup-doi';
+    return 'importer-doi';
+  }), [
+    'importer-doi', 'relation-title', 'importer-funder',
+    'importer-jgn', 'lookup-doi', 'lookup-jgn',
+  ]);
+});
+
+test('両fetchJgn: 429はctxだけに記録し、nullを返してフォールバック契約を維持する', async () => {
+  const original = CrossrefHttp.fetchJson;
+  CrossrefHttp.fetchJson = async () => ({ status: 429, ok: false, body: {}, attempts: 3 });
+  try {
+    for (const fetchJgn of [fetchImporterJgn, funderLookup.fetchJgn]) {
+      const ctx = {};
+      assert.strictEqual(await fetchJgn('JPTEST', ctx), null);
+      assert.deepStrictEqual(ctx, { rateLimited: true });
+    }
+  } finally {
+    CrossrefHttp.fetchJson = original;
+  }
+});
+
+test('funder lookup: JGN 429後にCiNii成功なら通常カードへ警告を表示する', async () => {
+  const originalCrossref = CrossrefHttp.fetchJson;
+  const originalFetch = global.fetch;
+  global.CONFIG = { CiNii_API_KEY: '' };
+  CrossrefHttp.fetchJson = async () => ({ status: 429, ok: false, body: {}, attempts: 3 });
+  global.fetch = async (url) => makeResponse({
+    body: { items: [{ title: url.includes('lang=en') ? 'English' : '日本語', 'dc:source': [{ '@id': 'https://kaken.example/1' }] }] },
+  });
+  try {
+    const result = await funderLookup.lookupOne('JP12A12345');
+    assert.strictEqual(result.source, 'KAKEN');
+    assert.match(result.supplementaryWarning, /レート制限/);
+    const html = funderLookup.buildResultCards([result]);
+    assert.match(html, /レート制限/);
+    assert.doesNotMatch(html, /error-card/);
+  } finally {
+    CrossrefHttp.fetchJson = originalCrossref;
+    global.fetch = originalFetch;
+  }
+});
+
+test('funder lookup: JGN 429後にCiNiiも失敗なら未登録と断定しないerror-cardを表示する', async () => {
+  const originalCrossref = CrossrefHttp.fetchJson;
+  const originalFetch = global.fetch;
+  global.CONFIG = { CiNii_API_KEY: '' };
+  CrossrefHttp.fetchJson = async () => ({ status: 429, ok: false, body: {}, attempts: 3 });
+  global.fetch = async () => makeResponse({ body: { items: [] } });
+  try {
+    const result = await funderLookup.lookupOne('JPTEST999');
+    assert.match(result.error, /レート制限/);
+    assert.match(result.error, /登録有無を確認できません/);
+    assert.doesNotMatch(result.error, /JGN・KAKEN いずれも見つかりません/);
+    const html = funderLookup.buildResultCards([result]);
+    assert.match(html, /error-card/);
+    assert.match(html, /時間を置いて再試行/);
+  } finally {
+    CrossrefHttp.fetchJson = originalCrossref;
+    global.fetch = originalFetch;
+  }
 });
