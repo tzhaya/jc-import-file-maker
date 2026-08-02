@@ -490,7 +490,7 @@
 
 <div style="font-size:0.85em; color:#555; background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:8px 14px; margin-bottom:12px;">
   <div style="margin-bottom:6px;">
-    <strong>最終更新:</strong> 2026-07-10 &nbsp;|&nbsp;
+    <strong>最終更新:</strong> 2026-08-02 &nbsp;|&nbsp;
     <strong>最新版:</strong> <a href="https://github.com/tzhaya/jc-import-file-maker" target="_blank" style="color:#2c5f2e;">github.com/tzhaya/jc-import-file-maker</a>
     <span id="update-check"></span>
   </div>
@@ -502,6 +502,10 @@
       </tr>
     </thead>
     <tbody>
+      <tr>
+        <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-08-02</td>
+        <td style="padding:2px 0;">メタデータ取得の安定性を改善。Crossrefが混雑して助成情報や関連情報を取得できなかったとき、「未登録」と誤って表示せず、混雑のため取得できなかったことを表示します（再検索で解消します）。複数DOIをまとめて取得する際は取得間隔を自動調整し、混雑時は少し待って再取得します。DataCite DOIでは、作成者が個人か団体か判断できない場合に推測せず空欄にして確認を促します（#253 / #256 / #254）（Chrome拡張 ver. 1.25.2 と同期）</td>
+      </tr>
       <tr>
         <td style="padding:2px 10px 2px 0; white-space:nowrap; vertical-align:top;">2026-07-10</td>
         <td style="padding:2px 0;">研究課題番号タイプ（JPCOAR 2.0 <code>awardNumberType</code>）に対応。JGN（Japan Grant Number）連携で取得した体系的番号には <code>JGN</code> を自動設定し、助成情報の編集フォームでも「（未設定）/ JGN」から選択可能に。助成機関逆引きツールのTSV出力にも反映（#222）（Chrome拡張 ver. 1.22.0 と同期）</td>

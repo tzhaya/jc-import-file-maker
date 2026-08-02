@@ -25,9 +25,15 @@
 | 更新対象 | 内容 |
 |---|---|
 | `chrome-extension/manifest.json` の `version` | 前リリース以降の変更内容に応じて patch/minor/major を上げる |
-| `LOCAL_VERSION`（`make_jc_importer.js` / `funder_lookup.js`） | 未反映ならリリース日（JST）に更新 |
+| `LOCAL_VERSION`（`make_jc_importer.js` / `funder_lookup.js`） | 未反映なら、このPRがmasterへマージされる日（**UTC**）に更新。マージ後に実際の値をAPIで確認する（詳細はCLAUDE.md） |
 | `docs/changelog.md` | 前リリース以降の変更をまとめる |
-| `README.md` の変更履歴 | 必要に応じて更新 |
+| `README.md` の「変更履歴」「最新の更新」 | リリース単位で1行にまとめて追記する（変更履歴は最新5件を維持） |
+| `chrome-extension/panel.html` の更新概要テーブル | リリース単位で1行追加し、「最終更新」をリリース日に更新 |
+| `make_jc_importer.html` の更新概要テーブル | **通常ブラウザ版に影響する変更のみ**1行追加し、「最終更新」をリリース日に更新 |
+| `funder_lookup.html` / `chrome-extension/funder_panel.html` の「最終更新」 | `funder_lookup.js` に変更が含まれる場合はリリース日に更新（更新概要テーブルはなし） |
+
+> **粒度の使い分けと `LOCAL_VERSION` との違いは CLAUDE.md「ドキュメント運用」を参照**。要点は、`docs/changelog.md` がPR単位・全量、利用者向けの面（README・各HTML）はリリース単位で、Issue番号や内部名ではなく「使っていて何が変わるか」を書くこと。
+> #248 以前は manifest を毎PRで更新していたため「リリース行＝PR行」で一致していたが、リリース時のみ更新する現行運用では1リリースに複数PRが含まれるため、両者は一致しない。リリース行にまとめた個別PR行がREADMEに残っている場合は重複するので削除する。
 
 ### 3. タグを作成して push する
 
@@ -80,6 +86,7 @@ version の更新はリリースPRでのみ行い、前リリース以降に Chr
 
 | タグ | manifest version | 日付 | 内容 |
 |---|---|---|---|
+| v1.25.2 | 1.25.2 | 2026-08-02 | Crossref・DataCite・OPF まわりのバグ修正・堅牢化4件（#229フォローアップの `format` 削除、#253 Crossrefレート制限対応、#256 Crossref通信の共通化と429の日本語表示、#254 DataCite `nameType` 欠落対応） |
 | v1.25.1 | 1.25.1 | 2026-07-26 | JISC Open Policy Finder API "full v1" リリース通知を受けたエラーハンドリング改善（#229）：401/403/429等の実エラーを「情報なし」と区別して表示し、OPF取得エラー時のアクセス権判定を安全側（`embargoed access`）に修正 |
 | v1.14.0 | 1.14.0 | 2026-06-28 | OpenAlex起点パイプライン前段階（手動運用版・Phase 3、#157）：DOIリスト一括取得（#154）、OpenAlex機関別著作検索＋登録済み照合バッジ（#155/#156）、TSVタイトルのタグ/改行除去で行崩れ防止 |
 | v1.13.0 | 1.13.0 | 2026-06-27 | 作業中データの自動保存・復元：入力中・蓄積中のメタデータをローカルストレージに自動保存し、タブ／サイドパネルを閉じても次回起動時に復元（#162） |

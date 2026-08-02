@@ -24,6 +24,28 @@
 ## ドキュメント運用
 - `docs/` に新規ドキュメントを追加したら `docs/README.md` の一覧に追記する（`scripts/check.js` は git 追跡ファイルを自動検査するため登録不要）
 
+### 変更履歴の記載先と粒度
+利用者が読む面と開発者が読む面で粒度を分ける。混同すると同じ変更が二重に並ぶ。
+
+| 記載先 | 読み手 | 粒度 | 更新するPR |
+|---|---|---|---|
+| `docs/changelog.md` | 開発者 | PR単位・全量（例外: リリースPRはタグ↔PR対応がわかるまとめ行を先頭に追加してよい。個別PR行は重複でも削除しない） | 毎PR |
+| `README.md`「変更履歴」「最新の更新」 | 利用者 | リリース単位 | リリースPR |
+| `chrome-extension/panel.html` 更新概要テーブル | 利用者 | リリース単位 | リリースPR |
+| `make_jc_importer.html` 更新概要テーブル | 利用者 | リリース単位（**通常ブラウザ版に影響する変更のみ**） | リリースPR |
+
+- 通常のPRでは **`docs/changelog.md` だけ**に書く。README・HTMLの更新履歴には行を足さない
+  （#248 で manifest をリリース時のみ更新に変えて以降、1リリース＝複数PRになったため。毎PRで足すと同じ変更が二重に並ぶ）
+- 例外として、拡張リリースを伴わない利用者向けの変更（導入手順・ドキュメント）は、その時点で README に個別行を足してよい
+- 利用者向けの3面は、**Issue番号や関数名・内部フラグ名を主役にせず、利用者にとって何が変わるかを書く**。技術的詳細は `docs/changelog.md` へのリンクで足りる
+- `make_jc_importer.html` には**拡張専用機能（OpenSearchパネル・OPF連携・KAKEN XML等）の行を載せない**
+
+### アプリ内「最終更新」表示と LOCAL_VERSION
+- `make_jc_importer.html` / `chrome-extension/panel.html` / `funder_lookup.html` / `chrome-extension/funder_panel.html` の「最終更新: YYYY-MM-DD」は**利用者に見える表示**で **JST** で書く。更新履歴に行を足したら必ず一緒に直す
+- `make_jc_importer.js` / `funder_lookup.js` の `LOCAL_VERSION` は**別物**。更新チェックは `GET /repos/tzhaya/jc-import-file-maker/commits?path=<ファイル>&per_page=1` の `commit.committer.date`（GitHub APIは常に **UTC**・ISO8601 `Z`表記）を先頭10文字にした値を `remoteDate` とし、`remoteDate > LOCAL_VERSION` の文字列比較で判定する。**`LOCAL_VERSION` は UTC の日付文字列で揃える（JSTではない）**。JST基準で書くと、JST 0〜9時にマージされたコミットはUTCでは前日になり1日ずれる（ずれの向きにより偽陽性・偽陰性のどちらも起きうる）
+- `LOCAL_VERSION` を編集する変更それ自体が対象JSへの最新コミットになる（squashマージのため）。つまり書き込むべき日付は**このPRがmasterへマージされる日（UTC）**。編集時点ではマージ日時は未確定なので、**マージ後に**上記APIと同じクエリ（`gh api "repos/tzhaya/jc-import-file-maker/commits?path=<ファイル>&per_page=1" --jq '.[0].commit.committer.date'`）で実際の値を確認し、日付がずれていれば追ってfixで直す
+- **正本JSを変更しないPRでは `LOCAL_VERSION` を触らない**
+
 ## ブランチ運用ルール
 - **基本的にすべての変更でブランチを作成する**（PRワークフローのため）
 - ブランチ命名規則:

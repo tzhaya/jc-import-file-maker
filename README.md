@@ -102,8 +102,8 @@ JaLC、KAKEN XML、Open Policy Finder API、機関リポジトリとの照合が
 
 | ツール | 日付 | バージョン | 更新概要 |
 |--------|------|-----------|----------|
-| Chrome拡張機能版 | 2026-07-26 | ver. 1.25.1 | Open Policy Finder APIのエラーハンドリングを改善（[#229](https://github.com/tzhaya/jc-import-file-maker/issues/229)）。401/403/429等の実エラーを「情報なし」と区別して表示し、OPF取得エラー時のアクセス権判定を安全側（`embargoed access`）に修正 |
-| 通常ブラウザ版 | 2026-07-20 | — | 導入手順を現在のJS単一ソース構成に合わせ、必要ファイルに `make_jc_importer.js` を追加 |
+| Chrome拡張機能版 | 2026-08-02 | ver. 1.25.2 | メタデータ取得の安定性を改善。Crossrefが混雑して情報を取得できなかったときに「未登録」と誤表示せず、混雑のため取得できなかったことを表示します。DOIをまとめて取得する際は取得間隔を自動調整し、混雑時は少し待って再取得します。DataCite DOIでは、作成者が個人か団体か判断できない場合に推測せず空欄にして確認を促します。Open Policy Finder APIの仕様変更にも追随しました |
+| 通常ブラウザ版 | 2026-08-02 | — | Chrome拡張機能版と同じメタデータ取得の安定性改善（Crossref混雑時の表示・取得間隔の自動調整、DataCite作成者種別の確認促し）を反映。Open Policy Finder連携はChrome拡張機能版のみのため対象外です |
 | 開発基盤 | 2026-07-19 | — | 標準版とChrome拡張機能版で正本JSを共有する構成へ移行。`npm run build` による反映とCIの同期検査を導入 |
 | ドキュメント | 2026-07-17 | — | [docs/README.md](docs/README.md) を新設し、`docs/` 以下の文書を用途別に一覧化 |
 | OpenAlex機関別著作検索 | 2026-07-17 | ver. 1.25.0 | 登録済み照合で `DOI` と `selfDOI` を順に検索し、候補DOIの完全一致を検出した場合は登録済み可能性大と確定。通信・解析エラーは未登録扱いにせず照合不可と表示（[#241](https://github.com/tzhaya/jc-import-file-maker/issues/241)） |
@@ -326,7 +326,7 @@ Service Worker の fetch proxy は `ALLOWED_HOSTS`（KAKEN・JaLC・OPF の3ホ�
 
 | 日付 | 内容 |
 |------|------|
-| 2026-08-02 | JISC Open Policy Finder API の v1リリース（2026-07-30に延期）後、実APIへクエリを送信して挙動を検証（[#229](https://github.com/tzhaya/jc-import-file-maker/issues/229) フォローアップ）。タイトル識別子が400で拒否されること・`format` 省略で正常応答が返ることからv1適用済みと確認し、v1で廃止された `format` パラメータの送信を削除。レスポンス構造はリリース前のサンプルとキー集合が完全一致で、`items` ラッパーを含め変化なし。未収録ISSNは404ではなく `200` + 空配列で返るため該当コメントを実態に合わせて修正（挙動は従来どおり「情報なし」で正しく動作）。機能・使い方の変更はなし |
+| 2026-08-02 | Chrome拡張 ver. 1.25.2：4件のバグ修正・堅牢化をまとめて配布。(1) JISC Open Policy Finder API v1 で廃止された `format` パラメータの送信を削除（[#229](https://github.com/tzhaya/jc-import-file-maker/issues/229) フォローアップ）、(2) Crossref からの関連DOIタイトル取得を、2025-12-01のCrossref側レート制限改定（5rps・同時実行1）に適合するよう逐次化し、429時は待機してリトライ（[#253](https://github.com/tzhaya/jc-import-file-maker/issues/253)）、(3) Crossref への通信を1か所に集約し、DOIインポート・助成情報検索の全経路で同じレート制限・リトライを適用。取得できなかった場合は「未登録」と誤表示せず、レート制限であることを日本語で表示（[#256](https://github.com/tzhaya/jc-import-file-maker/issues/256)）、(4) DataCite が作成者の種別（個人／団体）を自動補完しなくなったことに対応し、判断できない場合は誤分類せず空欄にして確認を促す（[#254](https://github.com/tzhaya/jc-import-file-maker/issues/254)）。詳細は [docs/changelog.md](docs/changelog.md) 参照 |
 | 2026-07-26 | Chrome拡張 ver. 1.25.1：JISCの Open Policy Finder API "full v1" リリース（2026-07-29）通知を受け、OPF連携のエラーハンドリングを改善（[#229](https://github.com/tzhaya/jc-import-file-maker/issues/229)）：404（未収録）とそれ以外のAPIエラー（401/403/429等）を分岐し、従来「情報なし」と誤表示されていたAPIエラーを専用バッジ・モーダル文言で区別。OPF取得エラー時にアクセス権が無条件で `open access` になっていた問題も修正し、安全側の `embargoed access` を返すよう変更。廃止予定の `format` パラメータは、現行APIでは省略すると全件エラーになることを実測で確認したため削除を見送り。詳細は [docs/changelog.md](docs/changelog.md) 参照 |
 | 2026-07-20 | 通常ブラウザ版の導入案内をJS単一ソース化後の構成へ追随させ、必要ファイルに `make_jc_importer.js` を追加。あわせてリリース作業を標準化する `/release` Skillを追加し、リリースPR準備・version判定・テスト・タグとmanifestの整合確認・GitHub Release確認を手順化。ドキュメントと開発フローのみの変更で、manifest versionは更新しない |
 | 2026-07-19 | 開発基盤の簡素化：標準版HTMLのインラインJSとChrome拡張版JSの手動同期を廃止し、リポジトリ直下の正本JSを両版で共有する構成に変更（`npm run build` が `chrome-extension/` へコピーし、CIが反映漏れを検出）。**通常ブラウザ版の必要ファイルが変わりました**（メインツールは `make_jc_importer.js`、助成情報検索は `funder_lookup.js`、OpenAlex検索は `weko3_opensearch_core.js`・`openalex_lookup.js` も同じフォルダに必要）。機能・使い方の変更はありません |
