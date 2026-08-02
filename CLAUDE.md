@@ -41,11 +41,10 @@
 - `make_jc_importer.html` には**拡張専用機能（OpenSearchパネル・OPF連携・KAKEN XML等）の行を載せない**
 
 ### アプリ内「最終更新」表示と LOCAL_VERSION
-- `make_jc_importer.html` / `chrome-extension/panel.html` / `funder_lookup.html` / `chrome-extension/funder_panel.html` の「最終更新: YYYY-MM-DD」は**利用者に見える表示**。更新履歴に行を足したら必ず一緒に直す
-- `make_jc_importer.js` / `funder_lookup.js` の `LOCAL_VERSION` は**別物**で、更新チェック（`remoteDate > LOCAL_VERSION`）の基準日。**そのJSが master に最後にコミットされる日**と一致させる
-  - 実際のコミット日より古い → 最新版の利用者にも更新通知が出続ける
-  - 新しい → 古い版の利用者に通知が出ない
-- **正本JSを変更しないPRでは `LOCAL_VERSION` を触らない。** 変更する場合はその正本JSの**実際の最終コミット日**に合わせる。**リリースPRのマージ日ではない**（機能PRの日付と別のリリースPRが後日マージされることがあり、マージ日を使うとずれる）
+- `make_jc_importer.html` / `chrome-extension/panel.html` / `funder_lookup.html` / `chrome-extension/funder_panel.html` の「最終更新: YYYY-MM-DD」は**利用者に見える表示**で **JST** で書く。更新履歴に行を足したら必ず一緒に直す
+- `make_jc_importer.js` / `funder_lookup.js` の `LOCAL_VERSION` は**別物**。更新チェックは `GET /repos/tzhaya/jc-import-file-maker/commits?path=<ファイル>&per_page=1` の `commit.committer.date`（GitHub APIは常に **UTC**・ISO8601 `Z`表記）を先頭10文字にした値を `remoteDate` とし、`remoteDate > LOCAL_VERSION` の文字列比較で判定する。**`LOCAL_VERSION` は UTC の日付文字列で揃える（JSTではない）**。JST基準で書くと、JST 0〜9時にマージされたコミットはUTCでは前日になり1日ずれる（ずれの向きにより偽陽性・偽陰性のどちらも起きうる）
+- `LOCAL_VERSION` を編集する変更それ自体が対象JSへの最新コミットになる（squashマージのため）。つまり書き込むべき日付は**このPRがmasterへマージされる日（UTC）**。編集時点ではマージ日時は未確定なので、**マージ後に**上記APIと同じクエリ（`gh api "repos/tzhaya/jc-import-file-maker/commits?path=<ファイル>&per_page=1" --jq '.[0].commit.committer.date'`）で実際の値を確認し、日付がずれていれば追ってfixで直す
+- **正本JSを変更しないPRでは `LOCAL_VERSION` を触らない**
 
 ## ブランチ運用ルール
 - **基本的にすべての変更でブランチを作成する**（PRワークフローのため）

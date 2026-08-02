@@ -33,7 +33,7 @@ description: Chrome拡張機能のリリースPR準備、manifest version更新�
 1. 最新の `master` から `release/<version>` ブランチを作る。
 2. `chrome-extension/manifest.json` の `version` を更新する。
    あわせて `README.md` の「最新の更新」「変更履歴」、`chrome-extension/panel.html` と `make_jc_importer.html` の更新概要テーブル、各HTML（`funder_lookup.html` / `chrome-extension/funder_panel.html` を含む）の「最終更新」表示をリリース単位で更新する。利用者向けの記述にする（詳細は CLAUDE.md「ドキュメント運用」）。
-3. `make_jc_importer.js` と `funder_lookup.js` の `LOCAL_VERSION` を確認する。前リリース以降の機能変更が未反映の場合だけ、そのJSの**実際の最終コミット日**（`git log -1 --date=format:%Y-%m-%d --format=%cd -- <ファイル>`、JST）に更新する。**リリースPRのマージ日ではない**（マージ日はコミット日と一致しないことがあり、ずれると更新チェックが誤動作する。詳細は CLAUDE.md「アプリ内『最終更新』表示と LOCAL_VERSION」）。
+3. `make_jc_importer.js` と `funder_lookup.js` の `LOCAL_VERSION` を確認する。前リリース以降の機能変更が未反映の場合だけ更新する。更新チェックはGitHub APIの `commit.committer.date`（**UTC**）を基準にするため、`LOCAL_VERSION` もUTCの日付文字列で書く（JSTではない）。このPR自体が対象JSを変更する＝マージした瞬間がそのJSの最新コミットになるので、**このPRがmasterへマージされる日（UTC）**を書く。マージ後に `gh api "repos/tzhaya/jc-import-file-maker/commits?path=<ファイル>&per_page=1" --jq '.[0].commit.committer.date'` で実際の値を確認し、日付がずれていたら追ってfixする（詳細は CLAUDE.md「アプリ内『最終更新』表示と LOCAL_VERSION」）。
 4. ルートのJSを変更した場合は `npm run build` を実行する。
 5. `docs/changelog.md` に前回リリース以降の変更をまとめる（利用者向けの面はステップ2で対応済み）。
 6. `git diff --check` と `npm test` を実行する。
@@ -45,6 +45,7 @@ description: Chrome拡張機能のリリースPR準備、manifest version更新�
 リリースPRのマージ後、ユーザーがタグ公開を明示的に承認した場合だけ行う。
 
 1. `master` を最新化し、作業ツリーがcleanであることを確認する。
+   このリリースPRで `LOCAL_VERSION` を更新した場合は、`gh api "repos/tzhaya/jc-import-file-maker/commits?path=<ファイル>&per_page=1" --jq '.[0].commit.committer.date'` で実際のマージ日（UTC）を確認し、`LOCAL_VERSION` とずれていたら別PRで先に直す。
 2. `HEAD` が `origin/master` と一致し、リリースPRが含まれることを確認する。
 3. manifest versionが `<version>`、作成予定タグが `v<version>` で完全一致することを確認する。
 4. 同名タグがローカルにもリモートにも存在しないことを確認する。
