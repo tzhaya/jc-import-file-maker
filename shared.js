@@ -124,6 +124,18 @@ async function extensionFetch(url, options = {}) {
       : Math.max(PUBLIC_POOL_MIN_INTERVAL_MS, computed);
   }
 
+  function parseRetryAfterMs(value, wallNow) {
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    if (/^\d+$/.test(trimmed)) {
+      const delayMs = Number(trimmed) * 1000;
+      return Number.isFinite(delayMs) ? delayMs : null;
+    }
+    const retryAt = Date.parse(trimmed);
+    if (!Number.isFinite(retryAt)) return null;
+    return Math.max(0, retryAt - wallNow());
+  }
+
   // テスト用フック。本番コードは fetchJson() だけを呼び、_paced() 内から
   // fetchJson() をawaitしない（二重ゲートは自己待ちになるため）。
   function paced(fn, deps = {}) {
@@ -150,6 +162,7 @@ async function extensionFetch(url, options = {}) {
     const fetchImpl = options.fetchImpl || (typeof fetch !== 'undefined' ? fetch : undefined);
     const sleep = options.sleep || ((ms) => new Promise(resolve => setTimeout(resolve, ms)));
     const now = options.now || defaultNow;
+    const wallNow = options.wallNow || Date.now;
     const label = options.label || 'Crossref API';
 
     for (let attempt = 0; ; attempt++) {
@@ -164,10 +177,10 @@ async function extensionFetch(url, options = {}) {
           body = null;
         }
         if (response.status === 429) {
-          const retryAfterSec = parseFloat(response.headers?.get?.('Retry-After'));
+          const retryAfterMs = parseRetryAfterMs(response.headers?.get?.('Retry-After'), wallNow);
           const backoffIdx = Math.min(attempt, BACKOFF_MS.length - 1);
-          retryWaitMs = Number.isFinite(retryAfterSec) && retryAfterSec >= 0
-            ? retryAfterSec * 1000
+          retryWaitMs = retryAfterMs !== null
+            ? retryAfterMs
             : BACKOFF_MS[backoffIdx];
           // queued taskにも適用するため、tail解放前に絶対時刻で記録する。
           recordCooldown(now() + retryWaitMs);
@@ -190,8 +203,11 @@ async function extensionFetch(url, options = {}) {
   }
 
   const api = { fetchJson, _paced: paced, _resetForTest: resetForTest };
-  if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  if (root) root.CrossrefHttp = api;
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = api;
+  } else if (root) {
+    root.CrossrefHttp = api;
+  }
 })(typeof globalThis !== 'undefined' ? globalThis : undefined);
 
 // ===== 作業中データ（下書き）の保存/復元（#162） =====

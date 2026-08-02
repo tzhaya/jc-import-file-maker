@@ -10,7 +10,7 @@ globalThis.CrossrefHttp = CrossrefHttp;
 const importer = require('../chrome-extension/make_jc_importer.js');
 const {
   fetchCrossref, fetchRelationTitle, fetchCrossrefFunderDetails,
-  fetchJgn: fetchImporterJgn,
+  fetchJgn: fetchImporterJgn, setJgnRateLimitWarning, hasJgnRateLimitWarning, collectFundingField,
 } = importer;
 const funderLookup = require('../chrome-extension/funder_lookup.js');
 const crossrefPaced = CrossrefHttp._paced;
@@ -43,6 +43,47 @@ function withWarnSpy(fn) {
   console.warn = (...args) => calls.push(args.join(' '));
   return fn(calls).finally(() => { console.warn = orig; });
 }
+
+test('JGN 429警告: DOM状態の保存・解除とcollector向け復元判定が往復する', () => {
+  const originalDocument = globalThis.document;
+  const badges = [];
+  const row = {
+    dataset: {},
+    querySelector: () => badges[0] || null,
+    appendChild: badge => badges.push(badge),
+  };
+  globalThis.document = {
+    createElement: () => ({
+      dataset: {},
+      remove() { badges.splice(badges.indexOf(this), 1); },
+    }),
+  };
+  try {
+    setJgnRateLimitWarning(row, true);
+    assert.strictEqual(row.dataset.warnJgnRateLimited, 'true');
+    assert.strictEqual(badges.length, 1);
+    assert.strictEqual(badges[0].dataset.warningKind, 'jgn-rate-limited');
+    assert.strictEqual(hasJgnRateLimitWarning({ querySelector: () => row }), true);
+    const fc = {
+      querySelector: selector => selector.includes('subitem_award_number') ? row : null,
+      querySelectorAll: () => [],
+    };
+    const section = {
+      querySelector: () => ({
+        querySelectorAll: () => [{ querySelector: () => fc }],
+      }),
+    };
+    assert.strictEqual(collectFundingField(section)[0]._warnJgnRateLimited, true);
+
+    setJgnRateLimitWarning(row, false);
+    assert.strictEqual(row.dataset.warnJgnRateLimited, 'false');
+    assert.strictEqual(badges.length, 0);
+    assert.strictEqual(hasJgnRateLimitWarning({ querySelector: () => row }), false);
+    assert.strictEqual(collectFundingField(section)[0]._warnJgnRateLimited, undefined);
+  } finally {
+    globalThis.document = originalDocument;
+  }
+});
 
 // 実際に処理が「重なる」条件を作るため、fn()の完了を外部から制御できるdeferredを使う。
 // 同期本体のfn()（awaitを含まない）はJSのシングルスレッド実行により、ゲートの有無に
@@ -199,6 +240,34 @@ test('fetchRelationTitle: Retry-Afterありはその秒数を待機値として�
   assert.ok(clock.sleepCalls.includes(2000), `sleepCalls=${clock.sleepCalls}`);
 });
 
+test('CrossrefHttp: HTTP-date形式のRetry-Afterを待機時間へ変換する', async () => {
+  CrossrefHttp._resetForTest();
+  const clock = makeVirtualClock();
+  const wallBase = Date.parse('2026-08-02T00:00:00Z');
+  let call = 0;
+  const fetchImpl = async () => {
+    call++;
+    if (call === 1) {
+      return makeResponse({
+        status: 429,
+        headers: { 'Retry-After': 'Sun, 02 Aug 2026 00:00:02 GMT' },
+      });
+    }
+    return makeResponse({ status: 200, body: { message: {} } });
+  };
+
+  const result = await CrossrefHttp.fetchJson('https://api.crossref.org/works/date-retry', {
+    fetchImpl,
+    now: clock.now,
+    sleep: clock.sleep,
+    wallNow: () => wallBase,
+  });
+
+  assert.strictEqual(result.status, 200);
+  assert.strictEqual(result.attempts, 2);
+  assert.ok(clock.sleepCalls.includes(2000), `HTTP-date由来の2000ms待機がない: ${clock.sleepCalls}`);
+});
+
 test('fetchRelationTitle: Retry-Afterなしは500ms→1000msへフォールバックする', async () => {
   _resetCrossrefPacingForTest();
   const clock = makeVirtualClock();
@@ -283,6 +352,48 @@ test('fetchRelationTitle: 429のRetry-Afterは共有ゲートに反映され、�
   // 既定の開始間隔(250ms)だけでは説明がつかない、cooldown(1000ms)相当の待機が
   // 2件目にも適用されていることを確認する（既定間隔のみなら250ms程度で開始されるはず）。
   assert.ok(start2 - start >= 900, `2件目がcooldown中に開始された可能性: elapsed=${start2 - start}ms`);
+});
+
+test('CrossrefHttp: 429要求のbackoffと待機者のcooldownはtail解放後に別々に開始する', async () => {
+  CrossrefHttp._resetForTest();
+  const sleeps = [];
+  const sleep = (ms) => {
+    if (sleeps.length >= 2) return Promise.resolve();
+    let resolve;
+    const promise = new Promise(r => { resolve = r; });
+    sleeps.push({ ms, resolve });
+    return promise;
+  };
+  let firstCalls = 0;
+  const first = CrossrefHttp.fetchJson('https://api.crossref.org/works/first', {
+    fetchImpl: async () => makeResponse({
+      status: firstCalls++ === 0 ? 429 : 200,
+      headers: firstCalls === 1 ? { 'Retry-After': '1' } : {},
+    }),
+    sleep,
+  });
+  const second = CrossrefHttp.fetchJson('https://api.crossref.org/works/second', {
+    fetchImpl: async () => makeResponse({ status: 200 }),
+    sleep,
+  });
+
+  await waitUntilTrue(() => sleeps.length === 2);
+  assert.strictEqual(sleeps.length, 2);
+  assert.ok(sleeps.every(s => s.ms >= 990 && s.ms <= 1000),
+    `backoff/cooldownが別々に登録されていない: ${sleeps.map(s => s.ms)}`);
+  sleeps.forEach(s => s.resolve());
+  await Promise.all([first, second]);
+});
+
+test('CrossrefHttp: CommonJSではglobalThis.CrossrefHttpを暗黙に公開しない', () => {
+  assert.strictEqual(globalThis.CrossrefHttp, CrossrefHttp);
+  const modulePath = require.resolve('../chrome-extension/shared.js');
+  delete require.cache[modulePath];
+  delete globalThis.CrossrefHttp;
+  const reloaded = require(modulePath);
+  assert.ok(reloaded.fetchJson);
+  assert.strictEqual(globalThis.CrossrefHttp, undefined);
+  globalThis.CrossrefHttp = CrossrefHttp;
 });
 
 test('fetchRelationTitle: 1件目の応答本文(json())が解放されるまで2件目のfetchImplは実行されない（P1回帰・結線レベル）', async () => {

@@ -4013,6 +4013,29 @@ function createFieldRow(label, value, inputType, selectOptsKey, extra) {
   return row;
 }
 
+const JGN_RATE_LIMIT_WARNING_TITLE = 'Crossref JGN APIのレート制限により、JGN情報を取得できませんでした。時間を置いて再試行してください。';
+
+function setJgnRateLimitWarning(row, active) {
+  if (!row) return;
+  row.dataset.warnJgnRateLimited = active ? 'true' : 'false';
+  const existing = row.querySelector('.warn-badge[data-warning-kind="jgn-rate-limited"]');
+  if (active && !existing) {
+    const badge = document.createElement('span');
+    badge.className = 'warn-badge';
+    badge.dataset.warningKind = 'jgn-rate-limited';
+    badge.title = JGN_RATE_LIMIT_WARNING_TITLE;
+    badge.textContent = '⚠ 要確認';
+    row.appendChild(badge);
+  } else if (!active && existing) {
+    existing.remove();
+  }
+}
+
+function hasJgnRateLimitWarning(container) {
+  const awardRow = container?.querySelector?.('[data-field-key="subitem_award_number"]');
+  return awardRow?.dataset.warnJgnRateLimited === 'true';
+}
+
 // ネスト項目（Level 1+ アコーディオン）
 function createNestedItem(label, level) {
   const item = document.createElement('div');
@@ -4788,9 +4811,8 @@ function renderOneFunder(funder, idx, defLabel) {
   const aw = funder.subitem_award_numbers || {};
   const awardRow = createFieldRow('研究課題番号', aw.subitem_award_number || '', 'text', null, {
     fieldKey: 'subitem_award_number',
-    warn: funder._warnJgnRateLimited,
-    warnTitle: 'Crossref JGN APIのレート制限により、JGN情報を取得できませんでした。時間を置いて再試行してください。',
   });
+  setJgnRateLimitWarning(awardRow, Boolean(funder._warnJgnRateLimited));
   const awardLookupBtn = document.createElement('button');
   awardLookupBtn.textContent = '助成機関を検索';
   awardLookupBtn.className = 'btn-add';
@@ -4866,6 +4888,9 @@ function renderOneFunder(funder, idx, defLabel) {
       if (!result) {
         try { result = await fetchKakenCiNii(awardNum); } catch { /* ignore */ }
       }
+
+      // 警告状態をDOMにも保持し、下書き保存時の再収集と再検索後の解除を一致させる。
+      setJgnRateLimitWarning(awardRow, Boolean(jgnCtx.rateLimited));
 
       if (!result) {
         awardResultEl.className = 'lookup-result warn';
@@ -6213,6 +6238,9 @@ function collectFundingField(section) {
       },
       subitem_funding_streams: [],
     };
+    if (hasJgnRateLimitWarning(fc)) {
+      funder._warnJgnRateLimited = true;
+    }
     fc.querySelectorAll('.entry-group').forEach(grp => {
       if (grp.querySelector('[data-field-key="subitem_funder_name"]')) {
         funder.subitem_funder_names.push({
@@ -7317,5 +7345,6 @@ if (typeof module !== 'undefined' && module.exports) {
     normalizeDoi, isValidDoi, processAbstract, generateTsv, determineAccessRights, calcEmbargoEndDate, todayStr,
     fetchCrossref, fetchRelationTitle, fetchCrossrefFunderDetails, fetchJgn,
     buildFunders, buildJaLCFunders, buildDataCiteFunders,
+    setJgnRateLimitWarning, hasJgnRateLimitWarning, collectFundingField,
   };
 }
