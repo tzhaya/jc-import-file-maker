@@ -98,6 +98,8 @@ JaLC 準会員（NII/IRDB 経由）・JaLC コンソーシアム（`jalcco`）�
 | 所属機関名 | `creators[].affiliation[].name`（`?affiliation=true` 時） | |
 | 所属機関識別子 | `affiliation[].affiliationIdentifier`（`affiliationIdentifierScheme`: ROR / ISNI / Ringgold / GRID） | ツールの `affiliationNameIdentifierScheme` select と一致。**充足率は低い**: ランダム40件中、所属あり9件・識別子あり8件。国内3機関のサンプルは識別子なし（name のみ） |
 
+> `nameType` が `Organizational` または `Personal` の場合はその値を採用する。`nameType` が欠落している場合だけ、trim 後の `familyName` または `givenName` があれば `Personal` とする。姓名がなく `nameType` が欠落している場合、および未知の `nameType` は、誤分類を避けるため `creatorNameType` を空欄にして利用者へ確認を促す。これは DataCite の [Metadata normalization changes](https://support.datacite.org/docs/datacite-metadata-normalization-changes) による `nameType` 自動補完の廃止に対応するものである。
+
 ## 6. 資源タイプ対応表（resourceTypeGeneral 全34値・Schema 4.7）
 
 正規化ルール: **PascalCase を大文字境界で分割 → 小文字化**（例: `JournalArticle` → `journal article`）。Crossref のハイフン変換（[crossref_type_mapping.md](crossref_type_mapping.md)）とは別処理。
