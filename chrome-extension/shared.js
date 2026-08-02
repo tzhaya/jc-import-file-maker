@@ -75,6 +75,125 @@ async function extensionFetch(url, options = {}) {
   return fetch(url, options);
 }
 
+// ===== Crossref REST API 共通HTTP境界（#253 / #256） =====
+// 素のトップレベル関数を公開すると後続scriptの字句宣言と衝突し得るため、
+// ブラウザは globalThis.CrossrefHttp、Nodeは module.exports だけで公開する。
+(function initCrossrefHttp(root) {
+  const PUBLIC_POOL_MIN_INTERVAL_MS = 250;
+  const MAX_RETRIES = 2;
+  const BACKOFF_MS = [500, 1000];
+  const KNOWN_NON_PUBLIC_POOLS = /^(polite|plus)/i;
+
+  let pacingIntervalMs = PUBLIC_POOL_MIN_INTERVAL_MS;
+  let gateTail = Promise.resolve();
+  let lastStart = -Infinity;
+  let notBefore = -Infinity;
+
+  function defaultNow() {
+    return typeof performance !== 'undefined' ? performance.now() : Date.now();
+  }
+
+  function resetForTest() {
+    pacingIntervalMs = PUBLIC_POOL_MIN_INTERVAL_MS;
+    gateTail = Promise.resolve();
+    lastStart = -Infinity;
+    notBefore = -Infinity;
+  }
+
+  function recordCooldown(untilTs) {
+    if (untilTs > notBefore) notBefore = untilTs;
+  }
+
+  function updatePacingFromHeaders(headers) {
+    if (!headers || typeof headers.get !== 'function') return;
+    const pool = (headers.get('x-api-pool') || '').trim();
+    const isKnownNonPublicPool = KNOWN_NON_PUBLIC_POOLS.test(pool);
+    const limit = parseInt(headers.get('x-rate-limit-limit'), 10);
+    const intervalRaw = (headers.get('x-rate-limit-interval') || '').trim();
+    const intervalMatch = /^(\d+(?:\.\d+)?)(ms|s)?$/i.exec(intervalRaw);
+    // ヘッダ欠落・不正時は直前の有効値を維持する（stickiness）。
+    if (!Number.isFinite(limit) || limit <= 0 || !intervalMatch) return;
+    const intervalValue = parseFloat(intervalMatch[1]);
+    if (!Number.isFinite(intervalValue) || intervalValue <= 0) return;
+    const intervalMs = (intervalMatch[2] || 's').toLowerCase() === 'ms'
+      ? intervalValue
+      : intervalValue * 1000;
+    const computed = intervalMs / limit;
+    pacingIntervalMs = isKnownNonPublicPool
+      ? computed
+      : Math.max(PUBLIC_POOL_MIN_INTERVAL_MS, computed);
+  }
+
+  // テスト用フック。本番コードは fetchJson() だけを呼び、_paced() 内から
+  // fetchJson() をawaitしない（二重ゲートは自己待ちになるため）。
+  function paced(fn, deps = {}) {
+    const now = deps.now || defaultNow;
+    const sleep = deps.sleep || ((ms) => new Promise(resolve => setTimeout(resolve, ms)));
+    const runWhenReady = gateTail.then(async () => {
+      const nowTs = now();
+      const wait = Math.max(
+        pacingIntervalMs - (nowTs - lastStart),
+        notBefore - nowTs,
+        0,
+      );
+      if (wait > 0) await sleep(wait);
+      lastStart = now();
+      return fn();
+    });
+    gateTail = runWhenReady.then(() => {}, () => {});
+    return runWhenReady;
+  }
+
+  // fetchImplはネイティブResponse互換（ok/status/json()/headers.get()）を要求する。
+  // ネットワーク例外は変換・再試行せず、そのまま呼び出し元へ伝播する。
+  async function fetchJson(url, options = {}) {
+    const fetchImpl = options.fetchImpl || (typeof fetch !== 'undefined' ? fetch : undefined);
+    const sleep = options.sleep || ((ms) => new Promise(resolve => setTimeout(resolve, ms)));
+    const now = options.now || defaultNow;
+    const label = options.label || 'Crossref API';
+
+    for (let attempt = 0; ; attempt++) {
+      let retryWaitMs = null;
+      const result = await paced(async () => {
+        const response = await fetchImpl(url);
+        updatePacingFromHeaders(response.headers);
+        let body = null;
+        try {
+          body = await response.json();
+        } catch {
+          body = null;
+        }
+        if (response.status === 429) {
+          const retryAfterSec = parseFloat(response.headers?.get?.('Retry-After'));
+          const backoffIdx = Math.min(attempt, BACKOFF_MS.length - 1);
+          retryWaitMs = Number.isFinite(retryAfterSec) && retryAfterSec >= 0
+            ? retryAfterSec * 1000
+            : BACKOFF_MS[backoffIdx];
+          // queued taskにも適用するため、tail解放前に絶対時刻で記録する。
+          recordCooldown(now() + retryWaitMs);
+        }
+        return { status: response.status, ok: response.ok, body };
+      }, { now, sleep });
+
+      if (result.status === 429 && attempt < MAX_RETRIES) {
+        // 当該要求自身のbackoffはゲート外。queued taskは共有cooldownを待てる。
+        await sleep(retryWaitMs);
+        continue;
+      }
+
+      const attempts = attempt + 1;
+      if (result.status === 429) {
+        console.warn(`${label}: レート制限のため断念しました (status: 429, 試行: ${attempts})`);
+      }
+      return { ...result, attempts };
+    }
+  }
+
+  const api = { fetchJson, _paced: paced, _resetForTest: resetForTest };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (root) root.CrossrefHttp = api;
+})(typeof globalThis !== 'undefined' ? globalThis : undefined);
+
 // ===== 作業中データ（下書き）の保存/復元（#162） =====
 // Chrome拡張版は chrome.storage.local、スタンドアロンHTML版は localStorage に保存する。
 // 保存形: { version, savedAt, repoHost, currentBatchIndex, allMetadata }

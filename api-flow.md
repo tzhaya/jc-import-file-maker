@@ -38,7 +38,7 @@ flowchart TD
     EK --> OPF2["OPF照会（参照リンク・ヒント表示のみ、アクセス権判定には不使用）"]
 
     E --> F["⑤ NCID 取得\n cir.nii.ac.jp/opensearch/v2/books?issn=..."]
-    E --> G["⑥ 助成金情報取得\n（アワード番号ごとに並列）"]
+    E --> G["⑥ 助成金情報取得\n（アワード処理は並列、Crossref HTTP試行は共通ゲートで直列・ペーシング）"]
     E --> H["⑦ 関連DOIタイトル取得\n（関連エントリのDOIごとに逐次・Public pool 5rps/同時実行1に合わせてペーシング）\n api.crossref.org/works/{doi}"]
 
     subgraph G["⑥ 助成金情報取得フォールバックチェーン"]
@@ -80,9 +80,9 @@ flowchart TD
 | 6 | JaLC REST API | `https://api.japanlinkcenter.org/v2/dois/{doi}` | JaLC DOI の場合（Chrome拡張版のみ） | 不要 |
 | 7 | CiNii Research (NCID) | `https://cir.nii.ac.jp/opensearch/v2/books?issn={issn}&format=json` | mapToItemType / mapToItemTypeJaLC 内・ISSN ごと | 任意（API Key） |
 | 8 | KAKEN XML API | `https://kaken.nii.ac.jp/opensearch/` | 助成金処理の最優先（JSPS/科研費パターン＆CiNii APIキーあり、Chrome拡張版のみ） | 必要（CiNii API Key） |
-| 9 | JGN (Crossref) | `https://api.crossref.org/works/10.52926/{award}` | KAKEN XML失敗後のフォールバック（アワード番号が JP で始まる場合） | 不要 |
+| 9 | JGN (Crossref) | `https://api.crossref.org/works/10.52926/{award}` | KAKEN XML失敗後のフォールバック（アワード番号が JP で始まる場合）。アワード処理自体は並列だが、Crossref HTTP試行は共通ゲートで同時実行1・開始間隔250ms以上に制御 | 不要 |
 | 10 | CiNii Research (KAKEN) | `https://cir.nii.ac.jp/opensearch/v2/projects?format=json&projectId={id}` | KAKEN XML・JGN いずれも失敗かつ科研費番号パターンにマッチの場合（最終フォールバック） | 任意（API Key） |
-| 11 | Crossref (関連 DOI) | `https://api.crossref.org/works/{doi}` | 関連エントリの DOI タイトル取得（並列） | 不要 |
+| 11 | Crossref (関連 DOI) | `https://api.crossref.org/works/{doi}` | 関連エントリの DOI タイトル取得（逐次・共通ゲートでペーシング） | 不要 |
 | 12 | DataCite REST API | `https://api.datacite.org/dois/{doi}?publisher=true&affiliation=true` | DataCite DOI の場合（標準版・Chrome拡張版とも） | 不要 |
 
 ---

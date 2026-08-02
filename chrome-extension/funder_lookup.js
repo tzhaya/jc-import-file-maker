@@ -1,9 +1,19 @@
 // CONFIG, loadConfig(), extensionFetch() は shared.js で定義
-if (typeof CONFIG === 'undefined') {
+if (typeof CONFIG === 'undefined' && typeof window !== 'undefined') {
   console.warn('shared.js が読み込めませんでした。APIキーなしで動作します。');
   window.CONFIG = { OpenAlex_API_KEY: '', CiNii_API_KEY: '', OPF_API_KEY: '' };
   window.loadConfig = async function() {};
   window.extensionFetch = function(url, options) { return fetch(url, options); };
+  window.CrossrefHttp = {
+    fetchJson: async (url, options = {}) => {
+      const response = await (options.fetchImpl || fetch)(url);
+      let body = null;
+      try { body = await response.json(); } catch { /* JSON以外はnull */ }
+      return { status: response.status, ok: response.ok, body, attempts: 1 };
+    },
+    _paced: (fn) => fn(),
+    _resetForTest: () => {},
+  };
   document.addEventListener('DOMContentLoaded', () => {
     const h1 = document.querySelector('h1');
     if (h1) h1.insertAdjacentHTML('afterend',
@@ -145,14 +155,18 @@ async function fetchAwardsByDoi(doi) {
   const awards = new Set();
   const errors = [];
   try {
-    const r = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+    const r = await CrossrefHttp.fetchJson(
+      `https://api.crossref.org/works/${encodeURIComponent(doi)}`,
+      { label: `課題番号取得 (DOI: ${doi})` },
+    );
     if (r.ok) {
-      const data = await r.json();
-      (data.message?.funder ?? []).forEach(f =>
+      (r.body?.message?.funder ?? []).forEach(f =>
         (f.award ?? []).forEach(a => { if (a.trim()) awards.add(a.trim()); })
       );
     } else if (r.status !== 404) {
-      errors.push(`Crossref APIエラー (${r.status})`);
+      errors.push(r.status === 429
+        ? 'Crossref APIがレート制限に達したため課題番号を取得できませんでした'
+        : `Crossref APIエラー (${r.status})`);
     }
   } catch (e) {
     console.warn('Crossref fetch failed:', e);
@@ -192,8 +206,8 @@ async function fetchAwardsByDoiFromInput() {
   statusEl.textContent = 'DOIから課題番号を検索中...';
   try {
     const { awards, errors } = await fetchAwardsByDoi(doi);
-    statusEl.textContent = '';
     if (awards.length === 0) {
+      statusEl.textContent = '';
       alert(errors.length
         ? '課題番号を取得できませんでした:\n' + errors.join('\n')
         : 'このDOIから課題番号を取得できませんでした。');
@@ -207,7 +221,13 @@ async function fetchAwardsByDoiFromInput() {
     } else {
       ta.value = (ta.value.trim() ? ta.value.trim() + '\n' : '') + toAdd.join('\n');
     }
-    if (errors.length) console.warn('一部のAPIでエラーが発生しました:', errors);
+    if (errors.length) {
+      statusEl.textContent = '⚠ 一部のAPIでエラーが発生しました: ' + errors.join(' / ');
+      statusEl.style.color = '#e65100';
+    } else {
+      statusEl.textContent = '';
+      statusEl.style.color = '';
+    }
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -243,13 +263,15 @@ const KAKENHI_FUNDING_STREAM = [
 ];
 
 // ===== fetchJgn（make_jc_importer.html より移植・拡張） =====
-async function fetchJgn(awardNumber) {
+async function fetchJgn(awardNumber, ctx = {}) {
   const url = `https://api.crossref.org/works/10.52926/${encodeURIComponent(awardNumber)}`;
   try {
-    const resp = await fetch(url);
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    const item = data.message;
+    const result = await CrossrefHttp.fetchJson(url, {
+      label: `JGN取得 (課題番号: ${awardNumber})`,
+    });
+    if (result.status === 429) ctx.rateLimited = true;
+    if (!result.ok) return null;
+    const item = result.body?.message;
     if (item.type !== 'grant') return null;
 
     const project = item.project?.[0] || {};
@@ -393,6 +415,7 @@ function fmtVal(v, lang) {
 // ===== 1件の課題番号を検索 =====
 async function lookupOne(awardNumber) {
   const hasCiNiiKey = CONFIG.CiNii_API_KEY && CONFIG.CiNii_API_KEY !== 'YOUR_CiNii_API_KEY';
+  const jgnCtx = {};
 
   // KAKEN XML API（Chrome拡張経由でCORS回避）
   if (hasCiNiiKey) {
@@ -424,7 +447,7 @@ async function lookupOne(awardNumber) {
 
   // JGN フォールバック（JP接頭辞あり）
   if (/^JP/i.test(awardNumber)) {
-    const jgnResult = await fetchJgn(awardNumber);
+    const jgnResult = await fetchJgn(awardNumber, jgnCtx);
     if (jgnResult) {
       return {
         award: awardNumber,
@@ -457,6 +480,9 @@ async function lookupOne(awardNumber) {
         awardUri: ciNiiResult.kakenUrl,
         titles: ciNiiResult.titles,
         fundingStreams: KAKENHI_FUNDING_STREAM,
+        supplementaryWarning: jgnCtx.rateLimited
+          ? 'Crossref JGN APIがレート制限に達したため、CiNii Researchの情報を表示しています。助成機関は科研費（JSPS）として表示されます。時間を置いて再取得するとJGN由来の正確な情報が得られる場合があります。'
+          : '',
       };
     }
   }
@@ -477,9 +503,9 @@ async function lookupOne(awardNumber) {
     ? '厚生労働科研費の可能性があります。<a href="https://mhlw-grants.niph.go.jp/" target="_blank" class="pv-link">厚生労働科学研究成果データベース</a>で検索して研究課題名を確認してください。'
     : '';
   const noKeyHint = !hasCiNiiKey ? 'CiNii APIキーが設定されていません。' : '';
-  const errorMsg = noKeyHint
-    ? noKeyHint + '該当なし（JGN・KAKEN いずれも見つかりません）'
-    : '該当なし（JGN・KAKEN いずれも見つかりません）';
+  const errorMsg = jgnCtx.rateLimited
+    ? noKeyHint + 'Crossref JGN APIがレート制限に達したため、JGNの登録有無を確認できませんでした。KAKEN／CiNii Researchからも情報を取得できませんでした。時間を置いて再試行してください。'
+    : noKeyHint + '該当なし（JGN・KAKEN いずれも見つかりません）';
   return { award: awardNumber, source: null, error: errorMsg, nistepHint, kakenSearchHint, amedHint, mhlwHint };
 }
 
@@ -824,8 +850,9 @@ async function copyTsvToClipboard(btn) {
 }
 
 // ===== 更新チェック =====
+if (typeof document !== 'undefined') {
 (async function checkForUpdate() {
-  const LOCAL_VERSION = '2026-07-19';
+  const LOCAL_VERSION = '2026-08-02';
   try {
     const res = await fetch('https://api.github.com/repos/tzhaya/jc-import-file-maker/commits?path=funder_lookup.js&per_page=1');
     if (!res.ok) return;
@@ -885,4 +912,12 @@ if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
       chrome.tabs.update({ url: href }).catch(() => chrome.tabs.create({ url: href, active: false }));
     }
   });
+}
+} // end typeof document guard
+
+// ===== ユニットテスト用エクスポート =====
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    fetchAwardsByDoi, fetchJgn, lookupOne, buildResultCards,
+  };
 }

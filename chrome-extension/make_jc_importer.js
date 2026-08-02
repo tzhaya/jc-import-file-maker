@@ -13,6 +13,16 @@ if (typeof CONFIG === 'undefined' && typeof window !== 'undefined') {
   window.saveDraft = async function() {};
   window.loadDraft = async function() { return null; };
   window.clearDraft = async function() {};
+  window.CrossrefHttp = {
+    fetchJson: async (url, options = {}) => {
+      const response = await (options.fetchImpl || fetch)(url);
+      let body = null;
+      try { body = await response.json(); } catch { /* JSON以外はnull */ }
+      return { status: response.status, ok: response.ok, body, attempts: 1 };
+    },
+    _paced: (fn) => fn(),
+    _resetForTest: () => {},
+  };
   document.addEventListener('DOMContentLoaded', () => {
     const area = document.getElementById('input-area');
     if (area) area.insertAdjacentHTML('beforebegin',
@@ -1021,13 +1031,15 @@ async function fetchDoiRA(doi) {
 
 // ===== 3.1 Crossref API =====
 async function fetchCrossref(doi) {
-  const resp = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
-  if (!resp.ok) {
-    if (resp.status === 404) throw new Error('DOIが見つかりません（Crossref 404）');
-    throw new Error(`Crossref APIエラー: ${resp.status}`);
+  const result = await CrossrefHttp.fetchJson(
+    `https://api.crossref.org/works/${encodeURIComponent(doi)}`,
+    { label: `Crossref書誌情報取得 (DOI: ${doi})` },
+  );
+  if (!result.ok) {
+    if (result.status === 404) throw new Error('DOIが見つかりません（Crossref 404）');
+    throw new Error(`Crossref APIエラー: ${result.status}`);
   }
-  const data = await resp.json();
-  return data.message;
+  return result.body?.message;
 }
 
 // ===== 3.2 OpenAlex API =====
@@ -1090,174 +1102,23 @@ async function fetchDataCite(doi) {
 }
 
 // ===== 3.2a 関連DOIタイトル取得（Crossref）=====
-// Crossref Public pool（GET /works/{doi} 単一レコード取得）は2026-07-21改定後も
-// 5 rps・同時実行1（#253）。同時実行を1に絞るだけでは応答が既定間隔未満の環境
-// （低遅延・キャッシュヒット時）でrps側を超え得るため、開始間隔にも安全余裕を
-// 持たせた250msを既定値とする。
-// 出典: https://www.crossref.org/documentation/retrieve-metadata/rest-api/access-and-authentication/
-//       https://community.crossref.org/t/refining-rest-api-limits-for-improved-stability-and-reliability/16137
-// 実測(2026-08-02, Public pool): x-api-pool: public-single / x-rate-limit-limit: 5
-//   / x-rate-limit-interval: 1s / x-concurrency-limit: 1
-const CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS = 250;
-
-function _defaultCrossrefNow() {
-  return typeof performance !== 'undefined' ? performance.now() : Date.now();
-}
-
-let _crossrefPacingIntervalMs = CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS;
-let _crossrefGateTail = Promise.resolve();
-let _crossrefLastStart = -Infinity;
-// 429のRetry-After等から算出したcooldown終了時刻（単調時計基準）。ゲートを通る
-// 全呼び出しが共有し、単一の呼び出しに対するローカル待機だけでは防げない、
-// 並行呼び出し（例: Enterキーとボタンの二重起動）によるcooldown中の送信を防ぐ。
-let _crossrefNotBefore = -Infinity;
-
-// テスト用: モジュールスコープのペーシング状態をリセットする（本番コードからは呼ばない）。
-function _resetCrossrefPacingForTest() {
-  _crossrefPacingIntervalMs = CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS;
-  _crossrefGateTail = Promise.resolve();
-  _crossrefLastStart = -Infinity;
-  _crossrefNotBefore = -Infinity;
-}
-
-// 429を受けた呼び出しが、429本文を読み終えたpaced task内（tailが進む前）で
-// 呼び出す。時刻を後退させない（複数の並行429が来ても最も遅いcooldownを残す）。
-function _recordCrossrefCooldown(untilTs) {
-  if (untilTs > _crossrefNotBefore) _crossrefNotBefore = untilTs;
-}
-
-// レスポンスヘッダから同時実行/rps上限をbest-effortで読み取り、次回以降の間隔を
-// 更新する。250ms下限は「polite」等、既知の非Public poolだと明示的に確認できた
-// 場合だけ外す。x-api-poolが欠落・未知の値の場合はPublic pool同様に扱い下限を
-// 維持する（pool判定不能時は安全側に倒す。ヘッダ欠落・不正値では何もしない）。
-const CROSSREF_KNOWN_NON_PUBLIC_POOLS = /^(polite|plus)/i;
-
-function _updateCrossrefPacingFromHeaders(headers) {
-  if (!headers || typeof headers.get !== 'function') return;
-  const pool = (headers.get('x-api-pool') || '').trim();
-  const isKnownNonPublicPool = CROSSREF_KNOWN_NON_PUBLIC_POOLS.test(pool);
-
-  const limit = parseInt(headers.get('x-rate-limit-limit'), 10);
-  const intervalRaw = (headers.get('x-rate-limit-interval') || '').trim();
-  const intervalMatch = /^(\d+(?:\.\d+)?)(ms|s)?$/i.exec(intervalRaw);
-  if (!Number.isFinite(limit) || limit <= 0 || !intervalMatch) return;
-
-  const unit = (intervalMatch[2] || 's').toLowerCase();
-  const intervalValue = parseFloat(intervalMatch[1]);
-  if (!Number.isFinite(intervalValue) || intervalValue <= 0) return;
-  const intervalMs = unit === 'ms' ? intervalValue : intervalValue * 1000;
-
-  const computed = intervalMs / limit;
-  _crossrefPacingIntervalMs = isKnownNonPublicPool
-    ? computed
-    : Math.max(CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS, computed);
-}
-
-// Crossref Public pool向けの同時実行数1・開始間隔制御ゲート。fn()の完了までを
-// 直列化しつつ、直前試行の開始時刻から一定間隔（既定250ms）空くまで待機してから
-// fn()を呼ぶ。実行Promise（呼び出し元へ返す）と継続用tailを分離し、fn()のreject
-// は呼び出し元へそのまま伝播させる一方、tail側は必ずcatchして次の待機者へ進む
-// （1件の失敗が後続の待機をブロックしないようにするため）。
-function crossrefPaced(fn, deps = {}) {
-  const now = deps.now || _defaultCrossrefNow;
-  const sleep = deps.sleep || ((ms) => new Promise(resolve => setTimeout(resolve, ms)));
-
-  const runWhenReady = _crossrefGateTail.then(async () => {
-    const nowTs = now();
-    const intervalWait = _crossrefPacingIntervalMs - (nowTs - _crossrefLastStart);
-    const cooldownWait = _crossrefNotBefore - nowTs;
-    const wait = Math.max(intervalWait, cooldownWait, 0);
-    if (wait > 0) await sleep(wait);
-    _crossrefLastStart = now();
-    return fn();
-  });
-
-  // tail: 次の待機者を進めるためだけの経路。fn()の結果/例外に関わらず継続する。
-  // 呼び出し元が受け取るのは（tailではなく）runWhenReady自身であり、reject時は
-  // 呼び出し元にもそのまま伝わる。
-  _crossrefGateTail = runWhenReady.then(() => {}, () => {});
-
-  return runWhenReady;
-}
-
-// 429時のリトライ回数・待機時間（Retry-Afterが無い場合の暫定値）。
-const CROSSREF_RELATION_TITLE_MAX_RETRIES = 2;
-const CROSSREF_RELATION_TITLE_BACKOFF_MS = [500, 1000];
-
-// deps は依存注入用（テスト専用）: { fetchImpl, sleep, now }。省略時は実fetch・実タイマー・
-// 実時計を使い、本番の呼び出しシグネチャ（doiのみ）は変更しない。
 async function fetchRelationTitle(doi, deps = {}) {
-  const fetchImpl = deps.fetchImpl || (typeof fetch !== 'undefined' ? fetch : undefined);
-  const sleep = deps.sleep || ((ms) => new Promise(resolve => setTimeout(resolve, ms)));
-  const { now } = deps;
-  const nowFn = now || _defaultCrossrefNow;
-
   const bareDoi = doi.replace(/^https?:\/\/doi\.org\//i, '');
   const url = `https://api.crossref.org/works/${encodeURIComponent(bareDoi)}`;
-
-  for (let attempt = 0; ; attempt++) {
-    let result;
-    try {
-      // ヘッダ解析(_updateCrossrefPacingFromHeaders)と応答本文の読取は、必ず
-      // ゲートのタスク内で完了させる。fetch()のPromiseは応答ヘッダー受信時点で
-      // 解決し本文読了を待たないため、.json()等の本文消費をゲート外（タスクの
-      // 戻り値を受け取った後）で行うと、本文を読み終える前に次のHTTP試行が
-      // 始まってしまい同時実行1を保証できない（レビュー指摘）。
-      result = await crossrefPaced(async () => {
-        const r = await fetchImpl(url);
-        _updateCrossrefPacingFromHeaders(r.headers);
-        let body = null;
-        try {
-          body = await r.json();
-        } catch {
-          body = null;
-        }
-
-        let retryWaitMs = null;
-        if (r.status === 429) {
-          const retryAfterSec = parseFloat(r.headers?.get?.('Retry-After'));
-          // 最終(3回目)試行はattempt===2だがBACKOFF_MSは2要素(index 0,1)のため、
-          // Retry-After欠落・不正のまま[attempt]で参照するとundefinedになり、
-          // 以降の_recordCrossrefCooldown(nowFn()+undefined)がNaNとなって共有
-          // cooldownが記録されない（レビュー指摘）。配列末尾でクランプする。
-          const backoffIdx = Math.min(attempt, CROSSREF_RELATION_TITLE_BACKOFF_MS.length - 1);
-          retryWaitMs = Number.isFinite(retryAfterSec) && retryAfterSec >= 0
-            ? retryAfterSec * 1000
-            : CROSSREF_RELATION_TITLE_BACKOFF_MS[backoffIdx];
-          // Retry-Afterはuser agent全体への指示（RFC 9110 §10.2.3）であり、この
-          // 呼び出し自身のローカル待機（下のsleep）だけでは、同じゲートに並ぶ
-          // 別の並行呼び出し（Enterキーとボタンの二重起動等、fetchData()は処理
-          // 中もボタンを無効化しないため成立し得る）がcooldown中に開始し得る。
-          // 429本文を読み終えたこのpaced task内・tailが進む前に共有notBeforeへ
-          // 反映し、ゲートを通る全待機者へcooldownを適用する（レビュー指摘）。
-          _recordCrossrefCooldown(nowFn() + retryWaitMs);
-        }
-
-        return { status: r.status, ok: r.ok, body, retryWaitMs };
-      }, { now, sleep });
-    } catch {
-      return null;
-    }
-
-    if (result.status === 429 && attempt < CROSSREF_RELATION_TITLE_MAX_RETRIES) {
-      await sleep(result.retryWaitMs);
-      continue;
-    }
-
-    if (!result.ok) {
-      // 404等の正常な「未収録」は警告を出さない。429はリトライを尽くした場合のみ、
-      // 理由不明のまま欠落しないようDOI・status・試行回数を記録する。
-      if (result.status === 429) {
-        console.warn(`関連DOIタイトル取得: レート制限のため断念しました (DOI: ${bareDoi}, status: 429, 試行: ${attempt + 1})`);
-      }
-      return null;
-    }
-
-    const msg = (result.body && result.body.message) || {};
-    const title = (msg.title || [])[0] || '';
-    const lang = msg.language || 'en';
-    return title ? { title, lang } : null;
+  let result;
+  try {
+    result = await CrossrefHttp.fetchJson(url, {
+      ...deps,
+      label: `関連DOIタイトル取得 (DOI: ${bareDoi})`,
+    });
+  } catch {
+    return null;
   }
+  if (!result.ok) return null;
+  const msg = result.body?.message || {};
+  const title = msg.title?.[0] || '';
+  const lang = msg.language || 'en';
+  return title ? { title, lang } : null;
 }
 
 // ===== 3.2b 関連DOIタイトル取得（JaLC）=====
@@ -1316,12 +1177,14 @@ async function fetchRorNamesAll(rorUri) {
 // ===== 3.3c Crossref Funders 逆引き: 主名称を取得 =====
 async function fetchCrossrefFunderDetails(funderUri) {
   const doi = funderUri.replace(/^https?:\/\/doi\.org\//i, '');
-  const resp = await fetch(`https://api.crossref.org/funders/${encodeURIComponent(doi)}`);
-  if (!resp.ok) throw new Error(`Crossref Funders APIエラー: ${resp.status}`);
-  const data = await resp.json();
-  const name = data.message?.name || '';
+  const result = await CrossrefHttp.fetchJson(
+    `https://api.crossref.org/funders/${encodeURIComponent(doi)}`,
+    { label: `Crossref助成機関取得 (DOI: ${doi})` },
+  );
+  if (!result.ok) throw new Error(`Crossref Funders APIエラー: ${result.status}`);
+  const name = result.body?.message?.name || '';
   // alt-names は言語タグなしのため上書き対象外（表示のみ）
-  const altNames = (data.message?.['alt-names'] || []).join(', ');
+  const altNames = (result.body?.message?.['alt-names'] || []).join(', ');
   return name
     ? [{ name, lang: 'en', _altNames: altNames }]
     : [];
@@ -1441,13 +1304,15 @@ async function fetchKakenCiNii(awardNumber) {
 }
 
 // ===== 3.5.2 Crossref JGN（Japan Grant Number）API =====
-async function fetchJgn(awardNumber) {
+async function fetchJgn(awardNumber, ctx = {}) {
   const url = `https://api.crossref.org/works/10.52926/${encodeURIComponent(awardNumber)}`;
   try {
-    const resp = await fetch(url);
-    if (!resp.ok) return null;            // 404 → JGN未登録
-    const data = await resp.json();
-    const item = data.message;
+    const result = await CrossrefHttp.fetchJson(url, {
+      label: `JGN取得 (課題番号: ${awardNumber})`,
+    });
+    if (result.status === 429) ctx.rateLimited = true;
+    if (!result.ok) return null;            // 404 → JGN未登録
+    const item = result.body?.message;
     if (item.type !== 'grant') return null;
 
     const project = item.project?.[0] || {};
@@ -2495,11 +2360,13 @@ async function buildFunders(crFunders) {
 
       // JGN連携: award が JP で始まる場合（JST助成金等）
       if (!kakenResult && awardNum && /^JP/i.test(awardNum)) {
+        const jgnCtx = {};
         try {
-          kakenResult = await fetchJgn(awardNum);
+          kakenResult = await fetchJgn(awardNum, jgnCtx);
         } catch (e) {
           console.warn(`JGN取得失敗 (${awardNum}):`, e.message);
         }
+        if (jgnCtx.rateLimited) obj._warnJgnRateLimited = true;
       }
 
       // CiNii Research OpenSearch フォールバック（KAKEN XML・JGN いずれも失敗時）
@@ -2638,9 +2505,11 @@ async function buildJaLCFunders(jalcFundList) {
 
       // JGN連携: award が JP で始まる場合
       if (!kakenResult && awardNum && /^JP/i.test(awardNum)) {
-        try { kakenResult = await fetchJgn(awardNum); } catch (e) {
+        const jgnCtx = {};
+        try { kakenResult = await fetchJgn(awardNum, jgnCtx); } catch (e) {
           console.warn(`JGN取得失敗 (${awardNum}):`, e.message);
         }
+        if (jgnCtx.rateLimited) obj._warnJgnRateLimited = true;
       }
 
       // CiNii Research OpenSearch フォールバック（KAKEN XML・JGN いずれも失敗時）
@@ -2768,9 +2637,11 @@ async function buildDataCiteFunders(fundingReferences) {
     }
     // JGN連携: award が JP で始まる場合
     if (!kakenResult && awardNum && /^JP/i.test(awardNum)) {
-      try { kakenResult = await fetchJgn(awardNum); } catch (e) {
+      const jgnCtx = {};
+      try { kakenResult = await fetchJgn(awardNum, jgnCtx); } catch (e) {
         console.warn(`JGN取得失敗 (${awardNum}):`, e.message);
       }
+      if (jgnCtx.rateLimited) obj._warnJgnRateLimited = true;
     }
     // CiNii Research OpenSearch フォールバック
     if (!kakenResult && looksKakenhi && awardNum) {
@@ -4915,7 +4786,11 @@ function renderOneFunder(funder, idx, defLabel) {
 
   // 研究課題番号（fieldset）+ 助成機関を検索ボタン
   const aw = funder.subitem_award_numbers || {};
-  const awardRow = createFieldRow('研究課題番号', aw.subitem_award_number || '', 'text', null, { fieldKey: 'subitem_award_number' });
+  const awardRow = createFieldRow('研究課題番号', aw.subitem_award_number || '', 'text', null, {
+    fieldKey: 'subitem_award_number',
+    warn: funder._warnJgnRateLimited,
+    warnTitle: 'Crossref JGN APIのレート制限により、JGN情報を取得できませんでした。時間を置いて再試行してください。',
+  });
   const awardLookupBtn = document.createElement('button');
   awardLookupBtn.textContent = '助成機関を検索';
   awardLookupBtn.className = 'btn-add';
@@ -4982,8 +4857,9 @@ function renderOneFunder(funder, idx, defLabel) {
       }
 
       // JGN フォールバック（JP接頭辞あり）
+      const jgnCtx = {};
       if (!result && /^JP/i.test(awardNum)) {
-        try { result = await fetchJgn(awardNum); } catch { /* ignore */ }
+        try { result = await fetchJgn(awardNum, jgnCtx); } catch { /* ignore */ }
       }
 
       // CiNii Research OpenSearch フォールバック（KAKEN XML・JGN いずれも失敗時）
@@ -4993,6 +4869,10 @@ function renderOneFunder(funder, idx, defLabel) {
 
       if (!result) {
         awardResultEl.className = 'lookup-result warn';
+        if (jgnCtx.rateLimited) {
+          awardResultEl.textContent = '⚠ Crossref JGN APIがレート制限に達したため、JGNの登録有無を確認できませんでした。時間を置いて再試行してください。';
+          return;
+        }
         const strippedNum = awardNum.replace(/^JP/i, '');
         if (/^\d+[A-Z]/i.test(strippedNum)) {
           awardResultEl.innerHTML = '⚠ 助成情報が見つかりませんでした。補助金番号の可能性があります。<a href="https://kaken.nii.ac.jp/ja/search/?qb='
@@ -5087,7 +4967,10 @@ function renderOneFunder(funder, idx, defLabel) {
         headerSpan.textContent = `${defLabel}[${idx}]${newName ? ': '+newName.substring(0,40) : ''}`;
       }
 
-      if (supplementaryWarning) {
+      if (jgnCtx.rateLimited) {
+        awardResultEl.className = 'lookup-result warn';
+        awardResultEl.textContent = '⚠ Crossref JGN APIがレート制限に達したため、代替情報を表示しています。時間を置いて再試行してください。';
+      } else if (supplementaryWarning) {
         awardResultEl.className = 'lookup-result warn';
         awardResultEl.textContent = '⚠ ' + supplementaryWarning;
       } else {
@@ -7432,6 +7315,7 @@ if (typeof document !== 'undefined') (async function checkForUpdate() {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     normalizeDoi, isValidDoi, processAbstract, generateTsv, determineAccessRights, calcEmbargoEndDate, todayStr,
-    fetchRelationTitle, crossrefPaced, _resetCrossrefPacingForTest,
+    fetchCrossref, fetchRelationTitle, fetchCrossrefFunderDetails, fetchJgn,
+    buildFunders, buildJaLCFunders, buildDataCiteFunders,
   };
 }
