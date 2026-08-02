@@ -1090,18 +1090,173 @@ async function fetchDataCite(doi) {
 }
 
 // ===== 3.2a 関連DOIタイトル取得（Crossref）=====
-async function fetchRelationTitle(doi) {
+// Crossref Public pool（GET /works/{doi} 単一レコード取得）は2026-07-21改定後も
+// 5 rps・同時実行1（#253）。同時実行を1に絞るだけでは応答が既定間隔未満の環境
+// （低遅延・キャッシュヒット時）でrps側を超え得るため、開始間隔にも安全余裕を
+// 持たせた250msを既定値とする。
+// 出典: https://www.crossref.org/documentation/retrieve-metadata/rest-api/access-and-authentication/
+//       https://community.crossref.org/t/refining-rest-api-limits-for-improved-stability-and-reliability/16137
+// 実測(2026-08-02, Public pool): x-api-pool: public-single / x-rate-limit-limit: 5
+//   / x-rate-limit-interval: 1s / x-concurrency-limit: 1
+const CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS = 250;
+
+function _defaultCrossrefNow() {
+  return typeof performance !== 'undefined' ? performance.now() : Date.now();
+}
+
+let _crossrefPacingIntervalMs = CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS;
+let _crossrefGateTail = Promise.resolve();
+let _crossrefLastStart = -Infinity;
+// 429のRetry-After等から算出したcooldown終了時刻（単調時計基準）。ゲートを通る
+// 全呼び出しが共有し、単一の呼び出しに対するローカル待機だけでは防げない、
+// 並行呼び出し（例: Enterキーとボタンの二重起動）によるcooldown中の送信を防ぐ。
+let _crossrefNotBefore = -Infinity;
+
+// テスト用: モジュールスコープのペーシング状態をリセットする（本番コードからは呼ばない）。
+function _resetCrossrefPacingForTest() {
+  _crossrefPacingIntervalMs = CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS;
+  _crossrefGateTail = Promise.resolve();
+  _crossrefLastStart = -Infinity;
+  _crossrefNotBefore = -Infinity;
+}
+
+// 429を受けた呼び出しが、429本文を読み終えたpaced task内（tailが進む前）で
+// 呼び出す。時刻を後退させない（複数の並行429が来ても最も遅いcooldownを残す）。
+function _recordCrossrefCooldown(untilTs) {
+  if (untilTs > _crossrefNotBefore) _crossrefNotBefore = untilTs;
+}
+
+// レスポンスヘッダから同時実行/rps上限をbest-effortで読み取り、次回以降の間隔を
+// 更新する。250ms下限は「polite」等、既知の非Public poolだと明示的に確認できた
+// 場合だけ外す。x-api-poolが欠落・未知の値の場合はPublic pool同様に扱い下限を
+// 維持する（pool判定不能時は安全側に倒す。ヘッダ欠落・不正値では何もしない）。
+const CROSSREF_KNOWN_NON_PUBLIC_POOLS = /^(polite|plus)/i;
+
+function _updateCrossrefPacingFromHeaders(headers) {
+  if (!headers || typeof headers.get !== 'function') return;
+  const pool = (headers.get('x-api-pool') || '').trim();
+  const isKnownNonPublicPool = CROSSREF_KNOWN_NON_PUBLIC_POOLS.test(pool);
+
+  const limit = parseInt(headers.get('x-rate-limit-limit'), 10);
+  const intervalRaw = (headers.get('x-rate-limit-interval') || '').trim();
+  const intervalMatch = /^(\d+(?:\.\d+)?)(ms|s)?$/i.exec(intervalRaw);
+  if (!Number.isFinite(limit) || limit <= 0 || !intervalMatch) return;
+
+  const unit = (intervalMatch[2] || 's').toLowerCase();
+  const intervalValue = parseFloat(intervalMatch[1]);
+  if (!Number.isFinite(intervalValue) || intervalValue <= 0) return;
+  const intervalMs = unit === 'ms' ? intervalValue : intervalValue * 1000;
+
+  const computed = intervalMs / limit;
+  _crossrefPacingIntervalMs = isKnownNonPublicPool
+    ? computed
+    : Math.max(CROSSREF_PUBLIC_POOL_MIN_INTERVAL_MS, computed);
+}
+
+// Crossref Public pool向けの同時実行数1・開始間隔制御ゲート。fn()の完了までを
+// 直列化しつつ、直前試行の開始時刻から一定間隔（既定250ms）空くまで待機してから
+// fn()を呼ぶ。実行Promise（呼び出し元へ返す）と継続用tailを分離し、fn()のreject
+// は呼び出し元へそのまま伝播させる一方、tail側は必ずcatchして次の待機者へ進む
+// （1件の失敗が後続の待機をブロックしないようにするため）。
+function crossrefPaced(fn, deps = {}) {
+  const now = deps.now || _defaultCrossrefNow;
+  const sleep = deps.sleep || ((ms) => new Promise(resolve => setTimeout(resolve, ms)));
+
+  const runWhenReady = _crossrefGateTail.then(async () => {
+    const nowTs = now();
+    const intervalWait = _crossrefPacingIntervalMs - (nowTs - _crossrefLastStart);
+    const cooldownWait = _crossrefNotBefore - nowTs;
+    const wait = Math.max(intervalWait, cooldownWait, 0);
+    if (wait > 0) await sleep(wait);
+    _crossrefLastStart = now();
+    return fn();
+  });
+
+  // tail: 次の待機者を進めるためだけの経路。fn()の結果/例外に関わらず継続する。
+  // 呼び出し元が受け取るのは（tailではなく）runWhenReady自身であり、reject時は
+  // 呼び出し元にもそのまま伝わる。
+  _crossrefGateTail = runWhenReady.then(() => {}, () => {});
+
+  return runWhenReady;
+}
+
+// 429時のリトライ回数・待機時間（Retry-Afterが無い場合の暫定値）。
+const CROSSREF_RELATION_TITLE_MAX_RETRIES = 2;
+const CROSSREF_RELATION_TITLE_BACKOFF_MS = [500, 1000];
+
+// deps は依存注入用（テスト専用）: { fetchImpl, sleep, now }。省略時は実fetch・実タイマー・
+// 実時計を使い、本番の呼び出しシグネチャ（doiのみ）は変更しない。
+async function fetchRelationTitle(doi, deps = {}) {
+  const fetchImpl = deps.fetchImpl || (typeof fetch !== 'undefined' ? fetch : undefined);
+  const sleep = deps.sleep || ((ms) => new Promise(resolve => setTimeout(resolve, ms)));
+  const { now } = deps;
+  const nowFn = now || _defaultCrossrefNow;
+
   const bareDoi = doi.replace(/^https?:\/\/doi\.org\//i, '');
-  try {
-    const resp = await fetch(`https://api.crossref.org/works/${encodeURIComponent(bareDoi)}`);
-    if (!resp.ok) return null;
-    const data = await resp.json();
-    const msg = data.message || {};
+  const url = `https://api.crossref.org/works/${encodeURIComponent(bareDoi)}`;
+
+  for (let attempt = 0; ; attempt++) {
+    let result;
+    try {
+      // ヘッダ解析(_updateCrossrefPacingFromHeaders)と応答本文の読取は、必ず
+      // ゲートのタスク内で完了させる。fetch()のPromiseは応答ヘッダー受信時点で
+      // 解決し本文読了を待たないため、.json()等の本文消費をゲート外（タスクの
+      // 戻り値を受け取った後）で行うと、本文を読み終える前に次のHTTP試行が
+      // 始まってしまい同時実行1を保証できない（レビュー指摘）。
+      result = await crossrefPaced(async () => {
+        const r = await fetchImpl(url);
+        _updateCrossrefPacingFromHeaders(r.headers);
+        let body = null;
+        try {
+          body = await r.json();
+        } catch {
+          body = null;
+        }
+
+        let retryWaitMs = null;
+        if (r.status === 429) {
+          const retryAfterSec = parseFloat(r.headers?.get?.('Retry-After'));
+          // 最終(3回目)試行はattempt===2だがBACKOFF_MSは2要素(index 0,1)のため、
+          // Retry-After欠落・不正のまま[attempt]で参照するとundefinedになり、
+          // 以降の_recordCrossrefCooldown(nowFn()+undefined)がNaNとなって共有
+          // cooldownが記録されない（レビュー指摘）。配列末尾でクランプする。
+          const backoffIdx = Math.min(attempt, CROSSREF_RELATION_TITLE_BACKOFF_MS.length - 1);
+          retryWaitMs = Number.isFinite(retryAfterSec) && retryAfterSec >= 0
+            ? retryAfterSec * 1000
+            : CROSSREF_RELATION_TITLE_BACKOFF_MS[backoffIdx];
+          // Retry-Afterはuser agent全体への指示（RFC 9110 §10.2.3）であり、この
+          // 呼び出し自身のローカル待機（下のsleep）だけでは、同じゲートに並ぶ
+          // 別の並行呼び出し（Enterキーとボタンの二重起動等、fetchData()は処理
+          // 中もボタンを無効化しないため成立し得る）がcooldown中に開始し得る。
+          // 429本文を読み終えたこのpaced task内・tailが進む前に共有notBeforeへ
+          // 反映し、ゲートを通る全待機者へcooldownを適用する（レビュー指摘）。
+          _recordCrossrefCooldown(nowFn() + retryWaitMs);
+        }
+
+        return { status: r.status, ok: r.ok, body, retryWaitMs };
+      }, { now, sleep });
+    } catch {
+      return null;
+    }
+
+    if (result.status === 429 && attempt < CROSSREF_RELATION_TITLE_MAX_RETRIES) {
+      await sleep(result.retryWaitMs);
+      continue;
+    }
+
+    if (!result.ok) {
+      // 404等の正常な「未収録」は警告を出さない。429はリトライを尽くした場合のみ、
+      // 理由不明のまま欠落しないようDOI・status・試行回数を記録する。
+      if (result.status === 429) {
+        console.warn(`関連DOIタイトル取得: レート制限のため断念しました (DOI: ${bareDoi}, status: 429, 試行: ${attempt + 1})`);
+      }
+      return null;
+    }
+
+    const msg = (result.body && result.body.message) || {};
     const title = (msg.title || [])[0] || '';
     const lang = msg.language || 'en';
     return title ? { title, lang } : null;
-  } catch {
-    return null;
   }
 }
 
@@ -2993,7 +3148,12 @@ async function mapToItemType(crJson, oaJson, rorMap) {
           doiRelEntries.push({ index: i, doi: relDoi });
         }
       });
-      const relTitles = await Promise.all(doiRelEntries.map(e => fetchRelationTitle(e.doi)));
+      // Crossref Public poolの同時実行1・rps制限を守るため逐次取得する（ペーシングは
+      // fetchRelationTitle()内部の責務。ここではゲートを取得しない、#253）。
+      const relTitles = [];
+      for (const entry of doiRelEntries) {
+        relTitles.push(await fetchRelationTitle(entry.doi));
+      }
       doiRelEntries.forEach((e, i) => {
         if (relTitles[i]) {
           relations[e.index].subitem_relation_name = [{
@@ -7270,5 +7430,8 @@ if (typeof document !== 'undefined') (async function checkForUpdate() {
 // ===== ユニットテスト用エクスポート（#192） =====
 // Node（node:test）から純粋関数を require するためのガード。ブラウザでは module 未定義のため不活性。
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { normalizeDoi, isValidDoi, processAbstract, generateTsv, determineAccessRights, calcEmbargoEndDate, todayStr };
+  module.exports = {
+    normalizeDoi, isValidDoi, processAbstract, generateTsv, determineAccessRights, calcEmbargoEndDate, todayStr,
+    fetchRelationTitle, crossrefPaced, _resetCrossrefPacingForTest,
+  };
 }

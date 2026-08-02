@@ -39,7 +39,7 @@ flowchart TD
 
     E --> F["⑤ NCID 取得\n cir.nii.ac.jp/opensearch/v2/books?issn=..."]
     E --> G["⑥ 助成金情報取得\n（アワード番号ごとに並列）"]
-    E --> H["⑦ 関連DOIタイトル取得\n（関連エントリのDOIごとに並列）\n api.crossref.org/works/{doi}"]
+    E --> H["⑦ 関連DOIタイトル取得\n（関連エントリのDOIごとに逐次・Public pool 5rps/同時実行1に合わせてペーシング）\n api.crossref.org/works/{doi}"]
 
     subgraph G["⑥ 助成金情報取得フォールバックチェーン"]
         G0["アワード番号が JP で始まる？"]
