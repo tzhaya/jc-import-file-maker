@@ -2256,16 +2256,36 @@ function buildJaLCAuthors(jalcCreators) {
 // ===== 4.3b DataCite 作成者マッピング（docs/datacite_jpcoar_mapping.md §5） =====
 function buildDataCiteAuthors(creators) {
   return (creators || []).map(cr => {
-    const isOrg  = cr.nameType === 'Organizational';
-    const family = !isOrg ? (cr.familyName || '') : '';
-    const given  = !isOrg ? (cr.givenName  || '') : '';
+    const nameType = cr.nameType || '';
+    const isOrg = nameType === 'Organizational';
+    // DataCite no longer supplements nameType from name components. Normalize
+    // whitespace-only components before both inferring and rendering a person.
+    const rawFamily = typeof cr.familyName === 'string' ? cr.familyName.trim() : '';
+    const rawGiven = typeof cr.givenName === 'string' ? cr.givenName.trim() : '';
+    const family = !isOrg ? rawFamily : '';
+    const given = !isOrg ? rawGiven : '';
+    const hasPersonalNameParts = Boolean(rawFamily || rawGiven);
+    // Unknown values are deliberately not inferred from name parts: they may be
+    // vocabulary extensions, whereas only a missing nameType can be inferred.
+    const creatorNameType = nameType === 'Organizational'
+      ? 'Organizational'
+      : nameType === 'Personal'
+        ? 'Personal'
+        : !nameType && hasPersonalNameParts
+          ? 'Personal'
+          : '';
     // nameType: Organizational は姓名分離せず name をそのまま使用（creatorNameType: 'Organizational'）
     const fullName = isOrg
       ? (cr.name || '')
       : (family && given ? `${family}, ${given}` : (family || given || cr.name || ''));
 
     const creatorNames = fullName
-      ? [{ creatorName: fullName, creatorNameLang: '', creatorNameType: isOrg ? 'Organizational' : 'Personal' }]
+      ? [{
+          creatorName: fullName,
+          creatorNameLang: '',
+          creatorNameType,
+          ...(creatorNameType === '' ? { _warnNameType: true } : {}),
+        }]
       : [];
     const familyNames = family ? [{ familyName: family, familyNameLang: '' }] : [];
     const givenNames  = given  ? [{ givenName:  given,  givenNameLang:  '' }] : [];
@@ -4329,7 +4349,11 @@ function renderOnePerson(person, idx, keys) {
     grp.appendChild(createFieldRow('言語', n[nameLangKey] || '', 'select', 'language', {
       fieldKey: nameLangKey, warn: n._warnLang, warnTitle: '仮に英語として設定しています。正確か確認してください'
     }));
-    grp.appendChild(createFieldRow('名前タイプ', n[nameTypeKey] || '', 'select', 'creatorNameType', { fieldKey: nameTypeKey }));
+    grp.appendChild(createFieldRow('名前タイプ', n[nameTypeKey] || '', 'select', 'creatorNameType', {
+      fieldKey: nameTypeKey,
+      warn: n._warnNameType,
+      warnTitle: '名前タイプを判定できませんでした。個人か組織かを確認してください',
+    }));
     grp.appendChild(delBtn);
     namesCont.appendChild(grp);
   });
@@ -7352,7 +7376,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     normalizeDoi, isValidDoi, processAbstract, generateTsv, determineAccessRights, calcEmbargoEndDate, todayStr,
     fetchCrossref, fetchRelationTitle, fetchCrossrefFunderDetails, fetchJgn,
-    buildFunders, buildJaLCFunders, buildDataCiteFunders,
+    buildFunders, buildJaLCFunders, buildDataCiteFunders, buildDataCiteAuthors,
     setJgnRateLimitWarning, hasJgnRateLimitWarning, collectFundingField,
   };
 }
