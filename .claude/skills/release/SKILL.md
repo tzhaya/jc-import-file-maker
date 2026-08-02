@@ -33,9 +33,9 @@ description: Chrome拡張機能のリリースPR準備、manifest version更新�
 1. 最新の `master` から `release/<version>` ブランチを作る。
 2. `chrome-extension/manifest.json` の `version` を更新する。
    あわせて `README.md` の「最新の更新」「変更履歴」、`chrome-extension/panel.html` と `make_jc_importer.html` の更新概要テーブル、各HTML（`funder_lookup.html` / `chrome-extension/funder_panel.html` を含む）の「最終更新」表示をリリース単位で更新する。利用者向けの記述にする（詳細は CLAUDE.md「ドキュメント運用」）。
-3. `make_jc_importer.js` と `funder_lookup.js` の `LOCAL_VERSION` を確認する。前リリース以降の機能変更が未反映の場合だけ、リリース日（JST、`YYYY-MM-DD`）へ更新する。
+3. `make_jc_importer.js` と `funder_lookup.js` の `LOCAL_VERSION` を確認する。前リリース以降の機能変更が未反映の場合だけ、そのJSの**実際の最終コミット日**（`git log -1 --date=format:%Y-%m-%d --format=%cd -- <ファイル>`、JST）に更新する。**リリースPRのマージ日ではない**（マージ日はコミット日と一致しないことがあり、ずれると更新チェックが誤動作する。詳細は CLAUDE.md「アプリ内『最終更新』表示と LOCAL_VERSION」）。
 4. ルートのJSを変更した場合は `npm run build` を実行する。
-5. `docs/changelog.md` に前回リリース以降の変更をまとめる。必要な場合だけREADMEの更新概要も直す。
+5. `docs/changelog.md` に前回リリース以降の変更をまとめる（利用者向けの面はステップ2で対応済み）。
 6. `git diff --check` と `npm test` を実行する。
 7. HTML/JSを変更した場合はユーザーに `/e2e-test` を依頼し、`ALL PASSED` の報告までPR作成へ進まない。
 8. `/prepare-pr` 相当の確認を行い、変更内容・version判断・テスト結果を示す。ユーザーの承認後にコミット、push、PR作成を行う。

@@ -25,7 +25,7 @@
 | 更新対象 | 内容 |
 |---|---|
 | `chrome-extension/manifest.json` の `version` | 前リリース以降の変更内容に応じて patch/minor/major を上げる |
-| `LOCAL_VERSION`（`make_jc_importer.js` / `funder_lookup.js`） | 未反映ならリリース日（JST）に更新 |
+| `LOCAL_VERSION`（`make_jc_importer.js` / `funder_lookup.js`） | 未反映なら、そのJSの実際の最終コミット日（リリースPRのマージ日ではない）に更新 |
 | `docs/changelog.md` | 前リリース以降の変更をまとめる |
 | `README.md` の「変更履歴」「最新の更新」 | リリース単位で1行にまとめて追記する（変更履歴は最新5件を維持） |
 | `chrome-extension/panel.html` の更新概要テーブル | リリース単位で1行追加し、「最終更新」をリリース日に更新 |
